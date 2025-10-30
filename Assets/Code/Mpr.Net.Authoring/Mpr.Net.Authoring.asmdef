@@ -1,0 +1,20 @@
+{
+    "name": "Mpr.Net.Authoring",
+    "rootNamespace": "Mpr.Net",
+    "references": [
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:734d92eba21c94caba915361bd5ac177",
+        "GUID:8819f35a0fc84499b990e90a4ca1911f",
+        "GUID:d27c93da0e3cb1f43b165b086251b47c",
+        "GUID:d56ab58bf9c2c5c42a12053f966fb08f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
