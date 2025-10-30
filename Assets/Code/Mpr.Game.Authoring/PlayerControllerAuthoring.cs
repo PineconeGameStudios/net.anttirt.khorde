@@ -5,15 +5,14 @@ namespace Mpr.Game
 {
 	public class PlayerControllerAuthoring : MonoBehaviour
 	{
+		public PlayerController controller;
+
 		class Baker : Baker<PlayerControllerAuthoring>
 		{
 			public override void Bake(PlayerControllerAuthoring authoring)
 			{
 				var entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
-				AddComponent(entity, new PlayerController
-				{
-
-				});
+				AddComponent(entity, authoring.controller);
 				AddComponent(entity, new PlayerInput
 				{
 

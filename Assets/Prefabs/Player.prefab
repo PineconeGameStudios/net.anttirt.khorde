@@ -127,6 +127,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9148dfe52a9292945869e27c2570a419, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Mpr.Game.Authoring::Mpr.Game.PlayerControllerAuthoring
+  controller:
+    speed: 5
 --- !u!114 &446069807961704479
 MonoBehaviour:
   m_ObjectHideFlags: 0

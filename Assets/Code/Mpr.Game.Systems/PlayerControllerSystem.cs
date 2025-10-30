@@ -17,7 +17,7 @@ namespace Mpr.Game
 		{
 			foreach(var (input, controller, ltw) in SystemAPI.Query<PlayerInput, PlayerController, RefRW<LocalTransform>>())
 			{
-				ltw.ValueRW.Position.xy += input.move * SystemAPI.Time.DeltaTime;
+				ltw.ValueRW.Position.xy += input.move * SystemAPI.Time.DeltaTime * controller.speed;
 			}
 		}
 	}
