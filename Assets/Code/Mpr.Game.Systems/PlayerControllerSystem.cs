@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 using UnityEngine;
@@ -37,9 +38,11 @@ namespace Mpr.Game
 
 		protected override void OnUpdate()
 		{
+			float2 move = inputActions.Player.Move.ReadValue<Vector2>();
+
 			foreach(var input in SystemAPI.Query<RefRW<PlayerInput>>().WithAll<GhostOwnerIsLocal>())
 			{
-				input.ValueRW.move = inputActions.Player.Move.ReadValue<Vector2>();
+				input.ValueRW.move = move;
 			}
 		}
 
