@@ -59,11 +59,16 @@ namespace Mpr.AI.BT
 		public override string ToString() => $"[{type}.{nodeId.index}] {depth}> {@event} @{cycle}";
 
 		#region Equality
-		public bool Equals(in BTExecTrace other) => type == other.type && @event == other.@event && depth == other.depth;
+		public bool Equals(in BTExecTrace other) =>
+			nodeId.index == other.nodeId.index &&
+			type == other.type &&
+			@event == other.@event &&
+			depth == other.depth;
 
 		public override int GetHashCode()
 		{
 			int hashCode = 17;
+			hashCode = hashCode * 23 + nodeId.index.GetHashCode();
 			hashCode = hashCode * 23 + type.GetHashCode();
 			hashCode = hashCode * 23 + @event.GetHashCode();
 			hashCode = hashCode * 23 + depth.GetHashCode();
@@ -146,7 +151,7 @@ namespace Mpr.AI.BT
 	}
 
 	public struct Wait { public BTExpr.Bool condition; }
-	public struct Fail { public BTExpr.Bool condition; }
+	public struct Fail { }
 	public struct Optional { public BTExpr.Bool condition; public BTExecNodeId child; }
 	public struct Catch { public BTExecNodeId child; }
 
@@ -332,6 +337,12 @@ namespace Mpr.AI.BT
 						trace.Add(new(nodeId, data.GetNode(nodeId).type, @event, stack.Length, cycle));
 				}
 
+				void Trace2(ref BTData data, int stackIndex, BTExecTrace.Event @event)
+				{
+					if(trace.IsCreated)
+						trace.Add(new(stack[stackIndex].nodeId, data.GetNode(stack[stackIndex].nodeId).type, @event, stackIndex + 1, cycle));
+				}
+
 				void Fail(ref BTData data, ref BTExec node)
 				{
 					Trace(ref node, BTExecTrace.Event.Fail);
@@ -341,9 +352,8 @@ namespace Mpr.AI.BT
 						ref var stackNode = ref data.GetNode(stack[i].nodeId);
 						if(stackNode.type == BTExec.Type.Catch)
 						{
-							Trace(ref node, BTExecTrace.Event.Catch);
-
-							stack.RemoveRange(i, stack.Length - 1);
+							Trace2(ref data, i, BTExecTrace.Event.Catch);
+							stack.RemoveRange(i, stack.Length - i);
 							nextChildIndex = stackNode.childIndex + 1;
 							return;
 						}
@@ -460,7 +470,7 @@ namespace Mpr.AI.BT
 
 					case BTExec.Type.Fail:
 						Fail(ref data, ref node);
-						return;
+						break;
 
 					case BTExec.Type.Optional:
 						if(nextChildIndex == 0 && node.data.optional.condition.Evaluate(ref data, componentPtrs))
