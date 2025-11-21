@@ -5,7 +5,7 @@ namespace Mpr.AI.BT
 {
 	public class BehaviorTreeAuthoring : MonoBehaviour
 	{
-		public BehaviorTreeGraph graph;
+		public BehaviorTreeAsset behaviorTree;
 
 		class Baker : Baker<BehaviorTreeAuthoring>
 		{
