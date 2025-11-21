@@ -572,6 +572,8 @@ namespace Mpr.AI.BT.Test
 			for(int i = 0; i < childNodeIds.Length; i++)
 			{
 				array[i] = new BTExecNodeId(childNodeIds[i]);
+				if(execs[childNodeIds[i]].childIndex != 0)
+					throw new System.Exception("node already claimed by another node");
 				execs[childNodeIds[i]].childIndex = (byte)i;
 			}
 		}
@@ -582,6 +584,8 @@ namespace Mpr.AI.BT.Test
 			for(int i = 0; i < childNodeIds.Length; i++)
 			{
 				array[i] = new ConditionalBlock { nodeId = new BTExecNodeId(childNodeIds[i].Item1), condition = childNodeIds[i].Item2 };
+				if(execs[childNodeIds[i].Item1].childIndex != 0)
+					throw new System.Exception("node already claimed by another node");
 				execs[childNodeIds[i].Item1].childIndex = (byte)i;
 			}
 		}
