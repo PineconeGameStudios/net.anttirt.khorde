@@ -124,7 +124,7 @@ namespace Mpr.AI.BT
 
 	public struct ConditionalBlock
 	{
-		public BTExpr.Bool condition;
+		public BTExprNodeRef condition;
 		public BTExecNodeId nodeId;
 	}
 
@@ -150,9 +150,9 @@ namespace Mpr.AI.BT
 		}
 	}
 
-	public struct Wait { public BTExpr.Bool condition; }
+	public struct Wait { public BTExprNodeRef condition; }
 	public struct Fail { }
-	public struct Optional { public BTExpr.Bool condition; public BTExecNodeId child; }
+	public struct Optional { public BTExprNodeRef condition; public BTExecNodeId child; }
 	public struct Catch { public BTExecNodeId child; }
 
 	public interface IBTExpr
@@ -179,8 +179,8 @@ namespace Mpr.AI.BT
 		{
 			switch(index)
 			{
-				case 0: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); break;
-				case 1: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); break;
+				case 0: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case 1: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 			}
 #if DEBUG
 			throw new Exception();
@@ -197,13 +197,13 @@ namespace Mpr.AI.BT
 		public struct ReadField : IBTExpr
 		{
 			public byte componentIndex;
-			public BlobArray<byte> fieldOffsets;
+			public ushort fieldOffset;
 
 			public readonly void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
 			{
 				unsafe
 				{
-					byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + fieldOffsets[outputIndex];
+					byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + fieldOffset;
 					fixed(byte* resultPtr = result)
 						UnsafeUtility.MemCpy(resultPtr, fieldPtr, result.Length);
 				}
@@ -428,7 +428,7 @@ namespace Mpr.AI.BT
 							for(int childIndex = 0; childIndex < node.data.selector.children.Length; ++childIndex)
 							{
 								ref var child = ref node.data.selector.children[childIndex];
-								if(child.condition.Evaluate(ref data, componentPtrs))
+								if(child.condition.Evaluate<bool>(ref data, componentPtrs))
 								{
 									any = true;
 									Call(ref data, child.nodeId);
@@ -455,7 +455,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Wait:
-						if(node.data.wait.condition.Evaluate(ref data, componentPtrs))
+						if(node.data.wait.condition.Evaluate<bool>(ref data, componentPtrs))
 						{
 							Return(ref data, ref node);
 						}
@@ -473,7 +473,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Optional:
-						if(nextChildIndex == 0 && node.data.optional.condition.Evaluate(ref data, componentPtrs))
+						if(nextChildIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data, componentPtrs))
 						{
 							Call(ref data, node.data.optional.child);
 						}
