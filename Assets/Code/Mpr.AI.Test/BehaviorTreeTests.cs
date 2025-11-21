@@ -440,6 +440,61 @@ namespace Mpr.AI.BT.Test
 					TestContext.WriteLine(item);
 			}
 		}
+
+		[Test]
+		public void Test_Write()
+		{
+			var builder = new BlobBuilder(Allocator.Temp);
+			ref var data = ref builder.ConstructRoot<BTData>();
+			var execs = builder.Allocate(ref data.execs, 100);
+			var exprs = builder.Allocate(ref data.exprs, 100);
+
+			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
+			execs[2].SetData(new WriteField
+			{
+				componentIndex = 0,
+				fieldOffset = (ushort)UnsafeUtility.GetFieldOffset(typeof(TestComponent1).GetField(nameof(TestComponent1.field1))),
+				fieldSize = sizeof(bool),
+				input = ConstBool(true, exprs)
+			});
+
+			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			System.Span<System.IntPtr> componentPtrs = stackalloc System.IntPtr[1];
+
+			unsafe
+			{
+				componentPtrs[0] = (System.IntPtr)(&tc1);
+			}
+
+			BehaviorTreeState state = default;
+
+			try
+			{
+				Assert.IsFalse(tc1.field1);
+				Assert.IsTrue(tc1.field2);
+
+				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+
+				AssertTrace(
+					Trace(Type.Root, 1, 0, Event.Init),
+					Trace(Type.Root, 1, 1, Event.Start),
+					Trace(Type.Root, 1, 1, Event.Call),
+					Trace(Type.WriteField, 2, 2, Event.Return),
+					Trace(Type.Root, 1, 1, Event.Yield)
+				);
+
+				Assert.IsTrue(tc1.field1);
+				Assert.IsTrue(tc1.field2);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
 	}
 
 	static class BehaviorTreeTestExt

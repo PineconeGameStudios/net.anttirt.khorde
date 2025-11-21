@@ -142,11 +142,18 @@ namespace Mpr.AI.BT
 	{
 		public BTExprNodeRef input;
 		public byte componentIndex;
-		public byte fieldOffset;
+		public ushort fieldOffset;
+		public byte fieldSize;
 
 		public readonly void Evaluate(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs)
 		{
 			ref var inputExpr = ref data.exprs[input.index];
+
+			unsafe
+			{
+				byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + fieldOffset;
+				inputExpr.Evaluate(ref data, input.outputIndex, componentPtrs, new Span<byte>(fieldPtr, fieldSize));
+			}
 		}
 	}
 
