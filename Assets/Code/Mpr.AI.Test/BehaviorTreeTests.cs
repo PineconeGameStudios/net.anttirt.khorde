@@ -211,9 +211,7 @@ namespace Mpr.AI.BT.Test
 			children2[1] = new BTExecNodeId(4);
 
 			execs[3].type = Type.Nop;
-			execs[3].childIndex = 0;
 			execs[4].type = Type.Nop;
-			execs[4].childIndex = 1;
 
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
@@ -261,11 +259,8 @@ namespace Mpr.AI.BT.Test
 			children2[2] = new ConditionalBlock { condition = ConstBool(true, exprs), nodeId = new BTExecNodeId(5) };
 
 			execs[3].type = Type.Nop;
-			execs[3].childIndex = 0;
 			execs[4].type = Type.Nop;
-			execs[4].childIndex = 1;
 			execs[5].type = Type.Nop;
-			execs[5].childIndex = 2;
 
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
@@ -310,9 +305,7 @@ namespace Mpr.AI.BT.Test
 			children2[1] = new BTExecNodeId(4);
 
 			execs[3].type = Type.Fail;
-			execs[3].childIndex = 0;
 			execs[4].type = Type.Nop;
-			execs[4].childIndex = 1;
 
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 

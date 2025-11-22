@@ -22,6 +22,7 @@ namespace Mpr.AI.BT
 	public struct BTStackFrame : IBufferElementData
 	{
 		public BTExecNodeId nodeId;
+		public byte childIndex;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static implicit operator BTStackFrame(BTExecNodeId nodeId) => new BTStackFrame { nodeId = nodeId };
@@ -92,7 +93,6 @@ namespace Mpr.AI.BT
 	{
 		public Type type;
 		[Tooltip("Index of this node within its parent Sequence")]
-		public byte childIndex;
 		public Data data;
 
 		public enum Type : byte
@@ -313,10 +313,6 @@ namespace Mpr.AI.BT
 
 			bool rootVisited = false;
 
-			// NOTE: we can only be here at either a Root or a Wait node, so we
-			// can always start with nextChildIndex = 0
-			int nextChildIndex = 0;
-
 			for(int cycle = 0; ; ++cycle)
 			{
 				if(cycle > 10000)
@@ -361,14 +357,12 @@ namespace Mpr.AI.BT
 						{
 							Trace2(ref data, i, BTExecTrace.Event.Catch);
 							stack.RemoveRange(i, stack.Length - i);
-							nextChildIndex = stackNode.childIndex + 1;
 							return;
 						}
 					}
 
 					stack.Clear();
 					stack.Add(data.Root);
-					nextChildIndex = 0;
 				}
 
 				void Return(ref BTData data, ref BTExec node)
@@ -376,15 +370,14 @@ namespace Mpr.AI.BT
 					Trace(ref node, BTExecTrace.Event.Return);
 
 					stack.RemoveAt(stack.Length - 1);
-					nextChildIndex = node.childIndex + 1;
 				}
 
 				void Call(ref BTData data, BTExecNodeId node)
 				{
 					Trace1(ref data, BTExecTrace.Event.Call);
 
+					stack.ElementAt(stack.Length - 1).childIndex++;
 					stack.Add(node);
-					nextChildIndex = 0;
 				}
 
 				if(state.selected)
@@ -416,9 +409,9 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Sequence:
-						if(nextChildIndex < node.data.sequence.children.Length)
+						if(stack[^1].childIndex < node.data.sequence.children.Length)
 						{
-							Call(ref data, node.data.sequence.children[nextChildIndex]);
+							Call(ref data, node.data.sequence.children[stack[^1].childIndex]);
 						}
 						else
 						{
@@ -428,7 +421,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Selector:
-						if(nextChildIndex == 0)
+						if(stack[^1].childIndex == 0)
 						{
 							bool any = false;
 
@@ -462,7 +455,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Wait:
-						if(node.data.wait.condition.Evaluate<bool>(ref data, componentPtrs))
+						if(node.data.wait.until.Evaluate<bool>(ref data, componentPtrs))
 						{
 							Return(ref data, ref node);
 						}
@@ -480,7 +473,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Optional:
-						if(nextChildIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data, componentPtrs))
+						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data, componentPtrs))
 						{
 							Call(ref data, node.data.optional.child);
 						}
@@ -491,7 +484,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Catch:
-						if(nextChildIndex == 0)
+						if(stack[^1].childIndex == 0)
 						{
 							Call(ref data, node.data.@catch.child);
 						}
