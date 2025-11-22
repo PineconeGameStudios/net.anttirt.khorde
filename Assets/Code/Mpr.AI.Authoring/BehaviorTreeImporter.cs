@@ -18,6 +18,7 @@ namespace Mpr.AI.BT
 			}
 
 			var asset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+			asset.graph = graph;
 			ctx.AddObjectToAsset("BehaviorTree", asset);
 			ctx.SetMainObject(asset);
 		}

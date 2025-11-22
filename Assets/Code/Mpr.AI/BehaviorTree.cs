@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Mpr.AI.BT
@@ -81,11 +82,69 @@ namespace Mpr.AI.BT
 	}
 
 	public readonly record struct BTExecNodeId(ushort index);
-	public readonly record struct BTExprNodeRef(ushort index, byte outputIndex)
+	public struct BTExprNodeRef
 	{
-		public readonly T Evaluate<T>(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs) where T : unmanaged
+		public ushort index;
+		public byte outputIndex;
+		public bool constant;
+
+		public override bool Equals(object obj) => obj is BTExprNodeRef other && this == other;
+		public bool Equals(BTExprNodeRef other) => this == other;
+
+		public BTExprNodeRef(ushort index, byte outputIndex, bool constant)
 		{
+			this.index = index;
+			this.outputIndex = outputIndex;
+			this.constant = constant;
+		}
+
+		public static BTExprNodeRef Node(ushort index, byte outputIndex) => new BTExprNodeRef(index, outputIndex, false);
+		public static BTExprNodeRef Const(ushort offset) => new BTExprNodeRef(offset, 0, true);
+
+		public override int GetHashCode()
+		{
+			int hashCode = 17;
+			hashCode = hashCode * 17 + index.GetHashCode();
+			hashCode = hashCode * 17 + outputIndex.GetHashCode();
+			hashCode = hashCode * 17 + constant.GetHashCode();
+			return hashCode;
+		}
+
+		public static bool operator==(BTExprNodeRef left, BTExprNodeRef right) =>
+			left.index == right.index &&
+			left.outputIndex == right.outputIndex &&
+			left.constant == right.constant;
+
+		public static bool operator!=(BTExprNodeRef left, BTExprNodeRef right) => !(left == right);
+
+		public T Evaluate<T>(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs) where T : unmanaged
+		{
+			if(constant)
+			{
+				unsafe
+				{
+					return *(T*)((byte*)data.constData.GetUnsafePtr() + index);
+				}
+			}
+
 			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
+		}
+
+		public void Evaluate(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+		{
+			if(constant)
+			{
+				unsafe
+				{
+					fixed(byte* dst = result)
+					{
+						UnsafeUtility.MemCpy(dst, (byte*)data.constData.GetUnsafePtr() + index, result.Length);
+						return;
+					}
+				}
+			}
+
+			data.GetNode(this).Evaluate(ref data, outputIndex, componentPtrs, result);
 		}
 	}
 
@@ -140,24 +199,36 @@ namespace Mpr.AI.BT
 	public struct Selector { public BlobArray<ConditionalBlock> children; }
 	public struct WriteField
 	{
-		public BTExprNodeRef input;
 		public byte componentIndex;
-		public ushort fieldOffset;
-		public byte fieldSize;
 
-		public readonly void Evaluate(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs)
+		public struct Field
 		{
-			ref var inputExpr = ref data.exprs[input.index];
+			public BTExprNodeRef input;
+			public ushort offset;
+			public ushort size;
+		}
 
-			unsafe
+		public BlobArray<Field> fields;
+
+		public void Evaluate(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs)
+		{
+			for(int i = 0; i < fields.Length; ++i)
 			{
-				byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + fieldOffset;
-				inputExpr.Evaluate(ref data, input.outputIndex, componentPtrs, new Span<byte>(fieldPtr, fieldSize));
+				ref var field = ref fields[i];
+
+				//ref var inputExpr = ref data.exprs[field.input.index];
+
+				unsafe
+				{
+					byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + field.offset;
+					field.input.Evaluate(ref data, componentPtrs, new Span<byte>(fieldPtr, field.size));
+					//inputExpr.Evaluate(ref data, field.input.outputIndex, componentPtrs, new Span<byte>(fieldPtr, field.size));
+				}
 			}
 		}
 	}
 
-	public struct Wait { public BTExprNodeRef condition; }
+	public struct Wait { public BTExprNodeRef until; }
 	public struct Fail { }
 	public struct Optional { public BTExprNodeRef condition; public BTExecNodeId child; }
 	public struct Catch { public BTExecNodeId child; }
@@ -170,9 +241,16 @@ namespace Mpr.AI.BT
 	public struct BTExpr : IBTExpr
 	{
 		public Data data;
-		public byte index;
+		public ExprType type;
 
-		public readonly T Evaluate<T>(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs) where T : unmanaged
+		public enum ExprType : byte
+		{
+			ReadField,
+			Bool,
+			Float3,
+		}
+
+		public T Evaluate<T>(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs) where T : unmanaged
 		{
 			T result = default;
 			unsafe
@@ -182,12 +260,13 @@ namespace Mpr.AI.BT
 			return result;
 		}
 
-		public readonly void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+		public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
 		{
-			switch(index)
+			switch(type)
 			{
-				case 0: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case 1: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case ExprType.ReadField: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case ExprType.Bool: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case ExprType.Float3: this.data.@float3.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 			}
 #if DEBUG
 			throw new Exception();
@@ -199,18 +278,19 @@ namespace Mpr.AI.BT
 		{
 			[FieldOffset(0)] public ReadField readField;
 			[FieldOffset(0)] public Bool @bool;
+			[FieldOffset(0)] public Float3 @float3;
 		}
 
 		public struct ReadField : IBTExpr
 		{
 			public byte componentIndex;
-			public ushort fieldOffset;
+			public BlobArray<ushort> offsets;
 
-			public readonly void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
 			{
 				unsafe
 				{
-					byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + fieldOffset;
+					byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + offsets[outputIndex];
 					fixed(byte* resultPtr = result)
 						UnsafeUtility.MemCpy(resultPtr, fieldPtr, result.Length);
 				}
@@ -219,7 +299,6 @@ namespace Mpr.AI.BT
 
 		public struct Bool : IBTExpr
 		{
-			public readonly record struct Const(bool value);
 			public readonly record struct Not(BTExprNodeRef inner);
 			public readonly record struct And(BTExprNodeRef left, BTExprNodeRef right);
 			public readonly record struct Or(BTExprNodeRef left, BTExprNodeRef right);
@@ -227,23 +306,28 @@ namespace Mpr.AI.BT
 			[StructLayout(LayoutKind.Explicit)]
 			public struct Data
 			{
-				[FieldOffset(0)] public Const @const;
 				[FieldOffset(0)] public Not not;
 				[FieldOffset(0)] public And and;
 				[FieldOffset(0)] public Or or;
 			}
 
-			public Data data;
-			public byte index;
+			public enum BoolType
+			{
+				Not,
+				And,
+				Or,
+			}
 
-			public readonly bool Evaluate(ref BTData btData, ReadOnlySpan<IntPtr> componentPtrs)
+			public Data data;
+			public BoolType index;
+
+			public bool Evaluate(ref BTData btData, ReadOnlySpan<IntPtr> componentPtrs)
 			{
 				switch(index)
 				{
-					case 0: return data.@const.value;
-					case 1: return !data.not.inner.Evaluate<bool>(ref btData, componentPtrs);
-					case 2: return data.and.left.Evaluate<bool>(ref btData, componentPtrs) && data.and.right.Evaluate<bool>(ref btData, componentPtrs);
-					case 3: return data.or.left.Evaluate<bool>(ref btData, componentPtrs) || data.or.right.Evaluate<bool>(ref btData, componentPtrs);
+					case BoolType.Not: return !data.not.inner.Evaluate<bool>(ref btData, componentPtrs);
+					case BoolType.And: return data.and.left.Evaluate<bool>(ref btData, componentPtrs) && data.and.right.Evaluate<bool>(ref btData, componentPtrs);
+					case BoolType.Or: return data.or.left.Evaluate<bool>(ref btData, componentPtrs) || data.or.right.Evaluate<bool>(ref btData, componentPtrs);
 				}
 #if DEBUG
 				Debug.Log($"invalid BTBoolExpr type index {index}");
@@ -253,12 +337,58 @@ namespace Mpr.AI.BT
 #endif
 			}
 
-			public readonly void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
 			{
 				unsafe
 				{
 					fixed(byte* resultPtr = result)
 						*(bool*)resultPtr = Evaluate(ref data, componentPtrs);
+				}
+			}
+		}
+
+		public struct Float3 : IBTExpr
+		{
+			public readonly record struct Add(BTExprNodeRef left, BTExprNodeRef right);
+			public readonly record struct Sub(BTExprNodeRef left, BTExprNodeRef right);
+
+			[StructLayout(LayoutKind.Explicit)]
+			public struct Data
+			{
+				[FieldOffset(0)] public Add add;
+				[FieldOffset(0)] public Sub sub;
+			}
+
+			public Data data;
+			public Float3Type index;
+
+			public enum Float3Type
+			{
+				Add,
+				Sub,
+			}
+
+			public float3 Evaluate(ref BTData btData, ReadOnlySpan<IntPtr> componentPtrs)
+			{
+				switch(index)
+				{
+					case Float3Type.Add: return data.add.left.Evaluate<float3>(ref btData, componentPtrs) + data.add.right.Evaluate<float3>(ref btData, componentPtrs);
+					case Float3Type.Sub: return data.sub.left.Evaluate<float3>(ref btData, componentPtrs) + data.sub.right.Evaluate<float3>(ref btData, componentPtrs);
+				}
+#if DEBUG
+				Debug.Log($"invalid BTBoolExpr type index {index}");
+				throw new Exception();
+#else
+			return false;
+#endif
+			}
+
+			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+			{
+				unsafe
+				{
+					fixed(byte* resultPtr = result)
+						*(float3*)resultPtr = Evaluate(ref data, componentPtrs);
 				}
 			}
 		}
@@ -268,6 +398,7 @@ namespace Mpr.AI.BT
 	{
 		public BlobArray<BTExec> execs;
 		public BlobArray<BTExpr> exprs;
+		public BlobArray<byte> constData;
 
 		public BTExecNodeId Root
 		{

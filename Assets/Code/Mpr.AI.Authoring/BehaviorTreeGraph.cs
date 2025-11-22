@@ -5,7 +5,7 @@ using UnityEditor;
 namespace Mpr.AI.BT
 {
 	[Serializable]
-	[Graph(AssetExtension)]
+	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
 	public class BehaviorTreeGraph : Graph
 	{
 		internal const string AssetExtension = "btg";
