@@ -5,7 +5,7 @@ namespace Mpr.AI.BT.Nodes
 {
 	[Serializable]
 	[UseWithGraph(typeof(BehaviorTreeGraph))]
-	internal abstract class Base : Node
+	public abstract class Base : Node
 	{
 		public const string EXEC_PORT_DEFAULT_NAME = "Execution";
 	}
@@ -93,7 +93,80 @@ namespace Mpr.AI.BT.Nodes
 	}
 
 	[Serializable]
-	internal abstract class ComponentReaderNode<T> : Base where T : Unity.Entities.IComponentData
+	internal class Optional : Base
+	{
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.Build();
+
+			context.AddInputPort<bool>("Condition")
+				.WithDisplayName("Condition")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.Build();
+
+			context.AddOutputPort(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	internal class Fail : Base
+	{
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.Build();
+
+			context.AddInputPort<bool>("Condition")
+				.WithDisplayName("Condition")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	internal class Catch : Base
+	{
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.Build();
+
+			context.AddOutputPort(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	internal class Wait : Base
+	{
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.Build();
+
+			context.AddInputPort<bool>("Condition")
+				.WithDisplayName("Condition")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	public abstract class ComponentReaderNode<T> : Base where T : Unity.Entities.IComponentData
 	{
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
@@ -108,7 +181,7 @@ namespace Mpr.AI.BT.Nodes
 	}
 
 	[Serializable]
-	internal abstract class ComponentWriterNode<T> : Base where T : Unity.Entities.IComponentData
+	public abstract class ComponentWriterNode<T> : Base where T : Unity.Entities.IComponentData
 	{
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
@@ -127,9 +200,6 @@ namespace Mpr.AI.BT.Nodes
 		}
 	}
 
-	[Serializable]
-	internal class ReadPlayerController : ComponentReaderNode<Mpr.Game.PlayerController> { }
-
-	[Serializable]
-	internal class WritePlayerController : ComponentWriterNode<Mpr.Game.PlayerController> { }
+	[Serializable] internal class ReadLocalTransform : ComponentReaderNode<Unity.Transforms.LocalTransform> { }
+	[Serializable] internal class WriteLocalTransform : ComponentWriterNode<Unity.Transforms.LocalTransform> { }
 }

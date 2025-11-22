@@ -1,3 +1,5 @@
+using Mpr.AI.BT.Nodes;
+using System;
 using Unity.Entities;
 using UnityEngine;
 
@@ -20,4 +22,7 @@ namespace Mpr.Game
 			}
 		}
 	}
+
+	[Serializable] class ReadPlayerController : ComponentReaderNode<PlayerController> { }
+	[Serializable] class WritePlayerController : ComponentWriterNode<PlayerController> { }
 }
