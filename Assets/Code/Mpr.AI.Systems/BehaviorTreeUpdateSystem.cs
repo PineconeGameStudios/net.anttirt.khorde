@@ -149,7 +149,7 @@ namespace Mpr.AI.BT
 					job.AddType(holder);
 				}
 
-				state.Dependency = job.Schedule(queryHolder.query, state.Dependency);
+				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
 			}
 		}
 

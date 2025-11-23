@@ -1,3 +1,0 @@
-namespace Mpr.AI.BT
-{
-}
