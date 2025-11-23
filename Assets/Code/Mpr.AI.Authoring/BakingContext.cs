@@ -60,6 +60,10 @@ namespace Mpr.AI.BT.Nodes
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, execNodeMap.Count);
 			var exprs = builder.Allocate(ref data.exprs, exprNodeMap.Count);
+			var types = builder.Allocate(ref data.componentTypes, componentTypes.Count);
+
+			for(int i = 0; i < componentTypes.Count; ++i)
+				types[i] = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(componentTypes[i])).StableTypeHash;
 
 			BakeNodes(rootGraph, ref builder, ref execs, ref exprs);
 

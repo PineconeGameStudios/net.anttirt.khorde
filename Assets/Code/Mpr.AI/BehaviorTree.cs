@@ -196,13 +196,21 @@ namespace Mpr.AI.BT
 	{
 		public IntPtr data;
 		public int length;
+		public TypeIndex typeIndex;
+		public ulong stableTypeHash;
 
-		public static UnsafeComponentReference Make<T>(ref T component) where T : unmanaged
+		public static UnsafeComponentReference Make<T>(ref T component) where T : unmanaged, IComponentData
 		{
 			unsafe
 			{
 				fixed(T* p = &component)
-					return new UnsafeComponentReference { data = (IntPtr)p, length = UnsafeUtility.SizeOf<T>() };
+					return new UnsafeComponentReference
+					{
+						data = (IntPtr)p,
+						length = UnsafeUtility.SizeOf<T>(),
+						typeIndex = TypeManager.GetTypeIndex<T>(),
+						stableTypeHash = TypeManager.GetTypeInfo<T>().StableTypeHash,
+					};
 			}
 		}
 
@@ -420,6 +428,7 @@ namespace Mpr.AI.BT
 		public BlobArray<BTExec> execs;
 		public BlobArray<BTExpr> exprs;
 		public BlobArray<byte> constData;
+		public BlobArray<ulong> componentTypes;
 
 		public BTExecNodeId Root
 		{
@@ -455,6 +464,18 @@ namespace Mpr.AI.BT
 
 		public static void Execute(ref BTData data, ref BehaviorTreeState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
 		{
+			if(data.componentTypes.Length > componentPtrs.Length)
+				throw new Exception($"not enough components; bt requires {data.componentTypes.Length} but only {componentPtrs.Length} found");
+
+			if(data.componentTypes.Length < componentPtrs.Length)
+				throw new Exception($"too many components; bt requires {data.componentTypes.Length} but {componentPtrs.Length} found");
+
+			for(int i = 0; i < data.componentTypes.Length; ++i)
+				if(data.componentTypes[i] != componentPtrs[i].stableTypeHash)
+					throw new Exception($"wrong type at index {i}, expected " +
+						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.componentTypes[i])).DebugTypeName}, found" +
+						$"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
+
 			if(stack.Length == 0)
 			{
 				if(trace.IsCreated)

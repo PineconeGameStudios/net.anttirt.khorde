@@ -23,6 +23,11 @@ namespace Mpr.AI.BT
 				{
 					tree = tree,
 				});
+
+				AddBuffer<BTStackFrame>(entity);
+				AddComponent(entity, new BehaviorTreeState
+				{
+				});
 			}
 		}
 	}

@@ -364,13 +364,6 @@ namespace Mpr.AI.BT.Test
 			}
 		}
 
-		struct TestComponent1
-		{
-			public int field0;
-			public bool field1;
-			public bool field2;
-		}
-
 		BTExprNodeRef ReadExpr(ref BlobBuilder builder, BlobBuilderArray<BTExpr> exprs, byte componentIndex, System.Reflection.FieldInfo fieldInfo)
 		{
 			exprs[exprCount] = new BTExpr
@@ -410,6 +403,8 @@ namespace Mpr.AI.BT.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprs, 100);
+			var types = builder.Allocate(ref data.componentTypes, 1);
+			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetSequence(ref builder, execs, 3, 5);
@@ -464,6 +459,8 @@ namespace Mpr.AI.BT.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprs, 100);
+			var types = builder.Allocate(ref data.componentTypes, 1);
+			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetWriteField(ref builder, 0, WriteField(True, typeof(TestComponent1).GetField(nameof(TestComponent1.field1))));
@@ -510,6 +507,8 @@ namespace Mpr.AI.BT.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprs, 100);
+			var types = builder.Allocate(ref data.componentTypes, 1);
+			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
 
 			var TestComponent1_field1 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field1)));
 
@@ -567,4 +566,12 @@ namespace Mpr.AI.BT.Test
 			}
 		}
 	}
+
+	struct TestComponent1 : IComponentData
+	{
+		public int field0;
+		public bool field1;
+		public bool field2;
+	}
+
 }
