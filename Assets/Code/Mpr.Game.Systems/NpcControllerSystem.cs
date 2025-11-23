@@ -1,11 +1,13 @@
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Transforms;
 
 namespace Mpr.Game
 {
-	public partial struct NpcControllersystem : ISystem
+	[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+	public partial struct NpcControllerSystem : ISystem
 	{
 		[BurstCompile]
 		partial struct MoveJob : IJobEntity

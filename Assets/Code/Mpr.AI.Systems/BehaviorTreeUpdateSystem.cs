@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.NetCode;
 
 namespace Mpr.AI.BT
 {
@@ -21,6 +22,7 @@ namespace Mpr.AI.BT
 		public int typeSize;
 	}
 
+	[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 	public partial struct BehaviorTreeUpdateSystem : ISystem
 	{
 		Entity traceHolder;
