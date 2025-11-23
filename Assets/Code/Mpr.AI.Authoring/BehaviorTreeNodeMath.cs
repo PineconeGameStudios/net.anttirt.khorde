@@ -17,8 +17,8 @@ namespace Mpr.AI.BT.Nodes
 				data = new BTExpr.Float3.Data
 				{
 					add = new BTExpr.Float3.Add(
-						GetInputPort(0).GetExprNodeRef(context),
-						GetInputPort(1).GetExprNodeRef(context)
+						context.GetExprNodeRef(GetInputPort(0)),
+						context.GetExprNodeRef(GetInputPort(1))
 						),
 				}
 			};

@@ -1,14 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
-using UnityEngine.Pool;
 
 namespace Mpr.AI.BT.Nodes
 {
+	public interface IComponentAccess
+	{
+		public Type ComponentType { get; }
+		public bool IsReadOnly { get; }
+	}
+
 	[Serializable]
 	[UseWithGraph(typeof(BehaviorTreeGraph))]
 	public abstract class Base : Node
@@ -22,30 +24,12 @@ namespace Mpr.AI.BT.Nodes
 	[Serializable]
 	public class Exec { }
 
-	public class BakingContext
-	{
-		public Dictionary<INode, BTExecNodeId> execNodeMap; 
-		public Dictionary<INode, BTExprNodeRef> exprNodeMap; 
-		public NativeList<byte> constStorage; 
-		public List<Type> componentTypes; 
-		public List<string> errors;
-
-		public BakingContext(Dictionary<INode, BTExecNodeId> execNodeMap, Dictionary<INode, BTExprNodeRef> exprNodeMap, NativeList<byte> constStorage, List<Type> componentTypes, List<string> errors)
-		{
-			this.execNodeMap = execNodeMap ?? throw new ArgumentNullException(nameof(execNodeMap));
-			this.exprNodeMap = exprNodeMap ?? throw new ArgumentNullException(nameof(exprNodeMap));
-			this.constStorage = constStorage;
-			this.componentTypes = componentTypes ?? throw new ArgumentNullException(nameof(componentTypes));
-			this.errors = errors ?? throw new ArgumentNullException(nameof(errors));
-		}
-	}
-
-	public interface IExecNode
+	public interface IExecNode : INode
 	{
 		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context);
 	}
 
-	public interface IExprNode
+	public interface IExprNode : INode
 	{
 		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context);
 	}
@@ -55,7 +39,7 @@ namespace Mpr.AI.BT.Nodes
 	{
 		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
 		{
-			exec.SetData(new BT.Root { child = GetOutputPort(0).GetTargetNodeId(context) });
+			exec.SetData(new BT.Root { child = context.GetTargetNodeId(GetOutputPort(0)) });
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
@@ -77,7 +61,7 @@ namespace Mpr.AI.BT.Nodes
 			exec.data.sequence = new BT.Sequence { };
 			var outputPorts = builder.Allocate(ref exec.data.sequence.children, outputPortCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
-				outputPorts[i] = GetOutputPort(i).GetTargetNodeId(context);
+				outputPorts[i] = context.GetTargetNodeId(GetOutputPort(i));
 		}
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
@@ -120,8 +104,8 @@ namespace Mpr.AI.BT.Nodes
 			for(int i = 0; i < outputPorts.Length; ++i)
 			{
 				var option = (SubTreeOption)GetBlock(i);
-				outputPorts[i].nodeId = option.GetOutputPort(0).GetTargetNodeId(context);
-				outputPorts[i].condition = option.GetInputPort(0).GetExprNodeRef(context);
+				outputPorts[i].nodeId = context.GetTargetNodeId(option.GetOutputPort(0));
+				outputPorts[i].condition = context.GetExprNodeRef(option.GetInputPort(0));
 			}
 		}
 
@@ -160,8 +144,8 @@ namespace Mpr.AI.BT.Nodes
 			exec.type = BTExec.Type.Optional;
 			exec.data.optional = new BT.Optional
 			{
-				child = GetOutputPort(0).GetTargetNodeId(context),
-				condition = GetInputPort(1).GetExprNodeRef(context),
+				child = context.GetTargetNodeId(GetOutputPort(0)),
+				condition = context.GetExprNodeRef(GetInputPort(1)),
 			};
 		}
 
@@ -210,7 +194,7 @@ namespace Mpr.AI.BT.Nodes
 			exec.type = BTExec.Type.Catch;
 			exec.data.@catch = new BT.Catch
 			{
-				child = GetOutputPort(0).GetTargetNodeId(context),
+				child = context.GetTargetNodeId(GetOutputPort(0)),
 			};
 		}
 
@@ -236,7 +220,7 @@ namespace Mpr.AI.BT.Nodes
 			exec.type = BTExec.Type.Wait;
 			exec.data.wait = new BT.Wait
 			{
-				until = GetInputPort(1).GetExprNodeRef(context),
+				until = context.GetExprNodeRef(GetInputPort(1)),
 			};
 		}
 
@@ -255,8 +239,11 @@ namespace Mpr.AI.BT.Nodes
 	}
 
 	[Serializable]
-	public abstract class ComponentReaderNode<T> : Base, IExprNode where T : Unity.Entities.IComponentData
+	public abstract class ComponentReaderNode<T> : Base, IExprNode, IComponentAccess where T : Unity.Entities.IComponentData
 	{
+		public Type ComponentType => typeof(T);
+		public bool IsReadOnly => true;
+
 		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
 		{
 			var index = context.componentTypes.IndexOf(typeof(T));
@@ -296,8 +283,11 @@ namespace Mpr.AI.BT.Nodes
 	}
 
 	[Serializable]
-	public abstract class ComponentWriterNode<T> : Base, IExecNode where T : Unity.Entities.IComponentData
+	public abstract class ComponentWriterNode<T> : Base, IExecNode, IComponentAccess where T : Unity.Entities.IComponentData
 	{
+		public Type ComponentType => typeof(T);
+		public bool IsReadOnly => false;
+
 		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
 		{
 			var componentIndex = context.componentTypes.IndexOf(typeof(T));
@@ -339,11 +329,11 @@ namespace Mpr.AI.BT.Nodes
 					if(offset > ushort.MaxValue)
 						throw new Exception("component too large; field offset over 65k");
 
-					var port = GetInputPort(enabledFieldCount);
+					var port = GetInputPort(enabledFieldCount + 1);
 
 					blobFields[enabledFieldCount] = new WriteField.Field
 					{
-						input = port.GetExprNodeRef(context),
+						input = context.GetExprNodeRef(port),
 						offset = (ushort)offset,
 						size = (ushort)UnsafeUtility.SizeOf(field.FieldType),
 					};

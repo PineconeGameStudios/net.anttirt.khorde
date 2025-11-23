@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
@@ -17,8 +20,24 @@ namespace Mpr.AI.BT
 				return;
 			}
 
+			bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.variable.variableKind == VariableKind.Input || v.variable.variableKind == VariableKind.Output);
+
+			if(isSubgraph)
+			{
+				// not importing subgraphs
+				return;
+			}
+
 			var asset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
-			asset.graph = graph;
+
+			var writer = new MemoryBinaryWriter();
+			graph.Bake(writer);
+
+			unsafe
+			{
+				asset.bakedGraph = new TextAsset(new ReadOnlySpan<byte>(writer.Data, writer.Length));
+			}
+
 			ctx.AddObjectToAsset("BehaviorTree", asset);
 			ctx.SetMainObject(asset);
 		}
