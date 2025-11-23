@@ -14,12 +14,20 @@ namespace Mpr.Game
 		}
 
 		[BurstCompile]
+		partial struct MoveJob : IJobEntity
+		{
+			public float deltaTime;
+
+			public void Execute(PlayerInput input, PlayerController controller, ref LocalTransform transform)
+			{
+				transform.Position.xy += input.move * deltaTime * controller.speed;
+			}
+		}
+
+		[BurstCompile]
 		void ISystem.OnUpdate(ref SystemState state)
 		{
-			foreach(var (input, controller, ltw) in SystemAPI.Query<PlayerInput, PlayerController, RefRW<LocalTransform>>())
-			{
-				ltw.ValueRW.Position.xy += input.move * SystemAPI.Time.DeltaTime * controller.speed;
-			}
+			state.Dependency = new MoveJob { deltaTime = SystemAPI.Time.DeltaTime }.Schedule(state.Dependency);
 		}
 	}
 }
