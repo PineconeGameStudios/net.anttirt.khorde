@@ -382,14 +382,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216325585142033
-          - rid: 8259216325585142034
-          - rid: 8259216325585142035
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -444,14 +438,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216325585142036
-          - rid: 8259216325585142037
-          - rid: 8259216325585142038
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -506,14 +494,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216325585142039
-          - rid: 8259216325585142040
-          - rid: 8259216325585142041
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -568,14 +550,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216325585142042
-          - rid: 8259216325585142043
-          - rid: 8259216325585142044
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -1286,59 +1262,3 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: position
-    - rid: 8259216325585142033
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216325585142034
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216325585142035
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
-    - rid: 8259216325585142036
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216325585142037
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216325585142038
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
-    - rid: 8259216325585142039
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216325585142040
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216325585142041
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
-    - rid: 8259216325585142042
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216325585142043
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216325585142044
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0

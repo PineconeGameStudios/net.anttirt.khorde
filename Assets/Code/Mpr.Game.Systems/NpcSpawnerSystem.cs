@@ -6,6 +6,7 @@ using Unity.Transforms;
 
 namespace Mpr.Game
 {
+	[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.LocalSimulation)]
 	partial struct NpcSpawnerSystem : ISystem
 	{
 		void ISystem.OnCreate(ref SystemState state)
