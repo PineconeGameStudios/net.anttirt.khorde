@@ -57,7 +57,7 @@ namespace Mpr.Net
 		[BurstCompile]
 		void ISystem.OnUpdate(ref SystemState state)
 		{
-			var prefab = SystemAPI.GetSingleton<PlayerSpawner>().prefab;
+			var prefab = SystemAPI.GetSingleton<PlayerSpawner>().netPrefab;
 			state.EntityManager.GetName(prefab, out var prefabName);
 			var worldName = new FixedString32Bytes(state.WorldUnmanaged.Name);
 			var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -72,6 +72,23 @@ namespace Mpr.Net
 				ecb.DestroyEntity(reqEntity);
 			}
 			ecb.Playback(state.EntityManager);
+		}
+	}
+
+	[WorldSystemFilter(WorldSystemFilterFlags.LocalSimulation)]
+	partial struct LocalSpawnPlayerSystem : ISystem
+	{
+		[BurstCompile]
+		void ISystem.OnCreate(ref SystemState state)
+		{
+			state.RequireForUpdate<PlayerSpawner>();
+		}
+
+		[BurstCompile]
+		void ISystem.OnUpdate(ref SystemState state)
+		{
+			state.EntityManager.Instantiate(SystemAPI.GetSingleton<PlayerSpawner>().prefab);
+			state.Enabled = false;
 		}
 	}
 }

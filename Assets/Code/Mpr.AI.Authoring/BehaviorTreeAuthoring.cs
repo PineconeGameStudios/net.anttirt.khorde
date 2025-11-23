@@ -11,6 +11,8 @@ namespace Mpr.AI.BT
 		{
 			public override void Bake(BehaviorTreeAuthoring authoring)
 			{
+				DependsOn(authoring.behaviorTree);
+
 				if(authoring.behaviorTree == null)
 					return;
 
@@ -19,7 +21,7 @@ namespace Mpr.AI.BT
 				var tree = authoring.behaviorTree.LoadPersistent();
 				AddBlobAsset(ref tree, out _);
 
-				AddComponent(entity, new BehaviorTree
+				AddSharedComponent(entity, new BehaviorTree
 				{
 					tree = tree,
 				});

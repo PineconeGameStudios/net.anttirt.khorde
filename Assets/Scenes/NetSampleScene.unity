@@ -461,15 +461,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45a335734b1572644a6a5d09d87adc65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Scenes::Unity.Scenes.SubScene
-  _SceneAsset: {fileID: 102900000, guid: 76d42485ec0bea645ab9b8b6efb22090, type: 3}
+  _SceneAsset: {fileID: 102900000, guid: 46363101b76c56949968c16b9cd15f0c, type: 3}
   _HierarchyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   AutoLoadScene: 1
   _SceneGUID:
     Value:
-      x: 1480740199
-      y: 1185853646
-      z: 1804311461
-      w: 151137278
+      x: 269706084
+      y: 1231406715
+      z: 3055322777
+      w: 3237289417
 --- !u!4 &884342261
 Transform:
   m_ObjectHideFlags: 0
@@ -514,7 +514,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d22fe1802f646eeb96208b5b2315fd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.NetCode::Unity.NetCode.OverrideAutomaticNetcodeBootstrap
-  ForceAutomaticBootstrapInScene: 0
+  ForceAutomaticBootstrapInScene: 1
 --- !u!4 &1778399123
 Transform:
   m_ObjectHideFlags: 0
@@ -524,7 +524,7 @@ Transform:
   m_GameObject: {fileID: 1778399121}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.9812, y: 0.71188, z: -4.49699}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

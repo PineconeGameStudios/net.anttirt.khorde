@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Mpr.AI.BT
 {
-	public struct BehaviorTree : IComponentData
+	public struct BehaviorTree : ISharedComponentData
 	{
 		public BlobAssetReference<BTData> tree;
 	}

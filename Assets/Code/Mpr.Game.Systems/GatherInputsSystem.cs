@@ -26,6 +26,11 @@ namespace Mpr.Game
 			{
 				input.ValueRW.move = move;
 			}
+
+			foreach(var input in SystemAPI.Query<RefRW<PlayerInput>>().WithNone<GhostOwner>())
+			{
+				input.ValueRW.move = move;
+			}
 		}
 
 		protected override void OnDestroy()

@@ -1,4 +1,3 @@
-using Mpr.AI.BT;
 using System;
 using Unity.Entities;
 using Unity.Transforms;
@@ -11,7 +10,7 @@ namespace Mpr.Game
 
 		void ISystem.OnCreate(ref SystemState state)
 		{
-			traceHolder = state.EntityManager.CreateSingletonBuffer<BTExecTrace>();
+			traceHolder = state.EntityManager.CreateSingletonBuffer<AI.BT.BTExecTrace>();
 		}
 
 		void ISystem.OnUpdate(ref SystemState state)
@@ -24,13 +23,15 @@ namespace Mpr.Game
 				LocalTransform
 				>())
 			{
+
+
 				Span<AI.BT.UnsafeComponentReference> componentPtrs = stackalloc AI.BT.UnsafeComponentReference[2];
 
 				componentPtrs[0] = AI.BT.UnsafeComponentReference.Make(ref move_.ValueRW);
 				var lt = transform;
 				componentPtrs[1] = AI.BT.UnsafeComponentReference.Make(ref lt);
 
-				var trace = SystemAPI.GetSingletonBuffer<BTExecTrace>();
+				var trace = SystemAPI.GetSingletonBuffer<AI.BT.BTExecTrace>();
 				trace.Clear();
 
 				try
