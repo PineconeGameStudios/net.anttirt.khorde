@@ -110,41 +110,46 @@ namespace Mpr.AI.BT
 			return hashCode;
 		}
 
-		public static bool operator==(BTExprNodeRef left, BTExprNodeRef right) =>
+		public static bool operator ==(BTExprNodeRef left, BTExprNodeRef right) =>
 			left.index == right.index &&
 			left.outputIndex == right.outputIndex &&
 			left.constant == right.constant;
 
-		public static bool operator!=(BTExprNodeRef left, BTExprNodeRef right) => !(left == right);
+		public static bool operator !=(BTExprNodeRef left, BTExprNodeRef right) => !(left == right);
 
-		public T Evaluate<T>(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
 		{
 			if(constant)
 			{
-				unsafe
-				{
-					return *(T*)((byte*)data.constData.GetUnsafePtr() + index);
-				}
+				return MemoryMarshal.Cast<byte, T>(data.constData.AsSpan().Slice(index, UnsafeUtility.SizeOf<T>()))[0];
 			}
 
 			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
 		}
 
-		public void Evaluate(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+		public void Evaluate(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 		{
 			if(constant)
 			{
-				unsafe
-				{
-					fixed(byte* dst = result)
-					{
-						UnsafeUtility.MemCpy(dst, (byte*)data.constData.GetUnsafePtr() + index, result.Length);
-						return;
-					}
-				}
+				data.constData.AsSpan().Slice(index, result.Length).CopyTo(result);
+				return;
 			}
 
 			data.GetNode(this).Evaluate(ref data, outputIndex, componentPtrs, result);
+		}
+	}
+
+	static class BlobExt
+	{
+		public static ReadOnlySpan<T> AsSpan<T>(ref this BlobArray<T> array) where T : unmanaged
+		{
+			unsafe
+			{
+				if(array.Length == 0)
+					return default;
+
+				return new ReadOnlySpan<T>(array.GetUnsafePtr(), array.Length);
+			}
 		}
 	}
 
@@ -187,6 +192,29 @@ namespace Mpr.AI.BT
 		public BTExecNodeId nodeId;
 	}
 
+	public struct UnsafeComponentReference
+	{
+		public IntPtr data;
+		public int length;
+
+		public static UnsafeComponentReference Make<T>(ref T component) where T : unmanaged
+		{
+			unsafe
+			{
+				fixed(T* p = &component)
+					return new UnsafeComponentReference { data = (IntPtr)p, length = UnsafeUtility.SizeOf<T>() };
+			}
+		}
+
+		public Span<byte> AsSpan()
+		{
+			unsafe
+			{
+				return new Span<byte>(data.ToPointer(), length);
+			}
+		}
+	}
+
 	// TODO
 	// public struct UtilityBlock
 	// {
@@ -210,20 +238,13 @@ namespace Mpr.AI.BT
 
 		public BlobArray<Field> fields;
 
-		public void Evaluate(ref BTData data, ReadOnlySpan<IntPtr> componentPtrs)
+		public void Evaluate(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 		{
 			for(int i = 0; i < fields.Length; ++i)
 			{
 				ref var field = ref fields[i];
-
-				//ref var inputExpr = ref data.exprs[field.input.index];
-
-				unsafe
-				{
-					byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + field.offset;
-					field.input.Evaluate(ref data, componentPtrs, new Span<byte>(fieldPtr, field.size));
-					//inputExpr.Evaluate(ref data, field.input.outputIndex, componentPtrs, new Span<byte>(fieldPtr, field.size));
-				}
+				var fieldSpan = componentPtrs[componentIndex].AsSpan().Slice(field.offset, field.size);
+				field.input.Evaluate(ref data, componentPtrs, fieldSpan);
 			}
 		}
 	}
@@ -235,7 +256,7 @@ namespace Mpr.AI.BT
 
 	public interface IBTExpr
 	{
-		void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result);
+		void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result);
 	}
 
 	public struct BTExpr : IBTExpr
@@ -250,17 +271,14 @@ namespace Mpr.AI.BT
 			Float3,
 		}
 
-		public T Evaluate<T>(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
 		{
-			T result = default;
-			unsafe
-			{
-				Evaluate(ref data, outputIndex, componentPtrs, new Span<byte>(&result, sizeof(T)));
-			}
-			return result;
+			Span<T> result = stackalloc T[1];
+			Evaluate(ref data, outputIndex, componentPtrs, MemoryMarshal.AsBytes(result));
+			return result[0];
 		}
 
-		public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+		public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 		{
 			switch(type)
 			{
@@ -284,16 +302,27 @@ namespace Mpr.AI.BT
 		public struct ReadField : IBTExpr
 		{
 			public byte componentIndex;
-			public BlobArray<ushort> offsets;
+			public BlobArray<Field> fields;
 
-			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+			public struct Field
 			{
-				unsafe
+				public ushort offset;
+				public ushort length;
+
+				public static implicit operator Field(System.Reflection.FieldInfo fieldInfo)
 				{
-					byte* fieldPtr = (byte*)componentPtrs[componentIndex].ToPointer() + offsets[outputIndex];
-					fixed(byte* resultPtr = result)
-						UnsafeUtility.MemCpy(resultPtr, fieldPtr, result.Length);
+					return new Field
+					{
+						offset = (ushort)UnsafeUtility.GetFieldOffset(fieldInfo),
+						length = (ushort)UnsafeUtility.SizeOf(fieldInfo.FieldType),
+					};
 				}
+			}
+
+			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			{
+				ref var field = ref fields[outputIndex];
+				componentPtrs[outputIndex].AsSpan().Slice(field.offset, field.length).CopyTo(result);
 			}
 		}
 
@@ -321,7 +350,7 @@ namespace Mpr.AI.BT
 			public Data data;
 			public BoolType index;
 
-			public bool Evaluate(ref BTData btData, ReadOnlySpan<IntPtr> componentPtrs)
+			public bool Evaluate(ref BTData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 			{
 				switch(index)
 				{
@@ -337,13 +366,9 @@ namespace Mpr.AI.BT
 #endif
 			}
 
-			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
-				unsafe
-				{
-					fixed(byte* resultPtr = result)
-						*(bool*)resultPtr = Evaluate(ref data, componentPtrs);
-				}
+				MemoryMarshal.Cast<byte, bool>(result)[0] = Evaluate(ref data, componentPtrs);
 			}
 		}
 
@@ -368,7 +393,7 @@ namespace Mpr.AI.BT
 				Sub,
 			}
 
-			public float3 Evaluate(ref BTData btData, ReadOnlySpan<IntPtr> componentPtrs)
+			public float3 Evaluate(ref BTData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 			{
 				switch(index)
 				{
@@ -383,13 +408,9 @@ namespace Mpr.AI.BT
 #endif
 			}
 
-			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<IntPtr> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
-				unsafe
-				{
-					fixed(byte* resultPtr = result)
-						*(float3*)resultPtr = Evaluate(ref data, componentPtrs);
-				}
+				MemoryMarshal.Cast<byte, float3>(result)[0] = Evaluate(ref data, componentPtrs);
 			}
 		}
 	}
@@ -429,10 +450,10 @@ namespace Mpr.AI.BT
 
 	public static class BehaviorTreeExecution
 	{
-		public static void Execute(this BlobAssetReference<BTData> asset, ref BehaviorTreeState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<IntPtr> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
+		public static void Execute(this BlobAssetReference<BTData> asset, ref BehaviorTreeState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
 			=> Execute(ref asset.Value, ref state, stack, componentPtrs, now, trace);
 
-		public static void Execute(ref BTData data, ref BehaviorTreeState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<IntPtr> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
+		public static void Execute(ref BTData data, ref BehaviorTreeState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
 		{
 			if(stack.Length == 0)
 			{

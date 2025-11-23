@@ -1,5 +1,6 @@
 using System;
 using Unity.Entities;
+using Unity.Transforms;
 
 namespace Mpr.Game
 {
@@ -7,19 +8,22 @@ namespace Mpr.Game
 	{
 		void ISystem.OnUpdate(ref SystemState state)
 		{
-			foreach(var (tree, state_, stack, move_) in SystemAPI.Query<AI.BT.BehaviorTree, RefRW<AI.BT.BehaviorTreeState>, DynamicBuffer<AI.BT.BTStackFrame>, RefRW<MoveTarget>>())
+			foreach(var (tree, state_, stack, move_, transform) in SystemAPI.Query<
+				AI.BT.BehaviorTree,
+				RefRW<AI.BT.BehaviorTreeState>,
+				DynamicBuffer<AI.BT.BTStackFrame>,
+				RefRW<MoveTarget>,
+				LocalTransform
+				>())
 			{
-				Span<IntPtr> componentPtrs = stackalloc IntPtr[1];
+				Span<AI.BT.UnsafeComponentReference> componentPtrs = stackalloc AI.BT.UnsafeComponentReference[2];
 
-				unsafe
-				{
-					ref var move = ref move_.ValueRW;
-					fixed(void* movePtr = &move)
-						componentPtrs[0] = (IntPtr)movePtr;
-				}
+				componentPtrs[0] = AI.BT.UnsafeComponentReference.Make(ref move_.ValueRW);
+				var lt = transform;
+				componentPtrs[1] = AI.BT.UnsafeComponentReference.Make(ref lt);
 
 				AI.BT.BehaviorTreeExecution.Execute(
-					ref tree.tree.Value,
+					tree.tree,
 					ref state_.ValueRW,
 					stack,
 					componentPtrs,

@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using System.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -386,9 +385,8 @@ namespace Mpr.AI.BT.Test
 				}
 			};
 
-			var read1Offsets = builder.Allocate(ref exprs[exprCount].data.readField.offsets, 1);
-			var fieldOffset = (ushort)UnsafeUtility.GetFieldOffset(fieldInfo);
-			read1Offsets[0] = fieldOffset;
+			var read1Fields = builder.Allocate(ref exprs[exprCount].data.readField.fields, 1);
+			read1Fields[0] = fieldInfo;
 
 			++exprCount;
 
@@ -429,12 +427,8 @@ namespace Mpr.AI.BT.Test
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			System.Span<System.IntPtr> componentPtrs = stackalloc System.IntPtr[1];
-
-			unsafe
-			{
-				componentPtrs[0] = (System.IntPtr)(&tc1);
-			}
+			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
 			BehaviorTreeState state = default;
 
@@ -479,12 +473,8 @@ namespace Mpr.AI.BT.Test
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			System.Span<System.IntPtr> componentPtrs = stackalloc System.IntPtr[1];
-
-			unsafe
-			{
-				componentPtrs[0] = (System.IntPtr)(&tc1);
-			}
+			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
 			BehaviorTreeState state = default;
 
@@ -531,12 +521,8 @@ namespace Mpr.AI.BT.Test
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			System.Span<System.IntPtr> componentPtrs = stackalloc System.IntPtr[1];
-
-			unsafe
-			{
-				componentPtrs[0] = (System.IntPtr)(&tc1);
-			}
+			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
 			BehaviorTreeState state = default;
 

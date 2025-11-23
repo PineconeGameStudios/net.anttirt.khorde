@@ -258,13 +258,14 @@ namespace Mpr.AI.BT.Nodes
 
 			var fields = GetFields();
 
-			var offsets = builder.Allocate(ref expr.data.readField.offsets, fields.Length);
+			var bakedFields = builder.Allocate(ref expr.data.readField.fields, fields.Length);
 			for(int i = 0; i < fields.Length; i++)
 			{
 				int offset = UnsafeUtility.GetFieldOffset(fields[i]);
 				if(offset > ushort.MaxValue)
 					throw new Exception("component too large; field offset over 65k");
-				offsets[i] = (ushort)offset;
+
+				bakedFields[i] = fields[i];
 			}
 		}
 
