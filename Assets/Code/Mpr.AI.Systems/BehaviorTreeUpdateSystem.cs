@@ -161,6 +161,8 @@ namespace Mpr.AI.BT
 
 			var holderQuery = SystemAPI.QueryBuilder().WithAllRW<BTQueryHolder, BTTypeHandleHolder>().WithAll<BehaviorTree>().Build();
 
+			bool clientWorld = (state.WorldUnmanaged.Flags & WorldFlags.GameClient) == WorldFlags.GameClient;
+
 			foreach(var value in values)
 			{
 				if(!value.tree.IsCreated)
@@ -185,6 +187,12 @@ namespace Mpr.AI.BT
 						ComponentType.ReadWrite<BehaviorTreeState>(),
 						ComponentType.ReadWrite<BTStackFrame>(),
 					};
+
+					if(clientWorld)
+					{
+						components.Add(ComponentType.ReadOnly<PredictedGhost>());
+						components.Add(ComponentType.ReadOnly<Simulate>());
+					}
 
 					var typeHandles = state.EntityManager.GetBuffer<BTTypeHandleHolder>(entity);
 

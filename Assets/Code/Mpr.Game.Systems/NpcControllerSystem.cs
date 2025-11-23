@@ -1,4 +1,5 @@
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
@@ -9,6 +10,24 @@ namespace Mpr.Game
 	[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 	public partial struct NpcControllerSystem : ISystem
 	{
+		EntityQuery moveQuery;
+
+		void ISystem.OnCreate(ref SystemState state)
+		{
+			var moveQueryBuilder = new EntityQueryBuilder(Allocator.Temp)
+				.WithAll<NpcController>()
+				.WithAllRW<MoveTarget, LocalTransform>();
+
+			bool clientWorld = (state.WorldUnmanaged.Flags & WorldFlags.GameClient) == WorldFlags.GameClient;
+
+			if(clientWorld)
+			{
+				moveQueryBuilder = moveQueryBuilder.WithAll<PredictedGhost, Simulate>();
+			}
+
+			moveQuery = moveQueryBuilder.Build(ref state);
+		}
+
 		[BurstCompile]
 		partial struct MoveJob : IJobEntity
 		{
@@ -53,7 +72,7 @@ namespace Mpr.Game
 		[BurstCompile]
 		void ISystem.OnUpdate(ref SystemState state)
 		{
-			state.Dependency = new MoveJob { deltaTime = SystemAPI.Time.DeltaTime }.ScheduleParallel(state.Dependency);
+			state.Dependency = new MoveJob { deltaTime = SystemAPI.Time.DeltaTime }.ScheduleParallel(moveQuery, state.Dependency);
 		}
 	}
 }
