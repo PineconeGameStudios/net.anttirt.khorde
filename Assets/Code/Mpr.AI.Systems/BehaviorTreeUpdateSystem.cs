@@ -6,7 +6,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 
-namespace Mpr.Game
+namespace Mpr.AI.BT
 {
 	struct BTQueryHolder : IComponentData
 	{
@@ -26,7 +26,7 @@ namespace Mpr.Game
 
 		void ISystem.OnCreate(ref SystemState state)
 		{
-			traceHolder = state.EntityManager.CreateSingletonBuffer<AI.BT.BTExecTrace>();
+			traceHolder = state.EntityManager.CreateSingletonBuffer<BTExecTrace>();
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -62,9 +62,9 @@ namespace Mpr.Game
 			FixedList64Bytes<int> typeSizes;
 			FixedList128Bytes<ulong> typeHashes;
 
-			public BlobAssetReference<AI.BT.BTData> btData;
-			public ComponentTypeHandle<AI.BT.BehaviorTreeState> stateTypeHandle;
-			public BufferTypeHandle<AI.BT.BTStackFrame> stackTypeHandle;
+			public BlobAssetReference<BTData> btData;
+			public ComponentTypeHandle<BehaviorTreeState> stateTypeHandle;
+			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
 			public float now;
 
 			public void AddType(BTTypeHandleHolder holder)
@@ -80,7 +80,7 @@ namespace Mpr.Game
 			public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
 			{
 				Span<IntPtr> basePointers = stackalloc IntPtr[typeSizes.Length];
-				Span<AI.BT.UnsafeComponentReference> components = stackalloc AI.BT.UnsafeComponentReference[typeSizes.Length];
+				Span<UnsafeComponentReference> components = stackalloc UnsafeComponentReference[typeSizes.Length];
 
 				for(int i = 0; i < typeSizes.Length; ++i)
 				{
@@ -92,7 +92,7 @@ namespace Mpr.Game
 						basePointers[i] = (IntPtr)data.GetUnsafePtr();
 					}
 
-					components[i] = new AI.BT.UnsafeComponentReference
+					components[i] = new UnsafeComponentReference
 					{
 						stableTypeHash = typeHashes[i],
 						typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(typeHashes[i]),
@@ -110,7 +110,7 @@ namespace Mpr.Game
 					for(int i = 0; i < components.Length; ++i)
 						components[i].data = basePointers[i] + entityIndex * typeSizes[i];
 
-					AI.BT.BehaviorTreeExecution.Execute(
+					BehaviorTreeExecution.Execute(
 						ref btData.Value,
 						ref states.AsSpan()[entityIndex],
 						stacks[entityIndex],
@@ -129,14 +129,14 @@ namespace Mpr.Game
 				return;
 			}
 
-			foreach(var (queryHolder, typeHandleHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<BTTypeHandleHolder>, AI.BT.BehaviorTree>())
+			foreach(var (queryHolder, typeHandleHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<BTTypeHandleHolder>, BehaviorTree>())
 			{
 				var job = new UpdateJob
 				{
 					btData = tree.tree,
 					now = (float)SystemAPI.Time.ElapsedTime,
-					stateTypeHandle = SystemAPI.GetComponentTypeHandle<AI.BT.BehaviorTreeState>(),
-					stackTypeHandle = SystemAPI.GetBufferTypeHandle<AI.BT.BTStackFrame>(),
+					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BehaviorTreeState>(),
+					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
 				};
 
 				for(int i = 0; i < typeHandleHolder.Length; ++i)
@@ -152,9 +152,9 @@ namespace Mpr.Game
 
 		private bool CreateQueries(ref SystemState state)
 		{
-			state.EntityManager.GetAllUniqueSharedComponents<AI.BT.BehaviorTree>(out var values, Allocator.Temp);
+			state.EntityManager.GetAllUniqueSharedComponents<BehaviorTree>(out var values, Allocator.Temp);
 
-			var holderQuery = SystemAPI.QueryBuilder().WithAllRW<BTQueryHolder, BTTypeHandleHolder>().WithAll<AI.BT.BehaviorTree>().Build();
+			var holderQuery = SystemAPI.QueryBuilder().WithAllRW<BTQueryHolder, BTTypeHandleHolder>().WithAll<BehaviorTree>().Build();
 
 			foreach(var value in values)
 			{
@@ -176,9 +176,9 @@ namespace Mpr.Game
 					var builder = new EntityQueryBuilder(Allocator.Temp);
 					var components = new NativeList<ComponentType>(Allocator.Temp)
 					{
-						ComponentType.ReadOnly<AI.BT.BehaviorTree>(),
-						ComponentType.ReadWrite<AI.BT.BehaviorTreeState>(),
-						ComponentType.ReadWrite<AI.BT.BTStackFrame>(),
+						ComponentType.ReadOnly<BehaviorTree>(),
+						ComponentType.ReadWrite<BehaviorTreeState>(),
+						ComponentType.ReadWrite<BTStackFrame>(),
 					};
 
 					var typeHandles = state.EntityManager.GetBuffer<BTTypeHandleHolder>(entity);
