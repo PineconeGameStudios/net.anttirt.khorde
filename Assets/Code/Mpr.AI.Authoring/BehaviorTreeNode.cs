@@ -332,12 +332,14 @@ namespace Mpr.AI.BT.Nodes
 
 					var port = GetInputPort(enabledFieldCount + 1);
 
-					blobFields[enabledFieldCount] = new WriteField.Field
+					var bakedField = new WriteField.Field
 					{
 						input = context.GetExprNodeRef(port),
 						offset = (ushort)offset,
 						size = (ushort)UnsafeUtility.SizeOf(field.FieldType),
 					};
+
+					blobFields[enabledFieldCount] = bakedField;
 
 					++enabledFieldCount;
 				}

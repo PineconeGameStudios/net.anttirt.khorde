@@ -42,17 +42,22 @@ namespace Mpr.AI.BT
 		public static void SetData(ref this BTExec self, in Optional value) { self.type = Type.Optional; self.data.optional = value; }
 		public static void SetData(ref this BTExec self, in Catch value) { self.type = Type.Catch; self.data.@catch = value; }
 
-		public static ushort WriteConstantImpl<T>(T value, NativeList<byte> constStorage) where T : unmanaged
+		public static ushort WriteConstantImpl<T>(T value, out byte length, NativeList<byte> constStorage) where T : unmanaged
 		{
 			int align = UnsafeUtility.AlignOf<T>();
 			int size = UnsafeUtility.SizeOf<T>();
+			if(size > byte.MaxValue)
+				throw new System.Exception("max constant size 255 bytes");
+
+			length = (byte)size;
+
 			int rem = constStorage.Length % align;
 			int offset = constStorage.Length;
 			if(rem != 0)
 				offset += align - rem;
 
 			if(offset > ushort.MaxValue)
-				throw new System.Exception("too many constants, max 65536 bytes storage");
+				throw new System.Exception("too many constants, max 65535 bytes storage");
 
 			constStorage.ResizeUninitialized(offset + size);
 

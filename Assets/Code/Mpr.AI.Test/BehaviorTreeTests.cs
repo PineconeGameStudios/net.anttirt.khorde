@@ -32,8 +32,10 @@ namespace Mpr.AI.BT.Test
 			trace = em.GetBuffer<BTExecTrace>(testEntity);
 			exprCount = 0;
 			constStorage = new NativeList<byte>(Allocator.Temp);
-			False = BTExprNodeRef.Const(BehaviorTreeAuthoringExt.WriteConstantImpl(false, constStorage));
-			True = BTExprNodeRef.Const(BehaviorTreeAuthoringExt.WriteConstantImpl(true, constStorage));
+			var offset = BehaviorTreeAuthoringExt.WriteConstantImpl(false, out var length, constStorage);
+			False = BTExprNodeRef.Const(offset, length);
+			offset = BehaviorTreeAuthoringExt.WriteConstantImpl(true, out length, constStorage);
+			True = BTExprNodeRef.Const(offset, length);
 		}
 
 		[TearDown]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -99,7 +100,7 @@ namespace Mpr.AI.BT
 		}
 
 		public static BTExprNodeRef Node(ushort index, byte outputIndex) => new BTExprNodeRef(index, outputIndex, false);
-		public static BTExprNodeRef Const(ushort offset) => new BTExprNodeRef(offset, 0, true);
+		public static BTExprNodeRef Const(ushort offset, byte length) => new BTExprNodeRef(offset, length, true);
 
 		public override int GetHashCode()
 		{
@@ -121,7 +122,10 @@ namespace Mpr.AI.BT
 		{
 			if(constant)
 			{
-				return MemoryMarshal.Cast<byte, T>(data.constData.AsSpan().Slice(index, UnsafeUtility.SizeOf<T>()))[0];
+				var constData = data.constData.AsSpan();
+				constData = constData.Slice(index, outputIndex);
+				var castData = MemoryMarshal.Cast<byte, T>(constData);
+				return castData[0];
 			}
 
 			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
@@ -131,24 +135,29 @@ namespace Mpr.AI.BT
 		{
 			if(constant)
 			{
-				data.constData.AsSpan().Slice(index, result.Length).CopyTo(result);
+				data.constData.AsSpan().Slice(index, outputIndex).CopyTo(result);
 				return;
 			}
 
 			data.GetNode(this).Evaluate(ref data, outputIndex, componentPtrs, result);
 		}
+
+		public override string ToString()
+		{
+			return constant ? $"const(off={index}, sz={outputIndex}) " : $"ref(expr={index} out={outputIndex})";
+		}
 	}
 
 	static class BlobExt
 	{
-		public static ReadOnlySpan<T> AsSpan<T>(ref this BlobArray<T> array) where T : unmanaged
+		public static Span<T> AsSpan<T>(ref this BlobArray<T> array) where T : unmanaged
 		{
 			unsafe
 			{
 				if(array.Length == 0)
 					return default;
 
-				return new ReadOnlySpan<T>(array.GetUnsafePtr(), array.Length);
+				return new Span<T>(array.GetUnsafePtr(), array.Length);
 			}
 		}
 	}
@@ -184,12 +193,38 @@ namespace Mpr.AI.BT
 			[FieldOffset(0)] public Optional optional;
 			[FieldOffset(0)] public Catch @catch;
 		}
+
+		public string DumpString()
+		{
+			string result = type.ToString() + ":";
+
+			switch(type)
+			{
+				case Type.Nop: break;
+				case Type.Root: result += data.root.DumpString(); break;
+				case Type.Sequence: result += data.sequence.DumpString(); break;
+				case Type.Selector: result += data.selector.DumpString(); break;
+				case Type.WriteField: result += data.writeField.DumpString(); break;
+				case Type.Wait: result += data.wait.DumpString(); break;
+				case Type.Fail: result += data.fail.DumpString(); break;
+				case Type.Optional: result += data.optional.DumpString(); break;
+				case Type.Catch: result += data.@catch.DumpString(); break;
+				default: break;
+			}
+
+			return result;
+		}
 	}
 
 	public struct ConditionalBlock
 	{
 		public BTExprNodeRef condition;
 		public BTExecNodeId nodeId;
+
+		public override string ToString()
+		{
+			return $"{{condition={condition}, nodeId={nodeId}}}";
+		}
 	}
 
 	public struct UnsafeComponentReference
@@ -230,9 +265,36 @@ namespace Mpr.AI.BT
 	// 	public BTExecNodeId nodeId;
 	// }
 
-	public struct Root { public BTExecNodeId child; }
-	public struct Sequence { public BlobArray<BTExecNodeId> children; }
-	public struct Selector { public BlobArray<ConditionalBlock> children; }
+	public struct Root
+	{
+		public BTExecNodeId child;
+
+		public string DumpString()
+		{
+			return $"{{ child={child} }}";
+		}
+	}
+
+	public struct Sequence
+	{
+		public BlobArray<BTExecNodeId> children;
+
+		public string DumpString()
+		{
+			return $"{{ children=[{string.Join(", ", children.ToArray())}] }}";
+		}
+	}
+
+	public struct Selector
+	{
+		public BlobArray<ConditionalBlock> children;
+
+		public string DumpString()
+		{
+			return $"{{ children=[{string.Join(", ", children.ToArray())}] }}";
+		}
+	}
+
 	public struct WriteField
 	{
 		public byte componentIndex;
@@ -242,6 +304,11 @@ namespace Mpr.AI.BT
 			public BTExprNodeRef input;
 			public ushort offset;
 			public ushort size;
+
+			public override string ToString()
+			{
+				return $"{{ input={input}, offset={offset}, size={size} }}";
+			}
 		}
 
 		public BlobArray<Field> fields;
@@ -255,12 +322,51 @@ namespace Mpr.AI.BT
 				field.input.Evaluate(ref data, componentPtrs, fieldSpan);
 			}
 		}
+
+		public string DumpString()
+		{
+			return $"{{ componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
+		}
 	}
 
-	public struct Wait { public BTExprNodeRef until; }
-	public struct Fail { }
-	public struct Optional { public BTExprNodeRef condition; public BTExecNodeId child; }
-	public struct Catch { public BTExecNodeId child; }
+	public struct Wait
+	{
+		public BTExprNodeRef until;
+
+		public string DumpString()
+		{
+			return $"{{ until={until} }}";
+		}
+	}
+
+	public struct Fail
+	{
+		public string DumpString()
+		{
+			return "{}";
+		}
+	}
+
+	public struct Optional
+	{
+		public BTExprNodeRef condition;
+		public BTExecNodeId child;
+
+		public string DumpString()
+		{
+			return $"{{ condition={condition}, child={child} }}";
+		}
+	}
+
+	public struct Catch
+	{
+		public BTExecNodeId child;
+
+		public string DumpString()
+		{
+			return $"{{ child={child} }}";
+		}
+	}
 
 	public interface IBTExpr
 	{
@@ -307,6 +413,20 @@ namespace Mpr.AI.BT
 			[FieldOffset(0)] public Float3 @float3;
 		}
 
+		public string DumpString()
+		{
+			string result = type.ToString() + ":";
+
+			switch(type)
+			{
+				case ExprType.ReadField: result += data.readField.DumpString(); break;
+				case ExprType.Bool: result += data.@bool.DumpString(); break;
+				case ExprType.Float3: result += data.@float3.DumpString(); break;
+			}
+
+			return result;
+		}
+
 		public struct ReadField : IBTExpr
 		{
 			public byte componentIndex;
@@ -325,12 +445,24 @@ namespace Mpr.AI.BT
 						length = (ushort)UnsafeUtility.SizeOf(fieldInfo.FieldType),
 					};
 				}
+
+				public override string ToString()
+				{
+					return $"{{ offset={offset}, length={length} }}";
+				}
 			}
 
 			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				ref var field = ref fields[outputIndex];
-				componentPtrs[outputIndex].AsSpan().Slice(field.offset, field.length).CopyTo(result);
+				var componentData = componentPtrs[componentIndex].AsSpan();
+				var fieldData = componentData.Slice(field.offset, field.length);
+				fieldData.CopyTo(result);
+			}
+
+			public string DumpString()
+			{
+				return $"{{ componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
 			}
 		}
 
@@ -378,6 +510,17 @@ namespace Mpr.AI.BT
 			{
 				MemoryMarshal.Cast<byte, bool>(result)[0] = Evaluate(ref data, componentPtrs);
 			}
+
+			public string DumpString()
+			{
+				switch(index)
+				{
+					case BoolType.Not: return data.not.ToString();
+					case BoolType.And: return data.not.ToString();
+					case BoolType.Or: return data.not.ToString();
+				}
+				return "";
+			}
 		}
 
 		public struct Float3 : IBTExpr
@@ -419,6 +562,16 @@ namespace Mpr.AI.BT
 			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				MemoryMarshal.Cast<byte, float3>(result)[0] = Evaluate(ref data, componentPtrs);
+			}
+
+			public string DumpString()
+			{
+				switch(index)
+				{
+					case Float3Type.Add: return data.add.ToString();
+					case Float3Type.Sub: return data.sub.ToString();
+				}
+				return "";
 			}
 		}
 	}
@@ -670,6 +823,28 @@ namespace Mpr.AI.BT
 					default:
 						throw new NotImplementedException($"BTExec node type {node.type} not implemented");
 				}
+			}
+		}
+
+		public static void DumpNodes(ref BTData data, List<string> output)
+		{
+			output.Add($"const data: {data.constData.Length} bytes");
+
+			output.Add("");
+
+			int j = 0;
+			foreach(ref var exec in data.execs.AsSpan())
+			{
+				output.Add("Exec " + j.ToString() + ": " + exec.DumpString());
+				j++;
+			}
+
+			output.Add("");
+
+			j = 0;
+			foreach(ref var expr in data.exprs.AsSpan())
+			{
+				output.Add("Expr " + j.ToString() + ": " + expr.DumpString());
 			}
 		}
 	}
