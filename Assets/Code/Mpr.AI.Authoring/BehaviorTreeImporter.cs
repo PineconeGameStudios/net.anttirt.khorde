@@ -32,12 +32,17 @@ namespace Mpr.AI.BT
 
 			var writer = new MemoryBinaryWriter();
 			graph.Bake(writer);
+			ReadOnlySpan<byte> data;
 
 			unsafe
 			{
-				asset.bakedGraph = new TextAsset(new ReadOnlySpan<byte>(writer.Data, writer.Length));
+				data = new ReadOnlySpan<byte>(writer.Data, writer.Length);
 			}
 
+			asset.bakedGraph = new TextAsset(data);
+			asset.bakedGraph.name = "Data";
+
+			ctx.AddObjectToAsset("Data", asset.bakedGraph);
 			ctx.AddObjectToAsset("BehaviorTree", asset);
 			ctx.SetMainObject(asset);
 		}

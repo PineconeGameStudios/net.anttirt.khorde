@@ -219,29 +219,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3998871276553954794, guid: e740227ee43f44640979a8fdae987394, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7095625994182443857}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e740227ee43f44640979a8fdae987394, type: 3}
---- !u!1 &7095625994182443856 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3998871276553954794, guid: e740227ee43f44640979a8fdae987394, type: 3}
-  m_PrefabInstance: {fileID: 7095625994182443855}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &7095625994182443857
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7095625994182443856}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc55ccf4a0668014f8f9c31dbf4cb36f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mpr.AI.Authoring::Mpr.AI.BT.BehaviorTreeAuthoring
-  behaviorTree: {fileID: 6634749563475461052, guid: ac25dcb76b2a4314e86fd2cd6da64599, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

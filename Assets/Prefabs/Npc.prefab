@@ -124,6 +124,7 @@ GameObject:
   - component: {fileID: -7405662223739098550}
   - component: {fileID: 1377151342010762949}
   - component: {fileID: -550322659938335631}
+  - component: {fileID: 3482629665782139149}
   m_Layer: 0
   m_Name: Npc
   m_TagString: Untagged
@@ -206,3 +207,16 @@ MonoBehaviour:
   UseSingleBaseline: 0
   RollbackPredictedSpawnedGhostState: 0
   RollbackPredictionOnStructuralChanges: 1
+--- !u!114 &3482629665782139149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3998871276553954794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc55ccf4a0668014f8f9c31dbf4cb36f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mpr.AI.Authoring::Mpr.AI.BT.BehaviorTreeAuthoring
+  behaviorTree: {fileID: 6634749563475461052, guid: ac25dcb76b2a4314e86fd2cd6da64599, type: 3}

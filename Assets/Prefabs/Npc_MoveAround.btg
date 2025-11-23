@@ -382,14 +382,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216277413823448
-          - rid: 8259216277413823449
-          - rid: 8259216277413823450
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -427,20 +421,6 @@ MonoBehaviour:
             m_GraphObjectInstanceID: 0
         m_CopyPasteLocalSubgraphModelReference:
           rid: -2
-    - rid: 8259216277413823448
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216277413823449
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216277413823450
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
     - rid: 8259216277413823451
       type: {class: SubgraphNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:
@@ -458,14 +438,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216277413823452
-          - rid: 8259216277413823453
-          - rid: 8259216277413823454
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -503,20 +477,6 @@ MonoBehaviour:
             m_GraphObjectInstanceID: 0
         m_CopyPasteLocalSubgraphModelReference:
           rid: -2
-    - rid: 8259216277413823452
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216277413823453
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216277413823454
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
     - rid: 8259216277413823455
       type: {class: SubgraphNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:
@@ -534,14 +494,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216277413823456
-          - rid: 8259216277413823457
-          - rid: 8259216277413823458
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -579,20 +533,6 @@ MonoBehaviour:
             m_GraphObjectInstanceID: 0
         m_CopyPasteLocalSubgraphModelReference:
           rid: -2
-    - rid: 8259216277413823456
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216277413823457
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216277413823458
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
     - rid: 8259216277413823459
       type: {class: SubgraphNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:
@@ -610,14 +550,8 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          m_ValueList:
-          - rid: 8259216277413823460
-          - rid: 8259216277413823461
-          - rid: 8259216277413823462
+          m_KeyList: []
+          m_ValueList: []
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -655,20 +589,6 @@ MonoBehaviour:
             m_GraphObjectInstanceID: 0
         m_CopyPasteLocalSubgraphModelReference:
           rid: -2
-    - rid: 8259216277413823460
-      type: {class: 'Constant`1[[Mpr.AI.BT.Nodes.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8259216277413823461
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8259216277413823462
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
     - rid: 8259216277413823463
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:

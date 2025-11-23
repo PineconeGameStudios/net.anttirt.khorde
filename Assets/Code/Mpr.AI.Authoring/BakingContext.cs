@@ -13,9 +13,8 @@ namespace Mpr.AI.BT.Nodes
 		public Graph rootGraph;
 		public Dictionary<NodeKey<IExecNode>, BTExecNodeId> execNodeMap;
 		public Dictionary<NodeKey<IExprNode>, BTExprNodeRef> exprNodeMap;
-		public List<IExecNode> execNodes;
-		public List<IExprNode> exprNodes;
 		public NativeList<byte> constStorage;
+		public HashSet<Type> componentTypeSet;
 		public List<Type> componentTypes;
 		public List<string> errors;
 		public List<string> warnings;
@@ -26,11 +25,10 @@ namespace Mpr.AI.BT.Nodes
 			this.rootGraph = rootGraph ?? throw new ArgumentNullException(nameof(rootGraph));
 
 			constStorage = new NativeList<byte>(Allocator.Persistent);
-			componentTypes = null;
+			componentTypeSet = new();
+			componentTypes = new();
 			execNodeMap = new();
-			execNodes = new();
 			exprNodeMap = new();
-			exprNodes = new();
 			errors = new();
 			warnings = new();
 			subgraphStack = new();
@@ -38,8 +36,6 @@ namespace Mpr.AI.BT.Nodes
 
 		public BlobBuilder Bake(AllocatorManager.AllocatorHandle allocator)
 		{
-			componentTypes = rootGraph.GetNodes().OfType<IComponentAccess>().Select(ica => ica.ComponentType).Distinct().ToList();
-
 			var roots = rootGraph.GetNodes().OfType<Root>().ToList();
 			if(roots.Count == 0)
 			{
@@ -57,21 +53,40 @@ namespace Mpr.AI.BT.Nodes
 			RegisterExecNode(roots[0]); // 1: Root
 			RegisterNodes(rootGraph);
 
+			componentTypes = componentTypeSet.OrderBy(t => t.FullName).ToList();
+
 			var builder = new BlobBuilder(allocator);
 
 			ref var data = ref builder.ConstructRoot<BTData>();
-			var execs = builder.Allocate(ref data.execs, execNodes.Count);
-			var exprs = builder.Allocate(ref data.exprs, exprNodes.Count);
+			var execs = builder.Allocate(ref data.execs, execNodeMap.Count);
+			var exprs = builder.Allocate(ref data.exprs, exprNodeMap.Count);
 
-			for(int i = 0; i < exprNodes.Count; ++i)
-				exprNodes[i]?.Bake(ref builder, ref exprs[i], this);
-
-			for(int i = 0; i < execNodes.Count; ++i)
-				execNodes[i]?.Bake(ref builder, ref execs[i], this);
+			BakeNodes(rootGraph, ref builder, ref execs, ref exprs);
 
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 
 			return builder;
+		}
+
+		void BakeNodes(Graph graph, ref BlobBuilder builder, ref BlobBuilderArray<BTExec> execs, ref BlobBuilderArray<BTExpr> exprs)
+		{
+			foreach(var node in graph.GetNodes())
+			{
+				if(node is ISubgraphNode subgraphNode)
+				{
+					PushSubgraph(subgraphNode);
+					BakeNodes(subgraphNode.GetSubgraph(), ref builder, ref execs, ref exprs);
+					PopSubgraph();
+				}
+				else if(node is IExecNode execNode)
+				{
+					execNode.Bake(ref builder, ref execs[GetNodeId(execNode).index], this);
+				}
+				else if(node is IExprNode exprNode)
+				{
+					exprNode.Bake(ref builder, ref exprs[GetNodeId(exprNode).index], this);
+				}
+			}
 		}
 
 		public void Dispose()
@@ -110,7 +125,6 @@ namespace Mpr.AI.BT.Nodes
 				throw new Exception("max exec node capacity exceeded");
 			if(!execNodeMap.TryAdd(GetNodeKey(execNode), new BTExecNodeId((ushort)index)))
 				throw new Exception("duplicate node key");
-			execNodes.Add(execNode);
 		}
 
 		public void RegisterExprNode(IExprNode exprNode)
@@ -120,7 +134,6 @@ namespace Mpr.AI.BT.Nodes
 				throw new Exception("max expr node capacity exceeded");
 			if(!exprNodeMap.TryAdd(GetNodeKey(exprNode), new BTExprNodeRef((ushort)index, 0, false)))
 				throw new Exception("duplicate node key");
-			exprNodes.Add(exprNode);
 		}
 
 		public BTExecNodeId GetNodeId(IExecNode execNode)
@@ -162,6 +175,11 @@ namespace Mpr.AI.BT.Nodes
 				else if(node is IExprNode exprNode)
 				{
 					RegisterExprNode(exprNode);
+				}
+
+				if(node is IComponentAccess componentAccess)
+				{
+					componentTypeSet.Add(componentAccess.ComponentType);
 				}
 			}
 		}

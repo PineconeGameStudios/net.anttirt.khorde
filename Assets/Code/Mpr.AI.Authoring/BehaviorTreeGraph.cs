@@ -70,16 +70,17 @@ namespace Mpr.AI.BT
 
 		public void Bake(BinaryWriter writer)
 		{
-			var context = new BakingContext(this);
-
-			var builder = context.Bake(Allocator.Temp);
-
-			if(context.errors.Count > 0)
+			using(var context = new BakingContext(this))
 			{
-				throw new System.Exception($"Errors while baking {this}:\n\t" + string.Join("\n\t", context.errors));
-			}
+				var builder = context.Bake(Allocator.Temp);
 
-			BlobAssetReference<BTData>.Write(writer, builder, 0);
+				if(context.errors.Count > 0)
+				{
+					throw new System.Exception($"Errors while baking {this}:\n\t" + string.Join("\n\t", context.errors));
+				}
+
+				BlobAssetReference<BTData>.Write(writer, builder, 0);
+			}
 		}
 	}
 }
