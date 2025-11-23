@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -56,6 +57,7 @@ namespace Mpr.AI.BT
 			}
 		}
 
+		[BurstCompile]
 		partial struct UpdateJob : IJobChunk
 		{
 			JobTypeHandles typeHandles;
@@ -122,6 +124,7 @@ namespace Mpr.AI.BT
 			}
 		}
 
+		[BurstCompile]
 		void ISystem.OnUpdate(ref SystemState state)
 		{
 			if(!CreateQueries(ref state))
