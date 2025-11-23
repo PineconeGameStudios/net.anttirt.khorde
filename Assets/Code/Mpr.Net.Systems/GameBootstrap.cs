@@ -8,6 +8,12 @@ namespace Mpr.Net
 	{
 		public override bool Initialize(string defaultWorldName)
 		{
+			if(!DetermineIfBootstrappingEnabled())
+			{
+				CreateLocalWorld(defaultWorldName);
+				return true;
+			}
+
 			AutoConnectPort = 7979;
 			return base.Initialize(defaultWorldName);
 		}
