@@ -47,6 +47,7 @@ namespace Mpr.AI.BT.Nodes
 			context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -80,6 +81,7 @@ namespace Mpr.AI.BT.Nodes
 					context.AddOutputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME + "_" + i.ToString())
 						.WithDisplayName(string.Empty)
 						.WithConnectorUI(PortConnectorUI.Arrowhead)
+						.WithPortCapacity(PortCapacity.Single)
 						.Build();
 				}
 			}
@@ -87,6 +89,7 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -114,6 +117,7 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -127,11 +131,13 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<bool>("Condition")
 				.WithDisplayName("Condition")
 				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -154,16 +160,19 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddInputPort<bool>("Condition")
 				.WithDisplayName("Condition")
 				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -182,6 +191,7 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -203,11 +213,13 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -229,11 +241,13 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddInputPort<bool>("Until")
 				.WithDisplayName("Until")
 				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -363,6 +377,7 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = ComponentReaderNode<T>.GetFields();
@@ -377,6 +392,7 @@ namespace Mpr.AI.BT.Nodes
 					context.AddInputPort(field.Name)
 						.WithDisplayName(field.Name)
 						.WithDataType(field.FieldType)
+						.WithPortCapacity(PortCapacity.Single)
 						.Build();
 				}
 

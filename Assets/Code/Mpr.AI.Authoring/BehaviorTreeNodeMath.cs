@@ -29,11 +29,13 @@ namespace Mpr.AI.BT.Nodes
 			context.AddInputPort<float3>("a")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddInputPort<float3>("b")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<float3>("out")
@@ -64,8 +66,8 @@ namespace Mpr.AI.BT.Nodes
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
-			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
+			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
+			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
 			context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 		}
 	}
@@ -91,8 +93,8 @@ namespace Mpr.AI.BT.Nodes
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
-			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
+			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
+			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
 			context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 		}
 	}
@@ -117,7 +119,7 @@ namespace Mpr.AI.BT.Nodes
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<bool>("in").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
+			context.AddInputPort<bool>("in").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
 			context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 		}
 	}
