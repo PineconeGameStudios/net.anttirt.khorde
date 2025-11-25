@@ -357,7 +357,7 @@ namespace Mpr.AI.BT.Nodes
 				if(dstPort.TryGetValue(out var value))
 				{
 					// TODO: deduplicate constants
-					ushort offset = WriteConstant(value, out var length);
+					ushort offset = BehaviorTreeAuthoringExt.WriteConstant(value, out var length, constStorage);
 					return BTExprNodeRef.Const(offset, length);
 				}
 				else
@@ -366,43 +366,6 @@ namespace Mpr.AI.BT.Nodes
 					return default;
 				}
 			}
-		}
-
-		public ushort WriteConstant(object value, out byte length)
-		{
-			if(value is bool @bool)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@bool, out length, constStorage);
-			else if(value is byte @byte)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@byte, out length, constStorage);
-			else if(value is short @short)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@short, out length, constStorage);
-			else if(value is ushort @ushort)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@ushort, out length, constStorage);
-			else if(value is int @int)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@int, out length, constStorage);
-			else if(value is uint @uint)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@uint, out length, constStorage);
-			else if(value is long @long)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@long, out length, constStorage);
-			else if(value is ulong @ulong)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@ulong, out length, constStorage);
-			else if(value is float @float)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@float, out length, constStorage);
-			else if(value is float2 @float2)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@float2, out length, constStorage);
-			else if(value is float3 @float3)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@float3, out length, constStorage);
-			else if(value is float4 @float4)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@float4, out length, constStorage);
-			else if(value is double @double)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@double, out length, constStorage);
-			else if(value is double2 @double2)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@double2, out length, constStorage);
-			else if(value is double3 @double3)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@double3, out length, constStorage);
-			else if(value is double4 @double4)
-				return BehaviorTreeAuthoringExt.WriteConstantImpl(@double4, out length, constStorage);
-			throw new System.Exception($"unsupported constant type {value.GetType().Name}");
 		}
 	}
 

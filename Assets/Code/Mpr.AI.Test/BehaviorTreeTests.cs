@@ -32,9 +32,9 @@ namespace Mpr.AI.BT.Test
 			trace = em.GetBuffer<BTExecTrace>(testEntity);
 			exprCount = 0;
 			constStorage = new NativeList<byte>(Allocator.Temp);
-			var offset = BehaviorTreeAuthoringExt.WriteConstantImpl(false, out var length, constStorage);
+			var offset = BehaviorTreeAuthoringExt.WriteConstant(false, out var length, constStorage);
 			False = BTExprNodeRef.Const(offset, length);
-			offset = BehaviorTreeAuthoringExt.WriteConstantImpl(true, out length, constStorage);
+			offset = BehaviorTreeAuthoringExt.WriteConstant(true, out length, constStorage);
 			True = BTExprNodeRef.Const(offset, length);
 		}
 
@@ -50,6 +50,20 @@ namespace Mpr.AI.BT.Test
 
 		static BTExecTrace Trace(Type type, ushort nodeId, int depth, Event @event)
 			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, depth, 0);
+
+		struct ManagedStruct
+		{
+			public object obj;
+		}
+
+		[Test]
+		public void Test_FailWriteConstantManaged()
+		{
+			Assert.That(
+				() => BehaviorTreeAuthoringExt.WriteConstant(new ManagedStruct(), out var length, constStorage),
+				Throws.Exception
+				);
+		}
 
 		[Test]
 		public void Test_CreateBlob()
