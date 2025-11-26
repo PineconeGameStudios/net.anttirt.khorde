@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Mpr.AI.BT
 {
 	[Serializable]
-	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
+	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs, typeof(BehaviorTreeGraphViewController))]
 	public class BehaviorTreeGraph : Graph
 	{
 		internal const string AssetExtension = "btg";
@@ -39,6 +39,11 @@ namespace Mpr.AI.BT
 			base.OnGraphChanged(infos);
 
 			CheckGraphErrors(infos);
+		}
+
+		public override void OnEnable()
+		{
+			base.OnEnable();
 		}
 
 		/// <summary>

@@ -582,6 +582,9 @@ namespace Mpr.AI.BT
 		public BlobArray<BTExpr> exprs;
 		public BlobArray<byte> constData;
 		public BlobArray<ulong> componentTypes;
+		public BlobArray<UnityEngine.Hash128> execNodeIds;
+		public BlobArray<UnityEngine.Hash128> exprNodeIds;
+		public BlobArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStacks;
 
 		public BTExecNodeId Root
 		{

@@ -50,6 +50,11 @@ namespace Mpr.AI.BT.Nodes
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
+
+		public override void OnEnable()
+		{
+			base.OnEnable();
+		}
 	}
 
 	[Serializable]

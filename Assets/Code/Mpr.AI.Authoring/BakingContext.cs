@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Codice.Client.Common;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
-using Unity.Mathematics;
 
 namespace Mpr.AI.BT.Nodes
 {
@@ -61,34 +62,53 @@ namespace Mpr.AI.BT.Nodes
 			var execs = builder.Allocate(ref data.execs, execNodeMap.Count);
 			var exprs = builder.Allocate(ref data.exprs, exprNodeMap.Count);
 			var types = builder.Allocate(ref data.componentTypes, componentTypes.Count);
+			var exprNodeIds = builder.Allocate(ref data.exprNodeIds, exprNodeMap.Count);
+			var execNodeIds = builder.Allocate(ref data.execNodeIds, execNodeMap.Count);
+			var execNodeSubgraphStacks = builder.Allocate(ref data.execNodeSubgraphStacks, execNodeMap.Count);
 
 			for(int i = 0; i < componentTypes.Count; ++i)
 				types[i] = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(componentTypes[i])).StableTypeHash;
 
-			BakeNodes(rootGraph, ref builder, ref execs, ref exprs);
+			BakeNodes(rootGraph, ref builder, ref execs, ref exprs, ref execNodeIds, ref exprNodeIds, ref execNodeSubgraphStacks);
 
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 
 			return builder;
 		}
 
-		void BakeNodes(Graph graph, ref BlobBuilder builder, ref BlobBuilderArray<BTExec> execs, ref BlobBuilderArray<BTExpr> exprs)
+		void BakeNodes(Graph graph,
+			ref BlobBuilder builder,
+			ref BlobBuilderArray<BTExec> execs,
+			ref BlobBuilderArray<BTExpr> exprs,
+			ref BlobBuilderArray<UnityEngine.Hash128> execNodeIds,
+			ref BlobBuilderArray<UnityEngine.Hash128> exprNodeIds,
+			ref BlobBuilderArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStack
+			)
 		{
 			foreach(var node in graph.GetNodes())
 			{
 				if(node is ISubgraphNode subgraphNode)
 				{
 					PushSubgraph(subgraphNode);
-					BakeNodes(subgraphNode.GetSubgraph(), ref builder, ref execs, ref exprs);
+					BakeNodes(subgraphNode.GetSubgraph(), ref builder, ref execs, ref exprs, ref execNodeIds, ref exprNodeIds, ref execNodeSubgraphStack);
 					PopSubgraph();
 				}
 				else if(node is IExecNode execNode)
 				{
-					execNode.Bake(ref builder, ref execs[GetNodeId(execNode).index], this);
+					var index = GetNodeId(execNode).index;
+					execNodeIds[index] = execNode.Guid;
+					var subgraphStackIds = builder.Allocate(ref execNodeSubgraphStack[index], subgraphStack.Depth);
+					int i = 0;
+					foreach(var hash in subgraphStack.Hashes)
+						subgraphStackIds[i++] = hash;
+
+					execNode.Bake(ref builder, ref execs[index], this);
 				}
 				else if(node is IExprNode exprNode)
 				{
-					exprNode.Bake(ref builder, ref exprs[GetNodeId(exprNode).index], this);
+					var index = GetNodeId(exprNode).index;
+					exprNodeIds[index] = exprNode.Guid;
+					exprNode.Bake(ref builder, ref exprs[index], this);
 				}
 			}
 		}
@@ -392,6 +412,8 @@ namespace Mpr.AI.BT.Nodes
 		}
 
 		public SubgraphStack Clone() => new SubgraphStack(this);
+
+		public IEnumerable<UnityEngine.Hash128> Hashes => pathHashes;
 
 		public int Depth => pathHashes.Count;
 		public void Push(ISubgraphNode node) { path.Add(node); pathHashes.Add(node.Guid); }
