@@ -7,59 +7,6 @@ using UnityEngine.UIElements;
 
 namespace Mpr.AI.BT.Nodes
 {
-	[Serializable]
-	internal class AddFloat3 : Base, IExprNode
-	{
-		static StyleSheet s_styleSheet;
-
-		public override StyleSheet CustomStyleSheet
-		{
-			get
-			{
-				if(s_styleSheet == null)
-					s_styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Settings/BTStyleSheets/Nodes/AddFloat3.uss");
-
-				return s_styleSheet;
-			}
-		}
-
-		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
-		{
-			expr.type = BTExpr.ExprType.Float3;
-			expr.data.float3 = new BTExpr.Float3
-			{
-				index = BTExpr.Float3.Float3Type.Add,
-				data = new BTExpr.Float3.Data
-				{
-					add = new BTExpr.Float3.Add(
-						context.GetExprNodeRef(GetInputPort(0)),
-						context.GetExprNodeRef(GetInputPort(1))
-						),
-				}
-			};
-		}
-
-		protected override void OnDefinePorts(IPortDefinitionContext context)
-		{
-			context.AddInputPort<float3>("a")
-				.WithDisplayName(string.Empty)
-				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
-				.Build();
-
-			context.AddInputPort<float3>("b")
-				.WithDisplayName(string.Empty)
-				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
-				.Build();
-
-			context.AddOutputPort<float3>("out")
-				.WithDisplayName(string.Empty)
-				.WithConnectorUI(PortConnectorUI.Circle)
-				.Build();
-		}
-	}
-
 	internal abstract class OpBase<T, OpT> : Base, IExprNode where T : unmanaged where OpT : unmanaged, IBTBinaryOp
 	{
 		static StyleSheet s_styleSheet;
@@ -156,7 +103,7 @@ namespace Mpr.AI.BT.Nodes
 	[Serializable] [NodeCategory("Math/Sub")] internal class SubFloat2 : OpBase<float2, BTBinaryOp_Sub> { }
 	[Serializable] [NodeCategory("Math/Mul")] internal class MulFloat2 : OpBase<float2, BTBinaryOp_Mul> { }
 	[Serializable] [NodeCategory("Math/Div")] internal class DivFloat2 : OpBase<float2, BTBinaryOp_Div> { }
-	//[Serializable] [NodeCategory("Math/Add")] internal class AddFloat3 : OpBase<float3, BTBinaryOp_Add> { }
+	[Serializable] [NodeCategory("Math/Add")] internal class AddFloat3 : OpBase<float3, BTBinaryOp_Add> { }
 	[Serializable] [NodeCategory("Math/Sub")] internal class SubFloat3 : OpBase<float3, BTBinaryOp_Sub> { }
 	[Serializable] [NodeCategory("Math/Mul")] internal class MulFloat3 : OpBase<float3, BTBinaryOp_Mul> { }
 	[Serializable] [NodeCategory("Math/Div")] internal class DivFloat3 : OpBase<float3, BTBinaryOp_Div> { }
