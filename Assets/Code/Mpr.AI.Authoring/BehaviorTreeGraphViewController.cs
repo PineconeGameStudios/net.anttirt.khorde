@@ -1,28 +1,40 @@
-using System;
 using System.Linq;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Mpr.AI.BT
 {
 	public class BehaviorTreeGraphViewController : IGraphViewController
 	{
+		BTGraphAssets cachedAssets;
 		IGraphView rootView;
 		Graph graph;
-		World world;
 
-		public void OnEnable()
+		BTGraphAssets assets
 		{
+			get
+			{
+				if(cachedAssets == null)
+					cachedAssets = AssetDatabase.LoadAssetByGUID<BTGraphAssets>(AssetDatabase.FindAssetGUIDs($"t:{nameof(BTGraphAssets)}")[0]);
+
+				return cachedAssets;
+			}
+		}
+
+		public void Initialize(IGraphView rootView)
+		{
+			this.rootView = rootView;
 			this.graph = rootView.Graph;
-
-			UnityEngine.Debug.Log($"BTGVC.Enable() with Graph={graph}");
-
-			// var views = graph.GetNodes().Select(node => node.GetView(rootView)).ToList();
-
 			EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
+		}
+
+		public void Dispose()
+		{
+			EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
 		}
 
 		private void EditorApplication_playModeStateChanged(PlayModeStateChange stateChange)
@@ -74,7 +86,17 @@ namespace Mpr.AI.BT
 
 				foreach(var (node, nodeView) in graph.GetNodes().Select(n => (n, n.GetView(rootView))).Where(n => n.Item2 != null))
 				{
-					nodeView.OverrideHighlighted = highlights.Contains(node.Guid);
+					bool highlight = highlights.Contains(node.Guid);
+
+					nodeView.OverrideHighlighted = highlight;
+
+					if(nodeView is VisualElement ve)
+					{
+						if(highlight)
+							ve.styleSheets.Add(assets.executionHighlightStyle);
+						else
+							ve.styleSheets.Remove(assets.executionHighlightStyle);
+					}
 				}
 			}
 		}
@@ -84,19 +106,12 @@ namespace Mpr.AI.BT
 			foreach(var (node, nodeView) in graph.GetNodes().Select(n => (n, n.GetView(rootView))).Where(n => n.Item2 != null))
 			{
 				nodeView.OverrideHighlighted = false;
+
+				if(nodeView is VisualElement ve)
+				{
+					ve.styleSheets.Remove(assets.executionHighlightStyle);
+				}
 			}
-		}
-
-		public void Dispose()
-		{
-			EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
-			UnityEngine.Debug.Log($"BTGVC.Dispose()");
-		}
-
-		public void SetRootView(IGraphView rootView)
-		{
-			UnityEngine.Debug.Log($"BTGVC.SetRootView({rootView})");
-			this.rootView = rootView;
 		}
 	}
 }
