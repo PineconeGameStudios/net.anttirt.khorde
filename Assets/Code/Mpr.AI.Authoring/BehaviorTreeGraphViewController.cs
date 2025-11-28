@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace Mpr.AI.BT
 {
-	public class BehaviorTreeGraphViewController : IGraphViewController
+	public class BehaviorTreeGraphViewController : EditorUpdatableObject, IGraphViewController
 	{
 		BTGraphAssets cachedAssets;
 		IGraphView rootView;
@@ -29,28 +29,13 @@ namespace Mpr.AI.BT
 		{
 			this.rootView = rootView;
 			this.graph = rootView.Graph;
-			EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
 		}
 
-		public void Dispose()
+		protected override void OnEnable()
 		{
-			EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
 		}
 
-		private void EditorApplication_playModeStateChanged(PlayModeStateChange stateChange)
-		{
-			if(stateChange == PlayModeStateChange.EnteredPlayMode)
-			{
-				EditorApplication.update += OnUpdate;
-			}
-			else
-			{
-				EditorApplication.update -= OnUpdate;
-				ClearHighlights();
-			}
-		}
-
-		private void OnUpdate()
+		protected override void OnUpdate()
 		{
 			if(Application.isPlaying)
 			{
@@ -88,8 +73,6 @@ namespace Mpr.AI.BT
 				{
 					bool highlight = highlights.Contains(node.Guid);
 
-					nodeView.OverrideHighlighted = highlight;
-
 					if(nodeView is VisualElement ve)
 					{
 						if(highlight)
@@ -101,12 +84,10 @@ namespace Mpr.AI.BT
 			}
 		}
 
-		private void ClearHighlights()
+		protected override void OnDisable()
 		{
 			foreach(var (node, nodeView) in graph.GetNodes().Select(n => (n, n.GetView(rootView))).Where(n => n.Item2 != null))
 			{
-				nodeView.OverrideHighlighted = false;
-
 				if(nodeView is VisualElement ve)
 				{
 					ve.styleSheets.Remove(assets.executionHighlightStyle);

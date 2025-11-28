@@ -1,7 +1,11 @@
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Mathematics;
+using UnityEditor.Experimental;
 using static Mpr.AI.BT.BTExec;
 using static Mpr.AI.BT.BTExecTrace;
 
@@ -93,7 +97,7 @@ namespace Mpr.AI.BT.Test
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -131,7 +135,7 @@ namespace Mpr.AI.BT.Test
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -172,7 +176,7 @@ namespace Mpr.AI.BT.Test
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -218,7 +222,7 @@ namespace Mpr.AI.BT.Test
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -268,7 +272,7 @@ namespace Mpr.AI.BT.Test
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -314,7 +318,7 @@ namespace Mpr.AI.BT.Test
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -353,7 +357,7 @@ namespace Mpr.AI.BT.Test
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -441,7 +445,7 @@ namespace Mpr.AI.BT.Test
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -489,7 +493,7 @@ namespace Mpr.AI.BT.Test
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -539,7 +543,7 @@ namespace Mpr.AI.BT.Test
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
-			BehaviorTreeState state = default;
+			BTState state = default;
 
 			try
 			{
@@ -581,6 +585,126 @@ namespace Mpr.AI.BT.Test
 					TestContext.WriteLine(item);
 			}
 		}
+
+		static string GetShortName(System.Type type)
+		{
+			if(type == typeof(int)) return "int";
+			if(type == typeof(float)) return "float";
+			return type.Name;
+		}
+
+		private static BTMathType[] mathTypes = System.Enum.GetValues(typeof(BTMathType)).Cast<BTMathType>().ToArray();
+		private static BTBinaryOp[] binaryOps = System.Enum.GetValues(typeof(BTBinaryOp)).Cast<BTBinaryOp>().ToArray();
+		private static Dictionary<BTMathType, System.Type> realTypes = mathTypes.ToDictionary(t => t, t => t switch
+		{
+			BTMathType.Int => typeof(int),
+			BTMathType.Int2 => typeof(int2),
+			BTMathType.Int3 => typeof(int3),
+			BTMathType.Int4 => typeof(int4),
+			BTMathType.Float => typeof(float),
+			BTMathType.Float2 => typeof(float2),
+			BTMathType.Float3 => typeof(float3),
+			BTMathType.Float4 => typeof(float4),
+			_ => throw new System.NotImplementedException(),
+		});
+		private static object Replicate(BTMathType type, int value) => type switch
+		{
+			BTMathType.Int => value,
+			BTMathType.Int2 => new int2(value),
+			BTMathType.Int3 => new int3(value),
+			BTMathType.Int4 => new int4(value),
+			BTMathType.Float => (float)value,
+			BTMathType.Float2 => new float2(value),
+			BTMathType.Float3 => new float3(value),
+			BTMathType.Float4 => new float4(value),
+			_ => throw new System.NotImplementedException(),
+		};
+		private static int Compute(int a, int b, BTBinaryOp op) => op switch
+		{
+			BTBinaryOp.Add => a + b,
+			BTBinaryOp.Sub => a - b,
+			BTBinaryOp.Mul => a * b,
+			BTBinaryOp.Div => a / b,
+			_ => throw new System.NotImplementedException(),
+		};
+
+		public static object[] TestCases =
+			binaryOps
+			.SelectMany(op => mathTypes.Select(type => (op, type)))
+			.Select(pair => new object[] { pair.op, pair.type, Replicate(pair.type, 6), Replicate(pair.type, 2), Replicate(pair.type, Compute(6, 2, pair.op)) })
+			.ToArray()
+			;
+
+		[TestCaseSource(nameof(TestCases))]
+		public void Test_Math(BTBinaryOp op, BTMathType mathType, object left, object right, object result)
+		{
+			var builder = new BlobBuilder(Allocator.Temp);
+			ref var data = ref builder.ConstructRoot<BTData>();
+			var execs = builder.Allocate(ref data.execs, 100);
+			var exprs = builder.Allocate(ref data.exprs, 100);
+			var types = builder.Allocate(ref data.componentTypes, 1);
+			types[0] = TypeManager.GetTypeInfo<TestComponent2>().StableTypeHash;
+
+			execs[1].type = BTExec.Type.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+
+			//BTBinaryOp op = BTBinaryOp.Add;
+			//BTMathType mathType = BTMathType.Int;
+			//int left = 1;
+			//int right = 2;
+			//int result = 3;
+
+			System.Reflection.FieldInfo field = typeof(TestComponent2)
+				.GetField(GetShortName(left.GetType()), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+
+			var offset0 = BehaviorTreeAuthoringExt.WriteConstant(left, out var length0, constStorage);
+			var const0 = BTExprNodeRef.Const(offset0, length0);
+			var offset1 = BehaviorTreeAuthoringExt.WriteConstant(right, out var length1, constStorage);
+			var const1 = BTExprNodeRef.Const(offset1, length1);
+
+			exprs[0].type = BTExpr.ExprType.BinaryOp;
+			exprs[0].data.binaryOp = new BTExpr.BinaryOp
+			{
+				left = const0,
+				right = const1,
+				op = op,
+				type = mathType,
+			};
+
+			var expr = BTExprNodeRef.Node(0, 0);
+
+			execs[2].SetWriteField(ref builder, 0, WriteField(expr, field));
+
+			TestComponent2 tc2 = new TestComponent2 {};
+
+			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc2);
+
+			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+
+				AssertTrace(
+					Trace(Type.Root, 1, 0, Event.Init),
+					Trace(Type.Root, 1, 1, Event.Start),
+					Trace(Type.Root, 1, 1, Event.Call),
+					Trace(Type.WriteField, 2, 2, Event.Return),
+					Trace(Type.Root, 1, 1, Event.Yield)
+				);
+
+				Assert.AreEqual(result, field.GetValue(tc2));
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
 	}
 
 	struct TestComponent1 : IComponentData
@@ -590,4 +714,15 @@ namespace Mpr.AI.BT.Test
 		public bool field2;
 	}
 
+	struct TestComponent2 : IComponentData
+	{
+		public int    @int;
+		public int2   @int2;
+		public int3   @int3;
+		public int4   @int4;
+		public float  @float;
+		public float2 @float2;
+		public float3 @float3;
+		public float4 @float4;
+	}
 }

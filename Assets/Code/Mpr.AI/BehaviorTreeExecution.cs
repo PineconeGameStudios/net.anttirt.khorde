@@ -1,0 +1,240 @@
+using System;
+using System.Collections.Generic;
+using Unity.Entities;
+
+namespace Mpr.AI.BT
+{
+	public static class BehaviorTreeExecution
+	{
+
+		public static void Execute(this BlobAssetReference<BTData> asset, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
+			=> Execute(ref asset.Value, ref state, stack, componentPtrs, now, trace);
+
+		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
+		{
+			if(data.componentTypes.Length > componentPtrs.Length)
+				throw new Exception($"not enough components; bt requires {data.componentTypes.Length} but only {componentPtrs.Length} found");
+
+			if(data.componentTypes.Length < componentPtrs.Length)
+				throw new Exception($"too many components; bt requires {data.componentTypes.Length} but {componentPtrs.Length} found");
+
+			for(int i = 0; i < data.componentTypes.Length; ++i)
+				if(data.componentTypes[i] != componentPtrs[i].stableTypeHash)
+					throw new Exception($"wrong type at index {i}, expected " +
+						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.componentTypes[i])).DebugTypeName}, found" +
+						$"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
+
+			if(stack.Length == 0)
+			{
+				if(trace.IsCreated)
+					trace.Add(new(data.Root, BTExec.Type.Root, BTExecTrace.Event.Init, stack.Length, -1));
+
+				stack.Add(data.Root);
+			}
+
+			bool rootVisited = false;
+
+			for(int cycle = 0; ; ++cycle)
+			{
+				if(cycle > 10000)
+					throw new Exception("max cycle count exceeded; almost certainly a bug in the implementation");
+
+				var nodeId = stack[^1].nodeId;
+
+				ref BTExec node = ref data.GetNode(nodeId);
+
+				if(trace.IsCreated && cycle == 0)
+					trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, stack.Length, cycle));
+
+				if(cycle == 0 && node.type != BTExec.Type.Root && node.type != BTExec.Type.Wait)
+					throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
+
+				void Trace(ref BTExec node, BTExecTrace.Event @event)
+				{
+					if(trace.IsCreated)
+						trace.Add(new(nodeId, node.type, @event, stack.Length, cycle));
+				}
+
+				void Trace1(ref BTData data, BTExecTrace.Event @event)
+				{
+					if(trace.IsCreated)
+						trace.Add(new(nodeId, data.GetNode(nodeId).type, @event, stack.Length, cycle));
+				}
+
+				void Trace2(ref BTData data, int stackIndex, BTExecTrace.Event @event)
+				{
+					if(trace.IsCreated)
+						trace.Add(new(stack[stackIndex].nodeId, data.GetNode(stack[stackIndex].nodeId).type, @event, stackIndex + 1, cycle));
+				}
+
+				void Fail(ref BTData data, ref BTExec node)
+				{
+					Trace(ref node, BTExecTrace.Event.Fail);
+
+					for(int i = stack.Length - 1; i > 0; --i)
+					{
+						ref var stackNode = ref data.GetNode(stack[i].nodeId);
+						if(stackNode.type == BTExec.Type.Catch)
+						{
+							Trace2(ref data, i, BTExecTrace.Event.Catch);
+							stack.RemoveRange(i, stack.Length - i);
+							return;
+						}
+					}
+
+					stack.Clear();
+					stack.Add(data.Root);
+				}
+
+				void Return(ref BTData data, ref BTExec node)
+				{
+					Trace(ref node, BTExecTrace.Event.Return);
+
+					stack.RemoveAt(stack.Length - 1);
+				}
+
+				void Call(ref BTData data, BTExecNodeId node)
+				{
+					Trace1(ref data, BTExecTrace.Event.Call);
+
+					stack.ElementAt(stack.Length - 1).childIndex++;
+					stack.Add(node);
+				}
+
+				switch(node.type)
+				{
+					case BTExec.Type.Nop:
+						Return(ref data, ref node);
+						break;
+
+					case BTExec.Type.Root:
+						if(stack.Length != 1)
+							throw new Exception($"Root should always be the first stack frame, found at {stack.Length}");
+
+						if(rootVisited)
+						{
+							// visit the root node at most once per frame to avoid getting stuck here
+							Trace(ref node, BTExecTrace.Event.Yield);
+							return;
+						}
+
+						rootVisited = true;
+
+						Call(ref data, node.data.root.child);
+						break;
+
+					case BTExec.Type.Sequence:
+						if(stack[^1].childIndex < node.data.sequence.children.Length)
+						{
+							Call(ref data, node.data.sequence.children[stack[^1].childIndex]);
+						}
+						else
+						{
+							Return(ref data, ref node);
+						}
+
+						break;
+
+					case BTExec.Type.Selector:
+						if(stack[^1].childIndex == 0)
+						{
+							bool any = false;
+
+							for(int childIndex = 0; childIndex < node.data.selector.children.Length; ++childIndex)
+							{
+								ref var child = ref node.data.selector.children[childIndex];
+								if(child.condition.Evaluate<bool>(ref data, componentPtrs))
+								{
+									any = true;
+									Call(ref data, child.nodeId);
+									break;
+								}
+							}
+
+							if(!any)
+							{
+								// none of the options worked
+								Fail(ref data, ref node);
+							}
+						}
+						else
+						{
+							// already executed one of our children, go back to parent
+							Return(ref data, ref node);
+						}
+						break;
+
+					case BTExec.Type.WriteField:
+						node.data.writeField.Evaluate(ref data, componentPtrs);
+						Return(ref data, ref node);
+						break;
+
+					case BTExec.Type.Wait:
+						if(node.data.wait.until.Evaluate<bool>(ref data, componentPtrs))
+						{
+							Return(ref data, ref node);
+						}
+						else
+						{
+							// still waiting, can't execute any more nodes until input data changes
+							Trace(ref node, BTExecTrace.Event.Wait);
+							return;
+						}
+
+						break;
+
+					case BTExec.Type.Fail:
+						Fail(ref data, ref node);
+						break;
+
+					case BTExec.Type.Optional:
+						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data, componentPtrs))
+						{
+							Call(ref data, node.data.optional.child);
+						}
+						else
+						{
+							Return(ref data, ref node);
+						}
+						break;
+
+					case BTExec.Type.Catch:
+						if(stack[^1].childIndex == 0)
+						{
+							Call(ref data, node.data.@catch.child);
+						}
+						else
+						{
+							Return(ref data, ref node);
+						}
+						break;
+
+					default:
+						throw new NotImplementedException($"BTExec node type {node.type} not implemented");
+				}
+			}
+		}
+
+		public static void DumpNodes(ref BTData data, List<string> output)
+		{
+			output.Add($"const data: {data.constData.Length} bytes");
+
+			output.Add("");
+
+			int j = 0;
+			foreach(ref var exec in data.execs.AsSpan())
+			{
+				output.Add("Exec " + j.ToString() + ": " + exec.DumpString());
+				j++;
+			}
+
+			output.Add("");
+
+			j = 0;
+			foreach(ref var expr in data.exprs.AsSpan())
+			{
+				output.Add("Expr " + j.ToString() + ": " + expr.DumpString());
+			}
+		}
+	}
+}

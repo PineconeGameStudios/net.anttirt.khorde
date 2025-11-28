@@ -1,0 +1,12 @@
+.ge-node-title-part__icon {
+	/* display: none; */
+	/**/
+	--unity-image: resource("Assets/Icons/Add.png");
+	/*/
+	 --unity-image: resource("Packages/com.unity.graphtoolkit/GraphToolkitEditor/Icons/d_GenericNode.png");
+	/**/
+}
+
+.ge-editable-title-part__label-container #title {
+	display: none;
+}

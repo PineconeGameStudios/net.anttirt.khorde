@@ -67,7 +67,7 @@ namespace Mpr.AI.BT
 			FixedList128Bytes<ulong> typeHashes;
 
 			public BlobAssetReference<BTData> btData;
-			public ComponentTypeHandle<BehaviorTreeState> stateTypeHandle;
+			public ComponentTypeHandle<BTState> stateTypeHandle;
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
 			public float now;
 
@@ -140,7 +140,7 @@ namespace Mpr.AI.BT
 				{
 					btData = tree.tree,
 					now = (float)SystemAPI.Time.ElapsedTime,
-					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BehaviorTreeState>(),
+					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BTState>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
 				};
 
@@ -184,7 +184,7 @@ namespace Mpr.AI.BT
 					var components = new NativeList<ComponentType>(Allocator.Temp)
 					{
 						ComponentType.ReadOnly<BehaviorTree>(),
-						ComponentType.ReadWrite<BehaviorTreeState>(),
+						ComponentType.ReadWrite<BTState>(),
 						ComponentType.ReadWrite<BTStackFrame>(),
 					};
 

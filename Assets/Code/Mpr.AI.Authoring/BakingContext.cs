@@ -362,7 +362,7 @@ namespace Mpr.AI.BT.Nodes
 					if(!found)
 						errors.Add($"couldn't find src port index");
 
-					result.outputIndex = (byte)i;
+					result = new BTExprNodeRef(result.index, (byte)i, result.constant);
 					return result;
 				}
 				else

@@ -37,7 +37,7 @@ namespace Mpr.AI.BT.Test
 			try
 			{
 				data = btAsset.LoadPersistent();
-				BehaviorTreeState state = default;
+				BTState state = default;
 				Game.MoveTarget moveTarget = default;
 				LocalTransform localTransform = LocalTransform.FromScale(1);
 

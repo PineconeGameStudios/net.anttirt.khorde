@@ -27,7 +27,7 @@ namespace Mpr.AI.BT
 				});
 
 				AddBuffer<BTStackFrame>(entity);
-				AddComponent(entity, new BehaviorTreeState
+				AddComponent(entity, new BTState
 				{
 				});
 			}
