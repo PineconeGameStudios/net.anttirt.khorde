@@ -75,7 +75,7 @@ namespace Mpr.AI.BT
 
 		public void Bake(BinaryWriter writer)
 		{
-			using(var context = new BakingContext(this))
+			using(var context = new BTBakingContext(this))
 			{
 				var builder = context.Bake(Allocator.Temp);
 

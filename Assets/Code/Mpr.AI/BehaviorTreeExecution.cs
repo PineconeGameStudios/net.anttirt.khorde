@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Entities;
 using Mpr.Blobs;
+using Mpr.Expr;
 
 namespace Mpr.AI.BT
 {

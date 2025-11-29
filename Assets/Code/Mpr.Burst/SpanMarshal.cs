@@ -2,9 +2,12 @@ using System;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace Mpr.AI.BT
+namespace Mpr.Burst
 {
-	static class SpanMarshal
+	/// <summary>
+	/// Burst-compatible equivalents to <see cref="System.Runtime.InteropServices.MemoryMarshal"/>
+	/// </summary>
+	public static class SpanMarshal
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Span<byte> AsBytes<T>(this Span<T> span) where T : unmanaged => Cast<T, byte>(span);

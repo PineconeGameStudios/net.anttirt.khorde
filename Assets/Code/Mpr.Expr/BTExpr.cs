@@ -4,13 +4,51 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using Mpr.Blobs;
+using Mpr.Burst;
 
-namespace Mpr.AI.BT
+namespace Mpr.Expr
 {
 	public interface IBTExprEval
 	{
 		void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result);
 	}
+
+	public readonly record struct BTExprNodeRef(ushort index, byte outputIndex, bool constant)
+	{
+		public static BTExprNodeRef Node(ushort index, byte outputIndex) => new BTExprNodeRef(index, outputIndex, false);
+		public static BTExprNodeRef Const(ushort offset, byte length) => new BTExprNodeRef(offset, length, true);
+
+		public T Evaluate<T>(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
+		{
+			if(constant)
+			{
+				var constData = data.constData.AsSpan();
+				constData = constData.Slice(index, outputIndex);
+				var castData = SpanMarshal.Cast<byte, T>(constData);
+				return castData[0];
+			}
+
+			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
+		}
+
+		public void Evaluate(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+		{
+			if(constant)
+			{
+				data.constData.AsSpan().Slice(index, outputIndex).CopyTo(result);
+				return;
+			}
+
+			data.GetNode(this).Evaluate(ref data, outputIndex, componentPtrs, result);
+		}
+
+		public override string ToString()
+		{
+			return constant ? $"const(off={index}, sz={outputIndex}) " : $"ref(expr={index} out={outputIndex})";
+		}
+	}
+
 
 	/// <summary>
 	/// Data and evaluation for pure expression nodes.

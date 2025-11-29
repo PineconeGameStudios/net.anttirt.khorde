@@ -1,4 +1,4 @@
-namespace Mpr.AI.BT
+namespace Mpr.Expr
 {
 	public enum BTMathType
 	{

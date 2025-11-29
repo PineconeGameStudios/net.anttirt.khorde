@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
+using Mpr.Expr;
 
 namespace Mpr.AI.BT
 {
@@ -73,17 +74,6 @@ namespace Mpr.AI.BT
 
 		public override bool Equals(object obj) => obj is BTExecTrace trace && Equals(trace);
 		#endregion
-	}
-
-	public struct BTExprData
-	{
-		public BlobArray<BTExpr> exprs;
-		public BlobArray<byte> constData;
-		public BlobArray<ulong> componentTypes;
-		public BlobArray<UnityEngine.Hash128> exprNodeIds;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public ref BTExpr GetNode(BTExprNodeRef nodeRef) => ref exprs[nodeRef.index];
 	}
 
 	public struct BTData

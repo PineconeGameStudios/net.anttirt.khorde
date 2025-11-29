@@ -2,7 +2,7 @@ using System;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
-namespace Mpr.AI.BT
+namespace Mpr.Expr
 {
 	public struct UnsafeComponentReference
 	{

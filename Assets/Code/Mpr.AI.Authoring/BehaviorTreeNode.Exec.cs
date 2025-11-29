@@ -6,9 +6,9 @@ namespace Mpr.AI.BT.Nodes
 {
 	[Serializable]
 	[NodeCategory("Execution")]
-	internal class Root : Base, IExecNode
+	internal class Root : ExecNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.SetData(new BT.Root { child = context.GetTargetNodeId(GetOutputPort(0)) });
 		}
@@ -30,9 +30,9 @@ namespace Mpr.AI.BT.Nodes
 
 	[Serializable]
 	[NodeCategory("Execution")]
-	internal class Sequence : Base, IExecNode
+	internal class Sequence : ExecNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.Type.Sequence;
 			exec.data.sequence = new BT.Sequence { };
@@ -54,7 +54,7 @@ namespace Mpr.AI.BT.Nodes
 			{
 				for(int i = 0; i < childCount; i++)
 				{
-					context.AddOutputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME + "_" + i.ToString())
+					context.AddOutputPort<Exec>(ExecNode.EXEC_PORT_DEFAULT_NAME + "_" + i.ToString())
 						.WithDisplayName(string.Empty)
 						.WithConnectorUI(PortConnectorUI.Arrowhead)
 						.WithPortCapacity(PortCapacity.Single)
@@ -62,7 +62,7 @@ namespace Mpr.AI.BT.Nodes
 				}
 			}
 
-			context.AddInputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<Exec>(ExecNode.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -74,7 +74,7 @@ namespace Mpr.AI.BT.Nodes
 	[NodeCategory("Execution")]
 	internal class Selector : ContextNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.Type.Selector;
 			exec.data.selector = new BT.Selector { };
@@ -90,7 +90,7 @@ namespace Mpr.AI.BT.Nodes
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<Exec>(ExecNode.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -111,7 +111,7 @@ namespace Mpr.AI.BT.Nodes
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			context.AddOutputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
+			context.AddOutputPort<Exec>(ExecNode.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -121,9 +121,9 @@ namespace Mpr.AI.BT.Nodes
 
 	[Serializable]
 	[NodeCategory("Execution")]
-	internal class Optional : Base, IExecNode
+	internal class Optional : ExecNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.Type.Optional;
 			exec.data.optional = new BT.Optional
@@ -157,9 +157,9 @@ namespace Mpr.AI.BT.Nodes
 
 	[Serializable]
 	[NodeCategory("Execution")]
-	internal class Fail : Base, IExecNode
+	internal class Fail : ExecNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.Type.Fail;
 			exec.data.fail = new BT.Fail { };
@@ -177,9 +177,9 @@ namespace Mpr.AI.BT.Nodes
 
 	[Serializable]
 	[NodeCategory("Execution")]
-	internal class Catch : Base, IExecNode
+	internal class Catch : ExecNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.Type.Catch;
 			exec.data.@catch = new BT.Catch
@@ -206,9 +206,9 @@ namespace Mpr.AI.BT.Nodes
 
 	[Serializable]
 	[NodeCategory("Execution")]
-	internal class Wait : Base, IExecNode
+	internal class Wait : ExecNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.Type.Wait;
 			exec.data.wait = new BT.Wait

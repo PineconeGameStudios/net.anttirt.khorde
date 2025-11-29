@@ -2,67 +2,20 @@
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
+using Mpr.Expr;
 
 namespace Mpr.AI.BT.Nodes
 {
 	[Serializable]
 	[NodeCategory("Component")]
-	public abstract class ComponentReaderNode<T> : Base, IExprNode, IComponentAccess where T : Unity.Entities.IComponentData
-	{
-		public Type ComponentType => typeof(T);
-		public bool IsReadOnly => true;
-
-		public override string Title => $"Read {typeof(T).Name}";
-
-		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
-		{
-			var index = context.componentTypes.IndexOf(typeof(T));
-			if(index == -1)
-				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
-
-			expr.type = BTExpr.ExprType.ReadField;
-			expr.data.readField = new BTExpr.ReadField
-			{
-				componentIndex = (byte)index,
-			};
-
-			var fields = GetFields();
-
-			var bakedFields = builder.Allocate(ref expr.data.readField.fields, fields.Length);
-			for(int i = 0; i < fields.Length; i++)
-			{
-				int offset = UnsafeUtility.GetFieldOffset(fields[i]);
-				if(offset > ushort.MaxValue)
-					throw new Exception("component too large; field offset over 65k");
-
-				bakedFields[i] = fields[i];
-			}
-		}
-
-		public static System.Reflection.FieldInfo[] GetFields() => typeof(T).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-		protected override void OnDefinePorts(IPortDefinitionContext context)
-		{
-			foreach(var field in GetFields())
-			{
-				context.AddOutputPort(field.Name)
-					.WithDisplayName(field.Name)
-					.WithDataType(field.FieldType)
-					.Build();
-			}
-		}
-	}
-
-	[Serializable]
-	[NodeCategory("Component")]
-	public abstract class ComponentWriterNode<T> : Base, IExecNode, IComponentAccess where T : Unity.Entities.IComponentData
+	public abstract class ComponentWriterNode<T> : ExecNode, IComponentAccess where T : Unity.Entities.IComponentData
 	{
 		public Type ComponentType => typeof(T);
 		public bool IsReadOnly => false;
 
 		public override string Title => $"Write {typeof(T).Name}";
 
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			var componentIndex = context.componentTypes.IndexOf(typeof(T));
 			if(componentIndex == -1)
@@ -133,7 +86,7 @@ namespace Mpr.AI.BT.Nodes
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(Base.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<Exec>(ExecNode.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -160,6 +113,5 @@ namespace Mpr.AI.BT.Nodes
 		}
 	}
 
-	[Serializable] internal class ReadLocalTransform : ComponentReaderNode<Unity.Transforms.LocalTransform> { }
 	[Serializable] internal class WriteLocalTransform : ComponentWriterNode<Unity.Transforms.LocalTransform> { }
 }

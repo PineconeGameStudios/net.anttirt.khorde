@@ -3,9 +3,9 @@ using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
 
-namespace Mpr.AI.BT.Nodes
+namespace Mpr.Expr
 {
-	internal abstract class SwizzleBase : Base
+	internal abstract class SwizzleBase : ExprNode
 	{
 		protected enum BaseType
 		{
@@ -70,9 +70,9 @@ namespace Mpr.AI.BT.Nodes
 	}
 
 	[Serializable]
-	internal abstract class SwizzleBase<T> : SwizzleBase, IExprNode where T : unmanaged
+	internal abstract class SwizzleBase<T> : SwizzleBase where T : unmanaged
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
 			UnityEngine.Debug.LogWarning($"{GetType().Name}.Bake() not implemented");
 		}

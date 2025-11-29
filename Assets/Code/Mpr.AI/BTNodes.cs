@@ -1,45 +1,11 @@
 using System;
 using Unity.Entities;
 using Mpr.Blobs;
+using Mpr.Expr;
 
 namespace Mpr.AI.BT
 {
 	public readonly record struct BTExecNodeId(ushort index);
-	public readonly record struct BTExprNodeRef(ushort index, byte outputIndex, bool constant)
-	{
-		public static BTExprNodeRef Node(ushort index, byte outputIndex) => new BTExprNodeRef(index, outputIndex, false);
-		public static BTExprNodeRef Const(ushort offset, byte length) => new BTExprNodeRef(offset, length, true);
-
-		public T Evaluate<T>(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
-		{
-			if(constant)
-			{
-				var constData = data.constData.AsSpan();
-				constData = constData.Slice(index, outputIndex);
-				var castData = SpanMarshal.Cast<byte, T>(constData);
-				return castData[0];
-			}
-
-			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
-		}
-
-		public void Evaluate(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
-		{
-			if(constant)
-			{
-				data.constData.AsSpan().Slice(index, outputIndex).CopyTo(result);
-				return;
-			}
-
-			data.GetNode(this).Evaluate(ref data, outputIndex, componentPtrs, result);
-		}
-
-		public override string ToString()
-		{
-			return constant ? $"const(off={index}, sz={outputIndex}) " : $"ref(expr={index} out={outputIndex})";
-		}
-	}
-
 	public struct ConditionalBlock
 	{
 		public BTExprNodeRef condition;

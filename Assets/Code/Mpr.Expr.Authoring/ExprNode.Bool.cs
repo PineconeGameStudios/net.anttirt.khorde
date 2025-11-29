@@ -2,15 +2,15 @@ using System;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.AI.BT.Nodes
+namespace Mpr.Expr
 {
 	[Serializable]
 	[NodeCategory("Boolean")]
-	internal class AndBool : Base, IExprNode
+	internal class AndBool : ExprNode
 	{
 		public override string Title => "And (bool)";
 
-		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
 			expr.type = BTExpr.ExprType.Bool;
 			expr.data.@bool = new BTExpr.Bool
@@ -36,11 +36,11 @@ namespace Mpr.AI.BT.Nodes
 
 	[Serializable]
 	[NodeCategory("Boolean")]
-	internal class OrBool : Base, IExprNode
+	internal class OrBool : ExprNode
 	{
 		public override string Title => "Or (bool)";
 
-		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
 			expr.type = BTExpr.ExprType.Bool;
 			expr.data.@bool = new BTExpr.Bool
@@ -66,11 +66,11 @@ namespace Mpr.AI.BT.Nodes
 
 	[Serializable]
 	[NodeCategory("Boolean")]
-	internal class NotBool : Base, IExprNode
+	internal class NotBool : ExprNode
 	{
 		public override string Title => "Not (bool)";
 
-		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
 			expr.type = BTExpr.ExprType.Bool;
 			expr.data.@bool = new BTExpr.Bool

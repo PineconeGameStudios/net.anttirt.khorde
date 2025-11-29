@@ -6,6 +6,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEditor.Experimental;
+using Mpr.Expr;
 using static Mpr.AI.BT.BTExec;
 using static Mpr.AI.BT.BTExecTrace;
 
@@ -36,9 +37,9 @@ namespace Mpr.AI.BT.Test
 			trace = em.GetBuffer<BTExecTrace>(testEntity);
 			exprCount = 0;
 			constStorage = new NativeList<byte>(Allocator.Temp);
-			var offset = BehaviorTreeAuthoringExt.WriteConstant(false, out var length, constStorage);
+			var offset = ExprAuthoring.WriteConstant(false, out var length, constStorage);
 			False = BTExprNodeRef.Const(offset, length);
-			offset = BehaviorTreeAuthoringExt.WriteConstant(true, out length, constStorage);
+			offset = ExprAuthoring.WriteConstant(true, out length, constStorage);
 			True = BTExprNodeRef.Const(offset, length);
 		}
 
@@ -64,7 +65,7 @@ namespace Mpr.AI.BT.Test
 		public void Test_FailWriteConstantManaged()
 		{
 			Assert.That(
-				() => BehaviorTreeAuthoringExt.WriteConstant(new ManagedStruct(), out var length, constStorage),
+				() => ExprAuthoring.WriteConstant(new ManagedStruct(), out var length, constStorage),
 				Throws.Exception
 				);
 		}
@@ -76,7 +77,7 @@ namespace Mpr.AI.BT.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 1);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 1);
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 			Assert.IsTrue(asset.IsCreated);
 			Assert.IsTrue(asset.Value.execs.Length == 1);
@@ -94,7 +95,7 @@ namespace Mpr.AI.BT.Test
 			execs[1].type = BTExec.Type.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;
@@ -132,7 +133,7 @@ namespace Mpr.AI.BT.Test
 			execs[2].type = Type.Fail;
 			execs[2].data.fail = new Fail { };
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;
@@ -173,7 +174,7 @@ namespace Mpr.AI.BT.Test
 			execs[3].type = Type.Fail;
 			execs[3].data.fail = new Fail { };
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;
@@ -219,7 +220,7 @@ namespace Mpr.AI.BT.Test
 			execs[3].type = Type.Nop;
 			execs[4].type = Type.Nop;
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;
@@ -269,7 +270,7 @@ namespace Mpr.AI.BT.Test
 			execs[4].type = Type.Nop;
 			execs[5].type = Type.Nop;
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;
@@ -315,7 +316,7 @@ namespace Mpr.AI.BT.Test
 			execs[3].type = Type.Fail;
 			execs[4].type = Type.Nop;
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;
@@ -354,7 +355,7 @@ namespace Mpr.AI.BT.Test
 			execs[4].type = Type.Nop;
 			execs[5].type = Type.Fail;
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;
@@ -437,7 +438,7 @@ namespace Mpr.AI.BT.Test
 			execs[5].SetData(new Optional { condition = TestComponent1_field2, child = new BTExecNodeId(6) });
 			execs[6].type = Type.Nop;
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
@@ -485,7 +486,7 @@ namespace Mpr.AI.BT.Test
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetWriteField(ref builder, 0, WriteField(True, typeof(TestComponent1).GetField(nameof(TestComponent1.field1))));
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
@@ -535,7 +536,7 @@ namespace Mpr.AI.BT.Test
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetData(new Wait { until = TestComponent1_field1 });
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
@@ -657,9 +658,9 @@ namespace Mpr.AI.BT.Test
 			System.Reflection.FieldInfo field = typeof(TestComponent2)
 				.GetField(GetShortName(left.GetType()), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
-			var offset0 = BehaviorTreeAuthoringExt.WriteConstant(left, out var length0, constStorage);
+			var offset0 = ExprAuthoring.WriteConstant(left, out var length0, constStorage);
 			var const0 = BTExprNodeRef.Const(offset0, length0);
-			var offset1 = BehaviorTreeAuthoringExt.WriteConstant(right, out var length1, constStorage);
+			var offset1 = ExprAuthoring.WriteConstant(right, out var length1, constStorage);
 			var const1 = BTExprNodeRef.Const(offset1, length1);
 
 			exprs[0].type = BTExpr.ExprType.BinaryOp;
@@ -680,7 +681,7 @@ namespace Mpr.AI.BT.Test
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc2);
 
-			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
 			BTState state = default;

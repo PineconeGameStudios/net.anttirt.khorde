@@ -1,8 +1,9 @@
 using System;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
+using Mpr.Burst;
 
-namespace Mpr.AI.BT
+namespace Mpr.Expr
 {
 	public enum BTBinaryOp
 	{

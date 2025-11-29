@@ -5,9 +5,9 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Mpr.AI.BT.Nodes
+namespace Mpr.Expr
 {
-	internal abstract class OpBase<T, OpT> : Base, IExprNode where T : unmanaged where OpT : unmanaged, IBTBinaryOp
+	internal abstract class OpBase<T, OpT> : ExprNode where T : unmanaged where OpT : unmanaged, IBTBinaryOp
 	{
 		static StyleSheet s_styleSheet;
 
@@ -24,7 +24,7 @@ namespace Mpr.AI.BT.Nodes
 
 		public override string Title => $"{default(OpT).Op} ({typeof(T).Name})";
 
-		public void Bake(ref BlobBuilder builder, ref BTExpr expr, BakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
 			expr.type = BTExpr.ExprType.BinaryOp;
 

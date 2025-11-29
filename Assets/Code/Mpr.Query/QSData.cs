@@ -4,6 +4,7 @@ using Unity.Collections;
 using System.Collections.Generic;
 using System;
 using System.Runtime.CompilerServices;
+using Mpr.Expr;
 
 namespace Mpr.Query
 {
@@ -14,7 +15,7 @@ namespace Mpr.Query
 		public BlobArray<QSScorer> scorers;
 		public BlobArray<QSCollector> collector;
 		public int itemCount;
-		public AI.BT.BTExprData exprData;
+		public BTExprData exprData;
 	}
 
 	public struct QSItem<TItem>
@@ -45,11 +46,11 @@ namespace Mpr.Query
 		// we could have a pseudo-variable expression with no inputs and one output that is the current item
 		// we could even allow reads from blackboard variables and components (but not writes)
 		// "subgraph inputs" could be query parameters that can be filled in within the bt
-		public AI.BT.BTExprNodeRef expr;
+		public BTExprNodeRef expr;
 
 		// TODO: implement some filter expressions
 
-		public bool Pass<TItem>(ref AI.BT.BTExprData data, in TItem item, Span<AI.BT.UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public bool Pass<TItem>(ref BTExprData data, in TItem item, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			// TODO: place the current item in a special location for the "Current Item" expr node to find it
 			return expr.Evaluate<bool>(ref data, componentPtrs);
@@ -59,9 +60,9 @@ namespace Mpr.Query
 	public struct QSScorer
 	{
 		// just use a floating point expression from bt exprs here?
-		public AI.BT.BTExprNodeRef expr;
+		public BTExprNodeRef expr;
 
-		public float Score<TItem>(ref AI.BT.BTExprData data, in TItem item, Span<AI.BT.UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public float Score<TItem>(ref BTExprData data, in TItem item, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			// TODO: place the current item in a special location for the "Current Item" expr node to find it
 			return expr.Evaluate<float>(ref data, componentPtrs);
@@ -85,7 +86,7 @@ namespace Mpr.Query
 		/// <param name="componentPtrs"></param>
 		/// <param name="allocator"></param>
 		/// <returns></returns>
-		public static NativeList<QSItem<TItem>> Execute<TItem>(ref QSData data, Span<AI.BT.UnsafeComponentReference> componentPtrs, AllocatorManager.AllocatorHandle allocator) where TItem : unmanaged
+		public static NativeList<QSItem<TItem>> Execute<TItem>(ref QSData data, Span<UnsafeComponentReference> componentPtrs, AllocatorManager.AllocatorHandle allocator) where TItem : unmanaged
 		{
 			var items = new NativeList<QSItem<TItem>>(allocator);
 			int startIndex = 0;

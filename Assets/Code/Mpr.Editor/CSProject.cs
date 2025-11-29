@@ -1,8 +1,8 @@
 using UnityEditor;
 
-namespace Mpr.Lang
+namespace Mpr.Editor
 {
-	public class CSProject : AssetPostprocessor
+	class CSProject : AssetPostprocessor
 	{
 		private static string OnGeneratedCSProject(string path, string content)
 		{

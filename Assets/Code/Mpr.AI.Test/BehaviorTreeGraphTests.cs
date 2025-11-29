@@ -5,6 +5,7 @@ using Unity.Transforms;
 using UnityEditor;
 using static Mpr.AI.BT.BTExec;
 using static Mpr.AI.BT.BTExecTrace;
+using Mpr.Expr;
 
 namespace Mpr.AI.BT.Test
 {

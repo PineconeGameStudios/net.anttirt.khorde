@@ -1,16 +1,16 @@
 {
-    "name": "Mpr.Game.Authoring",
-    "rootNamespace": "Mpr.Game",
+    "name": "Mpr.Expr.Test",
+    "rootNamespace": "Mpr.Expr.Test",
     "references": [
-        "GUID:d8b63aba1907145bea998dd612889d6b",
-        "GUID:e0cd26848372d4e5c891c569017e11f1",
         "GUID:734d92eba21c94caba915361bd5ac177",
-        "GUID:8819f35a0fc84499b990e90a4ca1911f",
-        "GUID:953adc2a6b8b4e3c8df5b728bcd546e9",
-        "GUID:33a3ac72b17e47144a4328c5c7e19cbf",
-        "GUID:95b3299af7d97ec4ab110db225b5e6d0",
-        "GUID:70ef9a24f4cfc4aec911c1414e3f90ad",
-        "GUID:bb37301e0d8cf5547ac941c396c1a95e"
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:a849e87fab625674291d81fb42f47cae",
+        "GUID:f978e00eb6af5064c95d4d1823b104c3",
+        "GUID:07f90efd59ad1d84798b1949d158ad9a",
+        "GUID:60834f263f01c6840929b5c72115ccfd",
+        "GUID:95b3299af7d97ec4ab110db225b5e6d0"
     ],
     "includePlatforms": [],
     "excludePlatforms": [
@@ -39,8 +39,10 @@
         "GameCoreScarlett"
     ],
     "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
