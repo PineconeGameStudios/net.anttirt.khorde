@@ -688,8 +688,8 @@ MonoBehaviour:
         m_Name: exec
         m_UniqueId: 
         m_DataType:
-          m_Identification: Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_Identification: Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         m_IsExposed: 0
         m_Scope: 0
         m_ShowOnInspectorOnly: 0

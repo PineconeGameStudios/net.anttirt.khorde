@@ -1,31 +1,25 @@
-using Mpr.Behavior.Authoring;
 using System;
-using Unity.Collections;
-using Unity.Entities;
-using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
 
-namespace Mpr.Behavior
+namespace Mpr.Expr.Authoring
 {
 	[Serializable]
-	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs, typeof(BehaviorTreeGraphViewController))]
-	[UseNodes(typeof(Mpr.Expr.Authoring.IExprNode))]
-	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
-	public class BehaviorTreeGraph : Graph
+	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
+	[UseNodes(typeof(IExprNode))]
+	public class ExprSubgraph : Graph
 	{
-		internal const string AssetExtension = "btg";
+		internal const string AssetExtension = "exprg";
 
-		const string k_graphName = "Behavior Tree Graph";
+		const string k_graphName = "Expression Subgraph";
 
 		/// <summary>
-		/// Creates a new Visual Novel Director graph asset file in the project window.
+		/// Creates a new Expression Subgraph asset file in the project window.
 		/// </summary>
-		/// <remarks>This is also where we add the shortcut to create a new graph from the editor Asset menu.</remarks>
-		[MenuItem("Assets/Create/Behavior Tree Graph")]
+		[MenuItem("Assets/Create/Expression Subgraph")]
 		static void CreateAssetFile()
 		{
-			GraphDatabase.PromptInProjectBrowserToCreateNewAsset<BehaviorTreeGraph>(k_graphName);
+			GraphDatabase.PromptInProjectBrowserToCreateNewAsset<ExprSubgraph>(k_graphName);
 		}
 
 		/// <summary>
@@ -73,21 +67,6 @@ namespace Mpr.Behavior
 			//             break;
 			//         }
 			// }
-		}
-
-		public void Bake(BinaryWriter writer)
-		{
-			using(var context = new BTBakingContext(this))
-			{
-				var builder = context.Bake(Allocator.Temp);
-
-				if(context.errors.Count > 0)
-				{
-					throw new System.Exception($"Errors while baking {this}:\n\t" + string.Join("\n\t", context.errors));
-				}
-
-				BlobAssetReference<BTData>.Write(writer, builder, 0);
-			}
 		}
 	}
 }
