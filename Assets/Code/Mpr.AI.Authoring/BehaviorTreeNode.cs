@@ -6,7 +6,7 @@ namespace Mpr.AI.BT.Nodes
 {
 	[Serializable]
 	[UseWithGraph(typeof(BehaviorTreeGraph))]
-	public abstract class ExecNode : Node, IExecNode
+	public abstract class ExecBase : Node, IExecNode
 	{
 		public const string EXEC_PORT_DEFAULT_NAME = "Execution";
 

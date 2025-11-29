@@ -8,7 +8,7 @@ namespace Mpr.AI.BT.Nodes
 {
 	[Serializable]
 	[NodeCategory("Component")]
-	public abstract class ComponentWriterNode<T> : ExecNode, IComponentAccess where T : Unity.Entities.IComponentData
+	public abstract class ComponentWriterNode<T> : ExecBase, IComponentAccess where T : Unity.Entities.IComponentData
 	{
 		public Type ComponentType => typeof(T);
 		public bool IsReadOnly => false;
@@ -86,7 +86,7 @@ namespace Mpr.AI.BT.Nodes
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(ExecNode.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
