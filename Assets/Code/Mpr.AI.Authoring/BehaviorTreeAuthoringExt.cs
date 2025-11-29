@@ -124,7 +124,7 @@ namespace Mpr.AI.BT
 			unsafe
 			{
 				UnsafeUtility.MemCpy(
-					builder.Allocate(ref data.constData, constStorage.Length).GetUnsafePtr(),
+					builder.Allocate(ref data.exprData.constData, constStorage.Length).GetUnsafePtr(),
 					constStorage.GetUnsafePtr(),
 					constStorage.Length
 					);

@@ -9,7 +9,7 @@ namespace Mpr.AI.BT
 {
 	public interface IBTExprEval
 	{
-		void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result);
+		void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result);
 	}
 
 	/// <summary>
@@ -28,14 +28,14 @@ namespace Mpr.AI.BT
 			BinaryOp,
 		}
 
-		public T Evaluate<T>(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
 		{
 			Span<T> result = stackalloc T[1];
 			Evaluate(ref data, outputIndex, componentPtrs, SpanMarshal.AsBytes(result));
 			return result[0];
 		}
 
-		public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+		public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 		{
 			switch(type)
 			{
@@ -79,7 +79,7 @@ namespace Mpr.AI.BT
 			public BTMathType type;
 			public BTBinaryOp op;
 
-			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				Span<byte> leftData = stackalloc byte[result.Length];
 				Span<byte> rightData = stackalloc byte[result.Length];
@@ -114,7 +114,7 @@ namespace Mpr.AI.BT
 				}
 			}
 
-			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				ref var field = ref fields[outputIndex];
 				var componentData = componentPtrs[componentIndex].AsSpan();
@@ -152,7 +152,7 @@ namespace Mpr.AI.BT
 			public Data data;
 			public BoolType index;
 
-			public bool Evaluate(ref BTData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
+			public bool Evaluate(ref BTExprData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 			{
 				switch(index)
 				{
@@ -168,7 +168,7 @@ namespace Mpr.AI.BT
 #endif
 			}
 
-			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				SpanMarshal.Cast<byte, bool>(result)[0] = Evaluate(ref data, componentPtrs);
 			}
@@ -206,7 +206,7 @@ namespace Mpr.AI.BT
 				Sub,
 			}
 
-			public float3 Evaluate(ref BTData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
+			public float3 Evaluate(ref BTExprData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 			{
 				switch(index)
 				{
@@ -221,7 +221,7 @@ namespace Mpr.AI.BT
 #endif
 			}
 
-			public void Evaluate(ref BTData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				SpanMarshal.Cast<byte, float3>(result)[0] = Evaluate(ref data, componentPtrs);
 			}

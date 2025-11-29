@@ -1,9 +1,9 @@
 using System;
 using Unity.Entities;
 
-namespace Mpr.AI.BT
+namespace Mpr.Blobs
 {
-	static class BlobExt
+	public static class BlobExt
 	{
 		public static Span<T> AsSpan<T>(ref this BlobArray<T> array) where T : unmanaged
 		{

@@ -197,9 +197,9 @@ namespace Mpr.AI.BT
 					var typeHandles = state.EntityManager.GetBuffer<BTTypeHandleHolder>(entity);
 
 					ref var btData = ref value.tree.Value;
-					for(int i = 0; i < btData.componentTypes.Length; ++i)
+					for(int i = 0; i < btData.exprData.componentTypes.Length; ++i)
 					{
-						ulong stableTypeHash = btData.componentTypes[i];
+						ulong stableTypeHash = btData.exprData.componentTypes[i];
 						var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(stableTypeHash);
 						if(typeIndex == TypeIndex.Null)
 						{

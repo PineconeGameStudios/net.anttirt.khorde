@@ -1,5 +1,6 @@
 using System;
 using Unity.Entities;
+using Mpr.Blobs;
 
 namespace Mpr.AI.BT
 {
@@ -9,7 +10,7 @@ namespace Mpr.AI.BT
 		public static BTExprNodeRef Node(ushort index, byte outputIndex) => new BTExprNodeRef(index, outputIndex, false);
 		public static BTExprNodeRef Const(ushort offset, byte length) => new BTExprNodeRef(offset, length, true);
 
-		public T Evaluate<T>(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
 		{
 			if(constant)
 			{
@@ -22,7 +23,7 @@ namespace Mpr.AI.BT
 			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
 		}
 
-		public void Evaluate(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+		public void Evaluate(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 		{
 			if(constant)
 			{
@@ -111,7 +112,7 @@ namespace Mpr.AI.BT
 			{
 				ref var field = ref fields[i];
 				var fieldSpan = componentPtrs[componentIndex].AsSpan().Slice(field.offset, field.size);
-				field.input.Evaluate(ref data, componentPtrs, fieldSpan);
+				field.input.Evaluate(ref data.exprData, componentPtrs, fieldSpan);
 			}
 		}
 

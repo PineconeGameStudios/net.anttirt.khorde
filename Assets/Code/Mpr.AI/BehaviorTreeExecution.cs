@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Entities;
+using Mpr.Blobs;
 
 namespace Mpr.AI.BT
 {
@@ -12,16 +13,16 @@ namespace Mpr.AI.BT
 
 		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
 		{
-			if(data.componentTypes.Length > componentPtrs.Length)
-				throw new Exception($"not enough components; bt requires {data.componentTypes.Length} but only {componentPtrs.Length} found");
+			if(data.exprData.componentTypes.Length > componentPtrs.Length)
+				throw new Exception($"not enough components; bt requires {data.exprData.componentTypes.Length} but only {componentPtrs.Length} found");
 
-			if(data.componentTypes.Length < componentPtrs.Length)
-				throw new Exception($"too many components; bt requires {data.componentTypes.Length} but {componentPtrs.Length} found");
+			if(data.exprData.componentTypes.Length < componentPtrs.Length)
+				throw new Exception($"too many components; bt requires {data.exprData.componentTypes.Length} but {componentPtrs.Length} found");
 
-			for(int i = 0; i < data.componentTypes.Length; ++i)
-				if(data.componentTypes[i] != componentPtrs[i].stableTypeHash)
+			for(int i = 0; i < data.exprData.componentTypes.Length; ++i)
+				if(data.exprData.componentTypes[i] != componentPtrs[i].stableTypeHash)
 					throw new Exception($"wrong type at index {i}, expected " +
-						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.componentTypes[i])).DebugTypeName}, found" +
+						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.componentTypes[i])).DebugTypeName}, found" +
 						$"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
 
 			if(stack.Length == 0)
@@ -143,7 +144,7 @@ namespace Mpr.AI.BT
 							for(int childIndex = 0; childIndex < node.data.selector.children.Length; ++childIndex)
 							{
 								ref var child = ref node.data.selector.children[childIndex];
-								if(child.condition.Evaluate<bool>(ref data, componentPtrs))
+								if(child.condition.Evaluate<bool>(ref data.exprData, componentPtrs))
 								{
 									any = true;
 									Call(ref data, child.nodeId);
@@ -170,7 +171,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Wait:
-						if(node.data.wait.until.Evaluate<bool>(ref data, componentPtrs))
+						if(node.data.wait.until.Evaluate<bool>(ref data.exprData, componentPtrs))
 						{
 							Return(ref data, ref node);
 						}
@@ -188,7 +189,7 @@ namespace Mpr.AI.BT
 						break;
 
 					case BTExec.Type.Optional:
-						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data, componentPtrs))
+						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data.exprData, componentPtrs))
 						{
 							Call(ref data, node.data.optional.child);
 						}
@@ -217,7 +218,7 @@ namespace Mpr.AI.BT
 
 		public static void DumpNodes(ref BTData data, List<string> output)
 		{
-			output.Add($"const data: {data.constData.Length} bytes");
+			output.Add($"const data: {data.exprData.constData.Length} bytes");
 
 			output.Add("");
 
@@ -231,7 +232,7 @@ namespace Mpr.AI.BT
 			output.Add("");
 
 			j = 0;
-			foreach(ref var expr in data.exprs.AsSpan())
+			foreach(ref var expr in data.exprData.exprs.AsSpan())
 			{
 				output.Add("Expr " + j.ToString() + ": " + expr.DumpString());
 			}

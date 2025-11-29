@@ -60,9 +60,9 @@ namespace Mpr.AI.BT.Nodes
 
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, execNodeMap.Count);
-			var exprs = builder.Allocate(ref data.exprs, exprNodeMap.Count);
-			var types = builder.Allocate(ref data.componentTypes, componentTypes.Count);
-			var exprNodeIds = builder.Allocate(ref data.exprNodeIds, exprNodeMap.Count);
+			var exprs = builder.Allocate(ref data.exprData.exprs, exprNodeMap.Count);
+			var types = builder.Allocate(ref data.exprData.componentTypes, componentTypes.Count);
+			var exprNodeIds = builder.Allocate(ref data.exprData.exprNodeIds, exprNodeMap.Count);
 			var execNodeIds = builder.Allocate(ref data.execNodeIds, execNodeMap.Count);
 			var execNodeSubgraphStacks = builder.Allocate(ref data.execNodeSubgraphStacks, execNodeMap.Count);
 

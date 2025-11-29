@@ -75,14 +75,22 @@ namespace Mpr.AI.BT
 		#endregion
 	}
 
-	public struct BTData
+	public struct BTExprData
 	{
-		public BlobArray<BTExec> execs;
 		public BlobArray<BTExpr> exprs;
 		public BlobArray<byte> constData;
 		public BlobArray<ulong> componentTypes;
-		public BlobArray<UnityEngine.Hash128> execNodeIds;
 		public BlobArray<UnityEngine.Hash128> exprNodeIds;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public ref BTExpr GetNode(BTExprNodeRef nodeRef) => ref exprs[nodeRef.index];
+	}
+
+	public struct BTData
+	{
+		public BTExprData exprData;
+		public BlobArray<BTExec> execs;
+		public BlobArray<UnityEngine.Hash128> execNodeIds;
 		public BlobArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStacks;
 
 		public BTExecNodeId Root
@@ -99,6 +107,6 @@ namespace Mpr.AI.BT
 		public ref BTExec GetNode(BTExecNodeId id) => ref execs[id.index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public ref BTExpr GetNode(BTExprNodeRef nodeRef) => ref exprs[nodeRef.index];
+		public ref BTExpr GetNode(BTExprNodeRef nodeRef) => ref exprData.exprs[nodeRef.index];
 	}
 }

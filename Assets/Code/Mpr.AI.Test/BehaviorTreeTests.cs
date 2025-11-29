@@ -75,12 +75,12 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 1);
-			var exprs = builder.Allocate(ref data.exprs, 1);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 1);
 			BehaviorTreeAuthoringExt.BakeConstStorage(ref builder, ref data, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 			Assert.IsTrue(asset.IsCreated);
 			Assert.IsTrue(asset.Value.execs.Length == 1);
-			Assert.IsTrue(asset.Value.exprs.Length == 1);
+			Assert.IsTrue(asset.Value.exprData.exprs.Length == 1);
 		}
 
 		[Test]
@@ -89,7 +89,7 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
 			execs[1].type = BTExec.Type.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -124,7 +124,7 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
 			execs[1].type = Type.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -162,7 +162,7 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
 			execs[1].type = Type.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -205,7 +205,7 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
 			execs[1].type = Type.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -253,7 +253,7 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
 			execs[1].type = Type.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -301,7 +301,7 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
 			execs[1].type = Type.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -346,7 +346,7 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetSequence(ref builder, execs, 3, 4);
@@ -422,8 +422,8 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
-			var types = builder.Allocate(ref data.componentTypes, 1);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
 			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
@@ -478,8 +478,8 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
-			var types = builder.Allocate(ref data.componentTypes, 1);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
 			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
@@ -526,8 +526,8 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
-			var types = builder.Allocate(ref data.componentTypes, 1);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
 			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
 
 			var TestComponent1_field1 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field1)));
@@ -641,8 +641,8 @@ namespace Mpr.AI.BT.Test
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprs, 100);
-			var types = builder.Allocate(ref data.componentTypes, 1);
+			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
 			types[0] = TypeManager.GetTypeInfo<TestComponent2>().StableTypeHash;
 
 			execs[1].type = BTExec.Type.Root;
