@@ -10,6 +10,7 @@ namespace Mpr.Behavior
 {
 	[Serializable]
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs, typeof(BehaviorTreeGraphViewController))]
+	[UseNodes(typeof(Mpr.Expr.Authoring.IExprNode))]
 	public class BehaviorTreeGraph : Graph
 	{
 		internal const string AssetExtension = "btg";
