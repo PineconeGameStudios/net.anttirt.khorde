@@ -1,4 +1,4 @@
-using Mpr.AI.BT.Nodes;
+using Mpr.AI.Authoring;
 using System;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,7 +6,7 @@ using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
 
-namespace Mpr.AI.BT
+namespace Mpr.AI
 {
 	[Serializable]
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs, typeof(BehaviorTreeGraphViewController))]

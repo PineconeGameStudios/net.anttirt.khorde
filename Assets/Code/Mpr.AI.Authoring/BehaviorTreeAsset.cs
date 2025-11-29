@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.Entities.Serialization;
 using UnityEngine;
 
-namespace Mpr.AI.BT
+namespace Mpr.AI
 {
 	public class BehaviorTreeAsset : ScriptableObject
 	{

@@ -5,7 +5,7 @@ using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Mpr.Expr.Authoring;
 
-namespace Mpr.AI.BT.Nodes
+namespace Mpr.AI.Authoring
 {
 	public class BTBakingContext : ExprBakingContext
 	{

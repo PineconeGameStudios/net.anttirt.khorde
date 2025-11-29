@@ -9,7 +9,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.NetCode;
 
-namespace Mpr.AI.BT
+namespace Mpr.AI
 {
 	struct BTQueryHolder : IComponentData
 	{

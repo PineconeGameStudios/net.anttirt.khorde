@@ -5,7 +5,7 @@ using Unity.GraphToolkit.Editor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 
-namespace Mpr.AI.BT
+namespace Mpr.AI
 {
 	[ScriptedImporter(1, BehaviorTreeGraph.AssetExtension)]
 	internal class BehaviorTreeImporter : ScriptedImporter

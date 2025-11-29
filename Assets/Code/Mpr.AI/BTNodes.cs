@@ -3,7 +3,7 @@ using Unity.Entities;
 using Mpr.Blobs;
 using Mpr.Expr;
 
-namespace Mpr.AI.BT
+namespace Mpr.AI
 {
 	public readonly record struct BTExecNodeId(ushort index);
 	public struct ConditionalBlock

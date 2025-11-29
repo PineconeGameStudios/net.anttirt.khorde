@@ -11,5 +11,5 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a154aa725bfa0b448adbbb2e76e7f81f, type: 3}
   m_Name: BTGraphAssets
-  m_EditorClassIdentifier: Mpr.AI.Authoring::Mpr.AI.BT.BTGraphAssets
+  m_EditorClassIdentifier: Mpr.AI.Authoring::Mpr.AI.BTGraphAssets
   executionHighlightStyle: {fileID: 7433441132597879392, guid: 734104a2eba440f45801d7c9fdaf1981, type: 3}

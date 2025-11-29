@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace Mpr.AI.BT
+namespace Mpr.AI
 {
 	/// <summary>
 	/// Data for execution nodes.
