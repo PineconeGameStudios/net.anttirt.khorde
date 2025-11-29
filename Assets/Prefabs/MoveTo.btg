@@ -870,7 +870,7 @@ MonoBehaviour:
       data:
         m_Value: 0
     - rid: 8259216303520743702
-      type: {class: NotBool, ns: Mpr.AI.BT.Nodes, asm: Mpr.AI.Authoring}
+      type: {class: NotBool, ns: Mpr.Expr, asm: Mpr.Expr.Authoring}
       data: 
     - rid: 8259216303520743703
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
