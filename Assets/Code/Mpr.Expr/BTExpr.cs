@@ -9,17 +9,17 @@ using Mpr.Burst;
 
 namespace Mpr.Expr
 {
-	public interface IBTExprEval
+	public interface IExprEval
 	{
-		void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result);
+		void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result);
 	}
 
-	public readonly record struct BTExprNodeRef(ushort index, byte outputIndex, bool constant)
+	public readonly record struct ExprNodeRef(ushort index, byte outputIndex, bool constant)
 	{
-		public static BTExprNodeRef Node(ushort index, byte outputIndex) => new BTExprNodeRef(index, outputIndex, false);
-		public static BTExprNodeRef Const(ushort offset, byte length) => new BTExprNodeRef(offset, length, true);
+		public static ExprNodeRef Node(ushort index, byte outputIndex) => new ExprNodeRef(index, outputIndex, false);
+		public static ExprNodeRef Const(ushort offset, byte length) => new ExprNodeRef(offset, length, true);
 
-		public T Evaluate<T>(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(ref ExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
 		{
 			if(constant)
 			{
@@ -32,7 +32,7 @@ namespace Mpr.Expr
 			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
 		}
 
-		public void Evaluate(ref BTExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+		public void Evaluate(ref ExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 		{
 			if(constant)
 			{
@@ -62,23 +62,23 @@ namespace Mpr.Expr
 		{
 			ReadField,
 			Bool,
-			BinaryOp,
+			BinaryMath,
 		}
 
-		public T Evaluate<T>(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
 		{
 			Span<T> result = stackalloc T[1];
 			Evaluate(ref data, outputIndex, componentPtrs, SpanMarshal.AsBytes(result));
 			return result[0];
 		}
 
-		public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+		public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 		{
 			switch(type)
 			{
 				case BTExprType.ReadField: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 				case BTExprType.Bool: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case BTExprType.BinaryOp: this.data.binaryOp.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case BTExprType.BinaryMath: this.data.binaryMath.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 			}
 #if DEBUG
 			throw new Exception();
@@ -90,7 +90,7 @@ namespace Mpr.Expr
 		{
 			[FieldOffset(0)] public ReadField readField;
 			[FieldOffset(0)] public Bool @bool;
-			[FieldOffset(0)] public BinaryOp binaryOp;
+			[FieldOffset(0)] public BinaryMath binaryMath;
 		}
 
 		public string DumpString()
@@ -101,20 +101,20 @@ namespace Mpr.Expr
 			{
 				case BTExprType.ReadField: result += data.readField.DumpString(); break;
 				case BTExprType.Bool: result += data.@bool.DumpString(); break;
-				case BTExprType.BinaryOp: result += data.binaryOp.DumpString(); break;
+				case BTExprType.BinaryMath: result += data.binaryMath.DumpString(); break;
 			}
 
 			return result;
 		}
 
-		public struct BinaryOp : IBTExprEval
+		public struct BinaryMath : IExprEval
 		{
-			public BTExprNodeRef left;
-			public BTExprNodeRef right;
-			public BTMathType type;
-			public BTBinaryOp op;
+			public ExprNodeRef left;
+			public ExprNodeRef right;
+			public MathType type;
+			public BinaryMathOp op;
 
-			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				Span<byte> leftData = stackalloc byte[result.Length];
 				Span<byte> rightData = stackalloc byte[result.Length];
@@ -129,7 +129,7 @@ namespace Mpr.Expr
 			}
 		}
 
-		public struct ReadField : IBTExprEval
+		public struct ReadField : IExprEval
 		{
 			public byte componentIndex;
 			public BlobArray<Field> fields;
@@ -154,7 +154,7 @@ namespace Mpr.Expr
 				}
 			}
 
-			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				ref var field = ref fields[outputIndex];
 				var componentData = componentPtrs[componentIndex].AsSpan();
@@ -168,12 +168,12 @@ namespace Mpr.Expr
 			}
 		}
 
-		public struct Bool : IBTExprEval
+		public struct Bool : IExprEval
 		{
-			public readonly record struct Not(BTExprNodeRef inner);
-			public readonly record struct And(BTExprNodeRef left, BTExprNodeRef right);
-			public readonly record struct Or(BTExprNodeRef left, BTExprNodeRef right);
-			public readonly record struct Xor(BTExprNodeRef left, BTExprNodeRef right);
+			public readonly record struct Not(ExprNodeRef inner);
+			public readonly record struct And(ExprNodeRef left, ExprNodeRef right);
+			public readonly record struct Or(ExprNodeRef left, ExprNodeRef right);
+			public readonly record struct Xor(ExprNodeRef left, ExprNodeRef right);
 
 			[StructLayout(LayoutKind.Explicit)]
 			public struct Data
@@ -195,7 +195,7 @@ namespace Mpr.Expr
 			public Data data;
 			public BoolType index;
 
-			public bool Evaluate(ref BTExprData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
+			public bool Evaluate(ref ExprData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 			{
 				switch(index)
 				{
@@ -212,7 +212,7 @@ namespace Mpr.Expr
 #endif
 			}
 
-			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
 			{
 				SpanMarshal.Cast<byte, bool>(result)[0] = Evaluate(ref data, componentPtrs);
 			}

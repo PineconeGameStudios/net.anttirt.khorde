@@ -22,8 +22,8 @@ namespace Mpr.AI.BT.Test
 		DynamicBuffer<BTExecTrace> trace;
 		ushort exprCount;
 		NativeList<byte> constStorage;
-		BTExprNodeRef False;
-		BTExprNodeRef True;
+		ExprNodeRef False;
+		ExprNodeRef True;
 
 		[SetUp]
 		public void SetUp()
@@ -38,9 +38,9 @@ namespace Mpr.AI.BT.Test
 			exprCount = 0;
 			constStorage = new NativeList<byte>(Allocator.Temp);
 			var offset = ExprAuthoring.WriteConstant(false, out var length, constStorage);
-			False = BTExprNodeRef.Const(offset, length);
+			False = ExprNodeRef.Const(offset, length);
 			offset = ExprAuthoring.WriteConstant(true, out length, constStorage);
-			True = BTExprNodeRef.Const(offset, length);
+			True = ExprNodeRef.Const(offset, length);
 		}
 
 		[TearDown]
@@ -385,7 +385,7 @@ namespace Mpr.AI.BT.Test
 			}
 		}
 
-		BTExprNodeRef ReadExpr(ref BlobBuilder builder, BlobBuilderArray<BTExpr> exprs, byte componentIndex, System.Reflection.FieldInfo fieldInfo)
+		ExprNodeRef ReadExpr(ref BlobBuilder builder, BlobBuilderArray<BTExpr> exprs, byte componentIndex, System.Reflection.FieldInfo fieldInfo)
 		{
 			exprs[exprCount] = new BTExpr
 			{
@@ -404,10 +404,10 @@ namespace Mpr.AI.BT.Test
 
 			++exprCount;
 
-			return BTExprNodeRef.Node((ushort)(exprCount - 1), 0);
+			return ExprNodeRef.Node((ushort)(exprCount - 1), 0);
 		}
 
-		static WriteField.Field WriteField(BTExprNodeRef input, System.Reflection.FieldInfo fieldInfo)
+		static WriteField.Field WriteField(ExprNodeRef input, System.Reflection.FieldInfo fieldInfo)
 		{
 			return new WriteField.Field
 			{
@@ -594,38 +594,38 @@ namespace Mpr.AI.BT.Test
 			return type.Name;
 		}
 
-		private static BTMathType[] mathTypes = System.Enum.GetValues(typeof(BTMathType)).Cast<BTMathType>().ToArray();
-		private static BTBinaryOp[] binaryOps = System.Enum.GetValues(typeof(BTBinaryOp)).Cast<BTBinaryOp>().ToArray();
-		private static Dictionary<BTMathType, System.Type> realTypes = mathTypes.ToDictionary(t => t, t => t switch
+		private static MathType[] mathTypes = System.Enum.GetValues(typeof(MathType)).Cast<MathType>().ToArray();
+		private static BinaryMathOp[] binaryOps = System.Enum.GetValues(typeof(BinaryMathOp)).Cast<BinaryMathOp>().ToArray();
+		private static Dictionary<MathType, System.Type> realTypes = mathTypes.ToDictionary(t => t, t => t switch
 		{
-			BTMathType.Int => typeof(int),
-			BTMathType.Int2 => typeof(int2),
-			BTMathType.Int3 => typeof(int3),
-			BTMathType.Int4 => typeof(int4),
-			BTMathType.Float => typeof(float),
-			BTMathType.Float2 => typeof(float2),
-			BTMathType.Float3 => typeof(float3),
-			BTMathType.Float4 => typeof(float4),
+			MathType.Int => typeof(int),
+			MathType.Int2 => typeof(int2),
+			MathType.Int3 => typeof(int3),
+			MathType.Int4 => typeof(int4),
+			MathType.Float => typeof(float),
+			MathType.Float2 => typeof(float2),
+			MathType.Float3 => typeof(float3),
+			MathType.Float4 => typeof(float4),
 			_ => throw new System.NotImplementedException(),
 		});
-		private static object Replicate(BTMathType type, int value) => type switch
+		private static object Replicate(MathType type, int value) => type switch
 		{
-			BTMathType.Int => value,
-			BTMathType.Int2 => new int2(value),
-			BTMathType.Int3 => new int3(value),
-			BTMathType.Int4 => new int4(value),
-			BTMathType.Float => (float)value,
-			BTMathType.Float2 => new float2(value),
-			BTMathType.Float3 => new float3(value),
-			BTMathType.Float4 => new float4(value),
+			MathType.Int => value,
+			MathType.Int2 => new int2(value),
+			MathType.Int3 => new int3(value),
+			MathType.Int4 => new int4(value),
+			MathType.Float => (float)value,
+			MathType.Float2 => new float2(value),
+			MathType.Float3 => new float3(value),
+			MathType.Float4 => new float4(value),
 			_ => throw new System.NotImplementedException(),
 		};
-		private static int Compute(int a, int b, BTBinaryOp op) => op switch
+		private static int Compute(int a, int b, BinaryMathOp op) => op switch
 		{
-			BTBinaryOp.Add => a + b,
-			BTBinaryOp.Sub => a - b,
-			BTBinaryOp.Mul => a * b,
-			BTBinaryOp.Div => a / b,
+			BinaryMathOp.Add => a + b,
+			BinaryMathOp.Sub => a - b,
+			BinaryMathOp.Mul => a * b,
+			BinaryMathOp.Div => a / b,
 			_ => throw new System.NotImplementedException(),
 		};
 
@@ -637,7 +637,7 @@ namespace Mpr.AI.BT.Test
 			;
 
 		[TestCaseSource(nameof(TestCases))]
-		public void Test_Math(BTBinaryOp op, BTMathType mathType, object left, object right, object result)
+		public void Test_Math(BinaryMathOp op, MathType mathType, object left, object right, object result)
 		{
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var data = ref builder.ConstructRoot<BTData>();
@@ -659,12 +659,12 @@ namespace Mpr.AI.BT.Test
 				.GetField(GetShortName(left.GetType()), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
 			var offset0 = ExprAuthoring.WriteConstant(left, out var length0, constStorage);
-			var const0 = BTExprNodeRef.Const(offset0, length0);
+			var const0 = ExprNodeRef.Const(offset0, length0);
 			var offset1 = ExprAuthoring.WriteConstant(right, out var length1, constStorage);
-			var const1 = BTExprNodeRef.Const(offset1, length1);
+			var const1 = ExprNodeRef.Const(offset1, length1);
 
-			exprs[0].type = BTExpr.BTExprType.BinaryOp;
-			exprs[0].data.binaryOp = new BTExpr.BinaryOp
+			exprs[0].type = BTExpr.BTExprType.BinaryMath;
+			exprs[0].data.binaryMath = new BTExpr.BinaryMath
 			{
 				left = const0,
 				right = const1,
@@ -672,7 +672,7 @@ namespace Mpr.AI.BT.Test
 				type = mathType,
 			};
 
-			var expr = BTExprNodeRef.Node(0, 0);
+			var expr = ExprNodeRef.Node(0, 0);
 
 			execs[2].SetWriteField(ref builder, 0, WriteField(expr, field));
 

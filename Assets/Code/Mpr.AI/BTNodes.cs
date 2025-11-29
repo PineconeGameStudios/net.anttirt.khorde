@@ -8,7 +8,7 @@ namespace Mpr.AI.BT
 	public readonly record struct BTExecNodeId(ushort index);
 	public struct ConditionalBlock
 	{
-		public BTExprNodeRef condition;
+		public ExprNodeRef condition;
 		public BTExecNodeId nodeId;
 
 		public override string ToString()
@@ -60,7 +60,7 @@ namespace Mpr.AI.BT
 
 		public struct Field
 		{
-			public BTExprNodeRef input;
+			public ExprNodeRef input;
 			public ushort offset;
 			public ushort size;
 
@@ -90,7 +90,7 @@ namespace Mpr.AI.BT
 
 	public struct Wait
 	{
-		public BTExprNodeRef until;
+		public ExprNodeRef until;
 
 		public string DumpString()
 		{
@@ -108,7 +108,7 @@ namespace Mpr.AI.BT
 
 	public struct Optional
 	{
-		public BTExprNodeRef condition;
+		public ExprNodeRef condition;
 		public BTExecNodeId child;
 
 		public string DumpString()

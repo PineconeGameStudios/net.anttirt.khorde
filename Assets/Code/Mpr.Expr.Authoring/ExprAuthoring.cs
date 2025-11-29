@@ -84,7 +84,7 @@ namespace Mpr.Expr
 			return (ushort)offset;
 		}
 
-		public static void BakeConstStorage(ref BlobBuilder builder, ref BTExprData exprData, NativeList<byte> constStorage)
+		public static void BakeConstStorage(ref BlobBuilder builder, ref ExprData exprData, NativeList<byte> constStorage)
 		{
 			unsafe
 			{

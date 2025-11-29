@@ -10,7 +10,7 @@ namespace Mpr.Expr
 	public class ExprBakingContext : IDisposable
 	{
 		public Graph rootGraph;
-		public Dictionary<NodeKey<IExprNode>, BTExprNodeRef> exprNodeMap;
+		public Dictionary<NodeKey<IExprNode>, ExprNodeRef> exprNodeMap;
 		public NativeList<byte> constStorage;
 		public HashSet<Type> componentTypeSet;
 		public List<Type> componentTypes;
@@ -67,7 +67,7 @@ namespace Mpr.Expr
 			return builder;
 		}
 
-		protected void BakeExprData(ref BTExprData exprData)
+		protected void BakeExprData(ref ExprData exprData)
 		{
 			var exprs = builder.Allocate(ref exprData.exprs, exprNodeMap.Count);
 			var types = builder.Allocate(ref exprData.componentTypes, componentTypes.Count);
@@ -79,14 +79,14 @@ namespace Mpr.Expr
 			BakeExprNodes(rootGraph, ref builder, ref exprs, ref exprNodeIds);
 		}
 
-		protected void BakeConstData(ref BTExprData exprData)
+		protected void BakeConstData(ref ExprData exprData)
 		{
 			ExprAuthoring.BakeConstStorage(ref builder, ref exprData, constStorage);
 		}
 
 		protected virtual void Bake()
 		{
-			ref var exprData = ref builder.ConstructRoot<BTExprData>();
+			ref var exprData = ref builder.ConstructRoot<ExprData>();
 			BakeExprData(ref exprData);
 			BakeConstData(ref exprData);
 		}
@@ -148,11 +148,11 @@ namespace Mpr.Expr
 			var index = exprNodeMap.Count;
 			if(index > ushort.MaxValue)
 				throw new Exception("max expr node capacity exceeded");
-			if(!exprNodeMap.TryAdd(GetNodeKey(exprNode), new BTExprNodeRef((ushort)index, 0, false)))
+			if(!exprNodeMap.TryAdd(GetNodeKey(exprNode), new ExprNodeRef((ushort)index, 0, false)))
 				throw new Exception("duplicate node key");
 		}
 
-		public BTExprNodeRef GetNodeId(IExprNode exprNode)
+		public ExprNodeRef GetNodeId(IExprNode exprNode)
 		{
 			return exprNodeMap[GetNodeKey(exprNode)];
 		}
@@ -190,7 +190,7 @@ namespace Mpr.Expr
 			}
 		}
 
-		public BTExprNodeRef GetExprNodeRef(IPort dstPort)
+		public ExprNodeRef GetExprNodeRef(IPort dstPort)
 		{
 			if(!dstPort.isConnected)
 				return HandleDisconnectedPort(dstPort);
@@ -253,7 +253,7 @@ namespace Mpr.Expr
 					if(!found)
 						errors.Add($"couldn't find src port index");
 
-					result = new BTExprNodeRef(result.index, (byte)i, result.constant);
+					result = new ExprNodeRef(result.index, (byte)i, result.constant);
 					return result;
 				}
 				else
@@ -263,13 +263,13 @@ namespace Mpr.Expr
 				}
 			}
 
-			BTExprNodeRef HandleDisconnectedPort(IPort dstPort)
+			ExprNodeRef HandleDisconnectedPort(IPort dstPort)
 			{
 				if(dstPort.TryGetValue(out var value))
 				{
 					// TODO: deduplicate constants
 					ushort offset = ExprAuthoring.WriteConstant(value, out var length, constStorage);
-					return BTExprNodeRef.Const(offset, length);
+					return ExprNodeRef.Const(offset, length);
 				}
 				else
 				{

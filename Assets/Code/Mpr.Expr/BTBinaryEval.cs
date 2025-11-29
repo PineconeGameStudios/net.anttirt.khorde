@@ -5,7 +5,7 @@ using Mpr.Burst;
 
 namespace Mpr.Expr
 {
-	public enum BTBinaryOp
+	public enum BinaryMathOp
 	{
 		Add,
 		Sub,
@@ -15,7 +15,7 @@ namespace Mpr.Expr
 
 	public interface IBTBinaryOp
 	{
-		BTBinaryOp Op { get; }
+		BinaryMathOp Op { get; }
 		int Apply(int a, int b);
 		int2 Apply(int2 a, int2 b);
 		int3 Apply(int3 a, int3 b);
@@ -28,7 +28,7 @@ namespace Mpr.Expr
 
 	public struct BTBinaryOp_Add : IBTBinaryOp
 	{
-		public BTBinaryOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BTBinaryOp.Add; }
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Add; }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int Apply(int a, int b) => a + b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int2 Apply(int2 a, int2 b) => a + b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int3 Apply(int3 a, int3 b) => a + b;
@@ -41,7 +41,7 @@ namespace Mpr.Expr
 
 	public struct BTBinaryOp_Sub : IBTBinaryOp
 	{
-		public BTBinaryOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BTBinaryOp.Sub; }
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Sub; }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int Apply(int a, int b) => a - b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int2 Apply(int2 a, int2 b) => a - b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int3 Apply(int3 a, int3 b) => a - b;
@@ -54,7 +54,7 @@ namespace Mpr.Expr
 
 	public struct BTBinaryOp_Mul : IBTBinaryOp
 	{
-		public BTBinaryOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BTBinaryOp.Mul; }
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Mul; }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int Apply(int a, int b) => a * b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int2 Apply(int2 a, int2 b) => a * b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int3 Apply(int3 a, int3 b) => a * b;
@@ -67,7 +67,7 @@ namespace Mpr.Expr
 
 	public struct BTBinaryOp_Div : IBTBinaryOp
 	{
-		public BTBinaryOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BTBinaryOp.Div; }
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Div; }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int Apply(int a, int b) => a / b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int2 Apply(int2 a, int2 b) => a / b;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public int3 Apply(int3 a, int3 b) => a / b;
@@ -81,30 +81,30 @@ namespace Mpr.Expr
 	static partial class BTBinaryEval
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static void Apply<TOp>(BTMathType type, Span<byte> left, Span<byte> right, Span<byte> result) where TOp : unmanaged, IBTBinaryOp
+		static void Apply<TOp>(MathType type, Span<byte> left, Span<byte> right, Span<byte> result) where TOp : unmanaged, IBTBinaryOp
 		{
 			switch(type)
 			{
-				case BTMathType.Int: SpanMarshal.Cast<byte, int>(result)[0] = default(IntBinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int>(left)[0], SpanMarshal.Cast<byte, int>(right)[0]); break;
-				case BTMathType.Int2: SpanMarshal.Cast<byte, int2>(result)[0] = default(Int2BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int2>(left)[0], SpanMarshal.Cast<byte, int2>(right)[0]); break;
-				case BTMathType.Int3: SpanMarshal.Cast<byte, int3>(result)[0] = default(Int3BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int3>(left)[0], SpanMarshal.Cast<byte, int3>(right)[0]); break;
-				case BTMathType.Int4: SpanMarshal.Cast<byte, int4>(result)[0] = default(Int4BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int4>(left)[0], SpanMarshal.Cast<byte, int4>(right)[0]); break;
-				case BTMathType.Float: SpanMarshal.Cast<byte, float>(result)[0] = default(FloatBinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float>(left)[0], SpanMarshal.Cast<byte, float>(right)[0]); break;
-				case BTMathType.Float2: SpanMarshal.Cast<byte, float2>(result)[0] = default(Float2BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float2>(left)[0], SpanMarshal.Cast<byte, float2>(right)[0]); break;
-				case BTMathType.Float3: SpanMarshal.Cast<byte, float3>(result)[0] = default(Float3BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float3>(left)[0], SpanMarshal.Cast<byte, float3>(right)[0]); break;
-				case BTMathType.Float4: SpanMarshal.Cast<byte, float4>(result)[0] = default(Float4BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float4>(left)[0], SpanMarshal.Cast<byte, float4>(right)[0]); break;
+				case MathType.Int: SpanMarshal.Cast<byte, int>(result)[0] = default(IntBinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int>(left)[0], SpanMarshal.Cast<byte, int>(right)[0]); break;
+				case MathType.Int2: SpanMarshal.Cast<byte, int2>(result)[0] = default(Int2BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int2>(left)[0], SpanMarshal.Cast<byte, int2>(right)[0]); break;
+				case MathType.Int3: SpanMarshal.Cast<byte, int3>(result)[0] = default(Int3BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int3>(left)[0], SpanMarshal.Cast<byte, int3>(right)[0]); break;
+				case MathType.Int4: SpanMarshal.Cast<byte, int4>(result)[0] = default(Int4BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, int4>(left)[0], SpanMarshal.Cast<byte, int4>(right)[0]); break;
+				case MathType.Float: SpanMarshal.Cast<byte, float>(result)[0] = default(FloatBinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float>(left)[0], SpanMarshal.Cast<byte, float>(right)[0]); break;
+				case MathType.Float2: SpanMarshal.Cast<byte, float2>(result)[0] = default(Float2BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float2>(left)[0], SpanMarshal.Cast<byte, float2>(right)[0]); break;
+				case MathType.Float3: SpanMarshal.Cast<byte, float3>(result)[0] = default(Float3BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float3>(left)[0], SpanMarshal.Cast<byte, float3>(right)[0]); break;
+				case MathType.Float4: SpanMarshal.Cast<byte, float4>(result)[0] = default(Float4BinaryOp<TOp>).Apply(SpanMarshal.Cast<byte, float4>(left)[0], SpanMarshal.Cast<byte, float4>(right)[0]); break;
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Apply(BTMathType type, BTBinaryOp op, Span<byte> left, Span<byte> right, Span<byte> result)
+		public static void Apply(MathType type, BinaryMathOp op, Span<byte> left, Span<byte> right, Span<byte> result)
 		{
 			switch(op)
 			{
-				case BTBinaryOp.Add: Apply<BTBinaryOp_Add>(type, left, right, result); break;
-				case BTBinaryOp.Sub: Apply<BTBinaryOp_Sub>(type, left, right, result); break;
-				case BTBinaryOp.Mul: Apply<BTBinaryOp_Mul>(type, left, right, result); break;
-				case BTBinaryOp.Div: Apply<BTBinaryOp_Div>(type, left, right, result); break;
+				case BinaryMathOp.Add: Apply<BTBinaryOp_Add>(type, left, right, result); break;
+				case BinaryMathOp.Sub: Apply<BTBinaryOp_Sub>(type, left, right, result); break;
+				case BinaryMathOp.Mul: Apply<BTBinaryOp_Mul>(type, left, right, result); break;
+				case BinaryMathOp.Div: Apply<BTBinaryOp_Div>(type, left, right, result); break;
 			}
 		}
 

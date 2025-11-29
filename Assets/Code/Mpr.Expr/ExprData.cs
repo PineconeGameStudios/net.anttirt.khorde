@@ -3,7 +3,7 @@ using Unity.Entities;
 
 namespace Mpr.Expr
 {
-	public struct BTExprData
+	public struct ExprData
 	{
 		public BlobArray<BTExpr> exprs;
 		public BlobArray<byte> constData;
@@ -11,6 +11,6 @@ namespace Mpr.Expr
 		public BlobArray<UnityEngine.Hash128> exprNodeIds;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public ref BTExpr GetNode(BTExprNodeRef nodeRef) => ref exprs[nodeRef.index];
+		public ref BTExpr GetNode(ExprNodeRef nodeRef) => ref exprs[nodeRef.index];
 	}
 }

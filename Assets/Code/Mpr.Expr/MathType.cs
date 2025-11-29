@@ -1,6 +1,6 @@
 namespace Mpr.Expr
 {
-	public enum BTMathType
+	public enum MathType
 	{
 		Int,
 		Int2,

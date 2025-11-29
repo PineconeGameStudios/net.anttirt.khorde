@@ -78,7 +78,7 @@ namespace Mpr.AI.BT
 
 	public struct BTData
 	{
-		public BTExprData exprData;
+		public ExprData exprData;
 		public BlobArray<BTExec> execs;
 		public BlobArray<UnityEngine.Hash128> execNodeIds;
 		public BlobArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStacks;
@@ -97,6 +97,6 @@ namespace Mpr.AI.BT
 		public ref BTExec GetNode(BTExecNodeId id) => ref execs[id.index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public ref BTExpr GetNode(BTExprNodeRef nodeRef) => ref exprData.exprs[nodeRef.index];
+		public ref BTExpr GetNode(ExprNodeRef nodeRef) => ref exprData.exprs[nodeRef.index];
 	}
 }

@@ -16,7 +16,7 @@ namespace Mpr.AI.BT
 				array[i] = new BTExecNodeId(childNodeIds[i]);
 			}
 		}
-		public static void SetSelector(ref this BTExec self, ref BlobBuilder builder, BlobBuilderArray<BTExec> execs, params (ushort, BTExprNodeRef)[] childNodeIds)
+		public static void SetSelector(ref this BTExec self, ref BlobBuilder builder, BlobBuilderArray<BTExec> execs, params (ushort, ExprNodeRef)[] childNodeIds)
 		{
 			self.type = BTExecType.Selector;
 			var array = builder.Allocate(ref self.data.selector.children, childNodeIds.Length);

@@ -26,30 +26,30 @@ namespace Mpr.Expr
 
 		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
-			expr.type = BTExpr.BTExprType.BinaryOp;
+			expr.type = BTExpr.BTExprType.BinaryMath;
 
-			BTMathType type;
+			MathType type;
 
 			if(typeof(T) == typeof(int))
-				type = BTMathType.Int;
+				type = MathType.Int;
 			else if(typeof(T) == typeof(int2))
-				type = BTMathType.Int2;
+				type = MathType.Int2;
 			else if(typeof(T) == typeof(int3))
-				type = BTMathType.Int3;
+				type = MathType.Int3;
 			else if(typeof(T) == typeof(int4))
-				type = BTMathType.Int4;
+				type = MathType.Int4;
 			else if(typeof(T) == typeof(float))
-				type = BTMathType.Float;
+				type = MathType.Float;
 			else if(typeof(T) == typeof(float2))
-				type = BTMathType.Float2;
+				type = MathType.Float2;
 			else if(typeof(T) == typeof(float3))
-				type = BTMathType.Float3;
+				type = MathType.Float3;
 			else if(typeof(T) == typeof(float4))
-				type = BTMathType.Float4;
+				type = MathType.Float4;
 			else
 				throw new NotImplementedException();
 
-			expr.data.binaryOp = new BTExpr.BinaryOp
+			expr.data.binaryMath = new BTExpr.BinaryMath
 			{
 				left = context.GetExprNodeRef(GetInputPort(0)),
 				right = context.GetExprNodeRef(GetInputPort(1)),

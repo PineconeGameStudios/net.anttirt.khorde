@@ -15,7 +15,7 @@ namespace Mpr.Query
 		public BlobArray<QSScorer> scorers;
 		public BlobArray<QSCollector> collector;
 		public int itemCount;
-		public BTExprData exprData;
+		public ExprData exprData;
 	}
 
 	public struct QSItem<TItem>
@@ -46,11 +46,11 @@ namespace Mpr.Query
 		// we could have a pseudo-variable expression with no inputs and one output that is the current item
 		// we could even allow reads from blackboard variables and components (but not writes)
 		// "subgraph inputs" could be query parameters that can be filled in within the bt
-		public BTExprNodeRef expr;
+		public ExprNodeRef expr;
 
 		// TODO: implement some filter expressions
 
-		public bool Pass<TItem>(ref BTExprData data, in TItem item, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public bool Pass<TItem>(ref ExprData data, in TItem item, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			// TODO: place the current item in a special location for the "Current Item" expr node to find it
 			return expr.Evaluate<bool>(ref data, componentPtrs);
@@ -60,9 +60,9 @@ namespace Mpr.Query
 	public struct QSScorer
 	{
 		// just use a floating point expression from bt exprs here?
-		public BTExprNodeRef expr;
+		public ExprNodeRef expr;
 
-		public float Score<TItem>(ref BTExprData data, in TItem item, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public float Score<TItem>(ref ExprData data, in TItem item, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			// TODO: place the current item in a special location for the "Current Item" expr node to find it
 			return expr.Evaluate<float>(ref data, componentPtrs);
