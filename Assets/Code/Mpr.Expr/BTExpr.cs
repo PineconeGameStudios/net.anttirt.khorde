@@ -62,7 +62,6 @@ namespace Mpr.Expr
 		{
 			ReadField,
 			Bool,
-			Float3,
 			BinaryOp,
 		}
 
@@ -79,7 +78,6 @@ namespace Mpr.Expr
 			{
 				case BTExprType.ReadField: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 				case BTExprType.Bool: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case BTExprType.Float3: this.data.@float3.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 				case BTExprType.BinaryOp: this.data.binaryOp.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 			}
 #if DEBUG
@@ -92,7 +90,6 @@ namespace Mpr.Expr
 		{
 			[FieldOffset(0)] public ReadField readField;
 			[FieldOffset(0)] public Bool @bool;
-			[FieldOffset(0)] public Float3 @float3;
 			[FieldOffset(0)] public BinaryOp binaryOp;
 		}
 
@@ -104,7 +101,7 @@ namespace Mpr.Expr
 			{
 				case BTExprType.ReadField: result += data.readField.DumpString(); break;
 				case BTExprType.Bool: result += data.@bool.DumpString(); break;
-				case BTExprType.Float3: result += data.@float3.DumpString(); break;
+				case BTExprType.BinaryOp: result += data.binaryOp.DumpString(); break;
 			}
 
 			return result;
@@ -124,6 +121,11 @@ namespace Mpr.Expr
 				left.Evaluate(ref data, componentPtrs, leftData);
 				right.Evaluate(ref data, componentPtrs, rightData);
 				BTBinaryEval.Apply(type, op, leftData, rightData, result);
+			}
+
+			public string DumpString()
+			{
+				return $"({left} {op} {right}):{type}";
 			}
 		}
 
@@ -171,6 +173,7 @@ namespace Mpr.Expr
 			public readonly record struct Not(BTExprNodeRef inner);
 			public readonly record struct And(BTExprNodeRef left, BTExprNodeRef right);
 			public readonly record struct Or(BTExprNodeRef left, BTExprNodeRef right);
+			public readonly record struct Xor(BTExprNodeRef left, BTExprNodeRef right);
 
 			[StructLayout(LayoutKind.Explicit)]
 			public struct Data
@@ -178,6 +181,7 @@ namespace Mpr.Expr
 				[FieldOffset(0)] public Not not;
 				[FieldOffset(0)] public And and;
 				[FieldOffset(0)] public Or or;
+				[FieldOffset(0)] public Xor xor;
 			}
 
 			public enum BoolType
@@ -185,6 +189,7 @@ namespace Mpr.Expr
 				Not,
 				And,
 				Or,
+				Xor,
 			}
 
 			public Data data;
@@ -197,12 +202,13 @@ namespace Mpr.Expr
 					case BoolType.Not: return !data.not.inner.Evaluate<bool>(ref btData, componentPtrs);
 					case BoolType.And: return data.and.left.Evaluate<bool>(ref btData, componentPtrs) && data.and.right.Evaluate<bool>(ref btData, componentPtrs);
 					case BoolType.Or: return data.or.left.Evaluate<bool>(ref btData, componentPtrs) || data.or.right.Evaluate<bool>(ref btData, componentPtrs);
+					case BoolType.Xor: return data.xor.left.Evaluate<bool>(ref btData, componentPtrs) != data.xor.right.Evaluate<bool>(ref btData, componentPtrs);
 				}
-#if DEBUG
 				Debug.Log($"invalid BTBoolExpr type index {index}");
+#if DEBUG
 				throw new Exception();
 #else
-			return false;
+				return false;
 #endif
 			}
 
@@ -216,60 +222,8 @@ namespace Mpr.Expr
 				switch(index)
 				{
 					case BoolType.Not: return data.not.ToString();
-					case BoolType.And: return data.not.ToString();
-					case BoolType.Or: return data.not.ToString();
-				}
-				return "";
-			}
-		}
-
-		public struct Float3 : IBTExprEval
-		{
-			public readonly record struct Add(BTExprNodeRef left, BTExprNodeRef right);
-			public readonly record struct Sub(BTExprNodeRef left, BTExprNodeRef right);
-
-			[StructLayout(LayoutKind.Explicit)]
-			public struct Data
-			{
-				[FieldOffset(0)] public Add add;
-				[FieldOffset(0)] public Sub sub;
-			}
-
-			public Data data;
-			public Float3Type index;
-
-			public enum Float3Type
-			{
-				Add,
-				Sub,
-			}
-
-			public float3 Evaluate(ref BTExprData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
-			{
-				switch(index)
-				{
-					case Float3Type.Add: return data.add.left.Evaluate<float3>(ref btData, componentPtrs) + data.add.right.Evaluate<float3>(ref btData, componentPtrs);
-					case Float3Type.Sub: return data.sub.left.Evaluate<float3>(ref btData, componentPtrs) + data.sub.right.Evaluate<float3>(ref btData, componentPtrs);
-				}
-#if DEBUG
-				Debug.Log($"invalid BTBoolExpr type index {index}");
-				throw new Exception();
-#else
-			return false;
-#endif
-			}
-
-			public void Evaluate(ref BTExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
-			{
-				SpanMarshal.Cast<byte, float3>(result)[0] = Evaluate(ref data, componentPtrs);
-			}
-
-			public string DumpString()
-			{
-				switch(index)
-				{
-					case Float3Type.Add: return data.add.ToString();
-					case Float3Type.Sub: return data.sub.ToString();
+					case BoolType.And: return data.and.ToString();
+					case BoolType.Or: return data.or.ToString();
 				}
 				return "";
 			}
