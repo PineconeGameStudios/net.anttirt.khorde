@@ -20,7 +20,7 @@ namespace Mpr.Expr
 			if(index == -1)
 				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
 
-			expr.type = BTExpr.ExprType.ReadField;
+			expr.type = BTExpr.BTExprType.ReadField;
 			expr.data.readField = new BTExpr.ReadField
 			{
 				componentIndex = (byte)index,

@@ -56,9 +56,9 @@ namespace Mpr.Expr
 	public struct BTExpr
 	{
 		public Data data;
-		public ExprType type;
+		public BTExprType type;
 
-		public enum ExprType : byte
+		public enum BTExprType : byte
 		{
 			ReadField,
 			Bool,
@@ -77,10 +77,10 @@ namespace Mpr.Expr
 		{
 			switch(type)
 			{
-				case ExprType.ReadField: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case ExprType.Bool: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case ExprType.Float3: this.data.@float3.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case ExprType.BinaryOp: this.data.binaryOp.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case BTExprType.ReadField: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case BTExprType.Bool: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case BTExprType.Float3: this.data.@float3.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case BTExprType.BinaryOp: this.data.binaryOp.Evaluate(ref data, outputIndex, componentPtrs, result); return;
 			}
 #if DEBUG
 			throw new Exception();
@@ -102,9 +102,9 @@ namespace Mpr.Expr
 
 			switch(type)
 			{
-				case ExprType.ReadField: result += data.readField.DumpString(); break;
-				case ExprType.Bool: result += data.@bool.DumpString(); break;
-				case ExprType.Float3: result += data.@float3.DumpString(); break;
+				case BTExprType.ReadField: result += data.readField.DumpString(); break;
+				case BTExprType.Bool: result += data.@bool.DumpString(); break;
+				case BTExprType.Float3: result += data.@float3.DumpString(); break;
 			}
 
 			return result;

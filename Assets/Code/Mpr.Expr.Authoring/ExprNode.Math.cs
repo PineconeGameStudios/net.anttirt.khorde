@@ -26,7 +26,7 @@ namespace Mpr.Expr
 
 		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
-			expr.type = BTExpr.ExprType.BinaryOp;
+			expr.type = BTExpr.BTExprType.BinaryOp;
 
 			BTMathType type;
 

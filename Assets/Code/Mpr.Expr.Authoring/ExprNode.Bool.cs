@@ -12,7 +12,7 @@ namespace Mpr.Expr
 
 		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
-			expr.type = BTExpr.ExprType.Bool;
+			expr.type = BTExpr.BTExprType.Bool;
 			expr.data.@bool = new BTExpr.Bool
 			{
 				index = BTExpr.Bool.BoolType.And,
@@ -42,7 +42,7 @@ namespace Mpr.Expr
 
 		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
-			expr.type = BTExpr.ExprType.Bool;
+			expr.type = BTExpr.BTExprType.Bool;
 			expr.data.@bool = new BTExpr.Bool
 			{
 				index = BTExpr.Bool.BoolType.Or,
@@ -72,7 +72,7 @@ namespace Mpr.Expr
 
 		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
-			expr.type = BTExpr.ExprType.Bool;
+			expr.type = BTExpr.BTExprType.Bool;
 			expr.data.@bool = new BTExpr.Bool
 			{
 				index = BTExpr.Bool.BoolType.Not,

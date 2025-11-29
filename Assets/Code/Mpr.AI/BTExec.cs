@@ -8,11 +8,11 @@ namespace Mpr.AI.BT
 	/// </summary>
 	public struct BTExec
 	{
-		public Type type;
+		public BTExecType type;
 		[Tooltip("Index of this node within its parent Sequence")]
 		public Data data;
 
-		public enum Type : byte
+		public enum BTExecType : byte
 		{
 			Nop,
 			Root,
@@ -44,15 +44,15 @@ namespace Mpr.AI.BT
 
 			switch(type)
 			{
-				case Type.Nop: break;
-				case Type.Root: result += data.root.DumpString(); break;
-				case Type.Sequence: result += data.sequence.DumpString(); break;
-				case Type.Selector: result += data.selector.DumpString(); break;
-				case Type.WriteField: result += data.writeField.DumpString(); break;
-				case Type.Wait: result += data.wait.DumpString(); break;
-				case Type.Fail: result += data.fail.DumpString(); break;
-				case Type.Optional: result += data.optional.DumpString(); break;
-				case Type.Catch: result += data.@catch.DumpString(); break;
+				case BTExecType.Nop: break;
+				case BTExecType.Root: result += data.root.DumpString(); break;
+				case BTExecType.Sequence: result += data.sequence.DumpString(); break;
+				case BTExecType.Selector: result += data.selector.DumpString(); break;
+				case BTExecType.WriteField: result += data.writeField.DumpString(); break;
+				case BTExecType.Wait: result += data.wait.DumpString(); break;
+				case BTExecType.Fail: result += data.fail.DumpString(); break;
+				case BTExecType.Optional: result += data.optional.DumpString(); break;
+				case BTExecType.Catch: result += data.@catch.DumpString(); break;
 				default: break;
 			}
 

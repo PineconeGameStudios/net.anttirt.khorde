@@ -29,7 +29,7 @@ namespace Mpr.AI.BT
 			if(stack.Length == 0)
 			{
 				if(trace.IsCreated)
-					trace.Add(new(data.Root, BTExec.Type.Root, BTExecTrace.Event.Init, stack.Length, -1));
+					trace.Add(new(data.Root, BTExec.BTExecType.Root, BTExecTrace.Event.Init, stack.Length, -1));
 
 				stack.Add(data.Root);
 			}
@@ -48,7 +48,7 @@ namespace Mpr.AI.BT
 				if(trace.IsCreated && cycle == 0)
 					trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, stack.Length, cycle));
 
-				if(cycle == 0 && node.type != BTExec.Type.Root && node.type != BTExec.Type.Wait)
+				if(cycle == 0 && node.type != BTExec.BTExecType.Root && node.type != BTExec.BTExecType.Wait)
 					throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
 
 				void Trace(ref BTExec node, BTExecTrace.Event @event)
@@ -76,7 +76,7 @@ namespace Mpr.AI.BT
 					for(int i = stack.Length - 1; i > 0; --i)
 					{
 						ref var stackNode = ref data.GetNode(stack[i].nodeId);
-						if(stackNode.type == BTExec.Type.Catch)
+						if(stackNode.type == BTExec.BTExecType.Catch)
 						{
 							Trace2(ref data, i, BTExecTrace.Event.Catch);
 							stack.RemoveRange(i, stack.Length - i);
@@ -105,11 +105,11 @@ namespace Mpr.AI.BT
 
 				switch(node.type)
 				{
-					case BTExec.Type.Nop:
+					case BTExec.BTExecType.Nop:
 						Return(ref data, ref node);
 						break;
 
-					case BTExec.Type.Root:
+					case BTExec.BTExecType.Root:
 						if(stack.Length != 1)
 							throw new Exception($"Root should always be the first stack frame, found at {stack.Length}");
 
@@ -125,7 +125,7 @@ namespace Mpr.AI.BT
 						Call(ref data, node.data.root.child);
 						break;
 
-					case BTExec.Type.Sequence:
+					case BTExec.BTExecType.Sequence:
 						if(stack[^1].childIndex < node.data.sequence.children.Length)
 						{
 							Call(ref data, node.data.sequence.children[stack[^1].childIndex]);
@@ -137,7 +137,7 @@ namespace Mpr.AI.BT
 
 						break;
 
-					case BTExec.Type.Selector:
+					case BTExec.BTExecType.Selector:
 						if(stack[^1].childIndex == 0)
 						{
 							bool any = false;
@@ -166,12 +166,12 @@ namespace Mpr.AI.BT
 						}
 						break;
 
-					case BTExec.Type.WriteField:
+					case BTExec.BTExecType.WriteField:
 						node.data.writeField.Evaluate(ref data, componentPtrs);
 						Return(ref data, ref node);
 						break;
 
-					case BTExec.Type.Wait:
+					case BTExec.BTExecType.Wait:
 						if(node.data.wait.until.Evaluate<bool>(ref data.exprData, componentPtrs))
 						{
 							Return(ref data, ref node);
@@ -185,11 +185,11 @@ namespace Mpr.AI.BT
 
 						break;
 
-					case BTExec.Type.Fail:
+					case BTExec.BTExecType.Fail:
 						Fail(ref data, ref node);
 						break;
 
-					case BTExec.Type.Optional:
+					case BTExec.BTExecType.Optional:
 						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data.exprData, componentPtrs))
 						{
 							Call(ref data, node.data.optional.child);
@@ -200,7 +200,7 @@ namespace Mpr.AI.BT
 						}
 						break;
 
-					case BTExec.Type.Catch:
+					case BTExec.BTExecType.Catch:
 						if(stack[^1].childIndex == 0)
 						{
 							Call(ref data, node.data.@catch.child);

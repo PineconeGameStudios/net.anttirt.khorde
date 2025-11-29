@@ -56,14 +56,14 @@ namespace Mpr.AI.BT.Test
 
 				AssertTrace
 				(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Sequence, 5, 3, Event.Call),
-					Trace(Type.WriteField, 3, 4, Event.Return),
-					Trace(Type.Sequence, 5, 3, Event.Call),
-					Trace(Type.Wait, 4, 4, Event.Wait)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Sequence, 5, 3, Event.Call),
+					Trace(BTExecType.WriteField, 3, 4, Event.Return),
+					Trace(BTExecType.Sequence, 5, 3, Event.Call),
+					Trace(BTExecType.Wait, 4, 4, Event.Wait)
 				);
 
 				trace.Clear();
@@ -72,8 +72,8 @@ namespace Mpr.AI.BT.Test
 
 				AssertTrace
 				(
-					Trace(Type.Wait, 4, 4, Event.Start),
-					Trace(Type.Wait, 4, 4, Event.Wait)
+					Trace(BTExecType.Wait, 4, 4, Event.Start),
+					Trace(BTExecType.Wait, 4, 4, Event.Wait)
 				);
 
 				trace.Clear();
@@ -84,14 +84,14 @@ namespace Mpr.AI.BT.Test
 
 				AssertTrace
 				(
-					Trace(Type.Wait, 4, 4, Event.Start),
-					Trace(Type.Wait, 4, 4, Event.Return),
-					Trace(Type.Sequence, 5, 3, Event.Return),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Sequence, 8, 3, Event.Call),
-					Trace(Type.WriteField, 6, 4, Event.Return),
-					Trace(Type.Sequence, 8, 3, Event.Call),
-					Trace(Type.Wait, 7, 4, Event.Wait)
+					Trace(BTExecType.Wait, 4, 4, Event.Start),
+					Trace(BTExecType.Wait, 4, 4, Event.Return),
+					Trace(BTExecType.Sequence, 5, 3, Event.Return),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Sequence, 8, 3, Event.Call),
+					Trace(BTExecType.WriteField, 6, 4, Event.Return),
+					Trace(BTExecType.Sequence, 8, 3, Event.Call),
+					Trace(BTExecType.Wait, 7, 4, Event.Wait)
 				);
 
 			}
@@ -104,7 +104,7 @@ namespace Mpr.AI.BT.Test
 
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());
 
-		static BTExecTrace Trace(Type type, ushort nodeId, int depth, Event @event)
+		static BTExecTrace Trace(BTExecType type, ushort nodeId, int depth, Event @event)
 			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, depth, 0);
 
 		[TearDown]

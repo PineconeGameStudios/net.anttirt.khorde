@@ -53,7 +53,7 @@ namespace Mpr.AI.BT.Test
 
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());
 
-		static BTExecTrace Trace(Type type, ushort nodeId, int depth, Event @event)
+		static BTExecTrace Trace(BTExecType type, ushort nodeId, int depth, Event @event)
 			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, depth, 0);
 
 		struct ManagedStruct
@@ -92,7 +92,7 @@ namespace Mpr.AI.BT.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
-			execs[1].type = BTExec.Type.Root;
+			execs[1].type = BTExec.BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
@@ -105,11 +105,11 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, default, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Nop, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Nop, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 				);
 			}
 			finally
@@ -127,10 +127,10 @@ namespace Mpr.AI.BT.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
-			execs[1].type = Type.Root;
+			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
-			execs[2].type = Type.Fail;
+			execs[2].type = BTExecType.Fail;
 			execs[2].data.fail = new Fail { };
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
@@ -143,11 +143,11 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, default, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Fail, 2, 2, Event.Fail),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Fail, 2, 2, Event.Fail),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
 			finally
@@ -165,13 +165,13 @@ namespace Mpr.AI.BT.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
-			execs[1].type = Type.Root;
+			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
-			execs[2].type = Type.Catch;
+			execs[2].type = BTExecType.Catch;
 			execs[2].data.@catch = new Catch { child = new BTExecNodeId(3) };
 
-			execs[3].type = Type.Fail;
+			execs[3].type = BTExecType.Fail;
 			execs[3].data.fail = new Fail { };
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
@@ -184,13 +184,13 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, default, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Catch, 2, 2, Event.Call),
-					Trace(Type.Fail, 3, 3, Event.Fail),
-					Trace(Type.Catch, 2, 2, Event.Catch),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Catch, 2, 2, Event.Call),
+					Trace(BTExecType.Fail, 3, 3, Event.Fail),
+					Trace(BTExecType.Catch, 2, 2, Event.Catch),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
 			finally
@@ -208,17 +208,17 @@ namespace Mpr.AI.BT.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
-			execs[1].type = Type.Root;
+			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
-			execs[2].type = Type.Sequence;
+			execs[2].type = BTExecType.Sequence;
 			execs[2].data.sequence = new Sequence { };
 			var children2 = builder.Allocate(ref execs[2].data.sequence.children, 2);
 			children2[0] = new BTExecNodeId(3);
 			children2[1] = new BTExecNodeId(4);
 
-			execs[3].type = Type.Nop;
-			execs[4].type = Type.Nop;
+			execs[3].type = BTExecType.Nop;
+			execs[4].type = BTExecType.Nop;
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
@@ -230,15 +230,15 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, default, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Nop, 3, 3, Event.Return),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Nop, 4, 3, Event.Return),
-					Trace(Type.Sequence, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Nop, 3, 3, Event.Return),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Nop, 4, 3, Event.Return),
+					Trace(BTExecType.Sequence, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
 			finally
@@ -256,19 +256,19 @@ namespace Mpr.AI.BT.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
-			execs[1].type = Type.Root;
+			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
-			execs[2].type = Type.Selector;
+			execs[2].type = BTExecType.Selector;
 			execs[2].data.selector = new Selector { };
 			var children2 = builder.Allocate(ref execs[2].data.selector.children, 3);
 			children2[0] = new ConditionalBlock { condition = False, nodeId = new BTExecNodeId(3) };
 			children2[1] = new ConditionalBlock { condition = True, nodeId = new BTExecNodeId(4) };
 			children2[2] = new ConditionalBlock { condition = True, nodeId = new BTExecNodeId(5) };
 
-			execs[3].type = Type.Nop;
-			execs[4].type = Type.Nop;
-			execs[5].type = Type.Nop;
+			execs[3].type = BTExecType.Nop;
+			execs[4].type = BTExecType.Nop;
+			execs[5].type = BTExecType.Nop;
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
@@ -280,13 +280,13 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, default, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Selector, 2, 2, Event.Call),
-					Trace(Type.Nop, 4, 3, Event.Return),
-					Trace(Type.Selector, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Selector, 2, 2, Event.Call),
+					Trace(BTExecType.Nop, 4, 3, Event.Return),
+					Trace(BTExecType.Selector, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
 			finally
@@ -304,17 +304,17 @@ namespace Mpr.AI.BT.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 
-			execs[1].type = Type.Root;
+			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
-			execs[2].type = Type.Sequence;
+			execs[2].type = BTExecType.Sequence;
 			execs[2].data.sequence = new Sequence { };
 			var children2 = builder.Allocate(ref execs[2].data.sequence.children, 2);
 			children2[0] = new BTExecNodeId(3);
 			children2[1] = new BTExecNodeId(4);
 
-			execs[3].type = Type.Fail;
-			execs[4].type = Type.Nop;
+			execs[3].type = BTExecType.Fail;
+			execs[4].type = BTExecType.Nop;
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
@@ -326,12 +326,12 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, default, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Fail, 3, 3, Event.Fail),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Fail, 3, 3, Event.Fail),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
 			finally
@@ -352,8 +352,8 @@ namespace Mpr.AI.BT.Test
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetSequence(ref builder, execs, 3, 4);
 			execs[3].SetData(new Catch { child = new BTExecNodeId(5) });
-			execs[4].type = Type.Nop;
-			execs[5].type = Type.Fail;
+			execs[4].type = BTExecType.Nop;
+			execs[5].type = BTExecType.Fail;
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
@@ -365,17 +365,17 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, default, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Catch, 3, 3, Event.Call),
-					Trace(Type.Fail, 5, 4, Event.Fail),
-					Trace(Type.Catch, 3, 3, Event.Catch),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Nop, 4, 3, Event.Return),
-					Trace(Type.Sequence, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Catch, 3, 3, Event.Call),
+					Trace(BTExecType.Fail, 5, 4, Event.Fail),
+					Trace(BTExecType.Catch, 3, 3, Event.Catch),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Nop, 4, 3, Event.Return),
+					Trace(BTExecType.Sequence, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
 			finally
@@ -389,7 +389,7 @@ namespace Mpr.AI.BT.Test
 		{
 			exprs[exprCount] = new BTExpr
 			{
-				type = BTExpr.ExprType.ReadField,
+				type = BTExpr.BTExprType.ReadField,
 				data = new BTExpr.Data
 				{
 					readField = new BTExpr.ReadField
@@ -434,9 +434,9 @@ namespace Mpr.AI.BT.Test
 			var TestComponent1_field2 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field2)));
 
 			execs[3].SetData(new Optional { condition = TestComponent1_field1, child = new BTExecNodeId(4) });
-			execs[4].type = Type.Nop;
+			execs[4].type = BTExecType.Nop;
 			execs[5].SetData(new Optional { condition = TestComponent1_field2, child = new BTExecNodeId(6) });
-			execs[6].type = Type.Nop;
+			execs[6].type = BTExecType.Nop;
 
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
@@ -453,17 +453,17 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, componentPtrs, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Optional, 3, 3, Event.Return),
-					Trace(Type.Sequence, 2, 2, Event.Call),
-					Trace(Type.Optional, 5, 3, Event.Call),
-					Trace(Type.Nop, 6, 4, Event.Return),
-					Trace(Type.Optional, 5, 3, Event.Return),
-					Trace(Type.Sequence, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Optional, 3, 3, Event.Return),
+					Trace(BTExecType.Sequence, 2, 2, Event.Call),
+					Trace(BTExecType.Optional, 5, 3, Event.Call),
+					Trace(BTExecType.Nop, 6, 4, Event.Return),
+					Trace(BTExecType.Optional, 5, 3, Event.Return),
+					Trace(BTExecType.Sequence, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 				);
 			}
 			finally
@@ -504,11 +504,11 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, componentPtrs, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.WriteField, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.WriteField, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 				);
 
 				Assert.IsTrue(tc1.field1);
@@ -551,10 +551,10 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, componentPtrs, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Wait, 2, 2, Event.Wait)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Wait, 2, 2, Event.Wait)
 				);
 
 				trace.Clear();
@@ -562,8 +562,8 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, componentPtrs, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Wait, 2, 2, Event.Start),
-					Trace(Type.Wait, 2, 2, Event.Wait)
+					Trace(BTExecType.Wait, 2, 2, Event.Start),
+					Trace(BTExecType.Wait, 2, 2, Event.Wait)
 				);
 
 				trace.Clear();
@@ -573,11 +573,11 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, componentPtrs, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Wait, 2, 2, Event.Start),
-					Trace(Type.Wait, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.Wait, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Wait, 2, 2, Event.Start),
+					Trace(BTExecType.Wait, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Wait, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 				);
 			}
 			finally
@@ -646,7 +646,7 @@ namespace Mpr.AI.BT.Test
 			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
 			types[0] = TypeManager.GetTypeInfo<TestComponent2>().StableTypeHash;
 
-			execs[1].type = BTExec.Type.Root;
+			execs[1].type = BTExec.BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
 			//BTBinaryOp op = BTBinaryOp.Add;
@@ -663,7 +663,7 @@ namespace Mpr.AI.BT.Test
 			var offset1 = ExprAuthoring.WriteConstant(right, out var length1, constStorage);
 			var const1 = BTExprNodeRef.Const(offset1, length1);
 
-			exprs[0].type = BTExpr.ExprType.BinaryOp;
+			exprs[0].type = BTExpr.BTExprType.BinaryOp;
 			exprs[0].data.binaryOp = new BTExpr.BinaryOp
 			{
 				left = const0,
@@ -691,11 +691,11 @@ namespace Mpr.AI.BT.Test
 				asset.Execute(ref state, stack, componentPtrs, 0, trace);
 
 				AssertTrace(
-					Trace(Type.Root, 1, 0, Event.Init),
-					Trace(Type.Root, 1, 1, Event.Start),
-					Trace(Type.Root, 1, 1, Event.Call),
-					Trace(Type.WriteField, 2, 2, Event.Return),
-					Trace(Type.Root, 1, 1, Event.Yield)
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.WriteField, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
 				);
 
 				Assert.AreEqual(result, field.GetValue(tc2));

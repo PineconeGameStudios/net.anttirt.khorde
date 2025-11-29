@@ -21,7 +21,7 @@ namespace Mpr.AI.BT.Nodes
 			if(componentIndex == -1)
 				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
 
-			exec.type = BTExec.Type.WriteField;
+			exec.type = BTExec.BTExecType.WriteField;
 			exec.data.writeField = new WriteField
 			{
 				componentIndex = (byte)componentIndex,

@@ -34,7 +34,7 @@ namespace Mpr.AI.BT.Nodes
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			exec.type = BTExec.Type.Sequence;
+			exec.type = BTExec.BTExecType.Sequence;
 			exec.data.sequence = new BT.Sequence { };
 			var outputPorts = builder.Allocate(ref exec.data.sequence.children, outputPortCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
@@ -76,7 +76,7 @@ namespace Mpr.AI.BT.Nodes
 	{
 		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			exec.type = BTExec.Type.Selector;
+			exec.type = BTExec.BTExecType.Selector;
 			exec.data.selector = new BT.Selector { };
 
 			var outputPorts = builder.Allocate(ref exec.data.selector.children, blockCount);
@@ -125,7 +125,7 @@ namespace Mpr.AI.BT.Nodes
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			exec.type = BTExec.Type.Optional;
+			exec.type = BTExec.BTExecType.Optional;
 			exec.data.optional = new BT.Optional
 			{
 				child = context.GetTargetNodeId(GetOutputPort(0)),
@@ -161,7 +161,7 @@ namespace Mpr.AI.BT.Nodes
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			exec.type = BTExec.Type.Fail;
+			exec.type = BTExec.BTExecType.Fail;
 			exec.data.fail = new BT.Fail { };
 		}
 
@@ -181,7 +181,7 @@ namespace Mpr.AI.BT.Nodes
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			exec.type = BTExec.Type.Catch;
+			exec.type = BTExec.BTExecType.Catch;
 			exec.data.@catch = new BT.Catch
 			{
 				child = context.GetTargetNodeId(GetOutputPort(0)),
@@ -210,7 +210,7 @@ namespace Mpr.AI.BT.Nodes
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			exec.type = BTExec.Type.Wait;
+			exec.type = BTExec.BTExecType.Wait;
 			exec.data.wait = new BT.Wait
 			{
 				until = context.GetExprNodeRef(GetInputPort(1)),

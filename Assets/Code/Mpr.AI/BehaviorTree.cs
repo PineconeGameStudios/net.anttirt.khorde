@@ -27,12 +27,12 @@ namespace Mpr.AI.BT
 	public struct BTExecTrace : IBufferElementData
 	{
 		public BTExecNodeId nodeId;
-		public BTExec.Type type;
+		public BTExec.BTExecType type;
 		public Event @event;
 		public int depth;
 		public int cycle;
 
-		public BTExecTrace(BTExecNodeId nodeId, BTExec.Type type, Event @event, int depth, int cycle)
+		public BTExecTrace(BTExecNodeId nodeId, BTExec.BTExecType type, Event @event, int depth, int cycle)
 		{
 			this.nodeId = nodeId;
 			this.type = type;
