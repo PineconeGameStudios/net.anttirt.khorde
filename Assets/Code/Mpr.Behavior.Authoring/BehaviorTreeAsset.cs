@@ -1,6 +1,7 @@
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Serialization;
+using UnityEditor;
 using UnityEngine;
 
 namespace Mpr.Behavior
@@ -8,6 +9,13 @@ namespace Mpr.Behavior
 	public class BehaviorTreeAsset : ScriptableObject
 	{
 		public TextAsset bakedGraph;
+
+		private void OnEnable()
+		{
+			var icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Icons/BehaviorGraph.psd");
+			if(icon != null)
+				EditorGUIUtility.SetIconForObject(this, icon);
+		}
 
 		public BlobAssetReference<BTData> LoadPersistent()
 		{

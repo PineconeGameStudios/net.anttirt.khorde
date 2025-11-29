@@ -25,26 +25,30 @@ namespace Mpr.Behavior
 			if(isSubgraph)
 			{
 				// not importing subgraphs
-				return;
+				var asset = ScriptableObject.CreateInstance<BehaviorTreeSubgraphAsset>();
+				ctx.AddObjectToAsset("BehaviorTreeSubgraph", asset);
+				ctx.SetMainObject(asset);
 			}
-
-			var asset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
-
-			var writer = new MemoryBinaryWriter();
-			graph.Bake(writer);
-			ReadOnlySpan<byte> data;
-
-			unsafe
+			else
 			{
-				data = new ReadOnlySpan<byte>(writer.Data, writer.Length);
+				var asset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+
+				var writer = new MemoryBinaryWriter();
+				graph.Bake(writer);
+				ReadOnlySpan<byte> data;
+
+				unsafe
+				{
+					data = new ReadOnlySpan<byte>(writer.Data, writer.Length);
+				}
+
+				asset.bakedGraph = new TextAsset(data);
+				asset.bakedGraph.name = "Data";
+
+				ctx.AddObjectToAsset("Data", asset.bakedGraph);
+				ctx.AddObjectToAsset("BehaviorTree", asset);
+				ctx.SetMainObject(asset);
 			}
-
-			asset.bakedGraph = new TextAsset(data);
-			asset.bakedGraph.name = "Data";
-
-			ctx.AddObjectToAsset("Data", asset.bakedGraph);
-			ctx.AddObjectToAsset("BehaviorTree", asset);
-			ctx.SetMainObject(asset);
 		}
 	}
 }
