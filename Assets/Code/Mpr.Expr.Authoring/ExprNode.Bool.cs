@@ -2,11 +2,11 @@ using System;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.Expr
+namespace Mpr.Expr.Authoring
 {
 	[Serializable]
 	[NodeCategory("Boolean")]
-	internal class AndBool : ExprNode
+	internal class AndBool : ExprBase
 	{
 		public override string Title => "And (bool)";
 
@@ -36,7 +36,7 @@ namespace Mpr.Expr
 
 	[Serializable]
 	[NodeCategory("Boolean")]
-	internal class OrBool : ExprNode
+	internal class OrBool : ExprBase
 	{
 		public override string Title => "Or (bool)";
 
@@ -66,7 +66,7 @@ namespace Mpr.Expr
 
 	[Serializable]
 	[NodeCategory("Boolean")]
-	internal class NotBool : ExprNode
+	internal class NotBool : ExprBase
 	{
 		public override string Title => "Not (bool)";
 

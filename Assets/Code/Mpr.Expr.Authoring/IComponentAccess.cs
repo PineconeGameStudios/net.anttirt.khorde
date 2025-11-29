@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Mpr.Expr
+namespace Mpr.Expr.Authoring
 {
 	public interface IComponentAccess
 	{

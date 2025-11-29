@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.Expr
+namespace Mpr.Expr.Authoring
 {
 	public class ExprBakingContext : IDisposable
 	{

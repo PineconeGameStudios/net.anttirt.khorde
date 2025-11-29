@@ -5,9 +5,9 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Mpr.Expr
+namespace Mpr.Expr.Authoring
 {
-	internal abstract class OpBase<T, OpT> : ExprNode where T : unmanaged where OpT : unmanaged, IBTBinaryOp
+	internal abstract class OpBase<T, OpT> : ExprBase where T : unmanaged where OpT : unmanaged, IBTBinaryOp
 	{
 		static StyleSheet s_styleSheet;
 

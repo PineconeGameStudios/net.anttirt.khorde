@@ -2,7 +2,7 @@
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
-using Mpr.Expr;
+using Mpr.Expr.Authoring;
 
 namespace Mpr.AI.BT.Nodes
 {

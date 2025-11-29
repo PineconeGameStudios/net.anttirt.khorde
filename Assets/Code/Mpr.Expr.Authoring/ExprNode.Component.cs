@@ -3,11 +3,11 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.Expr
+namespace Mpr.Expr.Authoring
 {
 	[Serializable]
 	[NodeCategory("Component")]
-	public abstract class ComponentReaderNode<T> : ExprNode, IComponentAccess where T : Unity.Entities.IComponentData
+	public abstract class ComponentReaderNode<T> : ExprBase, IComponentAccess where T : Unity.Entities.IComponentData
 	{
 		public Type ComponentType => typeof(T);
 		public bool IsReadOnly => true;

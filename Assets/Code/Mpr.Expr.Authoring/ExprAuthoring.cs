@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
-namespace Mpr.Expr
+namespace Mpr.Expr.Authoring
 {
 	public static class ExprAuthoring
 	{

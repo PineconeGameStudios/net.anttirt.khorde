@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
-using Mpr.Expr;
+using Mpr.Expr.Authoring;
 
 namespace Mpr.AI.BT.Nodes
 {

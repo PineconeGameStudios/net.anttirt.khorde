@@ -3,9 +3,9 @@ using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
 
-namespace Mpr.Expr
+namespace Mpr.Expr.Authoring
 {
-	internal abstract class SwizzleBase : ExprNode
+	internal abstract class SwizzleBase : ExprBase
 	{
 		protected enum BaseType
 		{
@@ -144,9 +144,9 @@ namespace Mpr.Expr
 	}
 
 	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt : SwizzleBase<int> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt2 : SwizzleBase<int> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt3 : SwizzleBase<int> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt4 : SwizzleBase<int> { }
+	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt2 : SwizzleBase<int2> { }
+	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt3 : SwizzleBase<int3> { }
+	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt4 : SwizzleBase<int4> { }
 	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleFloat : SwizzleBase<float> { }
 	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleFloat2 : SwizzleBase<float2> { }
 	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleFloat3 : SwizzleBase<float3> { }
