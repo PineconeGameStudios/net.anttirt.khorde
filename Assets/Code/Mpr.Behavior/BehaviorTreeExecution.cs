@@ -4,7 +4,7 @@ using Unity.Entities;
 using Mpr.Blobs;
 using Mpr.Expr;
 
-namespace Mpr.AI
+namespace Mpr.Behavior
 {
 	public static class BehaviorTreeExecution
 	{

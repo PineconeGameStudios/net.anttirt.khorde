@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Mpr.Expr;
 
-namespace Mpr.AI
+namespace Mpr.Behavior
 {
 	public struct BehaviorTree : ISharedComponentData
 	{

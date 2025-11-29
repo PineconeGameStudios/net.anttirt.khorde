@@ -2,7 +2,7 @@
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.AI.Authoring
+namespace Mpr.Behavior.Authoring
 {
 	[Serializable]
 	[UseWithGraph(typeof(BehaviorTreeGraph))]

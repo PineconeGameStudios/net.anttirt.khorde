@@ -227,7 +227,7 @@ MonoBehaviour:
         - rid: 8259216277413823388
         m_Title: 
     - rid: 8259216277413823365
-      type: {class: BehaviorTreeGraph, ns: Mpr.AI, asm: Mpr.AI.Authoring}
+      type: {class: BehaviorTreeGraph, ns: Mpr.Behavior, asm: Mpr.Behavior.Authoring}
       data: 
     - rid: 8259216277413823380
       type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -537,7 +537,7 @@ MonoBehaviour:
       type: {class: ReadMoveTarget, ns: Mpr.Game, asm: Mpr.Game.Authoring}
       data: 
     - rid: 8259216277413823397
-      type: {class: 'Constant`1[[Mpr.AI.Authoring.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823398
       type: {class: WriteMoveTarget, ns: Mpr.Game, asm: Mpr.Game.Authoring}
@@ -547,10 +547,10 @@ MonoBehaviour:
       data:
         m_Value: 0
     - rid: 8259216277413823400
-      type: {class: 'Constant`1[[Mpr.AI.Authoring.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823401
-      type: {class: Wait, ns: Mpr.AI.Authoring, asm: Mpr.AI.Authoring}
+      type: {class: Wait, ns: Mpr.Behavior.Authoring, asm: Mpr.Behavior.Authoring}
       data: 
     - rid: 8259216277413823402
       type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -606,10 +606,10 @@ MonoBehaviour:
       data:
         m_Value: 2
     - rid: 8259216277413823418
-      type: {class: 'Constant`1[[Mpr.AI.Authoring.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823419
-      type: {class: Sequence, ns: Mpr.AI.Authoring, asm: Mpr.AI.Authoring}
+      type: {class: Sequence, ns: Mpr.Behavior.Authoring, asm: Mpr.Behavior.Authoring}
       data: 
     - rid: 8259216277413823420
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -688,7 +688,7 @@ MonoBehaviour:
         m_Name: exec
         m_UniqueId: 
         m_DataType:
-          m_Identification: Mpr.AI.Authoring.Exec, Mpr.AI.Authoring, Version=0.0.0.0,
+          m_Identification: Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
         m_IsExposed: 0
         m_Scope: 0
@@ -699,7 +699,7 @@ MonoBehaviour:
         m_Modifiers: 1
         m_VariableFlags: 0
     - rid: 8259216277413823424
-      type: {class: 'Constant`1[[Mpr.AI.Authoring.Exec, Mpr.AI.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823425
       type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}

@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace Mpr.AI
+namespace Mpr.Behavior
 {
 	/// <summary>
 	/// Base class for objects that can be persistently attached to Editor

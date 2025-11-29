@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Mpr.AI
+namespace Mpr.Behavior
 {
 	public class BehaviorTreeGraphViewController : EditorUpdatableObject, IGraphViewController
 	{

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEditor;
-using static Mpr.AI.BTExec;
-using static Mpr.AI.BTExecTrace;
+using static Mpr.Behavior.BTExec;
+using static Mpr.Behavior.BTExecTrace;
 using Mpr.Expr;
 
-namespace Mpr.AI.Test
+namespace Mpr.Behavior.Test
 {
 	[TestFixture]
 	public class BehaviorTreeGraphTests

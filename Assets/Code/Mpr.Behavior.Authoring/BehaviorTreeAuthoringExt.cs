@@ -1,8 +1,8 @@
 using Mpr.Expr;
 using Unity.Entities;
-using static Mpr.AI.BTExec;
+using static Mpr.Behavior.BTExec;
 
-namespace Mpr.AI
+namespace Mpr.Behavior
 {
 	public static class BehaviorTreeAuthoringExt
 	{

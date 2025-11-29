@@ -7,10 +7,10 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Mpr.Expr;
 using Mpr.Expr.Authoring;
-using static Mpr.AI.BTExec;
-using static Mpr.AI.BTExecTrace;
+using static Mpr.Behavior.BTExec;
+using static Mpr.Behavior.BTExecTrace;
 
-namespace Mpr.AI.Test
+namespace Mpr.Behavior.Test
 {
 	[TestFixture]
 	public class BehaviorTreeTests

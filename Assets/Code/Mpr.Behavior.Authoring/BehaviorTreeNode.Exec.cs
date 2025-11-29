@@ -2,7 +2,7 @@
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.AI.Authoring
+namespace Mpr.Behavior.Authoring
 {
 	[Serializable]
 	[NodeCategory("Execution")]
@@ -10,7 +10,7 @@ namespace Mpr.AI.Authoring
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			exec.SetData(new AI.Root { child = context.GetTargetNodeId(GetOutputPort(0)) });
+			exec.SetData(new Behavior.Root { child = context.GetTargetNodeId(GetOutputPort(0)) });
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
@@ -35,7 +35,7 @@ namespace Mpr.AI.Authoring
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.BTExecType.Sequence;
-			exec.data.sequence = new AI.Sequence { };
+			exec.data.sequence = new Behavior.Sequence { };
 			var outputPorts = builder.Allocate(ref exec.data.sequence.children, outputPortCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
 				outputPorts[i] = context.GetTargetNodeId(GetOutputPort(i));
@@ -77,7 +77,7 @@ namespace Mpr.AI.Authoring
 		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.BTExecType.Selector;
-			exec.data.selector = new AI.Selector { };
+			exec.data.selector = new Behavior.Selector { };
 
 			var outputPorts = builder.Allocate(ref exec.data.selector.children, blockCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
@@ -126,7 +126,7 @@ namespace Mpr.AI.Authoring
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.BTExecType.Optional;
-			exec.data.optional = new AI.Optional
+			exec.data.optional = new Behavior.Optional
 			{
 				child = context.GetTargetNodeId(GetOutputPort(0)),
 				condition = context.GetExprNodeRef(GetInputPort(1)),
@@ -162,7 +162,7 @@ namespace Mpr.AI.Authoring
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.BTExecType.Fail;
-			exec.data.fail = new AI.Fail { };
+			exec.data.fail = new Behavior.Fail { };
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
@@ -182,7 +182,7 @@ namespace Mpr.AI.Authoring
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.BTExecType.Catch;
-			exec.data.@catch = new AI.Catch
+			exec.data.@catch = new Behavior.Catch
 			{
 				child = context.GetTargetNodeId(GetOutputPort(0)),
 			};
@@ -211,7 +211,7 @@ namespace Mpr.AI.Authoring
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.BTExecType.Wait;
-			exec.data.wait = new AI.Wait
+			exec.data.wait = new Behavior.Wait
 			{
 				until = context.GetExprNodeRef(GetInputPort(1)),
 			};

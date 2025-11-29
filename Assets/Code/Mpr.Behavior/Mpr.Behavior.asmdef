@@ -1,16 +1,15 @@
 {
-    "name": "Mpr.AI.Systems",
-    "rootNamespace": "Mpr.AI",
+    "name": "Mpr.Behavior",
+    "rootNamespace": "Mpr.Behavior",
     "references": [
+        "GUID:a849e87fab625674291d81fb42f47cae",
         "GUID:2665a8d13d1b3f18800f46e256720795",
         "GUID:d8b63aba1907145bea998dd612889d6b",
         "GUID:e0cd26848372d4e5c891c569017e11f1",
         "GUID:734d92eba21c94caba915361bd5ac177",
-        "GUID:a5baed0c9693541a5bd947d336ec7659",
         "GUID:953adc2a6b8b4e3c8df5b728bcd546e9",
-        "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:a9f18e087468c3e46a22a5b4719e44a5",
-        "GUID:23c153863a83bb54b82ea0b4c9ed327a",
+        "GUID:f978e00eb6af5064c95d4d1823b104c3",
+        "GUID:7025072c73caf8f409b3d846f7f268f0",
         "GUID:07f90efd59ad1d84798b1949d158ad9a"
     ],
     "includePlatforms": [],

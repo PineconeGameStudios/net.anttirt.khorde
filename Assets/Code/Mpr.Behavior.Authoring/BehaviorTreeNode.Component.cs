@@ -4,7 +4,7 @@ using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Mpr.Expr.Authoring;
 
-namespace Mpr.AI.Authoring
+namespace Mpr.Behavior.Authoring
 {
 	[Serializable]
 	[NodeCategory("Component")]

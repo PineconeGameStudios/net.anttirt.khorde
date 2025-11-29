@@ -1,7 +1,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-namespace Mpr.AI
+namespace Mpr.Behavior
 {
 	public class BehaviorTreeAuthoring : MonoBehaviour
 	{

@@ -1,5 +1,5 @@
 {
-    "name": "Mpr.AI.Test",
+    "name": "Mpr.Behavior.Test",
     "rootNamespace": "",
     "references": [
         "GUID:a9f18e087468c3e46a22a5b4719e44a5",
