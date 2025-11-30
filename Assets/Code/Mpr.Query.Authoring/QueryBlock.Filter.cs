@@ -5,11 +5,22 @@ using Unity.Mathematics;
 
 namespace Mpr.Query.Authoring
 {
-	[UseWithContext(typeof(PassInt2), typeof(PassFloat2), typeof(PassEntity))]
+	public interface IFilter : INode
+	{
+		void Bake(ref QSFilter qsFilter, QueryBakingContext queryBakingContext);
+	}
+
+	[UseWithContext(typeof(IPass))]
 	[Serializable]
-	class ExpressionFilter : QueryBlockBase
+	class ExpressionFilter : QueryGraphBlockBase, IFilter
 	{
 		public override string Title => $"Expression Filter";
+
+		public void Bake(ref QSFilter qsFilter, QueryBakingContext queryBakingContext)
+		{
+			qsFilter.type = QSFilter.FilterType.Expression;
+			qsFilter.expr = queryBakingContext.GetExprNodeRef(GetInputPort(0));
+		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{

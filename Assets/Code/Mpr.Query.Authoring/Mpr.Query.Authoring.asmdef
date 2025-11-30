@@ -13,7 +13,8 @@
         "GUID:a5baed0c9693541a5bd947d336ec7659",
         "GUID:a849e87fab625674291d81fb42f47cae",
         "GUID:c38fb62397af04c51b143415e1db6d90",
-        "GUID:bb37301e0d8cf5547ac941c396c1a95e"
+        "GUID:bb37301e0d8cf5547ac941c396c1a95e",
+        "GUID:07f90efd59ad1d84798b1949d158ad9a"
     ],
     "includePlatforms": [],
     "excludePlatforms": [
@@ -42,7 +43,7 @@
         "GameCoreScarlett"
     ],
     "allowUnsafeCode": true,
-    "overrideReferences": false,
+    "overrideReferences": true,
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],

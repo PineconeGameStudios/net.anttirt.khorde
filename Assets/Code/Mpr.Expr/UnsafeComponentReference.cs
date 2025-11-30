@@ -11,7 +11,7 @@ namespace Mpr.Expr
 		public TypeIndex typeIndex;
 		public ulong stableTypeHash;
 
-		public static UnsafeComponentReference Make<T>(ref T component) where T : unmanaged, IComponentData
+		public static UnsafeComponentReference Make<T>(ref T component) where T : unmanaged
 		{
 			unsafe
 			{

@@ -5,11 +5,22 @@ using Unity.Mathematics;
 
 namespace Mpr.Query.Authoring
 {
-	[UseWithContext(typeof(PassInt2), typeof(PassFloat2), typeof(PassEntity))]
+	public interface IScorer : INode
+	{
+		void Bake(ref QSScorer qSScorer, QueryBakingContext queryBakingContext);
+	}
+
+	[UseWithContext(typeof(IPass))]
 	[Serializable]
-	class ExpressionScorer : QueryBlockBase
+	class ExpressionScorer : QueryGraphBlockBase, IScorer
 	{
 		public override string Title => $"Expression Scorer";
+
+		public void Bake(ref QSScorer scorer, QueryBakingContext queryBakingContext)
+		{
+			scorer.type = QSScorer.ScorerType.Expression;
+			scorer.expr = queryBakingContext.GetExprNodeRef(GetInputPort(0));
+		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{

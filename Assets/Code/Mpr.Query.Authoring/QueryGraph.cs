@@ -1,5 +1,8 @@
 
 using System;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
 
@@ -7,7 +10,7 @@ namespace Mpr.Query.Authoring
 {
 	[Serializable]
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
-	[UseNodes(typeof(IQueryNode))]
+	[UseNodes(typeof(IQueryGraphNode))]
 	[UseNodes(typeof(Expr.Authoring.IExprNode))]
 	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
 	public class QueryGraph : Graph
@@ -70,6 +73,21 @@ namespace Mpr.Query.Authoring
 			//             break;
 			//         }
 			// }
+		}
+
+		public void Bake(BinaryWriter writer)
+		{
+			using(var context = new QueryBakingContext(this))
+			{
+				var builder = context.Bake(Allocator.Temp);
+
+				if(context.errors.Count > 0)
+				{
+					throw new System.Exception($"Errors while baking {this}:\n\t" + string.Join("\n\t", context.errors));
+				}
+
+				BlobAssetReference<QSData>.Write(writer, builder, 0);
+			}
 		}
 	}
 }

@@ -6,7 +6,7 @@ using Unity.Mathematics;
 
 namespace Mpr.Query.Authoring
 {
-	abstract class ItemNodeBase<T> : QueryNodeBase
+	abstract class ItemNodeBase<T> : QueryGraphNodeBase
 	{
 		public override string Title => $"Current Item ({typeof(T).Name})";
 

@@ -5,10 +5,27 @@ using Unity.Mathematics;
 
 namespace Mpr.Query.Authoring
 {
-	[Serializable]
-	[UseWithContext(typeof(PassFloat2))]
-	class GeneratorFloat2_Rectangle : QueryBlockBase
+	public interface IGenerator : INode
 	{
+		void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext);
+	}
+
+	[Serializable]
+	[UseWithContext(typeof(IPass<float2>))]
+	class GeneratorFloat2_Rectangle : QueryGraphBlockBase, IGenerator
+	{
+		public void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext)
+		{
+			generator.generatorType = QSGenerator.GeneratorType.Float2Rectangle;
+			generator.data.float2Rectangle = new QSGenerator.Float2Rectangle
+			{
+				center = queryBakingContext.GetExprNodeRef(GetInputPortByName("center")),
+				orientation = queryBakingContext.GetExprNodeRef(GetInputPortByName("orientation")),
+				size = queryBakingContext.GetExprNodeRef(GetInputPortByName("size")),
+				spacing = queryBakingContext.GetExprNodeRef(GetInputPortByName("spacing")),
+			};
+		}
+
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
 			context.AddInputPort<float2>("center")
@@ -17,27 +34,38 @@ namespace Mpr.Query.Authoring
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
-			context.AddInputPort<float>("density")
-				.WithDisplayName("Density")
+			context.AddInputPort<float>("orientation")
+				.WithDisplayName("Orientation")
 				.WithDefaultValue(1.0f)
 				.WithPortCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
-			context.AddInputPort<float2>("dimensions")
-				.WithDisplayName("Dimensions")
+			context.AddInputPort<float2>("size")
+				.WithDisplayName("Size")
 				.WithDefaultValue(new float2(4, 4))
 				.WithPortCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
+			context.AddInputPort<float>("spacing")
+				.WithDisplayName("Spacing")
+				.WithDefaultValue(1.0f)
+				.WithPortCapacity(PortCapacity.Single)
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.Build();
 		}
 	}
 
 	[Serializable]
-	[UseWithContext(typeof(PassFloat2))]
-	class GeneratorFloat2_Circle : QueryBlockBase
+	[UseWithContext(typeof(IPass<float2>))]
+	class GeneratorFloat2_Circle : QueryGraphBlockBase, IGenerator
 	{
+		public void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext)
+		{
+			throw new NotImplementedException();
+		}
+
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
 			context.AddInputPort<float2>("center")
