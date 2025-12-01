@@ -149,8 +149,6 @@ namespace Mpr.Query
 			}
 		}
 
-		// TODO: Burst 1.8.26 can compile this function
-		[BurstDiscard]
 		static void CheckType<TExpected, TActual>()
 		{
 			if(typeof(TExpected) != typeof(TActual))
