@@ -73,6 +73,9 @@ obj/Debug/
 # Visual Studio cache directory
 .vs/
 
+# Rider local settings
+.idea/
+
 # Gradle cache directory
 .gradle/
 
