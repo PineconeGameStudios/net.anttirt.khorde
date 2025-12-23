@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Mpr.Game.Authoring::Mpr.Game.NpcControllerAuthoring
   controller:
-    speed: 3
+    speed: 3.001983
   moveTarget:
     position:
       x: 4
