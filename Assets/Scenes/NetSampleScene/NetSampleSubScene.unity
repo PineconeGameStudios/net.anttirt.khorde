@@ -253,8 +253,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Mpr.Game.Authoring::Mpr.Game.NpcSpawnerAuthoring
   config:
     gridSize:
-      x: 1
-      y: 5
+      x: 30
+      y: 30
     gridSpacing: 2
     origin:
       x: 0
