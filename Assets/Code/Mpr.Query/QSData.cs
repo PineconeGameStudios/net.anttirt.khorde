@@ -9,6 +9,40 @@ using Unity.Collections.LowLevel.Unsafe;
 using System.Runtime.InteropServices;
 using Unity.Mathematics;
 
+/*
+ * TODO: v2 with entity-level batching and parallelism
+ *
+ * suppose you want every enemy in a survivor-like to query the nearest player for their AI
+ * - the generator returns 1-4 items per enemy entity
+ * - the filter and scorer process 1-4 items each
+ *
+ * in this situation it would clearly be beneficial to be able to vectorize the loops over many enemy entities so
+ *
+ * instead of this:
+ * ----------------
+ * 
+ * foreach entity in monsters:
+ *	items = generator(entity)
+ *  filter(items)
+ *  scores = score(items)
+ *  sort(scores)
+ *  mark(scores, items, N)
+ *
+ * you'd structure the loop like this:
+ * -----------------------------------
+ *
+ * foreach batch in batched(monsters):
+ *  items, indices = generator(batch) // if we want to get *really* fancy we could even detect that this doesn't depend on the entity and run it only once
+ *  filter(items)
+ *  scores = score(items)
+ *  foreach span in indices:
+ *	  sort(span, scores)
+ *  foreach span in indices:
+ *    mark(span, scores, items, N)
+ *
+ * but to do this we'd really need a vectorizable expression evaluator as well
+ */
+
 namespace Mpr.Query
 {
 	public struct QSData
