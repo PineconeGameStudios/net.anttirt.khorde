@@ -1,7 +1,3 @@
-#if false
-#define FPTR_SUPPORT
-#endif
-
 using Unity.Entities;
 using Mpr.Blobs;
 using Unity.Collections;
@@ -9,27 +5,45 @@ using System.Collections.Generic;
 using System;
 using System.Runtime.CompilerServices;
 using Mpr.Expr;
-using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 using System.Runtime.InteropServices;
 using Unity.Mathematics;
 
-#if FPTR_SUPPORT
-using AOT;
-using System.Reflection;
-using UnityEngine.Scripting;
-#endif
-
 namespace Mpr.Query
 {
-	public partial struct QSData
+	public struct QSData
 	{
+		/// <summary>
+		/// Baked data for all expressions in the query graph
+		/// </summary>
 		public ExprData exprData;
+
+		/// <summary>
+		/// List of passes for this query graph, in evaluation order.
+		/// </summary>
+		/// <remarks>
+		/// Passes are evaluated with their generators and filters until
+		/// the desired amount of items has been accepted by filters. This
+		/// means that further passes could still have generated better-scoring
+		/// items but they will not be considered.
+		/// </remarks>
 		public BlobArray<QSPass> passes;
+
+		/// <summary>
+		/// Stable type hash for the query result item type
+		/// </summary>
 		public ulong itemTypeHash;
+
+		/// <summary>
+		/// An expression to evaluate to determine the desired result item count
+		/// </summary>
 		public ExprNodeRef resultCount;
 
 		// TODO: fptr support
+
+		/// <summary>
+		/// Raw data storage for query nodes
+		/// </summary>
 		public BlobArray<byte> nodeStorage;
 		public BlobArray<NodeHeader> nodeHeaders;
 		bool runtimeInitComplete;
@@ -45,8 +59,21 @@ namespace Mpr.Query
 
 	public struct QSPass
 	{
+		/// <summary>
+		/// Generators for the pass. At the start of pass evaluation, all generators are evaluated.
+		/// </summary>
 		public BlobArray<QSGenerator> generators;
+
+		/// <summary>
+		/// Filters for the pass. After generators have been run, all generated items are filtered.
+		/// If this doesn't result in enough items, further passes will be evaluated to generate
+		/// and filter more items.
+		/// </summary>
 		public BlobArray<QSFilter> filters;
+
+		/// <summary>
+		/// Scorers for the pass. After filters have been run, all generated items are scored.
+		/// </summary>
 		public BlobArray<QSScorer> scorers;
 	}
 
@@ -182,22 +209,27 @@ namespace Mpr.Query
 		public enum FilterType
 		{
 			Expression,
-#if FPTR_SUPPORT
-			Function,
-#endif
+
+			// TODO
+			// Function,
 		}
 
-		public bool Pass<TItem>(ref QSData data, ref QSTempState tempState, ref TItem item, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public void Pass<TItem>(ref QSData data, ref QSTempState tempState, Span<TItem> items, NativeBitArray passBits, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			switch(type)
 			{
 				case FilterType.Expression:
-					return expr.Evaluate<bool>(ref data.exprData, componentPtrs);
+				{
+					// TODO: vectorized expressions
+					int i = 0;
+					foreach (ref var item in items)
+					{
+						tempState.GetCurrentItem<TItem>() = item;
+						passBits.Set(i, expr.Evaluate<bool>(ref data.exprData, componentPtrs));
+					}
 
-#if FPTR_SUPPORT
-				case FilterType.Function:
-					return data.InvokeFilter(nodeIndex, ref data.exprData, ref item, componentPtrs);
-#endif
+					break;
+				}
 
 				default:
 					throw new NotImplementedException();
@@ -215,16 +247,16 @@ namespace Mpr.Query
 			Expression,
 		}
 
-		public void Score<TItem>(ref ExprData exprData, ref QSTempState tempState, NativeList<TItem> items, NativeList<QSItem> scores, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public void Score<TItem>(ref ExprData exprData, ref QSTempState tempState, Span<TItem> items, Span<QSItem> scores, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			switch(type)
 			{
 				case ScorerType.Expression:
-					// TODO: expression array evaluation
+					// TODO: vectorized expressions
 					for(int i = 0; i < items.Length; ++i)
 					{
-						tempState.GetCurrentItem<TItem>() = items.ElementAt(i);
-						scores.ElementAt(i).score += expr.Evaluate<float>(ref exprData, componentPtrs);
+						tempState.GetCurrentItem<TItem>() = items[i];
+						scores[i].score += expr.Evaluate<float>(ref exprData, componentPtrs);
 					}
 					break;
 
@@ -256,7 +288,10 @@ namespace Mpr.Query
 			supComponentPtrs[^1] = UnsafeComponentReference.Make(ref tempState);
 
 			int passIndex = 0;
-			int unfilteredStartIndex = 0;
+			int passItemStartIndex = 0;
+
+			NativeBitArray passBits = new  NativeBitArray(resultCount, Allocator.Temp);
+			NativeList<int> itemsPerPass = new NativeList<int>(Allocator.Temp);
 
 			// generate and filter items until we've gone through enough passes to accept the desired amount of items
 			for(; passIndex < data.passes.Length; ++passIndex)
@@ -266,32 +301,33 @@ namespace Mpr.Query
 				foreach(ref var generator in pass.generators.AsSpan())
 					generator.Generate(ref data, items, componentPtrs);
 
-				// TODO: pass items array directly to filter so it can have a tight inner loop
-				for(int i = unfilteredStartIndex; i < items.Length;)
+				var unfilteredItems = items.AsArray().AsSpan().Slice(passItemStartIndex);
+				int newItemCount = unfilteredItems.Length;
+				passBits.Resize(newItemCount, NativeArrayOptions.UninitializedMemory);
+
+				foreach(ref var filter in pass.filters.AsSpan())
+					filter.Pass(ref data, ref tempState, unfilteredItems, passBits, componentPtrs);
+
+				for (int i = passItemStartIndex; i < items.Length;)
 				{
-					bool passedFilter = true;
-
-					tempState.GetCurrentItem<TItem>() = items.ElementAt(i);
-
-					foreach(ref var filter in pass.filters.AsSpan())
+					int passItemIndex = i - passItemStartIndex;
+					if (!passBits.IsSet(passItemIndex))
 					{
-						if(!filter.Pass(ref data, ref tempState, ref items.ElementAt(i), componentPtrs))
-						{
-							passedFilter = false;
-							break;
-						}
-					}
+						// passBits.RemoveAtSwapBack(passItemIndex);
+						passBits.Set(passItemIndex, passBits.IsSet(passBits.Length - 1));
+						passBits.Resize(passBits.Length - 1);
 
-					if(!passedFilter)
-					{
 						items.RemoveAtSwapBack(i);
-						continue;
 					}
-
-					i++;
+					else
+					{
+						++i;
+					}
 				}
 
-				unfilteredStartIndex = items.Length;
+				itemsPerPass.Add(items.Length - passItemStartIndex);
+
+				passItemStartIndex = items.Length;
 
 				if(items.Length >= resultCount)
 					break; // got enough items, skipping further fallback passes
@@ -303,14 +339,20 @@ namespace Mpr.Query
 				scores.ElementAt(i).itemIndex = i;
 
 			int passCount = passIndex + 1;
+			passItemStartIndex = 0;
 			for(passIndex = 0; passIndex < passCount; ++passIndex)
 			{
 				ref var pass = ref data.passes[passIndex];
+				int passItemCount = itemsPerPass[passIndex];
+				var passItems = items.AsArray().AsSpan().Slice(passItemStartIndex, passItemCount);
+				var passScores = scores.AsArray().AsSpan().Slice(passItemStartIndex, passItemCount);
 
 				foreach(ref var scorer in pass.scorers.AsSpan())
 				{
-					scorer.Score(ref data.exprData, ref tempState, items, scores, componentPtrs);
+					scorer.Score(ref data.exprData, ref tempState, passItems, passScores, componentPtrs);
 				}
+
+				passItemStartIndex += passItemCount;
 			}
 
 			// TODO: this is O(n log n + k) but can be done in O(kn) or O(n log k)
@@ -326,139 +368,4 @@ namespace Mpr.Query
 			return result;
 		}
 	}
-
-#if FPTR_SUPPORT
-	namespace Internal
-	{
-		public interface IQueryNode { }
-	}
-
-	public interface IQueryFilter<TItem> : Internal.IQueryNode
-	{
-		bool Pass(in TItem item); // TODO: support passing in components like IJobEntity
-	}
-
-	unsafe delegate void GeneratorDelegate(void* @this, void* itemsList, ref ExprData data, Span<UnsafeComponentReference> componentPtrs);
-	unsafe delegate bool FilterDelegate(void* @this, void* item, ref ExprData data, Span<UnsafeComponentReference> componentPtrs);
-	unsafe delegate float ScorerDelegate(void* @this, void* item, ref ExprData data, Span<UnsafeComponentReference> componentPtrs);
-
-	public partial struct QSData
-	{
-		// populate function pointers
-		public void RuntimeInitialize()
-		{
-			if(runtimeInitComplete)
-				return;
-
-			foreach(ref var nodeHeader in nodeHeaders.AsSpan())
-				nodeHeader.func = QuerySystemInit.s_functionLookup[nodeHeader.stableTypeHash];
-
-			runtimeInitComplete = true;
-		}
-
-		internal void InvokeGenerator<TItem>(int index, ref ExprData data, NativeList<TItem> itemsList, Span<UnsafeComponentReference> componentPtrs)
-			where TItem : unmanaged
-		{
-			var fptr = new FunctionPointer<GeneratorDelegate>(nodeHeaders[index].func);
-			unsafe
-			{
-				void* nodeData = ((byte*)nodeStorage.GetUnsafePtr()) + nodeHeaders[index].offset;
-				void* itemsListPtr = &itemsList;
-				fptr.Invoke(nodeData, itemsListPtr, ref data, componentPtrs);
-			}
-		}
-
-		internal bool InvokeFilter<TItem>(int index, ref ExprData data, ref TItem item, Span<UnsafeComponentReference> componentPtrs)
-			where TItem : unmanaged
-		{
-			var fptr = new FunctionPointer<FilterDelegate>(nodeHeaders[index].func);
-			unsafe
-			{
-				void* nodeData = ((byte*)nodeStorage.GetUnsafePtr()) + nodeHeaders[index].offset;
-				fixed(void* itemPtr = &item)
-					return fptr.Invoke(nodeData, itemPtr, ref data, componentPtrs);
-			}
-		}
-
-		internal float InvokeScorer<TItem>(int index, ref ExprData data, ref TItem item, Span<UnsafeComponentReference> componentPtrs)
-			where TItem : unmanaged
-		{
-			var fptr = new FunctionPointer<ScorerDelegate>(nodeHeaders[index].func);
-			unsafe
-			{
-				void* nodeData = ((byte*)nodeStorage.GetUnsafePtr()) + nodeHeaders[index].offset;
-				fixed(void* itemPtr = &item)
-					return fptr.Invoke(nodeData, itemPtr, ref data, componentPtrs);
-			}
-		}
-	}
-
-	public static class QuerySystemInit
-	{
-		public static Dictionary<ulong, IntPtr> s_functionLookup = new();
-
-		public static void Init()
-		{
-			var filterTypes = TypeCache.GetTypesDerivedFrom<Internal.IQueryNode>();
-			foreach(var type in filterTypes)
-			{
-				var (stableTypeHash, fptr, _) = ((ulong, IntPtr, object))type
-					.GetMethod("MakeCallInfo", BindingFlags.Static | BindingFlags.NonPublic)
-					.Invoke(null, Array.Empty<object>());
-
-				s_functionLookup[stableTypeHash] = fptr;
-			}
-		}
-	}
-
-	public partial struct MyTestFilter : IQueryFilter<float2>
-	{
-		public float maxLength;
-
-		[BurstCompile]
-		public bool Pass(in float2 item)
-		{
-			return math.length(item) >= maxLength;
-		}
-	}
-
-	[BurstCompile] // only if the function has [BurstCompile] but the struct doesn't
-	public partial struct MyTestFilter
-	{
-		[Preserve] // Burst version
-		static (ulong, IntPtr, object) MakeCallInfo()
-		{
-			var typeHash = TypeManager.GetTypeInfo<MyTestFilter>().StableTypeHash;
-
-			unsafe
-			{
-				FilterDelegate filterDelegate = InvokePass;
-				var fptr = BurstCompiler.CompileFunctionPointer(filterDelegate);
-				return (typeHash, fptr.Value, filterDelegate);
-			}
-		}
-
-		// [Preserve] // Non-Burst version
-		// static (ulong, IntPtr, object) MakeCallInfo_NoBurst()
-		// {
-		// 	var typeHash = TypeManager.GetTypeInfo<MyTestFilter>().StableTypeHash;
-
-		// 	unsafe
-		// 	{
-		// 		FilterDelegate filterDelegate = InvokePass;
-		// 		var fptr = Marshal.GetFunctionPointerForDelegate(filterDelegate);
-		// 		return (typeHash, fptr, filterDelegate);
-		// 	}
-		// }
-
-		[BurstCompile]
-		[MonoPInvokeCallback(typeof(FilterDelegate))]
-		static unsafe bool InvokePass(void* @this, void* itemPtr, ref ExprData data, Span<UnsafeComponentReference> components)
-		{
-			// TODO: pass ExprData in case the node wants to evaluate expressions
-			// TODO: pass components
-			return ((MyTestFilter*)@this)->Pass(in *(float2*)itemPtr);
-		}
-	}
-#endif
 }
