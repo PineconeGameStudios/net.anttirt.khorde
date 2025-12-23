@@ -5,7 +5,41 @@ using Mpr.Expr;
 
 namespace Mpr.Behavior
 {
-	public readonly record struct BTExecNodeId(ushort index);
+	public struct BTExecNodeId : IEquatable<BTExecNodeId>
+	{
+		public ushort index;
+
+		public BTExecNodeId(ushort index)
+		{
+			this.index = index;
+		}
+		
+		public bool Equals(BTExecNodeId other)
+		{
+			return index == other.index;
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is BTExecNodeId other && Equals(other);
+		}
+
+		public override int GetHashCode()
+		{
+			return index.GetHashCode();
+		}
+
+		public static bool operator ==(BTExecNodeId left, BTExecNodeId right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(BTExecNodeId left, BTExecNodeId right)
+		{
+			return !left.Equals(right);
+		}
+	}
+	
 	public struct ConditionalBlock
 	{
 		public ExprNodeRef condition;

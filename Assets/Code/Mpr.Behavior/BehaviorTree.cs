@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
 using Mpr.Expr;
+using Unity.NetCode;
 
 namespace Mpr.Behavior
 {
@@ -17,7 +18,9 @@ namespace Mpr.Behavior
 	[InternalBufferCapacity(8)]
 	public struct BTStackFrame : IBufferElementData
 	{
+		[GhostField]
 		public BTExecNodeId nodeId;
+		[GhostField]
 		public byte childIndex;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
