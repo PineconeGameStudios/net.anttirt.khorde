@@ -7,6 +7,8 @@ using System.Runtime.CompilerServices;
 using Mpr.Expr;
 using Unity.Collections.LowLevel.Unsafe;
 using System.Runtime.InteropServices;
+using Mpr.Burst;
+using Unity.Burst;
 using Unity.Mathematics;
 
 /*
@@ -72,23 +74,69 @@ namespace Mpr.Query
 		/// An expression to evaluate to determine the desired result item count
 		/// </summary>
 		public ExprNodeRef resultCount;
+	}
 
-		// TODO: fptr support
-
+	public struct QSEntityQueryReference : IBufferElementData
+	{
+		public BlobAssetReference<BlobEntityQueryDesc> entityQueryDesc;
+		
 		/// <summary>
-		/// Raw data storage for query nodes
+		/// Gets a runtime key that can be used to look up the results for a query
 		/// </summary>
-		public BlobArray<byte> nodeStorage;
-		public BlobArray<NodeHeader> nodeHeaders;
-		bool runtimeInitComplete;
+		/// <returns></returns>
+		public IntPtr GetRuntimeKey()
+		{
+			unsafe
+			{
+				return (IntPtr)entityQueryDesc.GetUnsafePtr();
+			}
+		}
 	}
 
 	[ChunkSerializable]
-	public struct NodeHeader
+	[BurstCompile]
+	public struct QSEntityQuery : ISharedComponentData, IEquatable<QSEntityQuery>
 	{
-		public ulong stableTypeHash;
-		public IntPtr func;
-		public int offset;
+		public BlobAssetReference<BlobEntityQueryDesc> entityQueryDesc;
+		
+		/// <summary>
+		/// Runtime-resolved query for this description
+		/// </summary>
+		public EntityQuery runtimeEntityQuery;
+		
+		/// <summary>
+		/// Most recent results for evaluating the entity query.
+		/// </summary>
+		public NativeList<Entity> results;
+
+		[BurstCompile]
+		public bool Equals(QSEntityQuery other)
+		{
+			return entityQueryDesc.Equals(other.entityQueryDesc);
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is QSEntityQuery other && Equals(other);
+		}
+
+		[BurstCompile]
+		public override int GetHashCode()
+		{
+			return entityQueryDesc.GetHashCode();
+		}
+
+		/// <summary>
+		/// Gets a runtime key that can be used to look up the results for a query
+		/// </summary>
+		/// <returns></returns>
+		public IntPtr GetRuntimeKey()
+		{
+			unsafe
+			{
+				return (IntPtr)entityQueryDesc.GetUnsafePtr();
+			}
+		}
 	}
 
 	public struct QSPass
@@ -166,11 +214,14 @@ namespace Mpr.Query
 		{
 			[FieldOffset(0)]
 			public Float2Rectangle float2Rectangle;
+
+			[FieldOffset(0)] public Entities entities;
 		}
 
 		public enum GeneratorType
 		{
 			Float2Rectangle,
+			Entities,
 		}
 
 		public struct Float2Rectangle
@@ -180,7 +231,7 @@ namespace Mpr.Query
 			public ExprNodeRef orientation;
 			public ExprNodeRef spacing;
 
-			public void Generate(ref QSData data, NativeList<float2> items, Span<UnsafeComponentReference> components)
+			public void Generate(ref QSData data, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<float2> items, Span<UnsafeComponentReference> components)
 			{
 				float2 center = this.center.Evaluate<float2>(ref data.exprData, components);
 				float2 size = this.size.Evaluate<float2>(ref data.exprData, components);
@@ -210,13 +261,25 @@ namespace Mpr.Query
 			}
 		}
 
+		public struct Entities
+		{
+			public int queryIndex;
+			
+			public void Generate(ref QSData data, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<Entity> items,
+				Span<UnsafeComponentReference> components)
+			{
+				if(queryResultLookup.TryGetValue(entityQueries[queryIndex].GetRuntimeKey(), out var results))
+					items.CopyFrom(results);
+			}
+		}
+
 		static void CheckType<TExpected, TActual>()
 		{
 			if(typeof(TExpected) != typeof(TActual))
 				throw new Exception();
 		}
 
-		public void Generate<TItem>(ref QSData data, NativeList<TItem> items, Span<UnsafeComponentReference> components) where TItem : unmanaged
+		public void Generate<TItem>(ref QSData data, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<TItem> items, Span<UnsafeComponentReference> components) where TItem : unmanaged
 		{
 			switch(generatorType)
 			{
@@ -224,7 +287,15 @@ namespace Mpr.Query
 					CheckType<float2, TItem>();
 					unsafe
 					{
-						this.data.float2Rectangle.Generate(ref data, *(NativeList<float2>*)&items, components);
+						this.data.float2Rectangle.Generate(ref data, entityQueries, queryResultLookup, *(NativeList<float2>*)&items, components);
+					}
+					break;
+				
+				case GeneratorType.Entities:
+					CheckType<Entity, TItem>();
+					unsafe
+					{
+						this.data.entities.Generate(ref data, entityQueries, queryResultLookup, *(NativeList<Entity>*)&items, components);
 					}
 					break;
 
@@ -300,6 +371,12 @@ namespace Mpr.Query
 		}
 	}
 
+	[InternalBufferCapacity(8)]
+	public struct QSResultItemStorage : IBufferElementData
+	{
+		public long storage;
+	}
+
 	public static class QueryExecution
 	{
 		/// <summary>
@@ -307,14 +384,23 @@ namespace Mpr.Query
 		/// </summary>
 		/// <typeparam name="TItem"></typeparam>
 		/// <param name="data"></param>
-		/// <param name="componentPtrs"></param>
-		/// <param name="allocator"></param>
+		/// <param name="componentPtrs">Components on the querier entity</param>
+		/// <param name="entityQueries">List of resolved generator entity queries attached to the querier entity</param>
+		/// <param name="results">Result item storage buffer</param>
+		/// <param name="tempAlloc">Temporary allocator for working data within the Execute function</param>
 		/// <returns></returns>
-		public static NativeList<TItem> Execute<TItem>(ref QSData data, Span<UnsafeComponentReference> componentPtrs, AllocatorManager.AllocatorHandle allocator) where TItem : unmanaged
+		public static void Execute<TItem>(
+			ref QSData data,
+			Span<UnsafeComponentReference> componentPtrs,
+			DynamicBuffer<QSEntityQueryReference> entityQueries,
+			NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup,
+			DynamicBuffer<QSResultItemStorage> results,
+			Allocator tempAlloc = Allocator.Temp
+			) where TItem : unmanaged
 		{
 			int resultCount = data.resultCount.Evaluate<int>(ref data.exprData, componentPtrs);
 
-			var items = new NativeList<TItem>(Allocator.Temp);
+			var items = new NativeList<TItem>(tempAlloc);
 			QSTempState tempState = default;
 
 			Span<UnsafeComponentReference> supComponentPtrs = stackalloc UnsafeComponentReference[componentPtrs.Length + 1];
@@ -324,24 +410,27 @@ namespace Mpr.Query
 			int passIndex = 0;
 			int passItemStartIndex = 0;
 
-			NativeBitArray passBits = new  NativeBitArray(resultCount, Allocator.Temp);
-			NativeList<int> itemsPerPass = new NativeList<int>(Allocator.Temp);
+			NativeBitArray passBits = new  NativeBitArray(resultCount, tempAlloc);
+			var scores = new NativeList<QSItem>(tempAlloc);
 
 			// generate and filter items until we've gone through enough passes to accept the desired amount of items
 			for(; passIndex < data.passes.Length; ++passIndex)
 			{
 				ref var pass = ref data.passes[passIndex];
 
+				// generate items
 				foreach(ref var generator in pass.generators.AsSpan())
-					generator.Generate(ref data, items, componentPtrs);
+					generator.Generate(ref data, entityQueries, queryResultLookup, items, componentPtrs);
 
 				var unfilteredItems = items.AsArray().AsSpan().Slice(passItemStartIndex);
 				int newItemCount = unfilteredItems.Length;
 				passBits.Resize(newItemCount, NativeArrayOptions.UninitializedMemory);
 
+				// compute filters
 				foreach(ref var filter in pass.filters.AsSpan())
 					filter.Pass(ref data, ref tempState, unfilteredItems, passBits, componentPtrs);
 
+				// remove filtered items
 				for (int i = passItemStartIndex; i < items.Length;)
 				{
 					int passItemIndex = i - passItemStartIndex;
@@ -358,8 +447,15 @@ namespace Mpr.Query
 						++i;
 					}
 				}
-
-				itemsPerPass.Add(items.Length - passItemStartIndex);
+				
+				// score remaining items
+				var filteredItems = items.AsArray().AsSpan().Slice(passItemStartIndex);
+				var passScores = scores.AsArray().AsSpan().Slice(passItemStartIndex);
+				
+				scores.ResizeUninitialized(items.Length);
+				
+				foreach(ref var scorer in pass.scorers.AsSpan())
+					scorer.Score(ref data.exprData, ref tempState, filteredItems, passScores, componentPtrs);
 
 				passItemStartIndex = items.Length;
 
@@ -367,39 +463,23 @@ namespace Mpr.Query
 					break; // got enough items, skipping further fallback passes
 			}
 
-			var scores = new NativeList<QSItem>(items.Length, Allocator.Temp);
-			scores.ResizeUninitialized(items.Length);
-			for(int i = 0; i < scores.Length; ++i)
-				scores.ElementAt(i).itemIndex = i;
-
-			int passCount = passIndex + 1;
-			passItemStartIndex = 0;
-			for(passIndex = 0; passIndex < passCount; ++passIndex)
-			{
-				ref var pass = ref data.passes[passIndex];
-				int passItemCount = itemsPerPass[passIndex];
-				var passItems = items.AsArray().AsSpan().Slice(passItemStartIndex, passItemCount);
-				var passScores = scores.AsArray().AsSpan().Slice(passItemStartIndex, passItemCount);
-
-				foreach(ref var scorer in pass.scorers.AsSpan())
-				{
-					scorer.Score(ref data.exprData, ref tempState, passItems, passScores, componentPtrs);
-				}
-
-				passItemStartIndex += passItemCount;
-			}
-
 			// TODO: this is O(n log n + k) but can be done in O(kn) or O(n log k)
 			scores.Sort(default(QSItem.ScoreComparer));
 
 			resultCount = math.min(resultCount, items.Length);
+			
+			results.Clear();
+			results.ResizeUninitialized(1 + (resultCount * UnsafeUtility.SizeOf<TItem>()) / UnsafeUtility.SizeOf<QSResultItemStorage>());
+			results.ElementAt(0).storage = resultCount;
 
-			var result = new NativeList<TItem>(resultCount, allocator);
+			var resultBuffer = results.AsNativeArray().AsSpan().Slice(1).Cast<QSResultItemStorage, TItem>();
 
 			for(int i = 0; i < scores.Length && i < resultCount; ++i)
-				result.Add(items[scores[i].itemIndex]);
+				resultBuffer[i] = items[scores[i].itemIndex];
 
-			return result;
+			items.Dispose();
+			passBits.Dispose();
+			scores.Dispose();
 		}
 	}
 }

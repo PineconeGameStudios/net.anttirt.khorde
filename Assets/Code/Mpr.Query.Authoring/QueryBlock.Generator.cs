@@ -1,5 +1,6 @@
 
 using System;
+using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
 
@@ -87,6 +88,30 @@ namespace Mpr.Query.Authoring
 				.WithPortCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
+		}
+	}
+	
+	[Serializable]
+	[UseWithContext(typeof(IPass<Entity>))]
+	class GeneratorEntityQuery : QueryGraphBlockBase, IGenerator
+	{
+		public void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext)
+		{
+			throw new NotImplementedException();
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			context.AddOption<string>("query")
+				.WithDefaultValue("all: LocalTransform; none: Disabled")
+				.WithDisplayName("Query")
+				.WithTooltip("Entity query description to be parsed")
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+
 		}
 	}
 }
