@@ -1,7 +1,6 @@
+using Mpr.Expr;
 using System;
 using Unity.Entities;
-using Mpr.Blobs;
-using Mpr.Expr;
 
 namespace Mpr.Behavior
 {
@@ -13,7 +12,7 @@ namespace Mpr.Behavior
 		{
 			this.index = index;
 		}
-		
+
 		public bool Equals(BTExecNodeId other)
 		{
 			return index == other.index;
@@ -39,7 +38,7 @@ namespace Mpr.Behavior
 			return !left.Equals(right);
 		}
 	}
-	
+
 	public struct ConditionalBlock
 	{
 		public ExprNodeRef condition;
@@ -108,11 +107,13 @@ namespace Mpr.Behavior
 
 		public void Evaluate(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 		{
+			var ctx = new ExprEvalContext(componentPtrs, ref data.exprData, default);
+
 			for(int i = 0; i < fields.Length; ++i)
 			{
 				ref var field = ref fields[i];
 				var fieldSpan = componentPtrs[componentIndex].AsSpan().Slice(field.offset, field.size);
-				field.input.Evaluate(ref data.exprData, componentPtrs, fieldSpan);
+				field.input.Evaluate(in ctx, fieldSpan);
 			}
 		}
 

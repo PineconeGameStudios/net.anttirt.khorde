@@ -9,14 +9,14 @@ namespace Mpr.Expr.Authoring
 	[NodeCategory("Component")]
 	public abstract class ComponentReaderNode<T> : ExprBase, IComponentAccess where T : Unity.Entities.IComponentData
 	{
-		public Type ComponentType => typeof(T);
+		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
 		public override string Title => $"Read {typeof(T).Name}";
 
 		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
-			var index = context.componentTypes.IndexOf(typeof(T));
+			var index = context.componentTypes.FindIndex(kv => kv.Key == typeof(T));
 			if(index == -1)
 				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
 

@@ -7,7 +7,7 @@ namespace Mpr.Expr
 	public struct UnsafeComponentReference
 	{
 		public IntPtr data;
-		public int length;
+		public int typeSize;
 		public TypeIndex typeIndex;
 		public ulong stableTypeHash;
 
@@ -19,7 +19,7 @@ namespace Mpr.Expr
 					return new UnsafeComponentReference
 					{
 						data = (IntPtr)p,
-						length = UnsafeUtility.SizeOf<T>(),
+						typeSize = UnsafeUtility.SizeOf<T>(),
 						typeIndex = TypeManager.GetTypeIndex<T>(),
 						stableTypeHash = TypeManager.GetTypeInfo<T>().StableTypeHash,
 					};
@@ -30,7 +30,7 @@ namespace Mpr.Expr
 		{
 			unsafe
 			{
-				return new Span<byte>(data.ToPointer(), length);
+				return new Span<byte>(data.ToPointer(), typeSize);
 			}
 		}
 	}

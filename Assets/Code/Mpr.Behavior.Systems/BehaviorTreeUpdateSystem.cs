@@ -8,21 +8,10 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.NetCode;
+using Unity.NetCode.LowLevel.Unsafe;
 
 namespace Mpr.Behavior
 {
-	struct BTQueryHolder : IComponentData
-	{
-		public EntityQuery query;
-	}
-
-	struct BTTypeHandleHolder : IBufferElementData
-	{
-		public DynamicComponentTypeHandle typeHandle;
-		public ulong stableTypeHash;
-		public int typeSize;
-	}
-
 	[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 	public partial struct BehaviorTreeUpdateSystem : ISystem
 	{
@@ -33,93 +22,34 @@ namespace Mpr.Behavior
 			traceHolder = state.EntityManager.CreateSingletonBuffer<BTExecTrace>();
 		}
 
-		[StructLayout(LayoutKind.Sequential)]
-		struct JobTypeHandles
-		{
-			DynamicComponentTypeHandle type0;
-			DynamicComponentTypeHandle type1;
-			DynamicComponentTypeHandle type2;
-			DynamicComponentTypeHandle type3;
-			DynamicComponentTypeHandle type4;
-			DynamicComponentTypeHandle type5;
-			DynamicComponentTypeHandle type6;
-			DynamicComponentTypeHandle type7;
-			DynamicComponentTypeHandle type8;
-			DynamicComponentTypeHandle type9;
-
-			public Span<DynamicComponentTypeHandle> Values
-			{
-				get
-				{
-					unsafe
-					{
-						fixed(DynamicComponentTypeHandle* handlesPtr = &type0)
-							return new Span<DynamicComponentTypeHandle>(handlesPtr, 10);
-					}
-				}
-			}
-		}
-
 		[BurstCompile]
 		partial struct UpdateJob : IJobChunk
 		{
-			JobTypeHandles typeHandles;
-			FixedList64Bytes<int> typeSizes;
-			FixedList128Bytes<ulong> typeHashes;
-
+			public ExprJobComponentTypeHandles typeHandles;
+			public ExprJobComponentLookups componentLookups;
 			public BlobAssetReference<BTData> btData;
 			public ComponentTypeHandle<BTState> stateTypeHandle;
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
 			public float now;
 
-			public void AddType(BTTypeHandleHolder holder)
-			{
-				if(typeSizes.Length >= 10)
-					throw new Exception("max supported component type count is 10");
-
-				typeHandles.Values[typeSizes.Length] = holder.typeHandle;
-				typeSizes.Add(holder.typeSize);
-				typeHashes.Add(holder.stableTypeHash);
-			}
-
 			public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
 			{
-				Span<IntPtr> basePointers = stackalloc IntPtr[typeSizes.Length];
-				Span<UnsafeComponentReference> components = stackalloc UnsafeComponentReference[typeSizes.Length];
+				typeHandles.Initialize(chunk);
 
-				for(int i = 0; i < typeSizes.Length; ++i)
-				{
-					ref var handle = ref typeHandles.Values[i];
-					var data = chunk.GetDynamicComponentDataArrayReinterpret<byte>(ref handle, typeSizes[i]);
-
-					unsafe
-					{
-						basePointers[i] = (IntPtr)data.GetUnsafePtr();
-					}
-
-					components[i] = new UnsafeComponentReference
-					{
-						stableTypeHash = typeHashes[i],
-						typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(typeHashes[i]),
-						length = typeSizes[i],
-					};
-				}
-
-				var states = chunk.GetNativeArray(ref stateTypeHandle);
+				var states = chunk.GetNativeArray(ref stateTypeHandle).AsSpan();
 				var stacks = chunk.GetBufferAccessor(ref stackTypeHandle);
 
+				var lookups = componentLookups.Values;
 
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
 				while(enumerator.NextEntityIndex(out var entityIndex))
 				{
-					for(int i = 0; i < components.Length; ++i)
-						components[i].data = basePointers[i] + entityIndex * typeSizes[i];
-
 					BehaviorTreeExecution.Execute(
 						ref btData.Value,
-						ref states.AsSpan()[entityIndex],
+						ref states[entityIndex],
 						stacks[entityIndex],
-						components,
+						typeHandles.GetComponents(entityIndex),
+						lookups,
 						now,
 						default
 						);
@@ -135,7 +65,7 @@ namespace Mpr.Behavior
 				return;
 			}
 
-			foreach(var (queryHolder, typeHandleHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<BTTypeHandleHolder>, BehaviorTree>())
+			foreach(var (queryHolder, typeHandleHolder, lookupHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<ExprSystemTypeHandleHolder>, DynamicBuffer<ExprSystemComponentLookupHolder>, BehaviorTree>())
 			{
 				var job = new UpdateJob
 				{
@@ -145,11 +75,16 @@ namespace Mpr.Behavior
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
 				};
 
-				for(int i = 0; i < typeHandleHolder.Length; ++i)
+				foreach(ref var holder in typeHandleHolder.AsNativeArray().AsSpan())
 				{
-					ref var holder = ref typeHandleHolder.ElementAt(i);
 					holder.typeHandle.Update(ref state);
-					job.AddType(holder);
+					job.typeHandles.AddType(holder);
+				}
+
+				foreach(var holder in lookupHolder.AsNativeArray().AsSpan())
+				{
+					holder.componentLookup.Update(ref state);
+					job.componentLookups.AddLookup(holder);
 				}
 
 				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
@@ -160,7 +95,7 @@ namespace Mpr.Behavior
 		{
 			state.EntityManager.GetAllUniqueSharedComponents<BehaviorTree>(out var values, Allocator.Temp);
 
-			var holderQuery = SystemAPI.QueryBuilder().WithAllRW<BTQueryHolder, BTTypeHandleHolder>().WithAll<BehaviorTree>().Build();
+			var holderQuery = SystemAPI.QueryBuilder().WithAllRW<BTQueryHolder, ExprSystemTypeHandleHolder>().WithAll<BehaviorTree>().Build();
 
 			bool clientWorld = (state.WorldUnmanaged.Flags & WorldFlags.GameClient) == WorldFlags.GameClient;
 
@@ -171,13 +106,14 @@ namespace Mpr.Behavior
 
 				holderQuery.AddSharedComponentFilter(value);
 
-				if(holderQuery.CalculateEntityCount() == 0)
+				if(holderQuery.IsEmpty)
 				{
-					// create a query-holder component
+					// create a query-holder entity matching this behaviortree asset
 
-					Span<ComponentType> types = stackalloc ComponentType[2];
+					Span<ComponentType> types = stackalloc ComponentType[3];
 					types[0] = ComponentType.ReadOnly<BTQueryHolder>();
-					types[1] = ComponentType.ReadWrite<BTTypeHandleHolder>();
+					types[1] = ComponentType.ReadWrite<ExprSystemTypeHandleHolder>();
+					types[2] = ComponentType.ReadWrite<ExprSystemComponentLookupHolder>();
 
 					var entity = state.EntityManager.CreateEntity(types);
 
@@ -195,31 +131,53 @@ namespace Mpr.Behavior
 						components.Add(ComponentType.ReadOnly<Simulate>());
 					}
 
-					var typeHandles = state.EntityManager.GetBuffer<BTTypeHandleHolder>(entity);
-
 					ref var btData = ref value.tree.Value;
-					for(int i = 0; i < btData.exprData.componentTypes.Length; ++i)
+					ref var componentTypes = ref btData.exprData.componentTypes;
+
+					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(entity);
+					for(int i = 0; i < componentTypes.Length; ++i)
 					{
-						ulong stableTypeHash = btData.exprData.componentTypes[i];
-						var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(stableTypeHash);
-						if(typeIndex == TypeIndex.Null)
+						var type = componentTypes[i].ResolveComponentType();
+						if(type.TypeIndex == TypeIndex.Null)
 						{
-							UnityEngine.Debug.LogError($"type with stableTypeHash={stableTypeHash} required by BehaviorTree not found");
+							UnityEngine.Debug.LogError($"type with stableTypeHash={componentTypes[i].stableTypeHash} required by BehaviorTree not found");
 							state.Enabled = false;
 							return false;
 						}
 
-						var type = ComponentType.FromTypeIndex(typeIndex);
-						// TODO: set some types as read-only based on graph access patterns
-						// type.AccessModeType = ComponentType.AccessMode.ReadOnly;
+						components.Add(type);
+
+						typeHandles.Add(new ExprSystemTypeHandleHolder
+						{
+							typeHandle = state.EntityManager.GetDynamicComponentTypeHandle(type),
+							typeIndex = type.TypeIndex,
+							stableTypeHash = componentTypes[i].stableTypeHash,
+							typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
+						});
+					}
+
+					ref var lookupTypes = ref btData.exprData.componentLookupTypes;
+
+					var lookups = state.EntityManager.GetBuffer<ExprSystemComponentLookupHolder>(entity);
+					for(int i = 0; i < lookupTypes.Length; ++i)
+					{
+						var type = lookupTypes[i].ResolveComponentType();
+						if(type.TypeIndex == TypeIndex.Null)
+						{
+							UnityEngine.Debug.LogError($"type with stableTypeHash={componentTypes[i].stableTypeHash} required by BehaviorTree not found");
+							state.Enabled = false;
+							return false;
+						}
 
 						components.Add(type);
 
-						typeHandles.Add(new BTTypeHandleHolder
+						lookups.Add(new ExprSystemComponentLookupHolder
 						{
-							typeHandle = state.EntityManager.GetDynamicComponentTypeHandle(type),
-							stableTypeHash = stableTypeHash,
-							typeSize = TypeManager.GetTypeInfo(typeIndex).TypeSize,
+							//typeHandle = state.EntityManager.GetDynamicComponentTypeHandle(type),
+							//componentLookup = new UntypedComponentLookup()
+							componentLookup = state.GetUntypedComponentLookup(type.TypeIndex, true),
+							stableTypeHash = lookupTypes[i].stableTypeHash,
+							typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
 						});
 					}
 
@@ -242,6 +200,169 @@ namespace Mpr.Behavior
 			}
 
 			return true;
+		}
+	}
+
+	public struct BTQueryHolder : IComponentData
+	{
+		/// <summary>
+		/// Query matching all entities with a <see cref="BehaviorTree"/>
+		/// component with a particular value. Each distinct BehaviorTree
+		/// (corresponding to a distinct BT Graph) gets its own query with a
+		/// configured shared component filter. Used to update behavior trees
+		/// with an IJobChunk.
+		/// </summary>
+		public EntityQuery query;
+	}
+
+	public struct ExprSystemTypeHandleHolder : IBufferElementData
+	{
+		/// <summary>
+		/// Type handle for passing component data references to BT evaluation during IJobChunk iteration
+		/// </summary>
+		public DynamicComponentTypeHandle typeHandle;
+
+		/// <summary>
+		/// Stable type hash of the component type
+		/// </summary>
+		public ulong stableTypeHash;
+
+		public TypeIndex typeIndex;
+
+		/// <summary>
+		/// Size in bytes of the component type
+		/// </summary>
+		public int typeSize;
+	}
+
+	public struct ExprSystemComponentLookupHolder : IBufferElementData
+	{
+		/// <summary>
+		/// Component lookup for accessing component data on other entities during BT evaluation
+		/// </summary>
+		public UntypedComponentLookup componentLookup;
+
+		/// <summary>
+		/// Stable type hash of the component type
+		/// </summary>
+		public ulong stableTypeHash;
+
+		/// <summary>
+		/// Size in bytes of the component type
+		/// </summary>
+		public int typeSize;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct ExprJobComponentTypeHandles
+	{
+		DynamicComponentTypeHandle type0;
+		DynamicComponentTypeHandle type1;
+		DynamicComponentTypeHandle type2;
+		DynamicComponentTypeHandle type3;
+		DynamicComponentTypeHandle type4;
+		DynamicComponentTypeHandle type5;
+		DynamicComponentTypeHandle type6;
+		DynamicComponentTypeHandle type7;
+		DynamicComponentTypeHandle type8;
+		DynamicComponentTypeHandle type9;
+		FixedList512Bytes<UnsafeComponentReference> components;
+		FixedList128Bytes<IntPtr> basePointers;
+		const int kMaxHandles = 10;
+
+		public int Length => components.Length;
+
+		public int GetTypeSize(int index) => components[index].typeSize;
+
+		Span<DynamicComponentTypeHandle> Handles
+		{
+			get
+			{
+				unsafe
+				{
+					fixed(DynamicComponentTypeHandle* ptr = &type0)
+						return new Span<DynamicComponentTypeHandle>(ptr, kMaxHandles);
+				}
+			}
+		}
+
+		public ReadOnlySpan<UnsafeComponentReference> GetComponents(int entityIndex)
+		{
+			for(int i = 0; i < components.Length; ++i)
+				components.ElementAt(i).data = basePointers[i] + entityIndex * components[i].typeSize;
+
+			return components.ToReadOnlySpan(components.Length);
+		}
+
+		public void Initialize(in ArchetypeChunk chunk)
+		{
+			basePointers.Length = Length;
+
+			for(int i = 0; i < Length; ++i)
+			{
+				ref var handle = ref Handles[i];
+				var data = chunk.GetDynamicComponentDataArrayReinterpret<byte>(ref handle, GetTypeSize(i));
+
+				unsafe
+				{
+					basePointers[i] = handle.IsReadOnly ? (IntPtr)data.GetUnsafeReadOnlyPtr() : (IntPtr)data.GetUnsafePtr();
+				}
+			}
+		}
+
+		public void AddType(ExprSystemTypeHandleHolder holder)
+		{
+			if(components.Length >= kMaxHandles)
+				throw new Exception("max supported component type count is 10");
+
+			Handles[components.Length] = holder.typeHandle;
+			components.Add(new UnsafeComponentReference
+			{
+				data = default,
+				typeSize = holder.typeSize,
+				stableTypeHash = holder.stableTypeHash,
+				typeIndex = holder.typeIndex,
+			});
+		}
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct ExprJobComponentLookups
+	{
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup0;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup1;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup2;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup3;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup4;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup5;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup6;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup7;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup8;
+		[NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup9;
+
+		FixedList64Bytes<int> componentTypeSizes;
+		FixedList128Bytes<ulong> componentTypeHashes;
+
+		public Span<UntypedComponentLookup> Values
+		{
+			get
+			{
+				unsafe
+				{
+					fixed(UntypedComponentLookup* handlesPtr = &lookup0)
+						return new Span<UntypedComponentLookup>(handlesPtr, 10);
+				}
+			}
+		}
+
+		public void AddLookup(ExprSystemComponentLookupHolder holder)
+		{
+			if(componentTypeSizes.Length >= 10)
+				throw new Exception("max supported component type count is 10");
+
+			Values[componentTypeSizes.Length] = holder.componentLookup;
+			componentTypeSizes.Add(holder.typeSize);
+			componentTypeHashes.Add(holder.stableTypeHash);
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using Mpr.Blobs;
 using System.Runtime.CompilerServices;
 using Unity.Entities;
 
@@ -7,7 +8,17 @@ namespace Mpr.Expr
 	{
 		public BlobArray<BTExpr> exprs;
 		public BlobArray<byte> constData;
-		public BlobArray<ulong> componentTypes;
+
+		/// <summary>
+		/// Components for direct access on the expression owner entity as part of BT/EQ chunk iteration
+		/// </summary>
+		public BlobArray<BlobComponentType> componentTypes;
+
+		/// <summary>
+		/// Components for indirect access on other entities
+		/// </summary>
+		public BlobArray<BlobComponentType> componentLookupTypes;
+
 		public BlobArray<UnityEngine.Hash128> exprNodeIds;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

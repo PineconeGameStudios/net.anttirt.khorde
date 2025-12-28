@@ -11,14 +11,14 @@ namespace Mpr.Query
 	public partial struct QuerySystem : ISystem
 	{
 		private NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup;
-		
+
 		// TODO: turn this into IJobChunk to pass dynamic expression component data as in BTUpdateSystem
 		[BurstCompile]
 		partial struct ExecuteQueriesJob : IJobEntity
 		{
 			[NativeDisableContainerSafetyRestriction]
 			public NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup;
-			
+
 			public void Execute(Query query,
 				DynamicBuffer<QSEntityQueryReference> entityQueries,
 				DynamicBuffer<QSResultItemStorage> results
@@ -26,7 +26,7 @@ namespace Mpr.Query
 			{
 				if(!query.query.IsCreated)
 					return;
-				
+
 				Span<UnsafeComponentReference> components = stackalloc UnsafeComponentReference[1];
 				QueryExecution.Execute<float2>(ref query.query.Value, components, entityQueries, queryResultLookup, results);
 			}
@@ -35,7 +35,7 @@ namespace Mpr.Query
 		void ISystem.OnCreate(ref SystemState state)
 		{
 			state.RequireForUpdate<Query>();
-			queryResultLookup = new NativeHashMap<IntPtr, NativeList<Entity>>(1,  Allocator.Persistent);
+			queryResultLookup = new NativeHashMap<IntPtr, NativeList<Entity>>(1, Allocator.Persistent);
 		}
 
 		void ISystem.OnUpdate(ref SystemState state)
@@ -44,14 +44,14 @@ namespace Mpr.Query
 
 			queryResultLookup.Clear();
 
-			foreach (ref var component in components.AsArray().AsSpan())
+			foreach(ref var component in components.AsArray().AsSpan())
 			{
-				if (component.runtimeEntityQuery == default && component.entityQueryDesc.IsCreated)
+				if(component.runtimeEntityQuery == default && component.entityQueryDesc.IsCreated)
 				{
 					component.runtimeEntityQuery = component.entityQueryDesc.Value.CreateQuery(state.EntityManager);
 				}
-				
-				if (component.runtimeEntityQuery != default)
+
+				if(component.runtimeEntityQuery != default)
 				{
 					component.results = component.runtimeEntityQuery.ToEntityListAsync(state.WorldUpdateAllocator, state.Dependency, out var dep);
 					state.Dependency = dep;
@@ -67,13 +67,6 @@ namespace Mpr.Query
 
 		void ISystem.OnDestroy(ref SystemState state)
 		{
-			state.EntityManager.GetAllUniqueSharedComponents<QSEntityQuery>(out var components, Allocator.Temp);
-
-			foreach (ref var component in components.AsArray().AsSpan())
-			{
-				component.runtimeEntityQuery.Dispose();
-			}
-			
 			queryResultLookup.Dispose();
 		}
 	}

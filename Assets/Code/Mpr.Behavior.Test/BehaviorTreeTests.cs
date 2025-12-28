@@ -1,3 +1,5 @@
+using Mpr.Expr;
+using Mpr.Expr.Authoring;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,8 +7,6 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
-using Mpr.Expr;
-using Mpr.Expr.Authoring;
 using static Mpr.Behavior.BTExec;
 using static Mpr.Behavior.BTExecTrace;
 
@@ -102,7 +102,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, 0, trace);
+				asset.Execute(ref state, stack, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -140,7 +140,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, 0, trace);
+				asset.Execute(ref state, stack, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -181,7 +181,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, 0, trace);
+				asset.Execute(ref state, stack, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -227,7 +227,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, 0, trace);
+				asset.Execute(ref state, stack, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -277,7 +277,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, 0, trace);
+				asset.Execute(ref state, stack, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -323,7 +323,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, 0, trace);
+				asset.Execute(ref state, stack, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -362,7 +362,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, 0, trace);
+				asset.Execute(ref state, stack, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -425,7 +425,7 @@ namespace Mpr.Behavior.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
-			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
+			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetSequence(ref builder, execs, 3, 5);
@@ -446,11 +446,13 @@ namespace Mpr.Behavior.Test
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
+			System.Span<UntypedComponentLookup> lookups = default;
+
 			BTState state = default;
 
 			try
 			{
-				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -481,7 +483,7 @@ namespace Mpr.Behavior.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
-			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
+			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetWriteField(ref builder, 0, WriteField(True, typeof(TestComponent1).GetField(nameof(TestComponent1.field1))));
@@ -494,6 +496,8 @@ namespace Mpr.Behavior.Test
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
+			System.Span<UntypedComponentLookup> lookups = default;
+
 			BTState state = default;
 
 			try
@@ -501,7 +505,7 @@ namespace Mpr.Behavior.Test
 				Assert.IsFalse(tc1.field1);
 				Assert.IsTrue(tc1.field2);
 
-				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -529,7 +533,7 @@ namespace Mpr.Behavior.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
-			types[0] = TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash;
+			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			var TestComponent1_field1 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field1)));
 
@@ -544,11 +548,13 @@ namespace Mpr.Behavior.Test
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
+			System.Span<UntypedComponentLookup> lookups = default;
+
 			BTState state = default;
 
 			try
 			{
-				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -559,7 +565,7 @@ namespace Mpr.Behavior.Test
 
 				trace.Clear();
 
-				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Wait, 2, 2, Event.Start),
@@ -570,7 +576,7 @@ namespace Mpr.Behavior.Test
 
 				tc1.field1 = true;
 
-				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Wait, 2, 2, Event.Start),
@@ -644,7 +650,7 @@ namespace Mpr.Behavior.Test
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
 			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
-			types[0] = TypeManager.GetTypeInfo<TestComponent2>().StableTypeHash;
+			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent2>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].type = BTExec.BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -676,7 +682,7 @@ namespace Mpr.Behavior.Test
 
 			execs[2].SetWriteField(ref builder, 0, WriteField(expr, field));
 
-			TestComponent2 tc2 = new TestComponent2 {};
+			TestComponent2 tc2 = new TestComponent2 { };
 
 			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc2);
@@ -684,11 +690,13 @@ namespace Mpr.Behavior.Test
 			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
 			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
 
+			System.Span<UntypedComponentLookup> lookups = default;
+
 			BTState state = default;
 
 			try
 			{
-				asset.Execute(ref state, stack, componentPtrs, 0, trace);
+				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -717,11 +725,11 @@ namespace Mpr.Behavior.Test
 
 	struct TestComponent2 : IComponentData
 	{
-		public int    @int;
-		public int2   @int2;
-		public int3   @int3;
-		public int4   @int4;
-		public float  @float;
+		public int @int;
+		public int2 @int2;
+		public int3 @int3;
+		public int4 @int4;
+		public float @float;
 		public float2 @float2;
 		public float3 @float3;
 		public float4 @float4;

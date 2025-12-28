@@ -1,17 +1,43 @@
+using Mpr.Blobs;
+using Mpr.Burst;
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
-using Mpr.Blobs;
-using Mpr.Burst;
 
 namespace Mpr.Expr
 {
+	public unsafe ref struct ExprEvalContext
+	{
+		public ExprEvalContext(
+			ReadOnlySpan<UnsafeComponentReference> componentPtrs,
+			ref ExprData data,
+			ReadOnlySpan<UntypedComponentLookup> remoteComponentLookups
+			)
+		{
+			this.componentPtrs = componentPtrs;
+			fixed(ExprData* pData = &data)
+				this.dataPtr = pData;
+			this.remoteComponentLookups = remoteComponentLookups;
+		}
+
+		public ReadOnlySpan<UnsafeComponentReference> componentPtrs;
+		public ExprData* dataPtr;
+		public ReadOnlySpan<UntypedComponentLookup> remoteComponentLookups;
+
+		public ref ExprData data
+		{
+			get
+			{
+				return ref *dataPtr;
+			}
+		}
+	}
+
 	public interface IExprEval
 	{
-		void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result);
+		void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result);
 	}
 
 	public readonly record struct ExprNodeRef(ushort index, byte outputIndex, bool constant)
@@ -19,28 +45,28 @@ namespace Mpr.Expr
 		public static ExprNodeRef Node(ushort index, byte outputIndex) => new ExprNodeRef(index, outputIndex, false);
 		public static ExprNodeRef Const(ushort offset, byte length) => new ExprNodeRef(offset, length, true);
 
-		public T Evaluate<T>(ref ExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(in ExprEvalContext ctx) where T : unmanaged
 		{
 			if(constant)
 			{
-				var constData = data.constData.AsSpan();
+				var constData = ctx.data.constData.AsSpan();
 				constData = constData.Slice(index, outputIndex);
 				var castData = SpanMarshal.Cast<byte, T>(constData);
 				return castData[0];
 			}
 
-			return data.GetNode(this).Evaluate<T>(ref data, outputIndex, componentPtrs);
+			return ctx.data.GetNode(this).Evaluate<T>(in ctx, outputIndex);
 		}
 
-		public void Evaluate(ref ExprData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+		public void Evaluate(in ExprEvalContext ctx, Span<byte> result)
 		{
 			if(constant)
 			{
-				data.constData.AsSpan().Slice(index, outputIndex).CopyTo(result);
+				ctx.data.constData.AsSpan().Slice(index, outputIndex).CopyTo(result);
 				return;
 			}
 
-			data.GetNode(this).Evaluate(ref data, outputIndex, componentPtrs, result);
+			ctx.data.GetNode(this).Evaluate(in ctx, outputIndex, result);
 		}
 
 		public override string ToString()
@@ -63,22 +89,25 @@ namespace Mpr.Expr
 			ReadField,
 			Bool,
 			BinaryMath,
+			ReadEntityComponentField,
 		}
 
-		public T Evaluate<T>(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs) where T : unmanaged
+		public T Evaluate<T>(in ExprEvalContext ctx, byte outputIndex) where T : unmanaged
 		{
 			Span<T> result = stackalloc T[1];
-			Evaluate(ref data, outputIndex, componentPtrs, SpanMarshal.AsBytes(result));
+			var resultBytes = SpanMarshal.AsBytes(result);
+			Evaluate(in ctx, outputIndex, resultBytes);
 			return result[0];
 		}
 
-		public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+		public void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
 		{
 			switch(type)
 			{
-				case BTExprType.ReadField: this.data.readField.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case BTExprType.Bool: this.data.@bool.Evaluate(ref data, outputIndex, componentPtrs, result); return;
-				case BTExprType.BinaryMath: this.data.binaryMath.Evaluate(ref data, outputIndex, componentPtrs, result); return;
+				case BTExprType.ReadField: this.data.readField.Evaluate(in ctx, outputIndex, result); return;
+				case BTExprType.Bool: this.data.@bool.Evaluate(in ctx, outputIndex, result); return;
+				case BTExprType.BinaryMath: this.data.binaryMath.Evaluate(in ctx, outputIndex, result); return;
+				case BTExprType.ReadEntityComponentField: this.data.readEntityComponentField.Evaluate(in ctx, outputIndex, result); return;
 			}
 #if DEBUG
 			throw new Exception();
@@ -91,6 +120,7 @@ namespace Mpr.Expr
 			[FieldOffset(0)] public ReadField readField;
 			[FieldOffset(0)] public Bool @bool;
 			[FieldOffset(0)] public BinaryMath binaryMath;
+			[FieldOffset(0)] public ReadEntityComponentField readEntityComponentField;
 		}
 
 		public string DumpString()
@@ -102,6 +132,7 @@ namespace Mpr.Expr
 				case BTExprType.ReadField: result += data.readField.DumpString(); break;
 				case BTExprType.Bool: result += data.@bool.DumpString(); break;
 				case BTExprType.BinaryMath: result += data.binaryMath.DumpString(); break;
+				case BTExprType.ReadEntityComponentField: result += data.readEntityComponentField.DumpString(); break;
 			}
 
 			return result;
@@ -114,12 +145,12 @@ namespace Mpr.Expr
 			public MathType type;
 			public BinaryMathOp op;
 
-			public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
 			{
 				Span<byte> leftData = stackalloc byte[result.Length];
 				Span<byte> rightData = stackalloc byte[result.Length];
-				left.Evaluate(ref data, componentPtrs, leftData);
-				right.Evaluate(ref data, componentPtrs, rightData);
+				left.Evaluate(in ctx, leftData);
+				right.Evaluate(in ctx, rightData);
 				BTBinaryEval.Apply(type, op, leftData, rightData, result);
 			}
 
@@ -154,10 +185,10 @@ namespace Mpr.Expr
 				}
 			}
 
-			public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
 			{
 				ref var field = ref fields[outputIndex];
-				var componentData = componentPtrs[componentIndex].AsSpan();
+				var componentData = ctx.componentPtrs[componentIndex].AsSpan();
 				var fieldData = componentData.Slice(field.offset, field.length);
 				fieldData.CopyTo(result);
 			}
@@ -195,14 +226,14 @@ namespace Mpr.Expr
 			public Data data;
 			public BoolType index;
 
-			public bool Evaluate(ref ExprData btData, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
+			public bool Evaluate(in ExprEvalContext ctx)
 			{
 				switch(index)
 				{
-					case BoolType.Not: return !data.not.inner.Evaluate<bool>(ref btData, componentPtrs);
-					case BoolType.And: return data.and.left.Evaluate<bool>(ref btData, componentPtrs) && data.and.right.Evaluate<bool>(ref btData, componentPtrs);
-					case BoolType.Or: return data.or.left.Evaluate<bool>(ref btData, componentPtrs) || data.or.right.Evaluate<bool>(ref btData, componentPtrs);
-					case BoolType.Xor: return data.xor.left.Evaluate<bool>(ref btData, componentPtrs) != data.xor.right.Evaluate<bool>(ref btData, componentPtrs);
+					case BoolType.Not: return !data.not.inner.Evaluate<bool>(in ctx);
+					case BoolType.And: return data.and.left.Evaluate<bool>(in ctx) && data.and.right.Evaluate<bool>(in ctx);
+					case BoolType.Or: return data.or.left.Evaluate<bool>(in ctx) || data.or.right.Evaluate<bool>(in ctx);
+					case BoolType.Xor: return data.xor.left.Evaluate<bool>(in ctx) != data.xor.right.Evaluate<bool>(in ctx);
 				}
 				Debug.Log($"invalid BTBoolExpr type index {index}");
 #if DEBUG
@@ -212,9 +243,9 @@ namespace Mpr.Expr
 #endif
 			}
 
-			public void Evaluate(ref ExprData data, byte outputIndex, ReadOnlySpan<UnsafeComponentReference> componentPtrs, Span<byte> result)
+			public void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
 			{
-				SpanMarshal.Cast<byte, bool>(result)[0] = Evaluate(ref data, componentPtrs);
+				SpanMarshal.Cast<byte, bool>(result)[0] = Evaluate(in ctx);
 			}
 
 			public string DumpString()
@@ -226,6 +257,56 @@ namespace Mpr.Expr
 					case BoolType.Or: return data.or.ToString();
 				}
 				return "";
+			}
+		}
+
+		public struct ReadEntityComponentField : IExprEval
+		{
+			public ExprNodeRef entity;
+			public byte componentIndex;
+			public BlobArray<Field> fields;
+
+			public struct Field
+			{
+				public ushort offset;
+				public ushort length;
+
+				public static implicit operator Field(System.Reflection.FieldInfo fieldInfo)
+				{
+					return new Field
+					{
+						offset = (ushort)UnsafeUtility.GetFieldOffset(fieldInfo),
+						length = (ushort)UnsafeUtility.SizeOf(fieldInfo.FieldType),
+					};
+				}
+
+				public override string ToString()
+				{
+					return $"{{ offset={offset}, length={length} }}";
+				}
+			}
+
+			public void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
+			{
+				var entity = this.entity.Evaluate<Entity>(in ctx);
+
+				ref var field = ref fields[outputIndex];
+
+				if(ctx.remoteComponentLookups[componentIndex].TryGetRefRO(entity, out var componentDataArray))
+				{
+					var componentData = componentDataArray.AsSpan();
+					var fieldData = componentData.Slice(field.offset, field.length);
+					fieldData.CopyTo(result);
+				}
+				else
+				{
+					result.Clear();
+				}
+			}
+
+			public string DumpString()
+			{
+				return $"{{ componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
 			}
 		}
 	}

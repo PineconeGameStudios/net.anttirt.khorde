@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Unity.Entities;
 
 namespace Mpr.Expr.Authoring
 {
 	public interface IComponentAccess
 	{
-		public Type ComponentType { get; }
+		public ComponentType ComponentType { get; }
 		public bool IsReadOnly { get; }
 	}
 

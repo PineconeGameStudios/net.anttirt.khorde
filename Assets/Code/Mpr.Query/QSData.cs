@@ -1,14 +1,14 @@
-using Unity.Entities;
 using Mpr.Blobs;
-using Unity.Collections;
-using System.Collections.Generic;
-using System;
-using System.Runtime.CompilerServices;
-using Mpr.Expr;
-using Unity.Collections.LowLevel.Unsafe;
-using System.Runtime.InteropServices;
 using Mpr.Burst;
+using Mpr.Expr;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Unity.Burst;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 using Unity.Mathematics;
 
 /*
@@ -79,7 +79,7 @@ namespace Mpr.Query
 	public struct QSEntityQueryReference : IBufferElementData
 	{
 		public BlobAssetReference<BlobEntityQueryDesc> entityQueryDesc;
-		
+
 		/// <summary>
 		/// Gets a runtime key that can be used to look up the results for a query
 		/// </summary>
@@ -98,17 +98,18 @@ namespace Mpr.Query
 	public struct QSEntityQuery : ISharedComponentData, IEquatable<QSEntityQuery>
 	{
 		public BlobAssetReference<BlobEntityQueryDesc> entityQueryDesc;
-		
+
 		/// <summary>
 		/// Runtime-resolved query for this description
 		/// </summary>
 		public EntityQuery runtimeEntityQuery;
-		
+
 		/// <summary>
 		/// Most recent results for evaluating the entity query.
 		/// </summary>
 		public NativeList<Entity> results;
 
+		#region IEquatable for SharedComponent keying
 		[BurstCompile]
 		public bool Equals(QSEntityQuery other)
 		{
@@ -125,6 +126,7 @@ namespace Mpr.Query
 		{
 			return entityQueryDesc.GetHashCode();
 		}
+		#endregion
 
 		/// <summary>
 		/// Gets a runtime key that can be used to look up the results for a query
@@ -231,12 +233,17 @@ namespace Mpr.Query
 			public ExprNodeRef orientation;
 			public ExprNodeRef spacing;
 
-			public void Generate(ref QSData data, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<float2> items, Span<UnsafeComponentReference> components)
+			public void Generate(
+				ref QSData data,
+				in ExprEvalContext ctx,
+				DynamicBuffer<QSEntityQueryReference> entityQueries,
+				NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup,
+				NativeList<float2> items)
 			{
-				float2 center = this.center.Evaluate<float2>(ref data.exprData, components);
-				float2 size = this.size.Evaluate<float2>(ref data.exprData, components);
-				float orientation = this.orientation.Evaluate<float>(ref data.exprData, components);
-				float spacing = this.spacing.Evaluate<float>(ref data.exprData, components);
+				float2 center = this.center.Evaluate<float2>(in ctx);
+				float2 size = this.size.Evaluate<float2>(in ctx);
+				float orientation = this.orientation.Evaluate<float>(in ctx);
+				float spacing = this.spacing.Evaluate<float>(in ctx);
 
 				math.sincos(orientation, out var s, out var c);
 				var basis = spacing * new float2(c - s, s + c);
@@ -249,11 +256,11 @@ namespace Mpr.Query
 					int xi = 0;
 					for(float x = 0; x < extent.x; x += spacing, xi++)
 					{
-						items.Add(center + new float2( basis.x * xi,  basis.y * yi));
+						items.Add(center + new float2(basis.x * xi, basis.y * yi));
 						if(xi > 0 && yi > 0)
 						{
-							items.Add(center + new float2( basis.x * xi, -basis.y * yi));
-							items.Add(center + new float2(-basis.x * xi,  basis.y * yi));
+							items.Add(center + new float2(basis.x * xi, -basis.y * yi));
+							items.Add(center + new float2(-basis.x * xi, basis.y * yi));
 							items.Add(center + new float2(-basis.x * xi, -basis.y * yi));
 						}
 					}
@@ -264,9 +271,8 @@ namespace Mpr.Query
 		public struct Entities
 		{
 			public int queryIndex;
-			
-			public void Generate(ref QSData data, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<Entity> items,
-				Span<UnsafeComponentReference> components)
+
+			public void Generate(ref QSData data, in ExprEvalContext ctx, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<Entity> items)
 			{
 				if(queryResultLookup.TryGetValue(entityQueries[queryIndex].GetRuntimeKey(), out var results))
 					items.CopyFrom(results);
@@ -279,7 +285,7 @@ namespace Mpr.Query
 				throw new Exception();
 		}
 
-		public void Generate<TItem>(ref QSData data, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<TItem> items, Span<UnsafeComponentReference> components) where TItem : unmanaged
+		public void Generate<TItem>(ref QSData data, in ExprEvalContext ctx, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<TItem> items) where TItem : unmanaged
 		{
 			switch(generatorType)
 			{
@@ -287,15 +293,15 @@ namespace Mpr.Query
 					CheckType<float2, TItem>();
 					unsafe
 					{
-						this.data.float2Rectangle.Generate(ref data, entityQueries, queryResultLookup, *(NativeList<float2>*)&items, components);
+						this.data.float2Rectangle.Generate(ref data, in ctx, entityQueries, queryResultLookup, *(NativeList<float2>*)&items);
 					}
 					break;
-				
+
 				case GeneratorType.Entities:
 					CheckType<Entity, TItem>();
 					unsafe
 					{
-						this.data.entities.Generate(ref data, entityQueries, queryResultLookup, *(NativeList<Entity>*)&items, components);
+						this.data.entities.Generate(ref data, in ctx, entityQueries, queryResultLookup, *(NativeList<Entity>*)&items);
 					}
 					break;
 
@@ -319,22 +325,22 @@ namespace Mpr.Query
 			// Function,
 		}
 
-		public void Pass<TItem>(ref QSData data, ref QSTempState tempState, Span<TItem> items, NativeBitArray passBits, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public void Pass<TItem>(ref QSData data, in ExprEvalContext ctx, ref QSTempState tempState, Span<TItem> items, NativeBitArray passBits) where TItem : unmanaged
 		{
 			switch(type)
 			{
 				case FilterType.Expression:
-				{
-					// TODO: vectorized expressions
-					int i = 0;
-					foreach (ref var item in items)
 					{
-						tempState.GetCurrentItem<TItem>() = item;
-						passBits.Set(i, expr.Evaluate<bool>(ref data.exprData, componentPtrs));
-					}
+						// TODO: vectorized expressions
+						int i = 0;
+						foreach(ref var item in items)
+						{
+							tempState.GetCurrentItem<TItem>() = item;
+							passBits.Set(i, expr.Evaluate<bool>(in ctx));
+						}
 
-					break;
-				}
+						break;
+					}
 
 				default:
 					throw new NotImplementedException();
@@ -352,7 +358,7 @@ namespace Mpr.Query
 			Expression,
 		}
 
-		public void Score<TItem>(ref ExprData exprData, ref QSTempState tempState, Span<TItem> items, Span<QSItem> scores, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public void Score<TItem>(in ExprEvalContext ctx, ref QSTempState tempState, Span<TItem> items, Span<QSItem> scores, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			switch(type)
 			{
@@ -361,7 +367,7 @@ namespace Mpr.Query
 					for(int i = 0; i < items.Length; ++i)
 					{
 						tempState.GetCurrentItem<TItem>() = items[i];
-						scores[i].score += expr.Evaluate<float>(ref exprData, componentPtrs);
+						scores[i].score += expr.Evaluate<float>(in ctx);
 					}
 					break;
 
@@ -398,7 +404,9 @@ namespace Mpr.Query
 			Allocator tempAlloc = Allocator.Temp
 			) where TItem : unmanaged
 		{
-			int resultCount = data.resultCount.Evaluate<int>(ref data.exprData, componentPtrs);
+			var exprContext = new ExprEvalContext(componentPtrs, ref data.exprData, default);
+
+			int resultCount = data.resultCount.Evaluate<int>(in exprContext);
 
 			var items = new NativeList<TItem>(tempAlloc);
 			QSTempState tempState = default;
@@ -410,7 +418,7 @@ namespace Mpr.Query
 			int passIndex = 0;
 			int passItemStartIndex = 0;
 
-			NativeBitArray passBits = new  NativeBitArray(resultCount, tempAlloc);
+			NativeBitArray passBits = new NativeBitArray(resultCount, tempAlloc);
 			var scores = new NativeList<QSItem>(tempAlloc);
 
 			// generate and filter items until we've gone through enough passes to accept the desired amount of items
@@ -420,7 +428,7 @@ namespace Mpr.Query
 
 				// generate items
 				foreach(ref var generator in pass.generators.AsSpan())
-					generator.Generate(ref data, entityQueries, queryResultLookup, items, componentPtrs);
+					generator.Generate(ref data, in exprContext, entityQueries, queryResultLookup, items);
 
 				var unfilteredItems = items.AsArray().AsSpan().Slice(passItemStartIndex);
 				int newItemCount = unfilteredItems.Length;
@@ -428,13 +436,13 @@ namespace Mpr.Query
 
 				// compute filters
 				foreach(ref var filter in pass.filters.AsSpan())
-					filter.Pass(ref data, ref tempState, unfilteredItems, passBits, componentPtrs);
+					filter.Pass(ref data, in exprContext, ref tempState, unfilteredItems, passBits);
 
 				// remove filtered items
-				for (int i = passItemStartIndex; i < items.Length;)
+				for(int i = passItemStartIndex; i < items.Length;)
 				{
 					int passItemIndex = i - passItemStartIndex;
-					if (!passBits.IsSet(passItemIndex))
+					if(!passBits.IsSet(passItemIndex))
 					{
 						// passBits.RemoveAtSwapBack(passItemIndex);
 						passBits.Set(passItemIndex, passBits.IsSet(passBits.Length - 1));
@@ -447,15 +455,15 @@ namespace Mpr.Query
 						++i;
 					}
 				}
-				
+
 				// score remaining items
 				var filteredItems = items.AsArray().AsSpan().Slice(passItemStartIndex);
 				var passScores = scores.AsArray().AsSpan().Slice(passItemStartIndex);
-				
+
 				scores.ResizeUninitialized(items.Length);
-				
+
 				foreach(ref var scorer in pass.scorers.AsSpan())
-					scorer.Score(ref data.exprData, ref tempState, filteredItems, passScores, componentPtrs);
+					scorer.Score(in exprContext, ref tempState, filteredItems, passScores, componentPtrs);
 
 				passItemStartIndex = items.Length;
 
@@ -467,7 +475,7 @@ namespace Mpr.Query
 			scores.Sort(default(QSItem.ScoreComparer));
 
 			resultCount = math.min(resultCount, items.Length);
-			
+
 			results.Clear();
 			results.ResizeUninitialized(1 + (resultCount * UnsafeUtility.SizeOf<TItem>()) / UnsafeUtility.SizeOf<QSResultItemStorage>());
 			results.ElementAt(0).storage = resultCount;

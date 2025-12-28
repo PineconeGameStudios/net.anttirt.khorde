@@ -7,23 +7,29 @@ namespace Mpr.Blobs;
 /// </summary>
 public struct BlobComponentType
 {
-    public ulong stableTypeHash;
-    public ComponentType.AccessMode accessModeType;
+	public ulong stableTypeHash;
+	public ComponentType.AccessMode accessModeType;
 
-    public ComponentType ResolveComponentType()
-    {
-        var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(stableTypeHash);
-        if (typeIndex != TypeIndex.Null)
-            return default;
-        
-        var type = ComponentType.FromTypeIndex(typeIndex);
-        type.AccessModeType = accessModeType;
-        return type;
-    }
+	public ComponentType ResolveComponentType()
+	{
+		var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(stableTypeHash);
+		if(typeIndex == TypeIndex.Null)
+			return default;
 
-    public BlobComponentType(ComponentType componentType)
-    {
-        stableTypeHash = TypeManager.GetTypeInfo(componentType.TypeIndex).StableTypeHash;
-        accessModeType = componentType.AccessModeType;
-    }
+		var type = ComponentType.FromTypeIndex(typeIndex);
+		type.AccessModeType = accessModeType;
+		return type;
+	}
+
+	public BlobComponentType(ComponentType componentType)
+	{
+		stableTypeHash = TypeManager.GetTypeInfo(componentType.TypeIndex).StableTypeHash;
+		accessModeType = componentType.AccessModeType;
+	}
+
+	public BlobComponentType(ulong stableTypeHash, ComponentType.AccessMode accessMode)
+	{
+		this.stableTypeHash = stableTypeHash;
+		this.accessModeType = accessMode;
+	}
 }

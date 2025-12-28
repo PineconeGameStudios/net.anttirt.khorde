@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Mpr.Expr.Authoring;
+using System;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
-using Mpr.Expr.Authoring;
 
 namespace Mpr.Behavior.Authoring
 {
@@ -10,14 +10,14 @@ namespace Mpr.Behavior.Authoring
 	[NodeCategory("Component")]
 	public abstract class ComponentWriterNode<T> : ExecBase, IComponentAccess where T : Unity.Entities.IComponentData
 	{
-		public Type ComponentType => typeof(T);
+		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
 		public override string Title => $"Write {typeof(T).Name}";
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			var componentIndex = context.componentTypes.IndexOf(typeof(T));
+			var componentIndex = context.componentTypes.FindIndex(kv => kv.Key == typeof(T));
 			if(componentIndex == -1)
 				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
 

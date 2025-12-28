@@ -1,3 +1,4 @@
+using Mpr.Net;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,7 +7,7 @@ using Unity.Transforms;
 
 namespace Mpr.Game
 {
-	[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.LocalSimulation)]
+	[WorldSystemFilter(WorldSystemFilterExt.Authority)]
 	partial struct NpcSpawnerSystem : ISystem
 	{
 		void ISystem.OnCreate(ref SystemState state)

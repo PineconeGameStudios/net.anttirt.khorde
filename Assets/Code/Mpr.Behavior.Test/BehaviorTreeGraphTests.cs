@@ -1,3 +1,4 @@
+using Mpr.Expr;
 using NUnit.Framework;
 using System.Collections.Generic;
 using Unity.Entities;
@@ -5,7 +6,6 @@ using Unity.Transforms;
 using UnityEditor;
 using static Mpr.Behavior.BTExec;
 using static Mpr.Behavior.BTExecTrace;
-using Mpr.Expr;
 
 namespace Mpr.Behavior.Test
 {
@@ -52,7 +52,9 @@ namespace Mpr.Behavior.Test
 				comps[0] = UnsafeComponentReference.Make(ref moveTarget);
 				comps[1] = UnsafeComponentReference.Make(ref localTransform);
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, comps, 0, trace);
+				System.Span<UntypedComponentLookup> lookups = default;
+
+				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -68,7 +70,7 @@ namespace Mpr.Behavior.Test
 
 				trace.Clear();
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, comps, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -80,7 +82,7 @@ namespace Mpr.Behavior.Test
 
 				moveTarget.enabled = false;
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, comps, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);
 
 				AssertTrace
 				(

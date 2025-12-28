@@ -12,8 +12,8 @@ namespace Mpr.Expr.Authoring
 		public Graph rootGraph;
 		public Dictionary<NodeKey<IExprNode>, ExprNodeRef> exprNodeMap;
 		public NativeList<byte> constStorage;
-		public HashSet<Type> componentTypeSet;
-		public List<Type> componentTypes;
+		public Dictionary<Type, ComponentType.AccessMode> componentTypeSet;
+		public List<KeyValuePair<Type, ComponentType.AccessMode>> componentTypes;
 		public List<string> errors;
 		public List<string> warnings;
 		public SubgraphStack subgraphStack;
@@ -42,7 +42,7 @@ namespace Mpr.Expr.Authoring
 			if(!RegisterNodes())
 				return default;
 
-			componentTypes = componentTypeSet.OrderBy(t => t.FullName).ToList();
+			componentTypes = componentTypeSet.OrderBy(t => t.Key.FullName).ToList();
 
 			builder = new BlobBuilder(allocator);
 
@@ -74,7 +74,7 @@ namespace Mpr.Expr.Authoring
 			var exprNodeIds = builder.Allocate(ref exprData.exprNodeIds, exprNodeMap.Count);
 
 			for(int i = 0; i < componentTypes.Count; ++i)
-				types[i] = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(componentTypes[i])).StableTypeHash;
+				types[i] = new Blobs.BlobComponentType(new ComponentType(componentTypes[i].Key, componentTypes[i].Value));
 
 			BakeExprNodes(rootGraph, ref builder, ref exprs, ref exprNodeIds);
 		}
@@ -185,7 +185,10 @@ namespace Mpr.Expr.Authoring
 
 				if(node is IComponentAccess componentAccess)
 				{
-					componentTypeSet.Add(componentAccess.ComponentType);
+					var managedType = componentAccess.ComponentType.GetManagedType();
+					componentTypeSet.TryGetValue(managedType, out var access);
+					access |= componentAccess.ComponentType.AccessModeType;
+					componentTypeSet[managedType] = access;
 				}
 			}
 		}

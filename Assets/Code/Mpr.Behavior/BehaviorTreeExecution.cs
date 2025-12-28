@@ -1,18 +1,18 @@
+using Mpr.Blobs;
+using Mpr.Expr;
 using System;
 using System.Collections.Generic;
 using Unity.Entities;
-using Mpr.Blobs;
-using Mpr.Expr;
 
 namespace Mpr.Behavior
 {
 	public static class BehaviorTreeExecution
 	{
 
-		public static void Execute(this BlobAssetReference<BTData> asset, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
-			=> Execute(ref asset.Value, ref state, stack, componentPtrs, now, trace);
+		public static void Execute(this BlobAssetReference<BTData> asset, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, ReadOnlySpan<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
+			=> Execute(ref asset.Value, ref state, stack, componentPtrs, lookups, now, trace);
 
-		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, float now, DynamicBuffer<BTExecTrace> trace)
+		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, ReadOnlySpan<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
 		{
 			if(data.exprData.componentTypes.Length > componentPtrs.Length)
 				throw new Exception($"not enough components; bt requires {data.exprData.componentTypes.Length} but only {componentPtrs.Length} found");
@@ -21,9 +21,9 @@ namespace Mpr.Behavior
 				throw new Exception($"too many components; bt requires {data.exprData.componentTypes.Length} but {componentPtrs.Length} found");
 
 			for(int i = 0; i < data.exprData.componentTypes.Length; ++i)
-				if(data.exprData.componentTypes[i] != componentPtrs[i].stableTypeHash)
+				if(data.exprData.componentTypes[i].stableTypeHash != componentPtrs[i].stableTypeHash)
 					throw new Exception($"wrong type at index {i}, expected " +
-						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.componentTypes[i])).DebugTypeName}, found" +
+						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.componentTypes[i].stableTypeHash)).DebugTypeName}, found" +
 						$"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
 
 			if(stack.Length == 0)
@@ -33,6 +33,8 @@ namespace Mpr.Behavior
 
 				stack.Add(data.Root);
 			}
+
+			var exprContext = new ExprEvalContext(componentPtrs, ref data.exprData, lookups);
 
 			bool rootVisited = false;
 
@@ -145,7 +147,7 @@ namespace Mpr.Behavior
 							for(int childIndex = 0; childIndex < node.data.selector.children.Length; ++childIndex)
 							{
 								ref var child = ref node.data.selector.children[childIndex];
-								if(child.condition.Evaluate<bool>(ref data.exprData, componentPtrs))
+								if(child.condition.Evaluate<bool>(in exprContext))
 								{
 									any = true;
 									Call(ref data, child.nodeId);
@@ -172,7 +174,7 @@ namespace Mpr.Behavior
 						break;
 
 					case BTExec.BTExecType.Wait:
-						if(node.data.wait.until.Evaluate<bool>(ref data.exprData, componentPtrs))
+						if(node.data.wait.until.Evaluate<bool>(in exprContext))
 						{
 							Return(ref data, ref node);
 						}
@@ -190,7 +192,7 @@ namespace Mpr.Behavior
 						break;
 
 					case BTExec.BTExecType.Optional:
-						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(ref data.exprData, componentPtrs))
+						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(in exprContext))
 						{
 							Call(ref data, node.data.optional.child);
 						}

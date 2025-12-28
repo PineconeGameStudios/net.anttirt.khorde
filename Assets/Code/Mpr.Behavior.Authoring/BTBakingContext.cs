@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Mpr.Expr.Authoring;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
-using Mpr.Expr.Authoring;
 
 namespace Mpr.Behavior.Authoring
 {
@@ -114,7 +114,10 @@ namespace Mpr.Behavior.Authoring
 
 				if(node is IComponentAccess componentAccess)
 				{
-					componentTypeSet.Add(componentAccess.ComponentType);
+					var managedType = componentAccess.ComponentType.GetManagedType();
+					componentTypeSet.TryGetValue(managedType, out var access);
+					access |= componentAccess.ComponentType.AccessModeType;
+					componentTypeSet[managedType] = access;
 				}
 			}
 		}
