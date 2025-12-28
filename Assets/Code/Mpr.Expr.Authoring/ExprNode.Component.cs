@@ -98,6 +98,12 @@ namespace Mpr.Expr.Authoring
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
+			/// NOTE: this offsets output indices for fields by 1 (see <see cref="Mpr.Expr.BTExpr.LookupField.Evaluate"/>
+			context.AddOutputPort<bool>("HasComponent")
+				.WithDisplayName("[Has Component]")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.Build();
+
 			foreach(var field in GetFields())
 			{
 				context.AddOutputPort(field.Name)
@@ -109,4 +115,7 @@ namespace Mpr.Expr.Authoring
 	}
 
 	[Serializable] internal class ReadLocalTransform : ComponentReaderNode<Unity.Transforms.LocalTransform> { }
+
+	[Serializable] internal class LookupLocalToWorld : ComponentLookupNode<Unity.Transforms.LocalToWorld> { }
+	[Serializable] internal class LookupLocalTransform : ComponentLookupNode<Unity.Transforms.LocalTransform> { }
 }

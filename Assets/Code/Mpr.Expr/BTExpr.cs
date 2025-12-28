@@ -290,13 +290,24 @@ namespace Mpr.Expr
 			{
 				var entity = this.entity.Evaluate<Entity>(in ctx);
 
-				ref var field = ref fields[outputIndex];
-
 				if(ctx.componentLookups[componentIndex].TryGetRefRO(entity, out var componentDataArray))
 				{
-					var componentData = componentDataArray.AsReadOnlySpan();
-					var fieldData = componentData.Slice(field.offset, field.length);
-					fieldData.CopyTo(result);
+					if(outputIndex == 0)
+					{
+						SpanMarshal.Cast<byte, bool>(result)[0] = true;
+					}
+					else
+					{
+						if(componentDataArray.IsCreated)
+							throw new Exception("attempting to access a field on a zero-sized component");
+
+						/// NOTE: index 0 is always the "has component" boolean, so field outputs are offset by 1
+						/// see <see cref="Mpr.Expr.Authoring.ComponentLookupNode{T}.OnDefinePorts"/>
+						ref var field = ref fields[outputIndex - 1];
+						var componentData = componentDataArray.AsReadOnlySpan();
+						var fieldData = componentData.Slice(field.offset, field.length);
+						fieldData.CopyTo(result);
+					}
 				}
 				else
 				{

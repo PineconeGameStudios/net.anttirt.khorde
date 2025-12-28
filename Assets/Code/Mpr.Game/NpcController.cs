@@ -18,4 +18,9 @@ namespace Mpr.Game
 		[GhostField] public float tolerance;
 		[GhostField] public bool enabled;
 	}
+
+	public struct NpcTargetEntity : IComponentData
+	{
+		[GhostField] public Entity target;
+	}
 }

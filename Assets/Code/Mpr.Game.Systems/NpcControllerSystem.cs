@@ -16,7 +16,9 @@ namespace Mpr.Game
 		{
 			var moveQueryBuilder = new EntityQueryBuilder(Allocator.Temp)
 				.WithAll<NpcController>()
-				.WithAllRW<MoveTarget, LocalTransform>();
+				.WithAllRW<MoveTarget, LocalTransform>()
+				.WithAllRW<NpcTargetEntity>()
+				;
 
 			bool clientWorld = (state.WorldUnmanaged.Flags & WorldFlags.GameClient) == WorldFlags.GameClient;
 
@@ -32,9 +34,12 @@ namespace Mpr.Game
 		partial struct MoveJob : IJobEntity
 		{
 			public float deltaTime;
+			public Entity playerEntity;
 
-			public void Execute(NpcController controller, ref MoveTarget target, ref LocalTransform transform)
+			public void Execute(NpcController controller, ref MoveTarget target, ref LocalTransform transform, ref NpcTargetEntity targetEntity)
 			{
+				targetEntity.target = playerEntity;
+
 				if(target.enabled)
 				{
 					var delta = target.position - transform.Position;
@@ -72,7 +77,12 @@ namespace Mpr.Game
 		[BurstCompile]
 		void ISystem.OnUpdate(ref SystemState state)
 		{
-			state.Dependency = new MoveJob { deltaTime = SystemAPI.Time.DeltaTime }.ScheduleParallel(moveQuery, state.Dependency);
+			SystemAPI.TryGetSingletonEntity<PlayerController>(out var playerEntity);
+			state.Dependency = new MoveJob
+			{
+				deltaTime = SystemAPI.Time.DeltaTime,
+				playerEntity = playerEntity,
+			}.ScheduleParallel(moveQuery, state.Dependency);
 		}
 	}
 }

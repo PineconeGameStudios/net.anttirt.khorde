@@ -21,15 +21,18 @@ namespace Mpr.Game
 		protected override void OnUpdate()
 		{
 			float2 move = inputActions.Player.Move.ReadValue<Vector2>();
+			float rotate = inputActions.Player.Turn.ReadValue<Vector2>().x;
 
 			foreach(var input in SystemAPI.Query<RefRW<PlayerInput>>().WithAll<GhostOwnerIsLocal>())
 			{
 				input.ValueRW.move = move;
+				input.ValueRW.rotate = rotate;
 			}
 
 			foreach(var input in SystemAPI.Query<RefRW<PlayerInput>>().WithNone<GhostOwner>())
 			{
 				input.ValueRW.move = move;
+				input.ValueRW.rotate = rotate;
 			}
 		}
 

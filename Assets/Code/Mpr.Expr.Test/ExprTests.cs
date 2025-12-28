@@ -85,9 +85,11 @@ namespace Mpr.Expr.Test
 			var fields = builder.Allocate(ref exprs[exprCount].data.lookupField.fields, 1);
 			fields[0] = fieldInfo;
 
+			const int FieldIndex = 0;
+
 			++exprCount;
 
-			return ExprNodeRef.Node((ushort)(exprCount - 1), 0);
+			return ExprNodeRef.Node((ushort)(exprCount - 1), FieldIndex + 1);
 		}
 
 		[Test]

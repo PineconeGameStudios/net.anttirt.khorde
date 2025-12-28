@@ -18,10 +18,14 @@ namespace Mpr.Game
 				var entity = GetEntity(authoring, TransformUsageFlags.Dynamic);
 				AddComponent(entity, authoring.controller);
 				AddComponent(entity, authoring.moveTarget);
+				AddComponent(entity, new NpcTargetEntity { });
 			}
 		}
 	}
 
 	[Serializable] class ReadMoveTarget : ComponentReaderNode<MoveTarget> { }
 	[Serializable] class WriteMoveTarget : ComponentWriterNode<MoveTarget> { }
+
+	[Serializable] class ReadNpcTargetEntity : ComponentReaderNode<NpcTargetEntity> { }
+	[Serializable] class WriteNpcTargetEntity : ComponentWriterNode<NpcTargetEntity> { }
 }

@@ -14,5 +14,6 @@ namespace Mpr.Game
 	public struct PlayerInput : IInputComponentData
 	{
 		public float2 move;
+		public float rotate;
 	}
 }
