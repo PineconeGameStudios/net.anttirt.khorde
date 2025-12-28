@@ -34,7 +34,7 @@ namespace Mpr.Behavior
 				stack.Add(data.Root);
 			}
 
-			var exprContext = new ExprEvalContext(componentPtrs, ref data.exprData, lookups);
+			var exprContext = new ExprEvalContext(ref data.exprData, componentPtrs, lookups);
 
 			bool rootVisited = false;
 

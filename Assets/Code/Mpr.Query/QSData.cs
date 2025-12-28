@@ -404,7 +404,7 @@ namespace Mpr.Query
 			Allocator tempAlloc = Allocator.Temp
 			) where TItem : unmanaged
 		{
-			var exprContext = new ExprEvalContext(componentPtrs, ref data.exprData, default);
+			var exprContext = new ExprEvalContext(ref data.exprData, componentPtrs, default);
 
 			int resultCount = data.resultCount.Evaluate<int>(in exprContext);
 

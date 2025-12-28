@@ -11,19 +11,19 @@ namespace Mpr.Expr
 	public unsafe ref struct ExprEvalContext
 	{
 		public ExprEvalContext(
-			ReadOnlySpan<UnsafeComponentReference> componentPtrs,
 			ref ExprData data,
+			ReadOnlySpan<UnsafeComponentReference> componentPtrs,
 			ReadOnlySpan<UntypedComponentLookup> componentLookups
 			)
 		{
-			this.componentPtrs = componentPtrs;
 			fixed(ExprData* pData = &data)
 				this.dataPtr = pData;
+			this.componentPtrs = componentPtrs;
 			this.componentLookups = componentLookups;
 		}
 
-		public ReadOnlySpan<UnsafeComponentReference> componentPtrs;
 		public ExprData* dataPtr;
+		public ReadOnlySpan<UnsafeComponentReference> componentPtrs;
 		public ReadOnlySpan<UntypedComponentLookup> componentLookups;
 
 		public ref ExprData data

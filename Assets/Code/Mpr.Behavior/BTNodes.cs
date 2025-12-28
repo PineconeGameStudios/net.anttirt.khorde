@@ -107,7 +107,7 @@ namespace Mpr.Behavior
 
 		public void Evaluate(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
 		{
-			var ctx = new ExprEvalContext(componentPtrs, ref data.exprData, default);
+			var ctx = new ExprEvalContext(ref data.exprData, componentPtrs, default);
 
 			for(int i = 0; i < fields.Length; ++i)
 			{

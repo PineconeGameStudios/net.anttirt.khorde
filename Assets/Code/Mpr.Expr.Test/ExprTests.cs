@@ -120,8 +120,8 @@ namespace Mpr.Expr.Test
 			lookups[0].Update(testSystem);
 
 			var ctx = new ExprEvalContext(
-				default,
 				ref asset.Value,
+				default,
 				lookups
 				);
 
