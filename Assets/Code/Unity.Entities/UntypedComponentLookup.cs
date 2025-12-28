@@ -78,6 +78,10 @@ namespace Unity.Entities
 
 #endif
 
+		public bool IsCreated => m_Access != null;
+		
+		public TypeIndex TypeIndex => m_TypeIndex;
+
 		/// <summary>
 		/// When a UntypedComponentLookup is cached by a system across multiple system updates, calling this function
 		/// inside the system's OnUpdate() method performs the minimal incremental updates necessary to make the
@@ -802,6 +806,15 @@ namespace Unity.Entities
 		[GenerateTestsForBurstCompatibility]
 		public static UntypedComponentLookup GetUntypedComponentLookup(ref this SystemState systemState, TypeIndex typeIndex, bool isReadOnly)
 		{
+			var componentType = new ComponentType
+			{
+				TypeIndex = typeIndex,
+				AccessModeType = isReadOnly ? ComponentType.AccessMode.ReadOnly : ComponentType.AccessMode.ReadWrite
+			};
+			
+			//systemState.CheckOnUpdate_Lookup();
+			systemState.AddReaderWriter(componentType);
+			
 			unsafe
 			{
 				var access = systemState.EntityManager.GetCheckedEntityDataAccess();

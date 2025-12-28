@@ -2,7 +2,9 @@ using Mpr.Blobs;
 using Mpr.Expr;
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Entities;
+using UnityEngine;
 
 namespace Mpr.Behavior
 {
@@ -14,8 +16,20 @@ namespace Mpr.Behavior
 
 		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, ReadOnlySpan<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
 		{
-			if(data.exprData.localComponents.Length > componentPtrs.Length)
+			if (data.exprData.localComponents.Length > componentPtrs.Length)
+			{
+				var missing = new NativeHashSet<TypeIndex>(0, Allocator.Temp);
+				foreach (ref var bct in data.exprData.localComponents.AsSpan())
+					missing.Add(bct.ResolveComponentType().TypeIndex);
+				
+				foreach(var cptr in componentPtrs)
+					missing.Remove(cptr.typeIndex);
+				
+				foreach(var m in missing)
+					Debug.LogError($"missing local component {TypeManager.GetTypeInfo(m).DebugTypeName}");
+				
 				throw new Exception($"not enough components; bt requires {data.exprData.localComponents.Length} but only {componentPtrs.Length} found");
+			}
 
 			if(data.exprData.localComponents.Length < componentPtrs.Length)
 				throw new Exception($"too many components; bt requires {data.exprData.localComponents.Length} but {componentPtrs.Length} found");
@@ -26,6 +40,18 @@ namespace Mpr.Behavior
 						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.localComponents[i].stableTypeHash)).DebugTypeName}, found" +
 						$"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
 
+			for (int i = 0; i < data.exprData.lookupComponents.Length; ++i)
+			{
+				if (!lookups[i].IsCreated)
+					throw new Exception($"component lookup at index {i} was not created");
+				
+				// TODO: this is an expensive check, remove it somehow
+				if (data.exprData.lookupComponents[i].ResolveComponentType().TypeIndex != lookups[i].TypeIndex)
+					throw new Exception($"wrong type at index {i}, expected " +
+					                    $"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.lookupComponents[i].stableTypeHash)).DebugTypeName}, found" +
+					                    $"{TypeManager.GetTypeInfo(lookups[i].TypeIndex).DebugTypeName}");
+			}
+
 			if(stack.Length == 0)
 			{
 				if(trace.IsCreated)
@@ -35,7 +61,7 @@ namespace Mpr.Behavior
 			}
 
 			var exprContext = new ExprEvalContext(ref data.exprData, componentPtrs, lookups);
-
+			
 			bool rootVisited = false;
 
 			for(int cycle = 0; ; ++cycle)
@@ -169,7 +195,7 @@ namespace Mpr.Behavior
 						break;
 
 					case BTExec.BTExecType.WriteField:
-						node.data.writeField.Evaluate(ref data, componentPtrs);
+						node.data.writeField.Evaluate(in exprContext);
 						Return(ref data, ref node);
 						break;
 

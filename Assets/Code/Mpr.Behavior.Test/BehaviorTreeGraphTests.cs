@@ -17,11 +17,13 @@ namespace Mpr.Behavior.Test
 		Entity testEntity;
 		DynamicBuffer<BTStackFrame> stack;
 		DynamicBuffer<BTExecTrace> trace;
+		BehaviorTestSystem testSystem;
 
 		[SetUp]
 		public void SetUp()
 		{
 			world = new World("TestWorld");
+			testSystem = world.GetOrCreateSystemManaged<BehaviorTestSystem>();
 			em = world.EntityManager;
 			testEntity = em.CreateEntity();
 			em.AddBuffer<BTStackFrame>(testEntity);
@@ -41,6 +43,7 @@ namespace Mpr.Behavior.Test
 				BTState state = default;
 				Game.MoveTarget moveTarget = default;
 				LocalTransform localTransform = LocalTransform.FromScale(1);
+				Game.NpcTargetEntity targetEntity = default;
 
 				var dump = new List<string>();
 				BehaviorTreeExecution.DumpNodes(ref data.Value, dump);
@@ -48,11 +51,13 @@ namespace Mpr.Behavior.Test
 				//foreach(var line in dump)
 				//	UnityEngine.Debug.Log(line);
 
-				System.Span<UnsafeComponentReference> comps = stackalloc UnsafeComponentReference[2];
+				System.Span<UnsafeComponentReference> comps = stackalloc UnsafeComponentReference[3];
 				comps[0] = UnsafeComponentReference.Make(ref moveTarget);
-				comps[1] = UnsafeComponentReference.Make(ref localTransform);
+				comps[1] = UnsafeComponentReference.Make(ref targetEntity);
+				comps[2] = UnsafeComponentReference.Make(ref localTransform);
 
-				System.Span<UntypedComponentLookup> lookups = default;
+				System.Span<UntypedComponentLookup> lookups = stackalloc UntypedComponentLookup[1];
+				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
 
 				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);
 
@@ -113,6 +118,14 @@ namespace Mpr.Behavior.Test
 		public void TearDown()
 		{
 			world.Dispose();
+		}
+	}
+
+	[DisableAutoCreation]
+	partial class BehaviorTestSystem : SystemBase
+	{
+		protected override void OnUpdate()
+		{
 		}
 	}
 }

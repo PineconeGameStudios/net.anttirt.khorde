@@ -55,7 +55,7 @@ namespace Mpr.Expr.Authoring
 
 	[Serializable]
 	[NodeCategory("Component")]
-	public abstract class ComponentLookupNode<T> : ExprBase, IComponentAccess where T : Unity.Entities.IComponentData
+	public abstract class ComponentLookupNode<T> : ExprBase, IComponentLookup where T : Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
@@ -64,7 +64,7 @@ namespace Mpr.Expr.Authoring
 
 		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
 		{
-			var index = context.localComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
+			var index = context.lookupComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
 			if(index == -1)
 				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
 

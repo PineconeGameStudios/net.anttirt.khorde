@@ -201,7 +201,7 @@ namespace Mpr.Expr.Authoring
 				{
 					var managedType = componentAccess.ComponentType.GetManagedType();
 					localComponentsDict.TryGetValue(managedType, out var access);
-					access |= componentAccess.ComponentType.AccessModeType;
+					access = Combine(access, componentAccess.ComponentType.AccessModeType);
 					localComponentsDict[managedType] = access;
 				}
 
@@ -209,10 +209,18 @@ namespace Mpr.Expr.Authoring
 				{
 					var managedType = componentLookup.ComponentType.GetManagedType();
 					lookupComponentsDict.TryGetValue(managedType, out var access);
-					access |= componentLookup.ComponentType.AccessModeType;
+					access = Combine(access, componentLookup.ComponentType.AccessModeType);
 					lookupComponentsDict[managedType] = access;
 				}
 			}
+		}
+
+		static ComponentType.AccessMode Combine(ComponentType.AccessMode a, ComponentType.AccessMode b)
+		{
+			if (a == ComponentType.AccessMode.ReadWrite || b == ComponentType.AccessMode.ReadWrite)
+				return ComponentType.AccessMode.ReadWrite;
+			
+			return a;
 		}
 
 		public ExprNodeRef GetExprNodeRef(IPort dstPort)

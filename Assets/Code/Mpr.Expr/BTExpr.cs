@@ -290,6 +290,18 @@ namespace Mpr.Expr
 			{
 				var entity = this.entity.Evaluate<Entity>(in ctx);
 
+				if (componentIndex >= ctx.componentLookups.Length)
+				{
+					Debug.LogError($"componentIndex {componentIndex} is out of range (length:{ctx.componentLookups.Length})");
+					throw new Exception("invalid componentIndex");
+				}
+
+				if (!ctx.componentLookups[componentIndex].IsCreated)
+				{
+					Debug.LogError($"componentLookup at index {componentIndex} was not created");
+					throw new Exception("componentLookup for index was not created");
+				}
+				
 				if(ctx.componentLookups[componentIndex].TryGetRefRO(entity, out var componentDataArray))
 				{
 					if(outputIndex == 0)
@@ -298,7 +310,7 @@ namespace Mpr.Expr
 					}
 					else
 					{
-						if(componentDataArray.IsCreated)
+						if(!componentDataArray.IsCreated)
 							throw new Exception("attempting to access a field on a zero-sized component");
 
 						/// NOTE: index 0 is always the "has component" boolean, so field outputs are offset by 1

@@ -39,7 +39,7 @@ namespace Mpr.Behavior
 				var states = chunk.GetNativeArray(ref stateTypeHandle).AsSpan();
 				var stacks = chunk.GetBufferAccessor(ref stackTypeHandle);
 
-				var lookups = componentLookups.Values;
+				var lookups = componentLookups.Lookups;
 
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
 				while(enumerator.NextEntityIndex(out var entityIndex))
@@ -151,6 +151,7 @@ namespace Mpr.Behavior
 						}
 
 						components.Add(type);
+						state.AddDependency(type);
 
 						typeHandles.Add(new ExprSystemTypeHandleHolder
 						{
@@ -173,8 +174,8 @@ namespace Mpr.Behavior
 							state.Enabled = false;
 							return false;
 						}
-
-						components.Add(type);
+						
+						state.AddDependency(type);
 
 						lookups.Add(new ExprSystemComponentLookupHolder
 						{
@@ -183,9 +184,6 @@ namespace Mpr.Behavior
 							typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
 						});
 					}
-
-					foreach(var component in components)
-						state.AddDependency(component);
 
 					builder.WithAll(ref components);
 

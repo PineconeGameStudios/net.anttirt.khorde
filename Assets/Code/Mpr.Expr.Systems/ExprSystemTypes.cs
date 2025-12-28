@@ -133,8 +133,20 @@ namespace Mpr.Expr
 
 		FixedList64Bytes<int> componentTypeSizes;
 		FixedList128Bytes<ulong> componentTypeHashes;
+		
+		public Span<UntypedComponentLookup> Lookups
+		{
+			get
+			{
+				unsafe
+				{
+					fixed(UntypedComponentLookup* handlesPtr = &lookup0)
+						return new Span<UntypedComponentLookup>(handlesPtr, componentTypeSizes.Length);
+				}
+			}
+		}
 
-		public Span<UntypedComponentLookup> Values
+		Span<UntypedComponentLookup> Values
 		{
 			get
 			{

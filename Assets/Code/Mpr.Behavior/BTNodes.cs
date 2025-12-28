@@ -105,14 +105,12 @@ namespace Mpr.Behavior
 
 		public BlobArray<Field> fields;
 
-		public void Evaluate(ref BTData data, ReadOnlySpan<UnsafeComponentReference> componentPtrs)
+		public void Evaluate(in ExprEvalContext ctx)
 		{
-			var ctx = new ExprEvalContext(ref data.exprData, componentPtrs, default);
-
 			for(int i = 0; i < fields.Length; ++i)
 			{
 				ref var field = ref fields[i];
-				var fieldSpan = componentPtrs[componentIndex].AsSpan().Slice(field.offset, field.size);
+				var fieldSpan = ctx.componentPtrs[componentIndex].AsSpan().Slice(field.offset, field.size);
 				field.input.Evaluate(in ctx, fieldSpan);
 			}
 		}
