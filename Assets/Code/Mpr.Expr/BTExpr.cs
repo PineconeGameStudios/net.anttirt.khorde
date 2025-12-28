@@ -13,18 +13,18 @@ namespace Mpr.Expr
 		public ExprEvalContext(
 			ReadOnlySpan<UnsafeComponentReference> componentPtrs,
 			ref ExprData data,
-			ReadOnlySpan<UntypedComponentLookup> remoteComponentLookups
+			ReadOnlySpan<UntypedComponentLookup> componentLookups
 			)
 		{
 			this.componentPtrs = componentPtrs;
 			fixed(ExprData* pData = &data)
 				this.dataPtr = pData;
-			this.remoteComponentLookups = remoteComponentLookups;
+			this.componentLookups = componentLookups;
 		}
 
 		public ReadOnlySpan<UnsafeComponentReference> componentPtrs;
 		public ExprData* dataPtr;
-		public ReadOnlySpan<UntypedComponentLookup> remoteComponentLookups;
+		public ReadOnlySpan<UntypedComponentLookup> componentLookups;
 
 		public ref ExprData data
 		{
@@ -89,7 +89,7 @@ namespace Mpr.Expr
 			ReadField,
 			Bool,
 			BinaryMath,
-			ReadEntityComponentField,
+			LookupField,
 		}
 
 		public T Evaluate<T>(in ExprEvalContext ctx, byte outputIndex) where T : unmanaged
@@ -107,7 +107,7 @@ namespace Mpr.Expr
 				case BTExprType.ReadField: this.data.readField.Evaluate(in ctx, outputIndex, result); return;
 				case BTExprType.Bool: this.data.@bool.Evaluate(in ctx, outputIndex, result); return;
 				case BTExprType.BinaryMath: this.data.binaryMath.Evaluate(in ctx, outputIndex, result); return;
-				case BTExprType.ReadEntityComponentField: this.data.readEntityComponentField.Evaluate(in ctx, outputIndex, result); return;
+				case BTExprType.LookupField: this.data.lookupField.Evaluate(in ctx, outputIndex, result); return;
 			}
 #if DEBUG
 			throw new Exception();
@@ -120,7 +120,7 @@ namespace Mpr.Expr
 			[FieldOffset(0)] public ReadField readField;
 			[FieldOffset(0)] public Bool @bool;
 			[FieldOffset(0)] public BinaryMath binaryMath;
-			[FieldOffset(0)] public ReadEntityComponentField readEntityComponentField;
+			[FieldOffset(0)] public LookupField lookupField;
 		}
 
 		public string DumpString()
@@ -132,7 +132,7 @@ namespace Mpr.Expr
 				case BTExprType.ReadField: result += data.readField.DumpString(); break;
 				case BTExprType.Bool: result += data.@bool.DumpString(); break;
 				case BTExprType.BinaryMath: result += data.binaryMath.DumpString(); break;
-				case BTExprType.ReadEntityComponentField: result += data.readEntityComponentField.DumpString(); break;
+				case BTExprType.LookupField: result += data.lookupField.DumpString(); break;
 			}
 
 			return result;
@@ -260,7 +260,7 @@ namespace Mpr.Expr
 			}
 		}
 
-		public struct ReadEntityComponentField : IExprEval
+		public struct LookupField : IExprEval
 		{
 			public ExprNodeRef entity;
 			public byte componentIndex;
@@ -292,7 +292,7 @@ namespace Mpr.Expr
 
 				ref var field = ref fields[outputIndex];
 
-				if(ctx.remoteComponentLookups[componentIndex].TryGetRefRO(entity, out var componentDataArray))
+				if(ctx.componentLookups[componentIndex].TryGetRefRO(entity, out var componentDataArray))
 				{
 					var componentData = componentDataArray.AsSpan();
 					var fieldData = componentData.Slice(field.offset, field.length);
