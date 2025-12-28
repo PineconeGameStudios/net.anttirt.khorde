@@ -394,7 +394,7 @@ namespace Mpr.Behavior.Test
 				{
 					readField = new BTExpr.ReadField
 					{
-						componentIndex = 0,
+						componentIndex = componentIndex,
 					}
 				}
 			};

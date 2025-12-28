@@ -32,4 +32,7 @@ public struct BlobComponentType
 		this.stableTypeHash = stableTypeHash;
 		this.accessModeType = accessMode;
 	}
+
+	public static BlobComponentType Make<T>(ComponentType.AccessMode accessMode)
+		=> new BlobComponentType(TypeManager.GetTypeInfo<T>().StableTypeHash, accessMode);
 }

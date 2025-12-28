@@ -294,7 +294,7 @@ namespace Mpr.Expr
 
 				if(ctx.componentLookups[componentIndex].TryGetRefRO(entity, out var componentDataArray))
 				{
-					var componentData = componentDataArray.AsSpan();
+					var componentData = componentDataArray.AsReadOnlySpan();
 					var fieldData = componentData.Slice(field.offset, field.length);
 					fieldData.CopyTo(result);
 				}

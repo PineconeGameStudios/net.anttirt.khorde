@@ -1,4 +1,3 @@
-using Mpr.Expr;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.Collections;
@@ -44,6 +43,20 @@ namespace Mpr.Expr.Authoring
 		{
 			T value = (T)objectValue;
 			return WriteConstant(value, out length, constStorage);
+		}
+
+		/// <summary>
+		/// Write a value to constant storage, returning an <see cref="ExprNodeRef"/> pointing to the constant.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="value"></param>
+		/// <param name="constStorage"></param>
+		/// <returns></returns>
+		/// <exception cref="System.Exception"></exception>
+		public static ExprNodeRef WriteConstant<T>(T value, NativeList<byte> constStorage) where T : unmanaged
+		{
+			var offset = WriteConstant<T>(value, out var length, constStorage);
+			return ExprNodeRef.Const(offset, length);
 		}
 
 		/// <summary>

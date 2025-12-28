@@ -817,5 +817,12 @@ namespace Unity.Entities
 #endif
 			}
 		}
+
+		[GenerateTestsForBurstCompatibility]
+		public static UntypedComponentLookup GetUntypedComponentLookup<T>(ref this SystemState systemState, bool isReadOnly)
+            where T : unmanaged, IComponentData
+		{
+			return GetUntypedComponentLookup(ref systemState, TypeManager.GetTypeIndex<T>(), isReadOnly);
+		}
 	}
 }
