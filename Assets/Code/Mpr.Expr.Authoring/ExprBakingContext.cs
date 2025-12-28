@@ -12,8 +12,15 @@ namespace Mpr.Expr.Authoring
 		public Graph rootGraph;
 		public Dictionary<NodeKey<IExprNode>, ExprNodeRef> exprNodeMap;
 		public NativeList<byte> constStorage;
-		public Dictionary<Type, ComponentType.AccessMode> componentTypeSet;
-		public List<KeyValuePair<Type, ComponentType.AccessMode>> componentTypes;
+
+		// components accessed directly on the current entity (behavior trees / queries)
+		public Dictionary<Type, ComponentType.AccessMode> localComponentsDict;
+		public List<ComponentType> localComponents;
+
+		// components looked up on other entities
+		public Dictionary<Type, ComponentType.AccessMode> lookupComponentsDict;
+		public List<ComponentType> lookupComponents;
+
 		public List<string> errors;
 		public List<string> warnings;
 		public SubgraphStack subgraphStack;
@@ -24,8 +31,10 @@ namespace Mpr.Expr.Authoring
 			this.rootGraph = rootGraph ?? throw new ArgumentNullException(nameof(rootGraph));
 
 			constStorage = new NativeList<byte>(Allocator.Persistent);
-			componentTypeSet = new();
-			componentTypes = new();
+			localComponentsDict = new();
+			localComponents = new();
+			lookupComponentsDict = new();
+			lookupComponents = new();
 			exprNodeMap = new();
 			errors = new();
 			warnings = new();
@@ -42,7 +51,8 @@ namespace Mpr.Expr.Authoring
 			if(!RegisterNodes())
 				return default;
 
-			componentTypes = componentTypeSet.OrderBy(t => t.Key.FullName).ToList();
+			localComponents = localComponentsDict.OrderBy(t => t.Key.FullName).Select(kv => new ComponentType(kv.Key, kv.Value)).ToList();
+			lookupComponents = lookupComponentsDict.OrderBy(t => t.Key.FullName).Select(kv => new ComponentType(kv.Key, kv.Value)).ToList();
 
 			builder = new BlobBuilder(allocator);
 
@@ -70,11 +80,15 @@ namespace Mpr.Expr.Authoring
 		protected void BakeExprData(ref ExprData exprData)
 		{
 			var exprs = builder.Allocate(ref exprData.exprs, exprNodeMap.Count);
-			var types = builder.Allocate(ref exprData.componentTypes, componentTypes.Count);
 			var exprNodeIds = builder.Allocate(ref exprData.exprNodeIds, exprNodeMap.Count);
 
-			for(int i = 0; i < componentTypes.Count; ++i)
-				types[i] = new Blobs.BlobComponentType(new ComponentType(componentTypes[i].Key, componentTypes[i].Value));
+			var localComponents = builder.Allocate(ref exprData.localComponents, this.localComponents.Count);
+			for(int i = 0; i < this.localComponents.Count; ++i)
+				localComponents[i] = new Blobs.BlobComponentType(this.localComponents[i]);
+
+			var lookupComponents = builder.Allocate(ref exprData.lookupComponents, this.lookupComponents.Count);
+			for(int i = 0; i < this.lookupComponents.Count; ++i)
+				lookupComponents[i] = new Blobs.BlobComponentType(this.lookupComponents[i]);
 
 			BakeExprNodes(rootGraph, ref builder, ref exprs, ref exprNodeIds);
 		}
@@ -186,9 +200,17 @@ namespace Mpr.Expr.Authoring
 				if(node is IComponentAccess componentAccess)
 				{
 					var managedType = componentAccess.ComponentType.GetManagedType();
-					componentTypeSet.TryGetValue(managedType, out var access);
+					localComponentsDict.TryGetValue(managedType, out var access);
 					access |= componentAccess.ComponentType.AccessModeType;
-					componentTypeSet[managedType] = access;
+					localComponentsDict[managedType] = access;
+				}
+
+				if(node is IComponentLookup componentLookup)
+				{
+					var managedType = componentLookup.ComponentType.GetManagedType();
+					lookupComponentsDict.TryGetValue(managedType, out var access);
+					access |= componentLookup.ComponentType.AccessModeType;
+					lookupComponentsDict[managedType] = access;
 				}
 			}
 		}

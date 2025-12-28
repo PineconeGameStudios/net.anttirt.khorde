@@ -17,7 +17,7 @@ namespace Mpr.Behavior.Authoring
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			var componentIndex = context.componentTypes.FindIndex(kv => kv.Key == typeof(T));
+			var componentIndex = context.localComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
 			if(componentIndex == -1)
 				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
 

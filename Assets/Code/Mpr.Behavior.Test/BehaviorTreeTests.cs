@@ -424,7 +424,7 @@ namespace Mpr.Behavior.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
+			var types = builder.Allocate(ref data.exprData.localComponents, 1);
 			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
@@ -482,7 +482,7 @@ namespace Mpr.Behavior.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
+			var types = builder.Allocate(ref data.exprData.localComponents, 1);
 			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
@@ -532,7 +532,7 @@ namespace Mpr.Behavior.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
+			var types = builder.Allocate(ref data.exprData.localComponents, 1);
 			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			var TestComponent1_field1 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field1)));
@@ -649,7 +649,7 @@ namespace Mpr.Behavior.Test
 			ref var data = ref builder.ConstructRoot<BTData>();
 			var execs = builder.Allocate(ref data.execs, 100);
 			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.componentTypes, 1);
+			var types = builder.Allocate(ref data.exprData.localComponents, 1);
 			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent2>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].type = BTExec.BTExecType.Root;

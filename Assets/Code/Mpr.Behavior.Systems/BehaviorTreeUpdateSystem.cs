@@ -137,7 +137,7 @@ namespace Mpr.Behavior
 					}
 
 					ref var btData = ref value.tree.Value;
-					ref var componentTypes = ref btData.exprData.componentTypes;
+					ref var componentTypes = ref btData.exprData.localComponents;
 
 					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(entity);
 					for(int i = 0; i < componentTypes.Length; ++i)
@@ -161,7 +161,7 @@ namespace Mpr.Behavior
 						});
 					}
 
-					ref var lookupTypes = ref btData.exprData.componentLookupTypes;
+					ref var lookupTypes = ref btData.exprData.lookupComponents;
 
 					var lookups = state.EntityManager.GetBuffer<ExprSystemComponentLookupHolder>(entity);
 					for(int i = 0; i < lookupTypes.Length; ++i)

@@ -14,16 +14,16 @@ namespace Mpr.Behavior
 
 		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, ReadOnlySpan<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
 		{
-			if(data.exprData.componentTypes.Length > componentPtrs.Length)
-				throw new Exception($"not enough components; bt requires {data.exprData.componentTypes.Length} but only {componentPtrs.Length} found");
+			if(data.exprData.localComponents.Length > componentPtrs.Length)
+				throw new Exception($"not enough components; bt requires {data.exprData.localComponents.Length} but only {componentPtrs.Length} found");
 
-			if(data.exprData.componentTypes.Length < componentPtrs.Length)
-				throw new Exception($"too many components; bt requires {data.exprData.componentTypes.Length} but {componentPtrs.Length} found");
+			if(data.exprData.localComponents.Length < componentPtrs.Length)
+				throw new Exception($"too many components; bt requires {data.exprData.localComponents.Length} but {componentPtrs.Length} found");
 
-			for(int i = 0; i < data.exprData.componentTypes.Length; ++i)
-				if(data.exprData.componentTypes[i].stableTypeHash != componentPtrs[i].stableTypeHash)
+			for(int i = 0; i < data.exprData.localComponents.Length; ++i)
+				if(data.exprData.localComponents[i].stableTypeHash != componentPtrs[i].stableTypeHash)
 					throw new Exception($"wrong type at index {i}, expected " +
-						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.componentTypes[i].stableTypeHash)).DebugTypeName}, found" +
+						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.localComponents[i].stableTypeHash)).DebugTypeName}, found" +
 						$"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
 
 			if(stack.Length == 0)

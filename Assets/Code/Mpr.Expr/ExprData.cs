@@ -12,12 +12,12 @@ namespace Mpr.Expr
 		/// <summary>
 		/// Components for direct access on the expression owner entity as part of BT/EQ chunk iteration
 		/// </summary>
-		public BlobArray<BlobComponentType> componentTypes;
+		public BlobArray<BlobComponentType> localComponents;
 
 		/// <summary>
 		/// Components for indirect access on other entities
 		/// </summary>
-		public BlobArray<BlobComponentType> componentLookupTypes;
+		public BlobArray<BlobComponentType> lookupComponents;
 
 		public BlobArray<UnityEngine.Hash128> exprNodeIds;
 

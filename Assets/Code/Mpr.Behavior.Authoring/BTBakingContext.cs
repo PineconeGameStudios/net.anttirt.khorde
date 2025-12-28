@@ -115,9 +115,17 @@ namespace Mpr.Behavior.Authoring
 				if(node is IComponentAccess componentAccess)
 				{
 					var managedType = componentAccess.ComponentType.GetManagedType();
-					componentTypeSet.TryGetValue(managedType, out var access);
+					localComponentsDict.TryGetValue(managedType, out var access);
 					access |= componentAccess.ComponentType.AccessModeType;
-					componentTypeSet[managedType] = access;
+					localComponentsDict[managedType] = access;
+				}
+
+				if(node is IComponentLookup componentLookup)
+				{
+					var managedType = componentLookup.ComponentType.GetManagedType();
+					lookupComponentsDict.TryGetValue(managedType, out var access);
+					access |= componentLookup.ComponentType.AccessModeType;
+					lookupComponentsDict[managedType] = access;
 				}
 			}
 		}
