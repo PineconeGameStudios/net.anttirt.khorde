@@ -1,10 +1,13 @@
 using Mpr.Blobs;
 using Mpr.Burst;
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Mpr.Expr
 {
@@ -90,6 +93,7 @@ namespace Mpr.Expr
 			Bool,
 			BinaryMath,
 			LookupField,
+			CustomExpr,
 		}
 
 		public T Evaluate<T>(in ExprEvalContext ctx, byte outputIndex) where T : unmanaged
@@ -108,6 +112,7 @@ namespace Mpr.Expr
 				case BTExprType.Bool: this.data.@bool.Evaluate(in ctx, outputIndex, result); return;
 				case BTExprType.BinaryMath: this.data.binaryMath.Evaluate(in ctx, outputIndex, result); return;
 				case BTExprType.LookupField: this.data.lookupField.Evaluate(in ctx, outputIndex, result); return;
+				case BTExprType.CustomExpr: this.data.customExpr.Evaluate(in ctx, outputIndex, result); return;
 			}
 #if DEBUG
 			throw new Exception();
@@ -121,6 +126,7 @@ namespace Mpr.Expr
 			[FieldOffset(0)] public Bool @bool;
 			[FieldOffset(0)] public BinaryMath binaryMath;
 			[FieldOffset(0)] public LookupField lookupField;
+			[FieldOffset(0)] public CustomExpr customExpr;
 		}
 
 		public string DumpString()
@@ -133,6 +139,7 @@ namespace Mpr.Expr
 				case BTExprType.Bool: result += data.@bool.DumpString(); break;
 				case BTExprType.BinaryMath: result += data.binaryMath.DumpString(); break;
 				case BTExprType.LookupField: result += data.lookupField.DumpString(); break;
+				case BTExprType.CustomExpr: result += data.customExpr.DumpString(); break;
 			}
 
 			return result;
@@ -332,5 +339,103 @@ namespace Mpr.Expr
 				return $"{{ componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
 			}
 		}
+		
+		public struct CustomExpr : IExprEval
+		{
+			public ulong stableTypeHash;
+			
+			/// <summary>
+			/// This is baked as null and initialized at runtime after the blob is loaded into memory
+			/// </summary>
+			public long funcPtr;
+			
+			/// <summary>
+			/// byte here is just a placeholder for the actual type.
+			/// </summary>
+			public BlobPtr<byte> dataPtr;
+
+			/// <summary>
+			/// Initialize function pointer after loading the blob into memory.
+			/// </summary>
+			public void RuntimeInitialize()
+			{
+				funcPtr = (long)ExprInvoker.GetFunctionPointer(stableTypeHash).Value;
+			}
+
+			public void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
+			{
+				unsafe
+				{
+					new FunctionPointer<EvaluateDelegate>((IntPtr)funcPtr).Invoke(dataPtr.GetUnsafePtr(), in ctx, outputIndex, result);
+				}
+			}
+
+			public string DumpString()
+			{
+				return "";
+			}
+		}
 	}
+
+	public unsafe delegate void EvaluateDelegate(void* data, in ExprEvalContext ctx, byte outputIndex, Span<byte> result);
+
+	// TODO: we're piggybacking on IComponentData so we
+	// can use TypeManager to resolve types, but we should
+	// use our own to avoid bloating component space
+	public unsafe interface ICustomExpr : IComponentData
+	{
+		unsafe void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result);
+	}
+
+	public struct ExprInvoker
+	{
+		public static FunctionPointer<EvaluateDelegate> GetFunctionPointer(ulong stableTypeHash)
+		{
+			var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(stableTypeHash);
+			var typeInfo = TypeManager.GetTypeInfo(typeIndex);
+			return (FunctionPointer<EvaluateDelegate>)typeof(ExprInvoker<>).MakeGenericType(typeInfo.Type).GetMethod("GetFunctionPointer", BindingFlags.Static).Invoke(null, Array.Empty<object>());
+		}
+	}
+
+	[Preserve]
+	[BurstCompile]
+	public struct ExprInvoker<T> where T : unmanaged, ICustomExpr
+	{
+		public static readonly SharedStatic<IntPtr> FunctionPointer = SharedStatic<IntPtr>.GetOrCreate<ExprInvoker<T>>();
+		public static readonly EvaluateDelegate GCGuard = (EvaluateDelegate)typeof(ExprInvoker<T>).GetMethod(nameof(Evaluate), BindingFlags.Static).CreateDelegate(typeof(EvaluateDelegate));
+
+		static ExprInvoker()
+		{
+			FunctionPointer.Data = Marshal.GetFunctionPointerForDelegate(GCGuard);
+			FunctionPointer.Data = BurstCompiler.CompileFunctionPointer(GCGuard).Value;
+		}
+
+		public static FunctionPointer<EvaluateDelegate> GetFunctionPointer() => new(FunctionPointer.Data);
+		
+		[BurstCompile]
+		public static unsafe void Evaluate(void* data, in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
+		{
+			((T*)data)->Evaluate(in ctx, outputIndex, result);
+		}
+	}
+	
+	/*
+	public struct MyCustomExpr : ICustomExpr
+	{
+		public ExprNodeRef input0;
+		
+		public unsafe void Evaluate(in ExprEvalContext ctx, byte outputIndex, Span<byte> result)
+		{
+		}
+	}
+
+	public class MyCustomExprNode : CustomExprNodeBase<MyCustomExprNode, MyCustomExpr>
+	{
+		public override void Bake(ref BlobBuilder builder, ref MyCustomExpr data, ExprBakingContext context)
+		{
+			data.input0 = new ExprNodeRef();
+			// ...
+		}
+	}
+	*/
 }
