@@ -1,4 +1,5 @@
 using System;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -31,6 +32,14 @@ namespace Mpr.Expr
 			unsafe
 			{
 				return new Span<byte>(data.ToPointer(), typeSize);
+			}
+		}
+
+		public NativeSlice<byte> AsNativeSlice()
+		{
+			unsafe
+			{
+				return NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(data.ToPointer(), 1, typeSize);
 			}
 		}
 	}
