@@ -5,37 +5,37 @@ using UnityEngine.Scripting;
 namespace Mpr.Expr;
 
 [Preserve, BurstCompile]
-public partial struct TestLargeExpression
+public partial struct BinaryBool
 {
     [BurstCompile]
     public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((TestLargeExpression*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
+        ((BinaryBool*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
     }
         
     [BurstCompile]
     public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((TestLargeExpression*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+        ((BinaryBool*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
     }
 }
 
-[Preserve]
-public partial struct TestManagedExpression
+[Preserve, BurstCompile]
+public partial struct UnaryBool
 {
-    [AOT.MonoPInvokeCallback(typeof(ExpressionEvalDelegate))]
+    [BurstCompile]
     public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((TestManagedExpression*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
+        ((UnaryBool*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
     }
         
-    [AOT.MonoPInvokeCallback(typeof(ExpressionEvalDelegate))]
+    [BurstCompile]
     public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((TestManagedExpression*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+        ((UnaryBool*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
     }
 }

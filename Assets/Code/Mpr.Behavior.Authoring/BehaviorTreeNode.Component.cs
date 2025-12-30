@@ -1,5 +1,6 @@
 ﻿using Mpr.Expr.Authoring;
 using System;
+using Mpr.Expr;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
@@ -8,7 +9,7 @@ namespace Mpr.Behavior.Authoring
 {
 	[Serializable]
 	[NodeCategory("Component")]
-	public abstract class ComponentWriterNode<T> : ExecBase, IComponentAccess where T : Unity.Entities.IComponentData
+	public abstract class ComponentWriterNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
@@ -27,7 +28,7 @@ namespace Mpr.Behavior.Authoring
 				componentIndex = (byte)componentIndex,
 			};
 
-			var fields = ComponentReaderNode<T>.GetFields();
+			var fields = BlobExpressionData.GetComponentFields<T>();
 
 			int index = 0;
 			int enabledFieldCount = 0;
@@ -76,7 +77,7 @@ namespace Mpr.Behavior.Authoring
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
-			foreach(var field in ComponentReaderNode<T>.GetFields())
+			foreach(var field in BlobExpressionData.GetComponentFields<T>())
 			{
 				context.AddOption<bool>("w_" + field.Name)
 					.WithDisplayName(field.Name)
@@ -92,7 +93,7 @@ namespace Mpr.Behavior.Authoring
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			var fields = ComponentReaderNode<T>.GetFields();
+			var fields = BlobExpressionData.GetComponentFields<T>();
 
 			int index = 0;
 			foreach(var field in fields)

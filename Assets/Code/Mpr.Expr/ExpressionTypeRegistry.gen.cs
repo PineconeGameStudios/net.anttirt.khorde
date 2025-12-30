@@ -1,17 +1,27 @@
 ﻿namespace Mpr.Expr.Generated;
     
-// one of these is generated separately for each assembly
+/// <summary>
+/// This is a generated class used for quickly loading type
+/// information at runtime. One is generated for each assembly
+/// that contains <see cref="IExpression"/> types.
+/// </summary>
 static class ExpressionTypeRegistry
 {
     public static readonly ExpressionTypeInfo[] ExpressionTypes = new[]
     {
-        new ExpressionTypeInfo(typeof(BinaryFloat), true),
-        new ExpressionTypeInfo(typeof(BinaryFloat2), true),
-        new ExpressionTypeInfo(typeof(BinaryFloat3), true),
-        new ExpressionTypeInfo(typeof(BinaryFloat4), true),
-        new ExpressionTypeInfo(typeof(TestLargeExpression), true),
-        new ExpressionTypeInfo(typeof(TestManagedExpression), false),
-        new ExpressionTypeInfo(typeof(ReadComponentField), true),
-        new ExpressionTypeInfo(typeof(LookupComponentField), true),
+        ExpressionTypeInfo.Create<BinaryFloat>(true),
+        ExpressionTypeInfo.Create<BinaryFloat2>(true),
+        ExpressionTypeInfo.Create<BinaryFloat3>(true),
+        ExpressionTypeInfo.Create<BinaryFloat4>(true),
+        ExpressionTypeInfo.Create<BinaryInt>(true),
+        ExpressionTypeInfo.Create<BinaryInt2>(true),
+        ExpressionTypeInfo.Create<BinaryInt3>(true),
+        ExpressionTypeInfo.Create<BinaryInt4>(true),
+        ExpressionTypeInfo.Create<TestLargeExpression>(true),
+        ExpressionTypeInfo.Create<TestManagedExpression>(false),
+        ExpressionTypeInfo.Create<ReadComponentField>(true),
+        ExpressionTypeInfo.Create<LookupComponentField>(true),
+        ExpressionTypeInfo.Create<BinaryBool>(true),
+        ExpressionTypeInfo.Create<UnaryBool>(true),
     };
 }

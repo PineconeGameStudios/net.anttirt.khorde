@@ -8,7 +8,7 @@ namespace Mpr.Expr;
 public partial struct BinaryFloat
 {
     [BurstCompile]
-    public static unsafe void Evaluate(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
         ((BinaryFloat*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
@@ -73,5 +73,77 @@ public partial struct BinaryFloat4
         ref NativeSlice<byte> untypedResult)
     {
         ((BinaryFloat4*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+}
+
+[Preserve, BurstCompile]
+public partial struct BinaryInt
+{
+    [BurstCompile]
+    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+        
+    [BurstCompile]
+    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+}
+
+[Preserve, BurstCompile]
+public partial struct BinaryInt2
+{
+    [BurstCompile]
+    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt2*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+        
+    [BurstCompile]
+    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt2*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+}
+
+[Preserve, BurstCompile]
+public partial struct BinaryInt3
+{
+    [BurstCompile]
+    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt3*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+        
+    [BurstCompile]
+    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt3*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+}
+
+[Preserve, BurstCompile]
+public partial struct BinaryInt4
+{
+    [BurstCompile]
+    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt4*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+        
+    [BurstCompile]
+    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeSlice<byte> untypedResult)
+    {
+        ((BinaryInt4*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
     }
 }

@@ -7,7 +7,7 @@ namespace Mpr.Expr.Authoring
 {
 	[Serializable]
 	[NodeCategory("Component")]
-	public abstract class ComponentReaderNode<T> : ExprBase, IComponentAccess where T : Unity.Entities.IComponentData
+	public abstract class ComponentReaderNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
@@ -26,7 +26,7 @@ namespace Mpr.Expr.Authoring
 				componentIndex = (byte)index,
 			};
 
-			var fields = GetFields();
+			var fields = BlobExpressionData.GetComponentFields<T>();
 
 			var bakedFields = builder.Allocate(ref expr.data.readField.fields, fields.Length);
 			for(int i = 0; i < fields.Length; i++)
@@ -39,11 +39,15 @@ namespace Mpr.Expr.Authoring
 			}
 		}
 
-		public static System.Reflection.FieldInfo[] GetFields() => typeof(T).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		{
+			ref var data = ref context.Allocate<ReadComponentField>(ref storage);
+			context.Bake<T>(ref data.typeInfo, ExpressionBakingContext.ComponentLocation.Local);
+		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			foreach(var field in GetFields())
+			foreach(var field in BlobExpressionData.GetComponentFields<T>())
 			{
 				context.AddOutputPort(field.Name)
 					.WithDisplayName(field.Name)
@@ -55,7 +59,7 @@ namespace Mpr.Expr.Authoring
 
 	[Serializable]
 	[NodeCategory("Component")]
-	public abstract class ComponentLookupNode<T> : ExprBase, IComponentLookup where T : Unity.Entities.IComponentData
+	public abstract class ComponentLookupNode<T> : ExprBase, IComponentLookup where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
@@ -75,7 +79,7 @@ namespace Mpr.Expr.Authoring
 				componentIndex = (byte)index,
 			};
 
-			var fields = GetFields();
+			var fields = BlobExpressionData.GetComponentFields<T>();
 
 			var bakedFields = builder.Allocate(ref expr.data.lookupField.fields, fields.Length);
 			for(int i = 0; i < fields.Length; i++)
@@ -88,7 +92,12 @@ namespace Mpr.Expr.Authoring
 			}
 		}
 
-		public static System.Reflection.FieldInfo[] GetFields() => typeof(T).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		{
+			ref var data = ref context.Allocate<LookupComponentField>(ref storage);
+			context.Bake<T>(ref data.typeInfo, ExpressionBakingContext.ComponentLocation.Lookup);
+			data.entity = context.GetExpressionRef(GetInputPort(0));
+		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
@@ -104,7 +113,7 @@ namespace Mpr.Expr.Authoring
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
-			foreach(var field in GetFields())
+			foreach(var field in BlobExpressionData.GetComponentFields<T>())
 			{
 				context.AddOutputPort(field.Name)
 					.WithDisplayName(field.Name)

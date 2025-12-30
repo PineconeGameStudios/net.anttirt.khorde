@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -164,6 +166,11 @@ public struct BlobExpressionData
     /// Latest loading status for weakly referenced assets.
     /// </summary>
     public ObjectLoadingStatus LoadingStatus => loadingStatus;
+    
+    public static FieldInfo[] GetComponentFields<T>() where T : unmanaged, IComponentData
+        => typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .OrderBy(UnsafeUtility.GetFieldOffset)
+            .ToArray();
 
     /// <summary>
     /// Initialize expression function pointers, patch strong object refs, start loading weak object refs, etc.
@@ -352,7 +359,7 @@ public interface IExpression
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate void EvaluateDelegate2(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+public unsafe delegate void ExpressionEvalDelegate(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
     ref NativeSlice<byte> untypedResult);
 
 [StructLayout(LayoutKind.Explicit)]
@@ -365,12 +372,21 @@ public struct ExpressionStorage
         
     // if that's not enough, use an indirect pointer (into the same blob)
     [FieldOffset(0)] public BlobPtr<byte> dataReference;
+
+    public ref BlobPtr<T> AsDataReference<T>() where T : unmanaged
+    {
+        unsafe
+        {
+            fixed(BlobPtr<byte>* pref = &dataReference)
+                return ref *(BlobPtr<T>*)pref;
+        }
+    }
 }
 
 [StructLayout(LayoutKind.Sequential)]
 public struct ExpressionData
 {
-    ExpressionStorage storage;
+    public ExpressionStorage storage;
 
     // filled in at runtime
     public long evaluateFuncPtr;
@@ -380,7 +396,7 @@ public struct ExpressionData
         unsafe
         {
             fixed (ExpressionStorage* ptr = &storage)
-                new FunctionPointer<EvaluateDelegate2>((IntPtr)evaluateFuncPtr).Invoke(ptr, in ctx, outputIndex,
+                new FunctionPointer<ExpressionEvalDelegate>((IntPtr)evaluateFuncPtr).Invoke(ptr, in ctx, outputIndex,
                     ref untypedResult);
         }
     }

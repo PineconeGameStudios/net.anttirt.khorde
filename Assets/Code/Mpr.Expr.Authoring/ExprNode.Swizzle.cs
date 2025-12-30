@@ -77,6 +77,11 @@ namespace Mpr.Expr.Authoring
 			UnityEngine.Debug.LogWarning($"{GetType().Name}.Bake() not implemented");
 		}
 
+		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		{
+			throw new NotImplementedException();
+		}
+
 		public override string Title => $"Swizzle ({typeof(T).Name})";
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)

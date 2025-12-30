@@ -26,6 +26,14 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 
+		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		{
+			ref var data = ref context.Allocate<BinaryBool>(ref storage);
+			data.@operator = BinaryBoolOp.And;
+			data.left = context.GetExpressionRef(GetInputPort(0));
+			data.right = context.GetExpressionRef(GetInputPort(0));
+		}
+
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
 			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
@@ -55,6 +63,14 @@ namespace Mpr.Expr.Authoring
 				}
 			};
 		}
+		
+		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		{
+			ref var data = ref context.Allocate<BinaryBool>(ref storage);
+			data.@operator = BinaryBoolOp.Or;
+			data.left = context.GetExpressionRef(GetInputPort(0));
+			data.right = context.GetExpressionRef(GetInputPort(0));
+		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
@@ -83,6 +99,13 @@ namespace Mpr.Expr.Authoring
 						),
 				}
 			};
+		}
+
+		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		{
+			ref var data = ref context.Allocate<UnaryBool>(ref storage);
+			data.@operator = UnaryBoolOp.Not;
+			data.operand = context.GetExpressionRef(GetInputPort(0));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)

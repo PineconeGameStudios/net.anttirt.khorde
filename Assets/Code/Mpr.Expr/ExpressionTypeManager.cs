@@ -19,6 +19,9 @@ public struct ExpressionTypeInfo
         Type = type;
         IsBurstCompiled = isBurstCompiled;
     }
+    
+    public static ExpressionTypeInfo Create<T>(bool isBurstCompiled) where T : unmanaged, IExpression
+        => new(typeof(T), isBurstCompiled);
 }
 
 public static class ExpressionTypeManager
@@ -29,15 +32,15 @@ public static class ExpressionTypeManager
 
     struct EvaluateFunctions
     {
-        public static readonly SharedStatic<NativeHashMap<ulong, FunctionPointer<EvaluateDelegate2>>> Ref =
-            SharedStatic<NativeHashMap<ulong, FunctionPointer<EvaluateDelegate2>>>
+        public static readonly SharedStatic<NativeHashMap<ulong, FunctionPointer<ExpressionEvalDelegate>>> Ref =
+            SharedStatic<NativeHashMap<ulong, FunctionPointer<ExpressionEvalDelegate>>>
                 .GetOrCreate<ExpressionTypeManagerKeyContext, EvaluateFunctions>();
     }
 
     // ReSharper disable once CollectionNeverQueried.Local
-    private static List<EvaluateDelegate2> s_gcRoots;
+    private static List<ExpressionEvalDelegate> s_gcRoots;
 
-    public static bool TryGetEvaluateFunction(ulong stableTypeHash, out FunctionPointer<EvaluateDelegate2> function)
+    public static bool TryGetEvaluateFunction(ulong stableTypeHash, out FunctionPointer<ExpressionEvalDelegate> function)
     {
         if (EvaluateFunctions.Ref.Data.IsCreated &&
             EvaluateFunctions.Ref.Data.TryGetValue(stableTypeHash, out function))
@@ -52,10 +55,10 @@ public static class ExpressionTypeManager
     {
         var thisAssembly = typeof(ExpressionTypeManager).Assembly;
         var hashCache = new Dictionary<Type, ulong>();
-        s_gcRoots = new List<EvaluateDelegate2>();
+        s_gcRoots = new List<ExpressionEvalDelegate>();
 
         var functions = EvaluateFunctions.Ref.Data =
-            new NativeHashMap<ulong, FunctionPointer<EvaluateDelegate2>>(0, Allocator.Domain);
+            new NativeHashMap<ulong, FunctionPointer<ExpressionEvalDelegate>>(0, Allocator.Domain);
 
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
@@ -88,11 +91,11 @@ public static class ExpressionTypeManager
                 if (method == null)
                     continue;
 
-                var evaluateDelegate = method.CreateDelegate(typeof(EvaluateDelegate2)) as EvaluateDelegate2;
+                var evaluateDelegate = method.CreateDelegate(typeof(ExpressionEvalDelegate)) as ExpressionEvalDelegate;
                 if (evaluateDelegate == null)
                     continue;
 
-                FunctionPointer<EvaluateDelegate2> function;
+                FunctionPointer<ExpressionEvalDelegate> function;
 
                 if (typeInfo.IsBurstCompiled)
                 {
@@ -101,7 +104,7 @@ public static class ExpressionTypeManager
                 else
                 {
                     s_gcRoots.Add(evaluateDelegate);
-                    function = new FunctionPointer<EvaluateDelegate2>(
+                    function = new FunctionPointer<ExpressionEvalDelegate>(
                         Marshal.GetFunctionPointerForDelegate(evaluateDelegate));
                 }
 

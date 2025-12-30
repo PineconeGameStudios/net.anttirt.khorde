@@ -58,6 +58,69 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 
+		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		{
+			var left = context.GetExpressionRef(GetInputPort(0));
+			var right = context.GetExpressionRef(GetInputPort(1));
+			
+			if(typeof(T) == typeof(float))
+			{
+				ref var data = ref context.Allocate<BinaryFloat>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+			else if (typeof(T) == typeof(float2))
+			{
+				ref var data = ref context.Allocate<BinaryFloat2>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+			else if (typeof(T) == typeof(float3))
+			{
+				ref var data = ref context.Allocate<BinaryFloat3>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+			else if (typeof(T) == typeof(float4))
+			{
+				ref var data = ref context.Allocate<BinaryFloat4>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+			else if(typeof(T) == typeof(int))
+			{
+				ref var data = ref context.Allocate<BinaryInt>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+			else if (typeof(T) == typeof(int2))
+			{
+				ref var data = ref context.Allocate<BinaryInt2>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+			else if (typeof(T) == typeof(int3))
+			{
+				ref var data = ref context.Allocate<BinaryInt3>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+			else if (typeof(T) == typeof(int4))
+			{
+				ref var data = ref context.Allocate<BinaryInt4>(ref storage);
+				data.@operator = default(OpT).Op;
+				data.left = left;
+				data.right = right;
+			}
+		}
+		
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
 			context.AddInputPort<T>("a")
