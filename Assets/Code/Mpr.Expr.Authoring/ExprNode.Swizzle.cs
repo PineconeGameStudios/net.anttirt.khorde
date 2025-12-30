@@ -79,7 +79,60 @@ namespace Mpr.Expr.Authoring
 
 		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
 		{
-			throw new NotImplementedException();
+			var (baseType, inputCount) = Decompose(typeof(T));
+			int elementSize;
+
+			switch (baseType)
+			{
+				case BaseType.Int: elementSize = sizeof(int); break;
+				case BaseType.Float: elementSize = sizeof(float); break;
+				case BaseType.Double: elementSize = sizeof(double); break;
+				default: throw new  NotImplementedException();
+			}
+
+			GetNodeOption(0).TryGetValue<string>(out var pattern);
+			
+			var op = new SwizzleOp
+			{
+				inputCount = (byte)inputCount,
+				outputCount = (byte)pattern.Length,
+			};
+
+			byte FieldToIndex(char field)
+			{
+				switch (char.ToLowerInvariant(field))
+				{
+					case 'x': case 'r': return 0;
+					case 'y': case 'g': return 1;
+					case 'z': case 'b': return 2;
+					case 'w': case 'a': return 3;
+					default: return 0;
+				}
+			}
+
+			for (int i = 0; i < pattern.Length; ++i)
+				op[i] = FieldToIndex(pattern[i]);
+
+			switch (elementSize)
+			{
+				case 4:
+				{
+					ref var swizzle = ref context.Allocate<Swizzle32>(ref storage);
+					swizzle.input = context.GetExpressionRef(GetInputPort(0));
+					swizzle.@operator = op;
+					break;
+				}
+				
+				case 8:
+				{
+					ref var swizzle = ref context.Allocate<Swizzle64>(ref storage);
+					swizzle.input = context.GetExpressionRef(GetInputPort(0));
+					swizzle.@operator = op;
+					break;
+				}
+				
+				default: throw new NotImplementedException();
+			}
 		}
 
 		public override string Title => $"Swizzle ({typeof(T).Name})";
@@ -123,7 +176,7 @@ namespace Mpr.Expr.Authoring
 
 			foreach(char ch in pattern)
 			{
-				switch(ch)
+				switch(char.ToLowerInvariant(ch))
 				{
 					case 'x': case 'r': minInputCount = math.max(minInputCount, 1); break;
 					case 'y': case 'g': minInputCount = math.max(minInputCount, 2); break;

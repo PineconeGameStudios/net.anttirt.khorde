@@ -17,6 +17,8 @@ static class ExpressionTypeRegistry
         ExpressionTypeInfo.Create<BinaryInt2>(true),
         ExpressionTypeInfo.Create<BinaryInt3>(true),
         ExpressionTypeInfo.Create<BinaryInt4>(true),
+        ExpressionTypeInfo.Create<Swizzle32>(true),
+        ExpressionTypeInfo.Create<Swizzle64>(true),
         ExpressionTypeInfo.Create<TestLargeExpression>(true),
         ExpressionTypeInfo.Create<TestManagedExpression>(false),
         ExpressionTypeInfo.Create<ReadComponentField>(true),
