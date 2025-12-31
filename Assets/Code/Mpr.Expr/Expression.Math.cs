@@ -4,172 +4,165 @@ using Unity.Mathematics;
 
 namespace Mpr.Expr;
 
-public partial struct BinaryFloat : IExpression
+public partial struct BinaryFloat : IExpression<float, float>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in float left, in float right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        float left = this.left.Evaluate<float>(in ctx);
-        float right = this.right.Evaluate<float>(in ctx);
-        var result = untypedResult.SliceConvert<float>();
+        ref var result = ref untypedResult.AsSingle<float>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
     
 }
 
-public partial struct BinaryFloat2 : IExpression
+public partial struct BinaryFloat2 : IExpression<float2, float2>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in float2 left, in float2 right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        float2 left = this.left.Evaluate<float2>(in ctx);
-        float2 right = this.right.Evaluate<float2>(in ctx);
-        var result = untypedResult.SliceConvert<float2>();
+        ref var result = ref untypedResult.AsSingle<float2>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
 }
 
-public partial struct BinaryFloat3 : IExpression
+public partial struct BinaryFloat3 : IExpression<float3, float3>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in float3 left, in float3 right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        float3 left = this.left.Evaluate<float3>(in ctx);
-        float3 right = this.right.Evaluate<float3>(in ctx);
-        var result = untypedResult.SliceConvert<float3>();
+        ref var result = ref untypedResult.AsSingle<float3>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
 }
 
-public partial struct BinaryFloat4 : IExpression
+public partial struct BinaryFloat4 : IExpression<float4, float4>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in float4 left, in float4 right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        float4 left = this.left.Evaluate<float4>(in ctx);
-        float4 right = this.right.Evaluate<float4>(in ctx);
-        var result = untypedResult.SliceConvert<float4>();
+        ref var result = ref untypedResult.AsSingle<float4>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
 }
 
-public partial struct BinaryInt : IExpression
+public partial struct BinaryInt : IExpression<int, int>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in int left, in int right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        int left = this.left.Evaluate<int>(in ctx);
-        int right = this.right.Evaluate<int>(in ctx);
-        var result = untypedResult.SliceConvert<int>();
+        ref var result = ref untypedResult.AsSingle<int>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
     
 }
 
-public partial struct BinaryInt2 : IExpression
+public partial struct BinaryInt2 : IExpression<int2, int2>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in int2 left, in int2 right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        int2 left = this.left.Evaluate<int2>(in ctx);
-        int2 right = this.right.Evaluate<int2>(in ctx);
-        var result = untypedResult.SliceConvert<int2>();
+        ref var result = ref untypedResult.AsSingle<int2>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
 }
 
-public partial struct BinaryInt3 : IExpression
+public partial struct BinaryInt3 : IExpression<int3, int3>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in int3 left, in int3 right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        int3 left = this.left.Evaluate<int3>(in ctx);
-        int3 right = this.right.Evaluate<int3>(in ctx);
-        var result = untypedResult.SliceConvert<int3>();
+        ref var result = ref untypedResult.AsSingle<int3>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
 }
 
-public partial struct BinaryInt4 : IExpression
+public partial struct BinaryInt4 : IExpression<int4, int4>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryMathOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in int4 left, in int4 right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        int4 left = this.left.Evaluate<int4>(in ctx);
-        int4 right = this.right.Evaluate<int4>(in ctx);
-        var result = untypedResult.SliceConvert<int4>();
+        ref var result = ref untypedResult.AsSingle<int4>();
         switch (@operator)
         {
-            case BinaryMathOp.Add: result[0] = left + right; break;
-            case BinaryMathOp.Sub: result[0] = left - right; break;
-            case BinaryMathOp.Mul: result[0] = left * right; break;
-            case BinaryMathOp.Div: result[0] = left / right; break;
+            case BinaryMathOp.Add: result = left + right; break;
+            case BinaryMathOp.Sub: result = left - right; break;
+            case BinaryMathOp.Mul: result = left * right; break;
+            case BinaryMathOp.Div: result = left / right; break;
         }
     }
 }
+

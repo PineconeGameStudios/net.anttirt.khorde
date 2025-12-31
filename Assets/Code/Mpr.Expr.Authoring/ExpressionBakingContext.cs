@@ -7,7 +7,7 @@ using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.Expr;
+namespace Mpr.Expr.Authoring;
 
 public unsafe class ExpressionBakingContext
 {
@@ -18,6 +18,8 @@ public unsafe class ExpressionBakingContext
     private NativeList<(ulong stableTypeHash, IntPtr typeReference)> patchableTypeInfos;
     private BlobBuilder builder;
     private BlobExpressionData* data;
+    private NativeList<byte> constStorage;
+    private Dictionary<Type, ulong> hashCache;
     
     // components accessed directly on the current entity (behavior trees / queries)
     private Dictionary<Type, ComponentType.AccessMode> localComponentsDict;
@@ -42,18 +44,57 @@ public unsafe class ExpressionBakingContext
         this.weakReferences = weakReferences;
     }
 
-    public void Bake()
+    public ref BlobExpressionData GetData()
+    {
+        if (data == null)
+            throw new InvalidOperationException("Call InitializeBake first");
+
+        return ref *data;
+    }
+
+    public void InitializeBake(Allocator allocator = Allocator.Temp)
     {
         weakReferenceSet = new();
-        builder = new BlobBuilder(Allocator.Temp);
-        patchableStrongObjectReferences = new (Allocator.Temp);
-        patchableTypeInfos = new(Allocator.Temp);
+        builder = new BlobBuilder(allocator);
+        patchableStrongObjectReferences = new (allocator);
+        patchableTypeInfos = new(allocator);
         ref var root = ref ConstructRoot();
         fixed (BlobExpressionData* proot = &root)
             data = proot;
 
+        constStorage = new NativeList<byte>(allocator);
+
+        hashCache = new();
+
         localComponents = new();
         lookupComponents = new();
+    }
+
+    public void FinalizeBake()
+    {
+        // create an array of internal blob ptrs to strong object refs, so they
+        // can be patched at runtime to point to loaded object instance ids
+        var patchableObjectRefs = builder.Allocate(ref data->patchableObjectRefs, patchableStrongObjectReferences.Length);
+        for (int i = 0; i < patchableStrongObjectReferences.Length; ++i)
+        {
+            ref UntypedExpressionObjectId objectId =
+                ref *(UntypedExpressionObjectId*)patchableStrongObjectReferences[i];
+            builder.SetPointer(ref patchableObjectRefs[i], ref objectId);
+        }
+
+        // patching info for component reflection
+        
+        // NOTE: component layout info must be patched at runtime because
+        // there may be components with platform-dependent layouts
+        var typeInfos = builder.Allocate(ref data->patchableTypeInfos, this.patchableTypeInfos.Length);
+        var typeHashes = builder.Allocate(ref data->typeInfoTypeHashes, this.patchableTypeInfos.Length);
+        for (int i = 0; i < patchableTypeInfos.Length; ++i)
+        {
+            ref ExpressionComponentTypeInfo typeInfo =
+                ref *(ExpressionComponentTypeInfo*)this.patchableTypeInfos[i].typeReference;
+            builder.SetPointer(ref typeInfos[i], ref typeInfo);
+            typeHashes[i] = this.patchableTypeInfos[i].stableTypeHash;
+        }
     }
 
     /// <summary>
@@ -67,18 +108,10 @@ public unsafe class ExpressionBakingContext
         return ref builder.ConstructRoot<BlobExpressionData>();
     }
 
-    public ref TExpression Allocate<TExpression>(ref ExpressionData exprData) where TExpression : unmanaged, IExpression
+    public ref TExpression Allocate<TExpression>(ExpressionStorageRef exprData)
+        where TExpression : unmanaged, IExpressionBase
     {
-        if (UnsafeUtility.SizeOf<TExpression>() > UnsafeUtility.SizeOf<ExpressionStorage>())
-        {
-            ref var blobPtr = ref exprData.storage.AsDataReference<TExpression>();
-            return ref builder.Allocate(ref blobPtr);
-        }
-        else
-        {
-            fixed (ExpressionStorage* pstorage = &exprData.storage)
-                return ref *(TExpression*)pstorage;
-        }
+        return ref ExprAuthoring.Allocate<TExpression>(ref builder, exprData, hashCache);
     }
 
     public void Bake<TAsset>(ref ExpressionObjectRef<TAsset> objectRef, TAsset asset) where TAsset : UnityEngine.Object
@@ -126,30 +159,6 @@ public unsafe class ExpressionBakingContext
 
         if(typeInfo.componentIndex <= 0)
             throw new System.Exception($"component type {typeof(TComponentData).Name} not found in type list");
-    }
-
-    public void FinalizeBake()
-    {
-        // create an array of internal blob ptrs to strong object refs, so they
-        // can be patched at runtime to point to loaded object instance ids
-        var patchableObjectRefs = builder.Allocate(ref data->patchableObjectRefs, patchableStrongObjectReferences.Length);
-        for (int i = 0; i < patchableStrongObjectReferences.Length; ++i)
-        {
-            ref UntypedExpressionObjectRef objectRef =
-                ref *(UntypedExpressionObjectRef*)patchableStrongObjectReferences[i];
-            builder.SetPointer(ref patchableObjectRefs[i], ref objectRef);
-        }
-
-        // create patching info for type hashes
-        var typeInfos = builder.Allocate(ref data->patchableTypeInfos, this.patchableTypeInfos.Length);
-        var typeHashes = builder.Allocate(ref data->typeInfoTypeHashes, this.patchableTypeInfos.Length);
-        for (int i = 0; i < patchableTypeInfos.Length; ++i)
-        {
-            ref ExpressionComponentTypeInfo typeInfo =
-                ref *(ExpressionComponentTypeInfo*)this.patchableTypeInfos[i].typeReference;
-            builder.SetPointer(ref typeInfos[i], ref typeInfo);
-            typeHashes[i] = this.patchableTypeInfos[i].stableTypeHash;
-        }
     }
 
     public ExpressionRef GetExpressionRef(IPort inputPort)

@@ -39,9 +39,9 @@ namespace Mpr.Expr.Authoring
 			}
 		}
 
-		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			ref var data = ref context.Allocate<ReadComponentField>(ref storage);
+			ref var data = ref context.Allocate<ReadComponentField>(storage);
 			context.Bake<T>(ref data.typeInfo, ExpressionBakingContext.ComponentLocation.Local);
 		}
 
@@ -92,11 +92,11 @@ namespace Mpr.Expr.Authoring
 			}
 		}
 
-		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			ref var data = ref context.Allocate<LookupComponentField>(ref storage);
+			ref var data = ref context.Allocate<LookupComponentField>(storage);
 			context.Bake<T>(ref data.typeInfo, ExpressionBakingContext.ComponentLocation.Lookup);
-			data.entity = context.GetExpressionRef(GetInputPort(0));
+			data.Input0 = context.GetExpressionRef(GetInputPort(0));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)

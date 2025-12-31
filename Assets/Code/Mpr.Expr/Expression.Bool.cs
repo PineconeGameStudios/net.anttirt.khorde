@@ -10,21 +10,21 @@ public enum BinaryBoolOp
     Xor,
 }
 
-public partial struct BinaryBool : IExpression
+public partial struct BinaryBool : IExpression<bool, bool>
 {
-    public ExpressionRef left, right;
+    public ExpressionRef Input0 { get; set; }
+    public ExpressionRef Input1 { get; set; }
     public BinaryBoolOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in bool left, in bool right, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        bool left = this.left.Evaluate<bool>(in ctx);
-        var result = untypedResult.SliceConvert<bool>();
+        ref var result = ref untypedResult.AsSingle<bool>();
         switch (@operator)
         {
-            case BinaryBoolOp.And: result[0] = left && right.Evaluate<bool>(in ctx); break;
-            case BinaryBoolOp.Or: result[0] = left || right.Evaluate<bool>(in ctx); break;
-            case BinaryBoolOp.Xor: result[0] = left != right.Evaluate<bool>(in ctx); break;
+            case BinaryBoolOp.And: result = left && right; break;
+            case BinaryBoolOp.Or: result = left || right; break;
+            case BinaryBoolOp.Xor: result = left != right; break;
         }
     }
 }
@@ -34,18 +34,18 @@ public enum UnaryBoolOp
     Not,
 }
 
-public partial struct UnaryBool : IExpression
+public partial struct UnaryBool : IExpression<bool>
 {
-    public ExpressionRef operand;
+    public ExpressionRef Input0 { get; set; }
     public UnaryBoolOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in bool operand, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        var result = untypedResult.SliceConvert<bool>();
+        ref var result = ref untypedResult.AsSingle<bool>();
         switch (@operator)
         {
-            case UnaryBoolOp.Not: result[0] = !operand.Evaluate<bool>(in ctx); break;
+            case UnaryBoolOp.Not: result = !operand; break;
         }
     }
 }

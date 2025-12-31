@@ -30,10 +30,8 @@ namespace Mpr.Expr.Test
 			testEntity = em.CreateEntity();
 			exprCount = 0;
 			constStorage = new NativeList<byte>(Allocator.Temp);
-			var offset = ExprAuthoring.WriteConstant(false, out var length, constStorage);
-			False = ExprNodeRef.Const(offset, length);
-			offset = ExprAuthoring.WriteConstant(true, out length, constStorage);
-			True = ExprNodeRef.Const(offset, length);
+			False = ExprAuthoring.WriteConstant(false, constStorage);
+			True = ExprAuthoring.WriteConstant(true, constStorage);
 			builder = new BlobBuilder(Allocator.Temp);
 		}
 

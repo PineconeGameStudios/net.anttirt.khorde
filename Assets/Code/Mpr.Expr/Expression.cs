@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -29,14 +27,6 @@ public struct BlobExpressionWeakObjectReference : IBufferElementData
     public WeakObjectReference<UnityEngine.Object> asset;
 }
 
-public struct UntypedExpressionObjectRef
-{
-    /// <summary>
-    /// Runtime-initialized instance id
-    /// </summary>
-    public int instanceId;
-}
-    
 /// <summary>
 /// Component field layout info for reading and writing field values
 /// </summary>
@@ -67,6 +57,26 @@ public struct ExpressionComponentTypeInfo
 }
 
 /// <summary>
+/// This needs to be binary-compatible with <see cref="UnityObjectRef{T}"/>
+/// </summary>
+public struct UntypedExpressionObjectId
+{
+    // TODO: add a preprocessor branch when UnityObjectRef switches to 64-bit EntityId
+    public int instanceId;
+
+    public static UntypedExpressionObjectId FromUnityObjectRef<T>(UnityObjectRef<T> r) where T : UnityEngine.Object
+    {
+        UntypedExpressionObjectId result = default;
+        unsafe
+        {
+            result = *(UntypedExpressionObjectId*)&r;
+        }
+
+        return result;
+    }
+}
+    
+/// <summary>
 /// Version of <see cref="UnityObjectRef{T}"/> that can be stored
 /// in an <see cref="ExpressionData"/> blob.
 /// Used with expression blob data. The baker stores a separate
@@ -76,7 +86,7 @@ public struct ExpressionComponentTypeInfo
 /// <typeparam name="T"></typeparam>
 public struct ExpressionObjectRef<T> where T : UnityEngine.Object
 {
-    public UntypedExpressionObjectRef objectRef;
+    public UntypedExpressionObjectId objectId;
 
     public T Value
     {
@@ -84,7 +94,7 @@ public struct ExpressionObjectRef<T> where T : UnityEngine.Object
         {
             unsafe
             {
-                fixed (void* ptr = &objectRef.instanceId)
+                fixed (void* ptr = &objectId)
                     return ((UnityObjectRef<T>*)ptr)->Value;
             }
         }
@@ -102,161 +112,6 @@ public struct WeakExpressionObjectRef<TObject> where TObject : UnityEngine.Objec
     public WeakReferenceGenerationType GenerationType;
 
     public WeakObjectReference<TObject> AsWeakObjectReference => new(new UntypedWeakReferenceId(GlobalId, GenerationType));
-}
-
-public struct BlobExpressionData
-{
-    /// <summary>
-    /// Storage for constant-valued expression node references
-    /// </summary>
-    public BlobArray<byte> constants;
-
-    /// <summary>
-    /// Storage for expressions
-    /// </summary>
-    public BlobArray<ExpressionData> expressions;
-
-    /// <summary>
-    /// Used after loading an expression data blob to populate the function pointers in the <see cref="expressions"/> array
-    /// </summary>
-    public BlobArray<ulong> expressionTypeHashes;
-
-    /// <summary>
-    /// Internal pointers to patch strong asset references at runtime
-    /// </summary>
-    public BlobArray<BlobPtr<UntypedExpressionObjectRef>> patchableObjectRefs;
-
-    /// <summary>
-    /// Component types (especially non-[ChunkSerializable] ones) might have a
-    /// different layout on the target platform so we have to initialize layouts
-    /// at runtime
-    /// </summary>
-    public BlobArray<BlobPtr<ExpressionComponentTypeInfo>> patchableTypeInfos;
-
-    /// <summary>
-    /// Used after loading an expression data blob to populate the field offsets
-    /// in ExpressionComponentTypeInfo
-    /// </summary>
-    public BlobArray<ulong> typeInfoTypeHashes;
-
-    /// <summary>
-    /// Get constants buffer as a NativeSlice
-    /// </summary>
-    /// <returns></returns>
-    public NativeSlice<byte> GetConstants()
-    {
-        unsafe
-        {
-            return NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(
-                constants.GetUnsafePtr(),
-                1,
-                constants.Length);
-        }
-    }
-
-    private bool isRuntimeInitialized;
-    private ObjectLoadingStatus loadingStatus;
-
-    /// <summary>
-    /// Whether <see cref="RuntimeInitialize"/> has been called on this instance.
-    /// </summary>
-    public bool IsRuntimeInitialized => isRuntimeInitialized;
-        
-    /// <summary>
-    /// Latest loading status for weakly referenced assets.
-    /// </summary>
-    public ObjectLoadingStatus LoadingStatus => loadingStatus;
-    
-    public static FieldInfo[] GetComponentFields<T>() where T : unmanaged, IComponentData
-        => typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .OrderBy(UnsafeUtility.GetFieldOffset)
-            .ToArray();
-
-    /// <summary>
-    /// Initialize expression function pointers, patch strong object refs, start loading weak object refs, etc.
-    /// </summary>
-    public void RuntimeInitialize(
-        DynamicBuffer<BlobExpressionObjectReference> objectReferences,
-        DynamicBuffer<BlobExpressionWeakObjectReference> weakObjectReferences
-        )
-    {
-        if (isRuntimeInitialized)
-            return;
-
-        isRuntimeInitialized = true;
-
-        for (int i = 0; i < patchableObjectRefs.Length; ++i)
-        {
-            ref var patchableObjectRef = ref patchableObjectRefs[i];
-            var assetRef = objectReferences[i].asset;
-            unsafe
-            {
-                patchableObjectRef.Value.instanceId = *(int*)&assetRef;
-            }
-        }
-
-        foreach (var weakObjectReference in weakObjectReferences)
-        {
-            weakObjectReference.asset.LoadAsync();
-        }
-            
-        UpdateLoadingStatus(objectReferences, weakObjectReferences);
-            
-        if (expressions.Length != expressionTypeHashes.Length)
-        {
-            Debug.LogError("corrupted data: must have the same amount of expressions and expression type hashes");
-            return;
-        }
-
-        for (int i = 0; i < expressions.Length; ++i)
-        {
-            var typeHash = expressionTypeHashes[i];
-            if (ExpressionTypeManager.TryGetEvaluateFunction(typeHash, out var function))
-            {
-                expressions[i].evaluateFuncPtr = (long)function.Value;
-            }
-            else
-            {
-                Debug.LogError($"couldn't find generated type info for hash {typeHash}");
-            }
-        }
-    }
-
-    public void UpdateLoadingStatus(DynamicBuffer<BlobExpressionObjectReference> objectReferences,
-        DynamicBuffer<BlobExpressionWeakObjectReference> weakObjectReferences)
-    {
-        if (loadingStatus == ObjectLoadingStatus.Completed)
-            return;
-
-        foreach (var weakObjectReference in weakObjectReferences)
-        {
-            if (weakObjectReference.asset.LoadingStatus != ObjectLoadingStatus.Completed)
-            {
-                loadingStatus = weakObjectReference.asset.LoadingStatus;
-                return;
-            }
-        }
-
-        loadingStatus = ObjectLoadingStatus.Completed;
-    }
-
-    /// <summary>
-    /// Release weak asset references, etc.
-    /// </summary>
-    /// <param name="objectReferences"></param>
-    /// <param name="weakObjectReferences"></param>
-    public void RuntimeDeinitialize(DynamicBuffer<BlobExpressionObjectReference> objectReferences, DynamicBuffer<BlobExpressionWeakObjectReference> weakObjectReferences)
-    {
-        if (!isRuntimeInitialized)
-            return;
-
-        isRuntimeInitialized = false;
-            
-        foreach (var weakObjectReference in weakObjectReferences)
-        {
-            weakObjectReference.asset.Release();
-        }
-    }
 }
 
 public unsafe ref struct ExpressionEvalContext
@@ -280,8 +135,38 @@ public unsafe ref struct ExpressionEvalContext
     public ref BlobExpressionData data => ref *dataPtr;
 }
 
+public static class ExprNativeSliceExt
+{
+    /// <summary>
+    /// Interpret the slice as a single element of type <typeparamref name="T"/>
+    /// </summary>
+    /// <param name="slice"></param>
+    /// <typeparam name="T"><c>unmanaged</c> type to interpret slice contents as</typeparam>
+    /// <returns></returns>
+    public static ref T AsSingle<T>(this ref NativeSlice<byte> slice) where T : unmanaged
+    {
+        var converted = slice.SliceConvert<T>();
+        unsafe
+        {
+            return ref *(T*)converted.GetUnsafePtr();
+        }
+    }
+
+    /// <summary>
+    /// Clear the contents of the slice, setting all bytes to zero.
+    /// </summary>
+    /// <param name="slice"></param>
+    public static void Clear(this ref NativeSlice<byte> slice)
+    {
+        unsafe
+        {
+            UnsafeUtility.MemClear(slice.GetUnsafePtr(), slice.Length);
+        }
+    }
+}
+
 /// <summary>
-/// Used to reference other expressions or constants from an expression.
+/// Used to define the inputs for an expression. Can reference other expressions and bake-time constant values.
 /// </summary>
 public struct ExpressionRef
 {
@@ -326,10 +211,34 @@ public struct ExpressionRef
         {
             var size = UnsafeUtility.SizeOf<T>();
             var resultSlice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(&result, size, size);
+            #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice, AtomicSafetyHandle.GetTempMemoryHandle());
+            #endif
             ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
         }
 
         return result;
+    }
+    
+    public void Evaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
+    {
+        if (isConstant)
+        {
+            result = ctx.data.GetConstants()
+                .Slice(index, outputIndexOrConstantLength)
+                .SliceConvert<T>()[0];
+            return;
+        }
+
+        unsafe
+        {
+            var size = UnsafeUtility.SizeOf<T>();
+            fixed (T* pResult = &result)
+            {
+                var resultSlice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(pResult, size, size);
+                ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
+            }
+        }
     }
 
     public void Evaluate(in ExpressionEvalContext ctx, ref NativeSlice<byte> result)
@@ -353,15 +262,63 @@ public struct ExpressionRef
     }
 }
 
-public interface IExpression
+public interface IExpressionBase { }
+
+public interface IExpression : IExpressionBase
 {
     void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult);
+}
+
+public interface IExpression<T0> : IExpressionBase where T0 : unmanaged
+{
+    ExpressionRef Input0 { get; }
+    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, int outputIndex, ref NativeSlice<byte> untypedResult);
+}
+
+public interface IExpression<T0, T1> : IExpressionBase where T0 : unmanaged where T1 : unmanaged
+{
+    ExpressionRef Input0 { get; }
+    ExpressionRef Input1 { get; }
+    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, int outputIndex, ref NativeSlice<byte> untypedResult);
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public unsafe delegate void ExpressionEvalDelegate(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
     ref NativeSlice<byte> untypedResult);
 
+static unsafe class EvalHelper
+{
+    public static void Evaluate<TExpr>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+        where TExpr : unmanaged, IExpression
+    {
+        TExpr* expr = self->GetUnsafePtr<TExpr>();
+        expr->Evaluate(in ctx, outputIndex, ref untypedResult);
+    }
+
+    public static void Evaluate<TExpr, TInput0>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+        where TExpr : unmanaged, IExpression<TInput0>
+        where TInput0 : unmanaged
+    {
+        TExpr* expr = self->GetUnsafePtr<TExpr>();
+        expr->Input0.Evaluate(in ctx, out TInput0 input0);
+        expr->Evaluate(in ctx, in input0, outputIndex, ref untypedResult);
+    }
+
+    public static void Evaluate<TExpr, TInput0, TInput1>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+        where TExpr : unmanaged, IExpression<TInput0, TInput1>
+        where TInput0 : unmanaged
+        where TInput1 : unmanaged
+    {
+        TExpr* expr = self->GetUnsafePtr<TExpr>();
+        expr->Input0.Evaluate(in ctx, out TInput0 input0);
+        expr->Input1.Evaluate(in ctx, out TInput1 input1);
+        expr->Evaluate(in ctx, in input0, in input1, outputIndex, ref untypedResult);
+    }
+}
+
+/// <summary>
+/// Blob storage for expression data. Pass this to <see cref="Mpr.Expr.Authoring.ExpressionBakingContext.Allocate"/>
+/// </summary>
 [StructLayout(LayoutKind.Explicit)]
 public struct ExpressionStorage
 {
@@ -373,7 +330,20 @@ public struct ExpressionStorage
     // if that's not enough, use an indirect pointer (into the same blob)
     [FieldOffset(0)] public BlobPtr<byte> dataReference;
 
-    public ref BlobPtr<T> AsDataReference<T>() where T : unmanaged
+    public unsafe TExpr* GetUnsafePtr<TExpr>() where TExpr : unmanaged
+    {
+        if (sizeof(TExpr) <= sizeof(ExpressionStorage))
+        {
+            fixed (long* ptr = &s0)
+                return (TExpr*)ptr;
+        }
+        else
+        {
+            return (TExpr*)dataReference.GetUnsafePtr();
+        }
+    }
+
+    public ref BlobPtr<T> GetDataReference<T>() where T : unmanaged
     {
         unsafe
         {

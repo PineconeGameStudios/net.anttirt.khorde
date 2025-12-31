@@ -14,19 +14,18 @@ public partial struct ReadComponentField : IExpression
     }
 }
 
-public partial struct LookupComponentField : IExpression
+public partial struct LookupComponentField : IExpression<Entity>
 {
-    public ExpressionRef entity;
+    public ExpressionRef Input0 { get; set; }
     public ExpressionComponentTypeInfo typeInfo;
-        
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+
+    public void Evaluate(in ExpressionEvalContext ctx, in Entity entity, int outputIndex, ref NativeSlice<byte> untypedResult)
     {
-        if (ctx.componentLookups[typeInfo.componentIndex].TryGetRefRO(entity.Evaluate<Entity>(in ctx), out var componentData))
+        if (ctx.componentLookups[typeInfo.componentIndex].TryGetRefRO(entity, out var componentData))
         {
             if (outputIndex == 0)
             {
-                var result = untypedResult.SliceConvert<bool>();
-                result[0] = true;
+                untypedResult.AsSingle<bool>() = true;
             }
             else
             {
@@ -37,15 +36,13 @@ public partial struct LookupComponentField : IExpression
                 }
                 else
                 {
-                    for (int i = 0; i < untypedResult.Length; i++)
-                        untypedResult[i] = default;
+                    untypedResult.Clear();
                 }
             }
         }
         else
         {
-            for (int i = 0; i < untypedResult.Length; i++)
-                untypedResult[i] = default;
+            untypedResult.Clear();
         }
     }
 }

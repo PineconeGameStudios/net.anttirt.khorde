@@ -37,10 +37,8 @@ namespace Mpr.Behavior.Test
 			trace = em.GetBuffer<BTExecTrace>(testEntity);
 			exprCount = 0;
 			constStorage = new NativeList<byte>(Allocator.Temp);
-			var offset = ExprAuthoring.WriteConstant(false, out var length, constStorage);
-			False = ExprNodeRef.Const(offset, length);
-			offset = ExprAuthoring.WriteConstant(true, out length, constStorage);
-			True = ExprNodeRef.Const(offset, length);
+			False = ExprAuthoring.WriteConstant(false, constStorage);
+			True = ExprAuthoring.WriteConstant(true, constStorage);
 		}
 
 		[TearDown]
@@ -664,10 +662,8 @@ namespace Mpr.Behavior.Test
 			System.Reflection.FieldInfo field = typeof(TestComponent2)
 				.GetField(GetShortName(left.GetType()), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
-			var offset0 = ExprAuthoring.WriteConstant(left, out var length0, constStorage);
-			var const0 = ExprNodeRef.Const(offset0, length0);
-			var offset1 = ExprAuthoring.WriteConstant(right, out var length1, constStorage);
-			var const1 = ExprNodeRef.Const(offset1, length1);
+			var const0 = ExprAuthoring.WriteConstant(left, constStorage);
+			var const1 = ExprAuthoring.WriteConstant(right, constStorage);
 
 			exprs[0].type = BTExpr.BTExprType.BinaryMath;
 			exprs[0].data.binaryMath = new BTExpr.BinaryMath

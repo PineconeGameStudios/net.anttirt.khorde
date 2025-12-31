@@ -302,7 +302,7 @@ namespace Mpr.Expr.Authoring
 				{
 					// TODO: deduplicate constants
 					ushort offset = ExprAuthoring.WriteConstant(value, out var length, constStorage);
-					return ExprNodeRef.Const(offset, length);
+					return ExprNodeRef.Const(offset, (byte)length);
 				}
 				else
 				{

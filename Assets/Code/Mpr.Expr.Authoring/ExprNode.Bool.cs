@@ -26,12 +26,12 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 
-		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			ref var data = ref context.Allocate<BinaryBool>(ref storage);
+			ref var data = ref context.Allocate<BinaryBool>(storage);
 			data.@operator = BinaryBoolOp.And;
-			data.left = context.GetExpressionRef(GetInputPort(0));
-			data.right = context.GetExpressionRef(GetInputPort(0));
+			data.Input0 = context.GetExpressionRef(GetInputPort(0));
+			data.Input1 = context.GetExpressionRef(GetInputPort(1));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
@@ -64,12 +64,12 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 		
-		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			ref var data = ref context.Allocate<BinaryBool>(ref storage);
+			ref var data = ref context.Allocate<BinaryBool>(storage);
 			data.@operator = BinaryBoolOp.Or;
-			data.left = context.GetExpressionRef(GetInputPort(0));
-			data.right = context.GetExpressionRef(GetInputPort(0));
+			data.Input0 = context.GetExpressionRef(GetInputPort(0));
+			data.Input1 = context.GetExpressionRef(GetInputPort(1));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
@@ -101,11 +101,11 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 
-		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			ref var data = ref context.Allocate<UnaryBool>(ref storage);
+			ref var data = ref context.Allocate<UnaryBool>(storage);
 			data.@operator = UnaryBoolOp.Not;
-			data.operand = context.GetExpressionRef(GetInputPort(0));
+			data.Input0 = context.GetExpressionRef(GetInputPort(0));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using UnityEngine;
 
@@ -12,20 +13,21 @@ namespace Mpr.Expr;
 public struct ExpressionTypeInfo
 {
     public readonly Type Type;
+    public readonly ExpressionEvalDelegate Evaluate;
     public readonly bool IsBurstCompiled;
 
-    public ExpressionTypeInfo(Type type, bool isBurstCompiled)
+    public ExpressionTypeInfo(Type type, ExpressionEvalDelegate evaluate, bool isBurstCompiled)
     {
         Type = type;
+        Evaluate = evaluate;
         IsBurstCompiled = isBurstCompiled;
     }
-    
-    public static ExpressionTypeInfo Create<T>(bool isBurstCompiled) where T : unmanaged, IExpression
-        => new(typeof(T), isBurstCompiled);
 }
 
 public static class ExpressionTypeManager
 {
+    private static bool s_initialized;
+    
     private struct ExpressionTypeManagerKeyContext
     {
     }
@@ -37,28 +39,29 @@ public static class ExpressionTypeManager
                 .GetOrCreate<ExpressionTypeManagerKeyContext, EvaluateFunctions>();
     }
 
-    // ReSharper disable once CollectionNeverQueried.Local
-    private static List<ExpressionEvalDelegate> s_gcRoots;
-
     public static bool TryGetEvaluateFunction(ulong stableTypeHash, out FunctionPointer<ExpressionEvalDelegate> function)
     {
-        if (EvaluateFunctions.Ref.Data.IsCreated &&
-            EvaluateFunctions.Ref.Data.TryGetValue(stableTypeHash, out function))
-            return true;
-
-        function = default;
-        return false;
+        if (!EvaluateFunctions.Ref.Data.IsCreated)
+            throw new InvalidOperationException("ExpressionTypeManager not initialized");
+        
+        return EvaluateFunctions.Ref.Data.TryGetValue(stableTypeHash, out function);
     }
-
+    
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
     public static void Initialize()
     {
+        if (s_initialized)
+            return;
+        
+        s_initialized = true;
+        
         var thisAssembly = typeof(ExpressionTypeManager).Assembly;
         var hashCache = new Dictionary<Type, ulong>();
-        s_gcRoots = new List<ExpressionEvalDelegate>();
 
         var functions = EvaluateFunctions.Ref.Data =
             new NativeHashMap<ulong, FunctionPointer<ExpressionEvalDelegate>>(0, Allocator.Domain);
+        
+        var directStorageSize = UnsafeUtility.SizeOf<ExpressionStorage>();
 
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
@@ -81,17 +84,9 @@ public static class ExpressionTypeManager
 
             foreach (var typeInfo in types)
             {
-                var memoryOrdering =
-                    TypeHash.CalculateMemoryOrdering(typeInfo.Type, out bool hasCustomMemoryOrder, hashCache);
-                var stableTypeHash = !hasCustomMemoryOrder
-                    ? memoryOrdering
-                    : TypeHash.CalculateStableTypeHash(typeInfo.Type, null, hashCache);
+                var stableTypeHash = GetTypeHash(typeInfo.Type, hashCache);
 
-                var method = typeInfo.Type.GetMethod("Evaluate", BindingFlags.Static | BindingFlags.Public);
-                if (method == null)
-                    continue;
-
-                var evaluateDelegate = method.CreateDelegate(typeof(ExpressionEvalDelegate)) as ExpressionEvalDelegate;
+                var evaluateDelegate = typeInfo.Evaluate;
                 if (evaluateDelegate == null)
                     continue;
 
@@ -103,7 +98,6 @@ public static class ExpressionTypeManager
                 }
                 else
                 {
-                    s_gcRoots.Add(evaluateDelegate);
                     function = new FunctionPointer<ExpressionEvalDelegate>(
                         Marshal.GetFunctionPointerForDelegate(evaluateDelegate));
                 }
@@ -111,5 +105,18 @@ public static class ExpressionTypeManager
                 functions[stableTypeHash] = function;
             }
         }
+    }
+
+    public static ulong GetTypeHash<TExpression>(Dictionary<Type, ulong> hashCache) where TExpression : unmanaged
+        => GetTypeHash(typeof(TExpression), hashCache);
+
+    public static ulong GetTypeHash(Type expressionType, Dictionary<Type, ulong> hashCache)
+    {
+        var memoryOrdering =
+            TypeHash.CalculateMemoryOrdering(expressionType, out bool hasCustomMemoryOrder, hashCache);
+                
+        return !hasCustomMemoryOrder
+            ? memoryOrdering
+            : TypeHash.CalculateStableTypeHash(expressionType, null, hashCache);
     }
 }

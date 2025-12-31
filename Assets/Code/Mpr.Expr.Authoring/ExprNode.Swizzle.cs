@@ -1,4 +1,5 @@
 using System;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
@@ -77,24 +78,22 @@ namespace Mpr.Expr.Authoring
 			UnityEngine.Debug.LogWarning($"{GetType().Name}.Bake() not implemented");
 		}
 
-		public override void Bake(ExpressionBakingContext context, ref ExpressionData storage)
+		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			var (baseType, inputCount) = Decompose(typeof(T));
 			int elementSize;
 
 			switch (baseType)
 			{
-				case BaseType.Int: elementSize = sizeof(int); break;
-				case BaseType.Float: elementSize = sizeof(float); break;
-				case BaseType.Double: elementSize = sizeof(double); break;
-				default: throw new  NotImplementedException();
+				case BaseType.Int: elementSize = UnsafeUtility.SizeOf<int>(); break;
+				case BaseType.Float: elementSize = UnsafeUtility.SizeOf<float>(); break;
+				default: throw new NotImplementedException();
 			}
-
+			
 			GetNodeOption(0).TryGetValue<string>(out var pattern);
 			
 			var op = new SwizzleOp
 			{
-				inputCount = (byte)inputCount,
 				outputCount = (byte)pattern.Length,
 			};
 
@@ -113,20 +112,39 @@ namespace Mpr.Expr.Authoring
 			for (int i = 0; i < pattern.Length; ++i)
 				op[i] = FieldToIndex(pattern[i]);
 
-			switch (elementSize)
+			if (elementSize != 4)
+				throw new NotImplementedException();
+
+			switch (inputCount)
 			{
-				case 4:
+				case 1:
 				{
-					ref var swizzle = ref context.Allocate<Swizzle32>(ref storage);
-					swizzle.input = context.GetExpressionRef(GetInputPort(0));
+					ref var swizzle = ref context.Allocate<Swizzle32x1>(storage);
+					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
 					swizzle.@operator = op;
 					break;
 				}
 				
-				case 8:
+				case 2:
 				{
-					ref var swizzle = ref context.Allocate<Swizzle64>(ref storage);
-					swizzle.input = context.GetExpressionRef(GetInputPort(0));
+					ref var swizzle = ref context.Allocate<Swizzle32x2>(storage);
+					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
+					swizzle.@operator = op;
+					break;
+				}
+				
+				case 3:
+				{
+					ref var swizzle = ref context.Allocate<Swizzle32x3>(storage);
+					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
+					swizzle.@operator = op;
+					break;
+				}
+				
+				case 4:
+				{
+					ref var swizzle = ref context.Allocate<Swizzle32x4>(storage);
+					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
 					swizzle.@operator = op;
 					break;
 				}

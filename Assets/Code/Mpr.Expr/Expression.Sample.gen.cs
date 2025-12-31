@@ -1,41 +1,27 @@
 ﻿using Unity.Burst;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine.Scripting;
 
 namespace Mpr.Expr;
 
-[Preserve, BurstCompile]
+[BurstCompile]
 public partial struct TestLargeExpression
 {
     [BurstCompile]
-    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+    public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((TestLargeExpression*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
-    }
-        
-    [BurstCompile]
-    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
-    {
-        ((TestLargeExpression*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+        EvalHelper.Evaluate<TestLargeExpression, float4>(self, in ctx, outputIndex, ref untypedResult);
     }
 }
 
-[Preserve]
 public partial struct TestManagedExpression
 {
     [AOT.MonoPInvokeCallback(typeof(ExpressionEvalDelegate))]
-    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+    public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((TestManagedExpression*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
-    }
-        
-    [AOT.MonoPInvokeCallback(typeof(ExpressionEvalDelegate))]
-    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
-    {
-        ((TestManagedExpression*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+        EvalHelper.Evaluate<TestManagedExpression, int, int>(self, in ctx, outputIndex, ref untypedResult);
     }
 }

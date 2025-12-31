@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.Collections;
@@ -6,21 +7,52 @@ using Unity.Entities;
 
 namespace Mpr.Expr.Authoring
 {
+	public unsafe ref struct ExpressionStorageRef
+	{
+		public ExpressionStorage* storage;
+		public ulong* typeHash;
+
+		public ExpressionStorageRef(ref ExpressionStorage storage, ref ulong typeHash)
+		{
+			fixed(ExpressionStorage* ptr = &storage)
+				this.storage = ptr;
+			fixed(ulong* ptr = &typeHash)
+				this.typeHash = ptr;
+		}
+	}
+	
 	public static class ExprAuthoring
 	{
-		delegate ushort WriteConstantDelegate(object objectValue, out byte length, NativeList<byte> constStorage);
+		delegate ushort WriteConstantDelegate(object objectValue, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache);
 
 		static Dictionary<System.Type, WriteConstantDelegate> writeConstantMethodCache = new();
 
+		public const ushort MaxConstantSize = 0x7fff;
+
+		public static ExprNodeRef WriteConstant(object value, NativeList<byte> constStorage,
+			Dictionary<object, (ushort offset, ushort length)> cache = null)
+		{
+			ushort offset = WriteConstant(value, out var length, constStorage, cache);
+			return ExprNodeRef.Const(offset, (byte)length);
+		}
+		
+		public static ExpressionRef WriteConstant2(object value, NativeList<byte> constStorage,
+			Dictionary<object, (ushort offset, ushort length)> cache = null)
+		{
+			ushort offset = WriteConstant(value, out var length, constStorage, cache);
+			return ExpressionRef.Const(offset, length);
+		}
+		
 		/// <summary>
 		/// Write a boxed constant value to constant storage, returning the offset and length. The content of the boxed value must have an unmanaged type.
 		/// </summary>
 		/// <param name="value"></param>
 		/// <param name="length"></param>
 		/// <param name="constStorage"></param>
+		/// <param name="cache">Value cache for constant value deduplication</param>
 		/// <returns></returns>
 		/// <exception cref="System.InvalidOperationException"></exception>
-		public static ushort WriteConstant(object value, out byte length, NativeList<byte> constStorage)
+		public static ushort WriteConstant(object value, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null)
 		{
 			var type = value.GetType();
 
@@ -36,13 +68,13 @@ namespace Mpr.Expr.Authoring
 				writeConstantMethodCache[type] = impl;
 			}
 
-			return impl(value, out length, constStorage);
+			return impl(value, out length, constStorage, cache);
 		}
 
-		static ushort WriteConstantTrampoline<T>(object objectValue, out byte length, NativeList<byte> constStorage) where T : unmanaged
+		static ushort WriteConstantTrampoline<T>(object objectValue, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
 		{
 			T value = (T)objectValue;
-			return WriteConstant(value, out length, constStorage);
+			return WriteConstant(value, out length, constStorage, cache);
 		}
 
 		/// <summary>
@@ -51,12 +83,28 @@ namespace Mpr.Expr.Authoring
 		/// <typeparam name="T"></typeparam>
 		/// <param name="value"></param>
 		/// <param name="constStorage"></param>
+		/// <param name="cache">Value cache for constant value deduplication</param>
 		/// <returns></returns>
 		/// <exception cref="System.Exception"></exception>
-		public static ExprNodeRef WriteConstant<T>(T value, NativeList<byte> constStorage) where T : unmanaged
+		public static ExprNodeRef WriteConstant<T>(T value, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
 		{
-			var offset = WriteConstant<T>(value, out var length, constStorage);
-			return ExprNodeRef.Const(offset, length);
+			var offset = WriteConstant<T>(value, out var length, constStorage, cache);
+			return ExprNodeRef.Const(offset, (byte)length);
+		}
+
+		/// <summary>
+		/// Write a value to constant storage, returning an <see cref="ExpressionRef"/> pointing to the constant.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="value"></param>
+		/// <param name="constStorage"></param>
+		/// <param name="cache">Value cache for constant value deduplication</param>
+		/// <returns></returns>
+		/// <exception cref="System.Exception"></exception>
+		public static ExpressionRef WriteConstant2<T>(T value, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
+		{
+			var offset = WriteConstant<T>(value, out var length, constStorage, cache);
+			return ExpressionRef.Const(offset, length);
 		}
 
 		/// <summary>
@@ -66,23 +114,33 @@ namespace Mpr.Expr.Authoring
 		/// <param name="value"></param>
 		/// <param name="length"></param>
 		/// <param name="constStorage"></param>
+		/// <param name="cache">Value cache for constant value deduplication</param>
 		/// <returns></returns>
 		/// <exception cref="System.Exception"></exception>
-		public static ushort WriteConstant<T>(T value, out byte length, NativeList<byte> constStorage) where T : unmanaged
+		public static ushort WriteConstant<T>(T value, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
 		{
+			if (cache != null)
+			{
+				if (cache.TryGetValue(value, out var result))
+				{
+					length = result.length;
+					return result.offset;
+				}
+			}
+			
 			int align = UnsafeUtility.AlignOf<T>();
 			int size = UnsafeUtility.SizeOf<T>();
-			if(size > byte.MaxValue)
-				throw new System.Exception("max constant size 255 bytes");
+			if(size > MaxConstantSize)
+				throw new System.Exception("max constant size 32767 bytes");
 
-			length = (byte)size;
+			length = (ushort)size;
 
 			int rem = constStorage.Length % align;
 			int offset = constStorage.Length;
 			if(rem != 0)
 				offset += align - rem;
 
-			if(offset > ushort.MaxValue)
+			if(offset + size > ushort.MaxValue)
 				throw new System.Exception("too many constants, max 65535 bytes storage");
 
 			constStorage.ResizeUninitialized(offset + size);
@@ -92,6 +150,11 @@ namespace Mpr.Expr.Authoring
 				byte* src = (byte*)&value;
 				byte* dst = constStorage.GetUnsafePtr() + offset;
 				UnsafeUtility.MemCpy(dst, src, size);
+			}
+
+			if (cache != null)
+			{
+				cache[value] = ((ushort)offset, length);
 			}
 
 			return (ushort)offset;
@@ -106,6 +169,32 @@ namespace Mpr.Expr.Authoring
 					constStorage.GetUnsafePtr(),
 					constStorage.Length
 					);
+			}
+		}
+		
+		public static void BakeConstStorage(ref BlobBuilder builder, ref BlobExpressionData exprData, NativeList<byte> constStorage)
+		{
+			unsafe
+			{
+				UnsafeUtility.MemCpy(
+					builder.Allocate(ref exprData.constants, constStorage.Length).GetUnsafePtr(),
+					constStorage.GetUnsafePtr(),
+					constStorage.Length
+				);
+			}
+		}
+		
+		public static unsafe ref TExpression Allocate<TExpression>(ref BlobBuilder builder, ExpressionStorageRef storage, Dictionary<Type, ulong> hashCache) where TExpression : unmanaged, IExpressionBase
+		{
+			*storage.typeHash = ExpressionTypeManager.GetTypeHash<TExpression>(hashCache);
+			if (UnsafeUtility.SizeOf<TExpression>() <= UnsafeUtility.SizeOf<ExpressionStorage>())
+			{
+				return ref *(TExpression*)storage.storage;
+			}
+			else
+			{
+				ref var blobPtr = ref storage.storage->GetDataReference<TExpression>();
+				return ref builder.Allocate(ref blobPtr);
 			}
 		}
 	}

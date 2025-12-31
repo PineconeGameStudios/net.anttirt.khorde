@@ -8,17 +8,10 @@ namespace Mpr.Expr;
 public partial struct BinaryBool
 {
     [BurstCompile]
-    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+    public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((BinaryBool*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
-    }
-        
-    [BurstCompile]
-    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
-    {
-        ((BinaryBool*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+        EvalHelper.Evaluate<BinaryBool, bool, bool>(self, in ctx, outputIndex, ref untypedResult);
     }
 }
 
@@ -26,16 +19,9 @@ public partial struct BinaryBool
 public partial struct UnaryBool
 {
     [BurstCompile]
-    public static unsafe void EvaluateDirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+    public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
         ref NativeSlice<byte> untypedResult)
     {
-        ((UnaryBool*)self)->Evaluate(in ctx, outputIndex, ref untypedResult);
-    }
-        
-    [BurstCompile]
-    public static unsafe void EvaluateIndirect(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
-    {
-        ((UnaryBool*)self->dataReference.GetUnsafePtr())->Evaluate(in ctx, outputIndex, ref untypedResult);
+        EvalHelper.Evaluate<UnaryBool, bool>(self, in ctx, outputIndex, ref untypedResult);
     }
 }
