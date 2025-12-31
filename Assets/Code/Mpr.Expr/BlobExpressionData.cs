@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Mpr.Blobs;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -108,7 +109,10 @@ public struct BlobExpressionData
     public ObjectLoadingStatus LoadingStatus => loadingStatus;
     
     public static FieldInfo[] GetComponentFields<T>() where T : unmanaged, IComponentData
-        => typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+        => GetComponentFields(typeof(T));
+    
+    static FieldInfo[] GetComponentFields(Type type)
+        => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .OrderBy(UnsafeUtility.GetFieldOffset)
             .ToArray();
 
@@ -157,6 +161,31 @@ public struct BlobExpressionData
                 Debug.LogError($"couldn't find generated type info for hash {typeHash} at index {i}");
                 throw new InvalidOperationException("couldn't find generated type info");
             }
+        }
+
+        var reflectionCache = new NativeHashMap<ulong, NativeArray<ExpressionComponentTypeInfo.Field>>(0, Allocator.Temp);
+
+        for (int i = 0; i < patchableTypeInfos.Length; ++i)
+        {
+            ref var typeInfo = ref patchableTypeInfos[i];
+            var typeHash = typeInfoTypeHashes[i];
+
+            if (!reflectionCache.TryGetValue(typeHash, out var fields))
+            {
+                var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(typeHash);
+                if (typeIndex == default)
+                    throw new InvalidOperationException($"couldn't find type index for StableTypeHash {typeHash}");
+                
+                var info = TypeManager.GetTypeInfo(typeIndex);
+                var reflFields = GetComponentFields(info.Type);
+                fields = reflectionCache[typeHash] = new NativeArray<ExpressionComponentTypeInfo.Field>(reflFields.Length, Allocator.Temp);
+                for (int j = 0; j < fields.Length; ++j)
+                    fields[j] = reflFields[j];
+            }
+
+            ref var patchedFields = ref typeInfo.Value.fields;
+            for(int j = 0; j < fields.Length; ++j)
+                patchedFields[j] = fields[j];
         }
     }
 

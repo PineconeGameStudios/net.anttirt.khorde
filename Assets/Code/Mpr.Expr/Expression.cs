@@ -222,6 +222,8 @@ public struct ExpressionRef
     public static ExpressionRef Node(ushort index, ushort outputIndex) => new ExpressionRef(index, outputIndex, false);
     public static ExpressionRef Const(ushort offset, ushort length) => new ExpressionRef(offset, length, true);
 
+    public ExpressionRef WithOutputIndex(ushort outputIndex) => Node(index, outputIndex);
+
     public T Evaluate<T>(in ExpressionEvalContext ctx) where T : unmanaged
     {
         if (isConstant)

@@ -1,11 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
 
 namespace Mpr.Expr.Authoring;
+
+public enum ExpressionComponentLocation
+{
+    Local,
+    Lookup,
+}
 
 public unsafe class ExpressionBakingContext
 {
@@ -31,12 +38,6 @@ public unsafe class ExpressionBakingContext
     protected NativeArray<UnityEngine.Hash128> builderSourceGraphNodeIds;
     private Allocator allocator;
 
-    public enum ComponentLocation
-    {
-        Local,
-        Lookup,
-    }
-
     public ExpressionBakingContext(
         DynamicBuffer<BlobExpressionObjectReference> strongReferences,
         DynamicBuffer<BlobExpressionWeakObjectReference> weakReferences,
@@ -54,8 +55,9 @@ public unsafe class ExpressionBakingContext
         patchableTypeInfos = new(allocator);
         constStorage = new NativeList<byte>(allocator);
         hashCache = new();
-        localComponents = new();
-        lookupComponents = new();
+        
+        localComponentsDict = new();
+        lookupComponentsDict = new();
         
         ref var root = ref ConstructRoot();
         fixed (BlobExpressionData* proot = &root)
@@ -88,6 +90,12 @@ public unsafe class ExpressionBakingContext
         builderExpressions = AsArray(builder.Allocate(ref data->expressions, expressionCount));
         builderTypeHashes = AsArray(builder.Allocate(ref data->expressionTypeHashes, expressionCount));
         builderSourceGraphNodeIds = AsArray(builder.Allocate(ref data->sourceGraphNodeIds, expressionCount));
+
+        localComponents = localComponentsDict.Select(kv => new ComponentType(kv.Key, kv.Value)).ToList();
+        lookupComponents = lookupComponentsDict.Select(kv => new ComponentType(kv.Key, kv.Value)).ToList();
+
+        localComponentsDict = null;
+        lookupComponentsDict = null;
     }
 
     public int ExpressionCount
@@ -98,6 +106,35 @@ public unsafe class ExpressionBakingContext
                 throw new InvalidOperationException("call InitializeBake first");
             
             return builderExpressions.Length;
+        }
+    }
+
+    private static ComponentType.AccessMode Combine(ComponentType.AccessMode m0, ComponentType.AccessMode m1)
+    {
+        if(m0 == ComponentType.AccessMode.ReadWrite || m1 ==  ComponentType.AccessMode.ReadWrite)
+            return ComponentType.AccessMode.ReadWrite;
+        return ComponentType.AccessMode.ReadOnly;
+    }
+
+    public void RegisterComponentAccess<TComponent>(ExpressionComponentLocation location, ComponentType.AccessMode accessMode) where TComponent : IComponentData
+        => RegisterComponentAccess(typeof(TComponent), location, accessMode);
+    
+    public void RegisterComponentAccess(Type type, ExpressionComponentLocation location, ComponentType.AccessMode accessMode)
+    {
+        if (localComponentsDict == null)
+            throw new InvalidOperationException("Register component types before calling InitializeBake");
+        
+        var dict = location == ExpressionComponentLocation.Local ? localComponentsDict : lookupComponentsDict;
+        if (dict.TryGetValue(type, out var value))
+        {
+            if (value != accessMode)
+            {
+                dict[type] = Combine(accessMode, value);
+            }
+        }
+        else
+        {
+            dict[type] = accessMode;
         }
     }
 
@@ -199,25 +236,27 @@ public unsafe class ExpressionBakingContext
         objectRef.GenerationType = wor.Id.GenerationType;
     }
 
-    public void Bake<TComponentData>(ref ExpressionComponentTypeInfo typeInfo, ComponentLocation location) where TComponentData : unmanaged, IComponentData
+    public void Bake<TComponentData>(ref ExpressionComponentTypeInfo typeInfo, ExpressionComponentLocation location) where TComponentData : unmanaged, IComponentData
     {
         int fieldCount = BlobExpressionData.GetComponentFields<TComponentData>().Length;
         builder.Allocate(ref typeInfo.fields, fieldCount);
         fixed(void* p = &typeInfo)
             patchableTypeInfos.Add((TypeManager.GetTypeInfo<TComponentData>().StableTypeHash, (IntPtr)p));
 
+        typeInfo.componentIndex = -1;
+
         switch (location)
         {
-            case ComponentLocation.Local:
+            case ExpressionComponentLocation.Local:
                 typeInfo.componentIndex = localComponents.FindIndex(kv => kv.GetManagedType() == typeof(TComponentData));
                 break;
             
-            case ComponentLocation.Lookup:
+            case ExpressionComponentLocation.Lookup:
                 typeInfo.componentIndex = lookupComponents.FindIndex(kv => kv.GetManagedType() == typeof(TComponentData));
                 break;
         }
 
-        if(typeInfo.componentIndex <= 0)
+        if(typeInfo.componentIndex == -1)
             throw new System.Exception($"component type {typeof(TComponentData).Name} not found in type list");
     }
 
