@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -35,11 +36,46 @@ namespace Mpr.Expr
 			}
 		}
 
-		public NativeSlice<byte> AsNativeSlice()
+		public NativeArray<byte> AsNativeArray()
 		{
 			unsafe
 			{
-				return NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(data.ToPointer(), 1, typeSize);
+				var result = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(data.ToPointer(), typeSize, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+				NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref result, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+				return result;
+			}
+		}
+
+		[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+		void CheckFieldBounds(int offset, int length)
+		{
+			unchecked
+			{
+				if (offset < 0)
+					throw new ArgumentOutOfRangeException(nameof(offset));
+            
+				if(offset + length < offset)
+					throw new ArgumentOutOfRangeException(nameof(length));
+			}
+        
+			if (typeSize < offset + length)
+				throw new IndexOutOfRangeException();
+		}
+		
+		public NativeArray<byte> AsNativeArray(int offset, int length)
+		{
+			CheckFieldBounds(offset, length);
+			
+			unsafe
+			{
+				var result = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(
+					(byte*)data.ToPointer() + offset, length, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+				NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref result, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+				return result;
 			}
 		}
 	}

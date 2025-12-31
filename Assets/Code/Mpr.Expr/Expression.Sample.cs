@@ -11,7 +11,7 @@ public partial struct TestLargeExpression : IExpression<float4>
     public float4x4 matrix;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, in float4 input, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in float4 input, int outputIndex, ref NativeArray<byte> untypedResult)
     {
         untypedResult.AsSingle<float4>() = math.mul(matrix, input);
     }
@@ -28,7 +28,7 @@ public partial struct TestManagedExpression : IExpression<int, int>
     // job worker threads?
     // public NativeArray<Color32> textureData;
 
-    public void Evaluate(in ExpressionEvalContext ctx, in int x, in int y, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in int x, in int y, int outputIndex, ref NativeArray<byte> untypedResult)
     {
         // read a color from a texture
         var textureAsset = texture.Value;
@@ -41,7 +41,7 @@ public partial struct TestManagedExpression : IExpression<int, int>
 //     // TODO: this would need to be patched...
 //     public BlobAssetReference<float4> asset;
 //     
-//     public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+//     public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
 //     {
 //         var result = untypedResult.SliceConvert<float4>();
 //         result[0] = asset.Value;

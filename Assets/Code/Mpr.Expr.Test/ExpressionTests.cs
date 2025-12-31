@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mpr.Expr.Authoring;
 using NUnit.Framework;
 using Unity.Collections;
@@ -7,6 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Mpr.Expr.Test;
 

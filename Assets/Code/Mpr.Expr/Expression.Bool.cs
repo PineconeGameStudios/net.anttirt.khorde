@@ -17,7 +17,7 @@ public partial struct BinaryBool : IExpression<bool, bool>
     public BinaryBoolOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, in bool left, in bool right, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in bool left, in bool right, int outputIndex, ref NativeArray<byte> untypedResult)
     {
         ref var result = ref untypedResult.AsSingle<bool>();
         switch (@operator)
@@ -40,7 +40,7 @@ public partial struct UnaryBool : IExpression<bool>
     public UnaryBoolOp @operator;
 
     [BurstCompile]
-    public void Evaluate(in ExpressionEvalContext ctx, in bool operand, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in bool operand, int outputIndex, ref NativeArray<byte> untypedResult)
     {
         ref var result = ref untypedResult.AsSingle<bool>();
         switch (@operator)

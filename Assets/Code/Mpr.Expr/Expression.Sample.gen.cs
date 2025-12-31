@@ -10,7 +10,7 @@ public partial struct TestLargeExpression
 {
     [BurstCompile]
     public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
+        ref NativeArray<byte> untypedResult)
     {
         EvalHelper.Evaluate<TestLargeExpression, float4>(self, in ctx, outputIndex, ref untypedResult);
     }
@@ -20,7 +20,7 @@ public partial struct TestManagedExpression
 {
     [AOT.MonoPInvokeCallback(typeof(ExpressionEvalDelegate))]
     public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
+        ref NativeArray<byte> untypedResult)
     {
         EvalHelper.Evaluate<TestManagedExpression, int, int>(self, in ctx, outputIndex, ref untypedResult);
     }

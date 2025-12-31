@@ -9,7 +9,7 @@ public partial struct ReadComponentField
 {
     [BurstCompile]
     public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
+        ref NativeArray<byte> untypedResult)
     {
         EvalHelper.Evaluate<ReadComponentField>(self, in ctx, outputIndex, ref untypedResult);
     }
@@ -20,7 +20,7 @@ public partial struct LookupComponentField
 {
     [BurstCompile]
     public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-        ref NativeSlice<byte> untypedResult)
+        ref NativeArray<byte> untypedResult)
     {
         EvalHelper.Evaluate<LookupComponentField, Entity>(self, in ctx, outputIndex, ref untypedResult);
     }

@@ -7,10 +7,10 @@ public partial struct ReadComponentField : IExpression
 {
     public ExpressionComponentTypeInfo typeInfo;
         
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
     {
         var field = typeInfo.fields[outputIndex];
-        untypedResult.CopyFrom(ctx.componentPtrs[typeInfo.componentIndex].AsNativeSlice().Slice(field.offset, field.length));
+        untypedResult.CopyFrom(ctx.componentPtrs[typeInfo.componentIndex].AsNativeArray(field.offset, field.length));
     }
 }
 
@@ -19,7 +19,7 @@ public partial struct LookupComponentField : IExpression<Entity>
     public ExpressionRef Input0 { get; set; }
     public ExpressionComponentTypeInfo typeInfo;
 
-    public void Evaluate(in ExpressionEvalContext ctx, in Entity entity, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, in Entity entity, int outputIndex, ref NativeArray<byte> untypedResult)
     {
         if (ctx.componentLookups[typeInfo.componentIndex].TryGetRefRO(entity, out var componentData))
         {
@@ -32,7 +32,7 @@ public partial struct LookupComponentField : IExpression<Entity>
                 var field = typeInfo.fields[outputIndex - 1];
                 if (componentData.IsCreated)
                 {
-                    untypedResult.CopyFrom(componentData.Slice(field.offset, field.length));
+                    untypedResult.CopyFrom(componentData.GetSubArray(field.offset, field.length));
                 }
                 else
                 {

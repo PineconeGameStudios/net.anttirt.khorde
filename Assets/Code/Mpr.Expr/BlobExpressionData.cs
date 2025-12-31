@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
-using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Mpr.Expr;
 
@@ -53,22 +54,44 @@ public struct BlobExpressionData
     public BlobArray<UnityEngine.Hash128> sourceGraphNodeIds;
     
     /// <summary>
-    /// Get constants buffer as a NativeSlice
+    /// Get constants buffer as a NativeArray
     /// </summary>
     /// <returns></returns>
-    public NativeSlice<byte> GetConstants()
+    public NativeArray<byte> GetConstants()
     {
         unsafe
         {
-            var slice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(
+            var slice = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(
                 constants.GetUnsafePtr(),
-                1,
-                constants.Length);
+                constants.Length,
+                Allocator.None);
             #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref slice, AtomicSafetyHandle.GetTempMemoryHandle());
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref slice, AtomicSafetyHandle.GetTempMemoryHandle());
             #endif
             return slice;
         }
+    }
+
+    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+    private void CheckConstantRange(int start, int length)
+    {
+        unchecked
+        {
+            if (start < 0)
+                throw new ArgumentOutOfRangeException(nameof(start));
+            
+            if(start + length < start)
+                throw new ArgumentOutOfRangeException(nameof(length));
+        }
+        
+        if (constants.Length < start + length)
+            throw new IndexOutOfRangeException();
+    }
+
+    public unsafe ref readonly TConstant GetConstant<TConstant>(int byteOffset) where TConstant : unmanaged
+    {
+        CheckConstantRange(byteOffset, sizeof(TConstant));
+        return ref *(TConstant*)(byteOffset + (byte*)constants.GetUnsafePtr());
     }
 
     private bool isRuntimeInitialized;

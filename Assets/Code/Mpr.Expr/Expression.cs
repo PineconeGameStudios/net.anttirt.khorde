@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -7,7 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.Serialization;
-using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Mpr.Expr;
 
@@ -118,24 +119,49 @@ public unsafe ref struct ExpressionEvalContext
 {
     public ExpressionEvalContext(
         ref BlobExpressionData data,
-        NativeSlice<UnsafeComponentReference> componentPtrs,
-        NativeSlice<UntypedComponentLookup> componentLookups
-    )
+        NativeArray<UnsafeComponentReference> componentPtrs,
+        NativeArray<UntypedComponentLookup> componentLookups)
     {
         fixed (BlobExpressionData* pData = &data)
             this.dataPtr = pData;
         this.componentPtrs = componentPtrs;
         this.componentLookups = componentLookups;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        this.callStack = new(Allocator.Temp);
+        this.callStackLookup = new(8, Allocator.Temp);
+#endif
     }
 
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+    public ExpressionEvalContext(
+        ref BlobExpressionData data,
+        NativeArray<UnsafeComponentReference> componentPtrs,
+        NativeArray<UntypedComponentLookup> componentLookups,
+        NativeList<ushort> callStack,
+        NativeHashSet<ushort> callStackLookup)
+    {
+        fixed (BlobExpressionData* pData = &data)
+            this.dataPtr = pData;
+        this.componentPtrs = componentPtrs;
+        this.componentLookups = componentLookups;
+        this.callStack = callStack;
+        this.callStackLookup = callStackLookup;
+    }
+#endif
+
     BlobExpressionData* dataPtr;
-    public NativeSlice<UnsafeComponentReference> componentPtrs;
-    public NativeSlice<UntypedComponentLookup> componentLookups;
+    public NativeArray<UnsafeComponentReference> componentPtrs;
+    public NativeArray<UntypedComponentLookup> componentLookups;
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+    public NativeList<ushort> callStack;
+    public NativeHashSet<ushort> callStackLookup;
+#endif
 
     public ref BlobExpressionData data => ref *dataPtr;
 }
 
-public static class ExprNativeSliceExt
+public static class ExprNativeArrayExt
 {
     /// <summary>
     /// Interpret the slice as a single element of type <typeparamref name="T"/>
@@ -143,11 +169,11 @@ public static class ExprNativeSliceExt
     /// <param name="slice"></param>
     /// <typeparam name="T"><c>unmanaged</c> type to interpret slice contents as</typeparam>
     /// <returns></returns>
-    public static ref T AsSingle<T>(this ref NativeSlice<byte> slice) where T : unmanaged
+    public static ref T AsSingle<T>(this ref NativeArray<byte> slice) where T : unmanaged
     {
-        var converted = slice.SliceConvert<T>();
         unsafe
         {
+            var converted = slice.Reinterpret<T>(1);
             return ref *(T*)converted.GetUnsafePtr();
         }
     }
@@ -156,7 +182,7 @@ public static class ExprNativeSliceExt
     /// Clear the contents of the slice, setting all bytes to zero.
     /// </summary>
     /// <param name="slice"></param>
-    public static void Clear(this ref NativeSlice<byte> slice)
+    public static void Clear(this ref NativeArray<byte> slice)
     {
         unsafe
         {
@@ -200,62 +226,102 @@ public struct ExpressionRef
     {
         if (isConstant)
         {
-            return ctx.data.GetConstants()
-                .Slice(index, outputIndexOrConstantLength)
-                .SliceConvert<T>()[0];
+            return ctx.data.GetConstant<T>(index);
         }
-
-        T result = default;
-
-        unsafe
+        else
         {
-            var size = UnsafeUtility.SizeOf<T>();
-            var resultSlice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(&result, size, size);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice, AtomicSafetyHandle.GetTempMemoryHandle());
-#endif
-            ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
-        }
+            T result = default;
 
-        return result;
+            unsafe
+            {
+                var size = UnsafeUtility.SizeOf<T>();
+                var resultSlice =
+                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(&result, size, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice,
+                    AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+                CheckStackPush(in ctx, index);
+                ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
+                CheckStackPop(in ctx, index);
+            }
+
+            return result;
+        }
     }
-    
+
+    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+    private void CheckStackPush(in ExpressionEvalContext ctx, ushort index)
+    {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        if (!ctx.callStack.IsCreated)
+            return;
+        
+        if (!ctx.callStackLookup.Add(index))
+            throw new InvalidOperationException($"expression cycle: {index} calls itself");
+                
+        ctx.callStack.Add(index);
+#endif
+    }
+
+    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+    private void CheckStackPop(in ExpressionEvalContext ctx, ushort index)
+    {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        if (!ctx.callStack.IsCreated)
+            return;
+        
+        var top = ctx.callStack[ctx.callStack.Length - 1];
+        if (top != index)
+            throw new InvalidOperationException($"inconsistent stack: {index} call resulted in {top} at the top");
+        
+        ctx.callStackLookup.Remove(top);
+        ctx.callStack.RemoveAt(ctx.callStack.Length - 1);
+#endif
+    }
+
     public void Evaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
     {
         if (isConstant)
         {
-            result = ctx.data.GetConstants()
-                .Slice(index, outputIndexOrConstantLength)
-                .SliceConvert<T>()[0];
-            return;
+            result = ctx.data.GetConstant<T>(index);
         }
-
-        unsafe
+        else
         {
-            var size = UnsafeUtility.SizeOf<T>();
-            fixed (T* pResult = &result)
+            unsafe
             {
-                var resultSlice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(pResult, size, size);
+                var size = UnsafeUtility.SizeOf<T>();
+                fixed (T* pResult = &result)
+                {
+                    var resultSlice =
+                        NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(pResult, size, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice, AtomicSafetyHandle.GetTempMemoryHandle());
+                    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice,
+                        AtomicSafetyHandle.GetTempMemoryHandle());
 #endif
-                ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
+
+                    CheckStackPush(in ctx, index);
+                    ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
+                    CheckStackPop(in ctx, index);
+                }
             }
         }
     }
 
-    public void Evaluate(in ExpressionEvalContext ctx, ref NativeSlice<byte> result)
+    public void Evaluate(in ExpressionEvalContext ctx, ref NativeArray<byte> result)
     {
         if (isConstant)
         {
             result.CopyFrom(
                 ctx.data.GetConstants()
-                    .Slice(index, outputIndexOrConstantLength)
+                    .GetSubArray(index, outputIndexOrConstantLength)
             );
         }
         else
         {
+            CheckStackPush(in ctx, index);
             ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref result);
+            CheckStackPop(in ctx, index);
         }
     }
 
@@ -269,25 +335,25 @@ public interface IExpressionBase { }
 
 public interface IExpression : IExpressionBase
 {
-    void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult);
+    void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 public interface IExpression<T0> : IExpressionBase where T0 : unmanaged
 {
     ExpressionRef Input0 { get; }
-    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, int outputIndex, ref NativeSlice<byte> untypedResult);
+    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 public interface IExpression<T0, T1> : IExpressionBase where T0 : unmanaged where T1 : unmanaged
 {
     ExpressionRef Input0 { get; }
     ExpressionRef Input1 { get; }
-    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, int outputIndex, ref NativeSlice<byte> untypedResult);
+    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public unsafe delegate void ExpressionEvalDelegate(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-    ref NativeSlice<byte> untypedResult);
+    ref NativeArray<byte> untypedResult);
 
 static unsafe class EvalHelper
 {
@@ -305,14 +371,14 @@ static unsafe class EvalHelper
             Debug.Log("running from mono/il2cpp");
     }
 
-    public static void Evaluate<TExpr>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public static void Evaluate<TExpr>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
         where TExpr : unmanaged, IExpression
     {
         TExpr* expr = self->GetUnsafePtr<TExpr>();
         expr->Evaluate(in ctx, outputIndex, ref untypedResult);
     }
 
-    public static void Evaluate<TExpr, TInput0>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public static void Evaluate<TExpr, TInput0>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
         where TExpr : unmanaged, IExpression<TInput0>
         where TInput0 : unmanaged
     {
@@ -321,7 +387,7 @@ static unsafe class EvalHelper
         expr->Evaluate(in ctx, in input0, outputIndex, ref untypedResult);
     }
 
-    public static void Evaluate<TExpr, TInput0, TInput1>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public static void Evaluate<TExpr, TInput0, TInput1>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
         where TExpr : unmanaged, IExpression<TInput0, TInput1>
         where TInput0 : unmanaged
         where TInput1 : unmanaged
@@ -378,13 +444,15 @@ public struct ExpressionData
     // filled in at runtime
     public long evaluateFuncPtr;
 
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
+    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
     {
         unsafe
         {
+            var funcPtr = new FunctionPointer<ExpressionEvalDelegate>((IntPtr)evaluateFuncPtr);
             fixed (ExpressionStorage* ptr = &storage)
-                new FunctionPointer<ExpressionEvalDelegate>((IntPtr)evaluateFuncPtr).Invoke(ptr, in ctx, outputIndex,
-                    ref untypedResult);
+            {
+                funcPtr.Invoke(ptr, in ctx, outputIndex, ref untypedResult);
+            }
         }
     }
 }
