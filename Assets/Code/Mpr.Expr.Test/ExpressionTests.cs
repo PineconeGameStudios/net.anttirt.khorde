@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
+using Unity.Mathematics;
 
 namespace Mpr.Expr.Test;
 
@@ -41,6 +42,7 @@ public unsafe class ExpressionTests
 
         constStorage = new NativeList<byte>(Allocator.Temp);
         hashCache = new Dictionary<Type, ulong>();
+        exprIndex = 0;
         
         False = ExprAuthoring.WriteConstant2(false, constStorage);
         True = ExprAuthoring.WriteConstant2(true, constStorage);
@@ -160,6 +162,75 @@ public unsafe class ExpressionTests
         Assert.AreEqual(false, n3.Evaluate<bool>(in ctx));
         Assert.AreEqual(false, n4.Evaluate<bool>(in ctx));
         Assert.AreEqual(true, n5.Evaluate<bool>(in ctx));
+    }
+    
+    ExpressionRef Const<TConstant>(TConstant constant) where TConstant : unmanaged
+        => ExprAuthoring.WriteConstant2(constant, constStorage);
+    
+    [Test]
+    public void Test_Math()
+    {
+        var exprs = blobBuilder.Allocate(ref root->expressions, 6);
+        var typeHashes = blobBuilder.Allocate(ref root->expressionTypeHashes, 6);
+        
+        var n0 = AddExpression(exprs, typeHashes, new BinaryFloat2
+        {
+            Input0 = Const(new float2(1, 2)),
+            Input1 = Const(new float2(2, 3)),
+            @operator = BinaryMathOp.Add,
+        });
+
+        var n1 = AddExpression(exprs, typeHashes, new BinaryFloat2
+        {
+            Input0 = Const(new float2(1, 2)),
+            Input1 = Const(new float2(2, 1)),
+            @operator =  BinaryMathOp.Sub,
+        });
+
+        var n2 = AddExpression(exprs, typeHashes, new BinaryFloat2
+        {
+            Input0 = Const(new float2(3, 3)),
+            Input1 = Const(new float2(2, 5)),
+            @operator = BinaryMathOp.Mul,
+        });
+        
+        var n3 = AddExpression(exprs, typeHashes, new BinaryFloat2
+        {
+            Input0 = Const(new float2(0, 6)),
+            Input1 = Const(new float2(2, 2)),
+            @operator = BinaryMathOp.Div,
+        });
+
+        var n4 = AddExpression(exprs, typeHashes, new BinaryFloat2
+        {
+            Input0 = n0,
+            Input1 = n1,
+            @operator = BinaryMathOp.Add,
+        });
+        
+        var n5 = AddExpression(exprs, typeHashes, new BinaryFloat2
+        {
+            Input0 = n1,
+            Input1 = n0,
+            @operator = BinaryMathOp.Add,
+        });
+
+        ExprAuthoring.BakeConstStorage(ref blobBuilder, ref *root, constStorage);
+        var blob = blobBuilder.CreateBlobAssetReference<BlobExpressionData>(Allocator.Temp);
+
+        blob.Value.RuntimeInitialize(default, default);
+        
+        Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
+        
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
+
+        Assert.AreEqual(new float2(3, 5), n0.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float2(-1, 1), n1.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float2(6, 15), n2.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float2(0, 3), n3.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float2(2, 6), n4.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float2(2, 6), n5.Evaluate<float2>(in ctx));
     }
 
     struct TestComponent1 : IComponentData
