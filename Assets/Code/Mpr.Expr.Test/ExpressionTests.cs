@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Mpr.Expr.Authoring;
 using NUnit.Framework;
 using Unity.Collections;
@@ -8,7 +6,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Mpr.Expr.Test;
 
@@ -222,18 +219,18 @@ public unsafe class ExpressionTests
     [Test]
     public void Test_Field()
     {
-        baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);
+        baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Lookup, ComponentType.AccessMode.ReadOnly);
         baker.InitializeBake(1);
 
-        ref var rcf = ref Allocate<ReadComponentField>(out var n0);
-        baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+        ref var rcf = ref Allocate<LookupComponentField>(out var n0);
+        baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Lookup);
         
         var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
         blob.Value.RuntimeInitialize(default, default);
 
         Assert.Greater(
-            blob.Value.expressions[0].storage.GetUnsafePtr<ReadComponentField>()->typeInfo.fields[0].length,
+            blob.Value.expressions[0].storage.GetUnsafePtr<LookupComponentField>()->typeInfo.fields[0].length,
             0
             );
         
@@ -255,6 +252,50 @@ public unsafe class ExpressionTests
         Assert.AreEqual(42, n0.WithOutputIndex(0).Evaluate<int>(in ctx));
         Assert.AreEqual(true, n0.WithOutputIndex(1).Evaluate<bool>(in ctx));
         Assert.AreEqual(false, n0.WithOutputIndex(2).Evaluate<bool>(in ctx));
+    }
+    
+    [Test]
+    public void Test_Lookup()
+    {
+        baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);
+        baker.InitializeBake(1);
+
+        var otherEntity = em.CreateEntity();
+        em.AddComponentData(otherEntity, new TestComponent1
+        {
+            field0 = 42,
+            field1 = true,
+            field2 = false,
+        });
+        
+        ref var rcf = ref Allocate<LookupComponentField>(out var n0);
+        baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+        rcf.Input0 = baker.Const(otherEntity);
+        
+        var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
+
+        blob.Value.RuntimeInitialize(default, default);
+
+        Assert.Greater(
+            blob.Value.expressions[0].storage.GetUnsafePtr<LookupComponentField>()->typeInfo.fields[0].length,
+            0
+        );
+        
+        Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
+
+        NativeArray<UntypedComponentLookup> componentLookups = new  NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
+        componentLookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestComponent1>(true);
+        
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, componentLookups);
+
+        // HasComponent
+        Assert.AreEqual(true, n0.WithOutputIndex(0).Evaluate<bool>(in ctx));
+        
+        const int FieldStartIndex = 1;
+        Assert.AreEqual(42, n0.WithOutputIndex(FieldStartIndex + 0).Evaluate<int>(in ctx));
+        Assert.AreEqual(true, n0.WithOutputIndex(FieldStartIndex + 1).Evaluate<bool>(in ctx));
+        Assert.AreEqual(false, n0.WithOutputIndex(FieldStartIndex + 2).Evaluate<bool>(in ctx));
     }
 
     struct TestComponent1 : IComponentData
