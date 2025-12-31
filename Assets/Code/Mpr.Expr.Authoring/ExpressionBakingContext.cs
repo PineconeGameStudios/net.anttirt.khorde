@@ -108,10 +108,16 @@ public unsafe class ExpressionBakingContext
         return ref builder.ConstructRoot<BlobExpressionData>();
     }
 
-    public ref TExpression Allocate<TExpression>(ExpressionStorageRef exprData)
+    /// <summary>
+    /// Allocate storage for an expression and record its type.
+    /// </summary>
+    /// <param name="storageRef">Reference to the storage slot for the expression being currently baked</param>
+    /// <typeparam name="TExpression"></typeparam>
+    /// <returns></returns>
+    public ref TExpression Allocate<TExpression>(ExpressionStorageRef storageRef)
         where TExpression : unmanaged, IExpressionBase
     {
-        return ref ExprAuthoring.Allocate<TExpression>(ref builder, exprData, hashCache);
+        return ref ExprAuthoring.Allocate<TExpression>(ref builder, storageRef, hashCache);
     }
 
     public void Bake<TAsset>(ref ExpressionObjectRef<TAsset> objectRef, TAsset asset) where TAsset : UnityEngine.Object

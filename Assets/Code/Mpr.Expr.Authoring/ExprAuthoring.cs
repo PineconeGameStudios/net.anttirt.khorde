@@ -7,6 +7,9 @@ using Unity.Entities;
 
 namespace Mpr.Expr.Authoring
 {
+	/// <summary>
+	/// Reference to storage for a single expression. Pass this to <see cref="ExpressionBakingContext.Allocate"/>
+	/// </summary>
 	public unsafe ref struct ExpressionStorageRef
 	{
 		public ExpressionStorage* storage;
@@ -184,6 +187,14 @@ namespace Mpr.Expr.Authoring
 			}
 		}
 		
+		/// <summary>
+		/// Allocate storage for an expression and record its type.
+		/// </summary>
+		/// <param name="builder">The blob builder being used for the current expression graph</param>
+		/// <param name="storage">Reference to the storage slot for the expression being currently baked</param>
+		/// <param name="hashCache">Cache of computed type hashes</param>
+		/// <typeparam name="TExpression"></typeparam>
+		/// <returns></returns>
 		public static unsafe ref TExpression Allocate<TExpression>(ref BlobBuilder builder, ExpressionStorageRef storage, Dictionary<Type, ulong> hashCache) where TExpression : unmanaged, IExpressionBase
 		{
 			*storage.typeHash = ExpressionTypeManager.GetTypeHash<TExpression>(hashCache);

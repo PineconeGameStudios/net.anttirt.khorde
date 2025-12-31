@@ -14,7 +14,6 @@ public unsafe class ExpressionTests
 {
     World world;
     EntityManager em;
-    ushort exprCount;
     NativeList<byte> constStorage;
     Dictionary<Type, ulong> hashCache;
     ExpressionRef False;
@@ -23,6 +22,7 @@ public unsafe class ExpressionTests
     Entity bakedExpressionEntity;
     BlobBuilder blobBuilder;
     BlobExpressionData* root;
+    ushort exprIndex;
 
     [SetUp]
     public void SetUp()
@@ -34,7 +34,6 @@ public unsafe class ExpressionTests
         testSystem = world.GetOrCreateSystemManaged<ExpressionTestSystem>();
 
         em = world.EntityManager;
-        exprCount = 0;
         
         bakedExpressionEntity = em.CreateEntity();
         var strongRefs = em.AddBuffer<BlobExpressionObjectReference>(bakedExpressionEntity);
@@ -59,27 +58,7 @@ public unsafe class ExpressionTests
         world.Dispose();
         world = null;
     }
-
-    [Test]
-    public void Test_Const()
-    {
-        ExprAuthoring.BakeConstStorage(ref blobBuilder, ref *root, constStorage);
-        var blob = blobBuilder.CreateBlobAssetReference<BlobExpressionData>(Allocator.Temp);
-
-        Assert.Greater(blob.Value.constants.Length, 0);
-        Assert.That((IntPtr)blob.Value.constants.GetUnsafePtr(), Is.Not.Zero);
-        var constants = blob.Value.GetConstants();
-        Assert.Greater(constants.Length, 0);
-        Assert.That((IntPtr)constants.GetUnsafePtr(), Is.Not.Zero);
-        
-        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
-
-        Assert.AreEqual(false, False.Evaluate<bool>(in ctx));
-        Assert.AreEqual(true, True.Evaluate<bool>(in ctx));
-    }
-
-    private ushort exprIndex;
-
+    
     ref TExpression Allocate<TExpression>(BlobBuilderArray<ExpressionData> exprs, BlobBuilderArray<ulong> typeHashes, out ExpressionRef node)
         where TExpression : unmanaged, IExpressionBase
     {
@@ -101,10 +80,28 @@ public unsafe class ExpressionTests
     }
 
     [Test]
+    public void Test_Const()
+    {
+        ExprAuthoring.BakeConstStorage(ref blobBuilder, ref *root, constStorage);
+        var blob = blobBuilder.CreateBlobAssetReference<BlobExpressionData>(Allocator.Temp);
+
+        Assert.Greater(blob.Value.constants.Length, 0);
+        Assert.That((IntPtr)blob.Value.constants.GetUnsafePtr(), Is.Not.Zero);
+        var constants = blob.Value.GetConstants();
+        Assert.Greater(constants.Length, 0);
+        Assert.That((IntPtr)constants.GetUnsafePtr(), Is.Not.Zero);
+        
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
+
+        Assert.AreEqual(false, False.Evaluate<bool>(in ctx));
+        Assert.AreEqual(true, True.Evaluate<bool>(in ctx));
+    }
+    
+    [Test]
     public void Test_Boolean()
     {
-        var exprs = blobBuilder.Allocate(ref root->expressions, 3);
-        var typeHashes = blobBuilder.Allocate(ref root->expressionTypeHashes, 3);
+        var exprs = blobBuilder.Allocate(ref root->expressions, 6);
+        var typeHashes = blobBuilder.Allocate(ref root->expressionTypeHashes, 6);
 
         var n0 = AddExpression(exprs, typeHashes, new BinaryBool
         {
@@ -126,6 +123,26 @@ public unsafe class ExpressionTests
             Input1 = True,
             @operator = BinaryBoolOp.And,
         });
+        
+        var n3 = AddExpression(exprs, typeHashes, new UnaryBool
+        {
+            Input0 = True,
+            @operator =  UnaryBoolOp.Not,
+        });
+
+        var n4 = AddExpression(exprs, typeHashes, new BinaryBool
+        {
+            Input0 = n0,
+            Input1 = n1,
+            @operator = BinaryBoolOp.And,
+        });
+        
+        var n5 = AddExpression(exprs, typeHashes, new BinaryBool
+        {
+            Input0 = n0,
+            Input1 = n1,
+            @operator = BinaryBoolOp.Or,
+        });
 
         ExprAuthoring.BakeConstStorage(ref blobBuilder, ref *root, constStorage);
         var blob = blobBuilder.CreateBlobAssetReference<BlobExpressionData>(Allocator.Temp);
@@ -140,6 +157,9 @@ public unsafe class ExpressionTests
         Assert.AreEqual(false, n0.Evaluate<bool>(in ctx));
         Assert.AreEqual(true, n1.Evaluate<bool>(in ctx));
         Assert.AreEqual(true, n2.Evaluate<bool>(in ctx));
+        Assert.AreEqual(false, n3.Evaluate<bool>(in ctx));
+        Assert.AreEqual(false, n4.Evaluate<bool>(in ctx));
+        Assert.AreEqual(true, n5.Evaluate<bool>(in ctx));
     }
 
     struct TestComponent1 : IComponentData

@@ -211,9 +211,9 @@ public struct ExpressionRef
         {
             var size = UnsafeUtility.SizeOf<T>();
             var resultSlice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(&result, size, size);
-            #if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice, AtomicSafetyHandle.GetTempMemoryHandle());
-            #endif
+#endif
             ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
         }
 
@@ -236,6 +236,9 @@ public struct ExpressionRef
             fixed (T* pResult = &result)
             {
                 var resultSlice = NativeSliceUnsafeUtility.ConvertExistingDataToNativeSlice<byte>(pResult, size, size);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                NativeSliceUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
                 ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
             }
         }
@@ -331,7 +334,7 @@ static unsafe class EvalHelper
 }
 
 /// <summary>
-/// Blob storage for expression data. Pass this to <see cref="Mpr.Expr.Authoring.ExpressionBakingContext.Allocate"/>
+/// Blob storage for expression data.
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
 public struct ExpressionStorage
