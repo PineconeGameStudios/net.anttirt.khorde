@@ -288,6 +288,20 @@ public unsafe delegate void ExpressionEvalDelegate(ExpressionStorage* self, in E
 
 static unsafe class EvalHelper
 {
+    [BurstDiscard]
+    static void TestBurst(ref bool isBurst) => isBurst = false;
+
+    public static void ReportBurst()
+    {
+        bool isBurst = true;
+        TestBurst(ref isBurst);
+        
+        if (isBurst)
+            Debug.Log("running from burst");
+        else
+            Debug.Log("running from mono/il2cpp");
+    }
+
     public static void Evaluate<TExpr>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeSlice<byte> untypedResult)
         where TExpr : unmanaged, IExpression
     {
