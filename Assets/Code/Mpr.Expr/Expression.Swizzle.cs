@@ -13,6 +13,31 @@ public struct SwizzleOp
         get => (byte)((desc >> (index * 2)) & 3);
         set => desc = (byte)((desc & ~(3 << (index * 2))) | (value << (index * 2)));
     }
+
+    public static SwizzleOp Parse(string pattern)
+    {
+        var op = new SwizzleOp
+        {
+            outputCount = (byte)pattern.Length,
+        };
+
+        byte FieldToIndex(char field)
+        {
+            switch (char.ToLowerInvariant(field))
+            {
+                case 'x': case 'r': return 0;
+                case 'y': case 'g': return 1;
+                case 'z': case 'b': return 2;
+                case 'w': case 'a': return 3;
+                default: return 0;
+            }
+        }
+
+        for (int i = 0; i < pattern.Length; ++i)
+            op[i] = FieldToIndex(pattern[i]);
+
+        return op;
+    }
 }
 
 public partial struct Swizzle32x1 : IExpression<int>

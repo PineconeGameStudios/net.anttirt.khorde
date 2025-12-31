@@ -297,6 +297,67 @@ public unsafe class ExpressionTests
         Assert.AreEqual(true, n0.WithOutputIndex(FieldStartIndex + 1).Evaluate<bool>(in ctx));
         Assert.AreEqual(false, n0.WithOutputIndex(FieldStartIndex + 2).Evaluate<bool>(in ctx));
     }
+    
+    [Test]
+    public void Test_Swizzle()
+    {
+        baker.InitializeBake(18);
+        
+        var n11 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("x") });
+        var n12 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("xx") });
+        var n13 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("xxx") });
+        var n14 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("xxxx") });
+        
+        var n21 = AddExpression(new Swizzle32x2 { Input0 = baker.Const(new float2(1, 2)), @operator = SwizzleOp.Parse("y") });
+        var n22 = AddExpression(new Swizzle32x2 { Input0 = baker.Const(new float2(1, 2)), @operator = SwizzleOp.Parse("yx") });
+        var n23 = AddExpression(new Swizzle32x2 { Input0 = baker.Const(new float2(1, 2)), @operator = SwizzleOp.Parse("xyx") });
+        var n24 = AddExpression(new Swizzle32x2 { Input0 = baker.Const(new float2(1, 2)), @operator = SwizzleOp.Parse("yxyx") });
+        
+        var n31 = AddExpression(new Swizzle32x3 { Input0 = baker.Const(new float3(1, 2, 3)), @operator = SwizzleOp.Parse("z") });
+        var n32 = AddExpression(new Swizzle32x3 { Input0 = baker.Const(new float3(1, 2, 3)), @operator = SwizzleOp.Parse("zy") });
+        var n33 = AddExpression(new Swizzle32x3 { Input0 = baker.Const(new float3(1, 2, 3)), @operator = SwizzleOp.Parse("zyx") });
+        var n34 = AddExpression(new Swizzle32x3 { Input0 = baker.Const(new float3(1, 2, 3)), @operator = SwizzleOp.Parse("xzyx") });
+        
+        var n41 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("w") });
+        var n42 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("wz") });
+        var n43 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("wzy") });
+        var n44 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("wzyx") });
+        
+        var n5 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("xyzw") });
+        var n6 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("xxyy") });
+
+        var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
+
+        blob.Value.RuntimeInitialize(default, default);
+        
+        Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
+        
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
+
+        Assert.AreEqual(1,                      n11.Evaluate<float>(in ctx));
+        Assert.AreEqual(new float2(1, 1),       n12.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float3(1, 1, 1),    n13.Evaluate<float3>(in ctx));
+        Assert.AreEqual(new float4(1, 1, 1, 1), n14.Evaluate<float4>(in ctx));
+
+        Assert.AreEqual(2,                      n21.Evaluate<float>(in ctx));
+        Assert.AreEqual(new float2(2, 1),       n22.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float3(1, 2, 1),    n23.Evaluate<float3>(in ctx));
+        Assert.AreEqual(new float4(2, 1, 2, 1), n24.Evaluate<float4>(in ctx));
+
+        Assert.AreEqual(3,                      n31.Evaluate<float>(in ctx));
+        Assert.AreEqual(new float2(3, 2),       n32.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float3(3, 2, 1),    n33.Evaluate<float3>(in ctx));
+        Assert.AreEqual(new float4(1, 3, 2, 1), n34.Evaluate<float4>(in ctx));
+
+        Assert.AreEqual(4,                      n41.Evaluate<float>(in ctx));
+        Assert.AreEqual(new float2(4, 3),       n42.Evaluate<float2>(in ctx));
+        Assert.AreEqual(new float3(4, 3, 2),    n43.Evaluate<float3>(in ctx));
+        Assert.AreEqual(new float4(4, 3, 2, 1), n44.Evaluate<float4>(in ctx));
+
+        Assert.AreEqual(new float4(1, 2, 3, 4),  n5.Evaluate<float4>(in ctx));
+        Assert.AreEqual(new float4(1, 1, 2, 2),  n6.Evaluate<float4>(in ctx));
+    }
 
     struct TestComponent1 : IComponentData
     {
