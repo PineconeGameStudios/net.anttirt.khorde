@@ -78,7 +78,7 @@ namespace Mpr.Expr.Authoring
 			UnityEngine.Debug.LogWarning($"{GetType().Name}.Bake() not implemented");
 		}
 
-		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			var (baseType, inputCount) = Decompose(typeof(T));
 			int elementSize;

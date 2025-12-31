@@ -26,7 +26,7 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 
-		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			ref var data = ref context.Allocate<BinaryBool>(storage);
 			data.@operator = BinaryBoolOp.And;
@@ -64,7 +64,7 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 		
-		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			ref var data = ref context.Allocate<BinaryBool>(storage);
 			data.@operator = BinaryBoolOp.Or;
@@ -101,7 +101,7 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 
-		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			ref var data = ref context.Allocate<UnaryBool>(storage);
 			data.@operator = UnaryBoolOp.Not;

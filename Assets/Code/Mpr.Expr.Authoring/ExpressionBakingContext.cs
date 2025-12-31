@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
-using Unity.GraphToolkit.Editor;
 
 namespace Mpr.Expr.Authoring;
 
@@ -28,6 +26,10 @@ public unsafe class ExpressionBakingContext
     // components looked up on other entities
     private Dictionary<Type, ComponentType.AccessMode> lookupComponentsDict;
     private List<ComponentType> lookupComponents;
+    protected NativeArray<ExpressionData> builderExpressions;
+    protected NativeArray<ulong> builderTypeHashes;
+    protected NativeArray<UnityEngine.Hash128> builderSourceGraphNodeIds;
+    private Allocator allocator;
 
     public enum ComponentLocation
     {
@@ -37,41 +39,91 @@ public unsafe class ExpressionBakingContext
 
     public ExpressionBakingContext(
         DynamicBuffer<BlobExpressionObjectReference> strongReferences,
-        DynamicBuffer<BlobExpressionWeakObjectReference> weakReferences
+        DynamicBuffer<BlobExpressionWeakObjectReference> weakReferences,
+        Allocator allocator
     )
     {
         this.strongReferences = strongReferences;
         this.weakReferences = weakReferences;
+        this.allocator = allocator;
+        
+        builder = new BlobBuilder(allocator);
+        
+        weakReferenceSet = new();
+        patchableStrongObjectReferences = new(allocator);
+        patchableTypeInfos = new(allocator);
+        constStorage = new NativeList<byte>(allocator);
+        hashCache = new();
+        localComponents = new();
+        lookupComponents = new();
+        
+        ref var root = ref ConstructRoot();
+        fixed (BlobExpressionData* proot = &root)
+            data = proot;
     }
 
     public ref BlobExpressionData GetData()
     {
-        if (data == null)
-            throw new InvalidOperationException("Call InitializeBake first");
-
         return ref *data;
     }
 
-    public void InitializeBake(Allocator allocator = Allocator.Temp)
+    NativeArray<T> AsArray<T>(BlobBuilderArray<T> blobBuilderArray) where T : unmanaged
     {
-        weakReferenceSet = new();
-        builder = new BlobBuilder(allocator);
-        patchableStrongObjectReferences = new (allocator);
-        patchableTypeInfos = new(allocator);
-        ref var root = ref ConstructRoot();
-        fixed (BlobExpressionData* proot = &root)
-            data = proot;
-
-        constStorage = new NativeList<byte>(allocator);
-
-        hashCache = new();
-
-        localComponents = new();
-        lookupComponents = new();
+        var result = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
+            blobBuilderArray.GetUnsafePtr(),
+            blobBuilderArray.Length,
+            Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref result, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+        return result;
     }
 
-    public void FinalizeBake()
+    /// <summary>
+    /// Call this before baking individual expressions
+    /// </summary>
+    /// <param name="expressionCount"></param>
+    public void InitializeBake(int expressionCount)
     {
+        builderExpressions = AsArray(builder.Allocate(ref data->expressions, expressionCount));
+        builderTypeHashes = AsArray(builder.Allocate(ref data->expressionTypeHashes, expressionCount));
+        builderSourceGraphNodeIds = AsArray(builder.Allocate(ref data->sourceGraphNodeIds, expressionCount));
+    }
+
+    public int ExpressionCount
+    {
+        get
+        {
+            if (!builderExpressions.IsCreated)
+                throw new InvalidOperationException("call InitializeBake first");
+            
+            return builderExpressions.Length;
+        }
+    }
+
+    /// <summary>
+    /// Get the storage slot for the expression at index <paramref name="index"/>
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public ExpressionStorageRef GetStorage(int index)
+    {
+        if(index < 0 || index >= builderExpressions.Length || index >= builderTypeHashes.Length)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        
+        return new ExpressionStorageRef(
+            ref ((ExpressionData*)builderExpressions.GetUnsafePtr())[index].storage,
+            ref ((ulong*)builderTypeHashes.GetUnsafePtr())[index]
+        );
+    }
+
+    /// <summary>
+    /// Call this after all individual expressions have been baked
+    /// </summary>
+    public BlobAssetReference<TBlob> CreateAsset<TBlob>(Allocator assetAllocator) where TBlob : unmanaged
+    {
+        ExprAuthoring.BakeConstStorage(ref builder, ref *data, constStorage);
+        
         // create an array of internal blob ptrs to strong object refs, so they
         // can be patched at runtime to point to loaded object instance ids
         var patchableObjectRefs = builder.Allocate(ref data->patchableObjectRefs, patchableStrongObjectReferences.Length);
@@ -95,6 +147,8 @@ public unsafe class ExpressionBakingContext
             builder.SetPointer(ref typeInfos[i], ref typeInfo);
             typeHashes[i] = this.patchableTypeInfos[i].stableTypeHash;
         }
+        
+        return builder.CreateBlobAssetReference<TBlob>(assetAllocator);
     }
 
     /// <summary>
@@ -167,8 +221,6 @@ public unsafe class ExpressionBakingContext
             throw new System.Exception($"component type {typeof(TComponentData).Name} not found in type list");
     }
 
-    public ExpressionRef GetExpressionRef(IPort inputPort)
-    {
-        throw new NotImplementedException();
-    }
+    public ExpressionRef Const<TConstant>(TConstant constant) where TConstant : unmanaged
+        => ExprAuthoring.WriteConstant2(constant, constStorage);
 }

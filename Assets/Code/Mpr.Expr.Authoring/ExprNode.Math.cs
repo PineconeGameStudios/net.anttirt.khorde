@@ -58,7 +58,7 @@ namespace Mpr.Expr.Authoring
 			};
 		}
 
-		public override void Bake(ExpressionBakingContext context, ExpressionStorageRef storage)
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			var left = context.GetExpressionRef(GetInputPort(0));
 			var right = context.GetExpressionRef(GetInputPort(1));
