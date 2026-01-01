@@ -1,4 +1,6 @@
-﻿using Unity.Collections;
+﻿using System;
+using System.Diagnostics;
+using Unity.Collections;
 using Unity.Entities;
 
 namespace Mpr.Expr;
@@ -6,9 +8,17 @@ namespace Mpr.Expr;
 public partial struct ReadComponentField : IExpression
 {
     public ExpressionComponentTypeInfo typeInfo;
+
+    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+    void CheckInitialized(int outputIndex)
+    {
+        if (typeInfo.fields[outputIndex].length == 0)
+            throw new InvalidOperationException("field info not initialized");
+    }
         
     public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
     {
+        CheckInitialized(outputIndex);
         var field = typeInfo.fields[outputIndex];
         untypedResult.CopyFrom(ctx.componentPtrs[typeInfo.componentIndex].AsNativeArray(field.offset, field.length));
     }

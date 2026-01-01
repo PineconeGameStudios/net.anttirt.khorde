@@ -2,11 +2,15 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Mpr.Blobs;
+using Unity.Burst;
+using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
+using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 namespace Mpr.Expr;
@@ -125,6 +129,52 @@ public struct BlobExpressionData
             .OrderBy(UnsafeUtility.GetFieldOffset)
             .ToArray();
 
+    struct ComponentReflectionCache
+    {
+        public NativeHashMap<ulong, UnsafeList<ExpressionComponentTypeInfo.Field>> Cache;
+        public FunctionPointer<ComputeFieldsDelegate> ComputeFields;
+
+        public delegate void ComputeFieldsDelegate(ulong typeHash,
+            out UnsafeList<ExpressionComponentTypeInfo.Field> fields);
+
+        [AOT.MonoPInvokeCallback(typeof(ComputeFieldsDelegate))]
+        public static void GetFieldsImpl(ulong typeHash, out UnsafeList<ExpressionComponentTypeInfo.Field> fields)
+        {
+            var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(typeHash);
+            if (typeIndex == default)
+                throw new InvalidOperationException($"couldn't find type index for StableTypeHash {typeHash}");
+            
+            var info = TypeManager.GetTypeInfo(typeIndex);
+            var reflFields = GetComponentFields(info.Type);
+            fields = new UnsafeList<ExpressionComponentTypeInfo.Field>(reflFields.Length, Allocator.Domain);
+            foreach (var field in reflFields)
+                fields.Add(field);
+        }
+    }
+    
+    static readonly SharedStatic<ComponentReflectionCache> Cache
+        = SharedStatic<ComponentReflectionCache>.GetOrCreate<ComponentReflectionCache>();
+
+    static readonly ComponentReflectionCache.ComputeFieldsDelegate ComputeFieldsDelegate
+        = ComponentReflectionCache.GetFieldsImpl;
+
+    static BlobExpressionData()
+    {
+        Cache.Data.Cache = new(0, Allocator.Domain);
+        Cache.Data.ComputeFields = new(Marshal.GetFunctionPointerForDelegate(ComputeFieldsDelegate));
+    }
+
+    static UnsafeList<ExpressionComponentTypeInfo.Field> GetFields(ulong typeHash)
+    {
+        if (Hint.Unlikely(!Cache.Data.Cache.TryGetValue(typeHash, out var fields)))
+        {
+            Cache.Data.ComputeFields.Invoke(typeHash, out fields);
+            Cache.Data.Cache[typeHash] = fields;
+        }
+        
+        return fields;
+    }
+    
     /// <summary>
     /// Initialize expression function pointers, patch strong object refs, start loading weak object refs, etc.
     /// </summary>
@@ -142,38 +192,26 @@ public struct BlobExpressionData
 
         for (int i = 0; i < expressions.Length; ++i)
         {
-            var typeHash = expressionTypeHashes[i];
-            if (ExpressionTypeManager.TryGetEvaluateFunction(typeHash, out var function))
+            var expressionTypeHash = expressionTypeHashes[i];
+            if(expressionTypeHash == 0)
+                continue;
+            
+            if (ExpressionTypeManager.TryGetEvaluateFunction(expressionTypeHash, out var function))
             {
                 expressions[i].evaluateFuncPtr = (long)function.Value;
             }
             else
             {
-                Debug.LogError($"couldn't find generated type info for hash {typeHash} at index {i}");
+                Debug.LogError($"couldn't find generated type info for hash {expressionTypeHash} at index {i}");
                 throw new InvalidOperationException("couldn't find generated type info");
             }
         }
 
-        var reflectionCache = new NativeHashMap<ulong, NativeArray<ExpressionComponentTypeInfo.Field>>(0, Allocator.Temp);
-
         for (int i = 0; i < patchableTypeInfos.Length; ++i)
         {
             ref var typeInfo = ref patchableTypeInfos[i];
-            var typeHash = typeInfoTypeHashes[i];
-
-            if (!reflectionCache.TryGetValue(typeHash, out var fields))
-            {
-                var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(typeHash);
-                if (typeIndex == default)
-                    throw new InvalidOperationException($"couldn't find type index for StableTypeHash {typeHash}");
-                
-                var info = TypeManager.GetTypeInfo(typeIndex);
-                var reflFields = GetComponentFields(info.Type);
-                fields = reflectionCache[typeHash] = new NativeArray<ExpressionComponentTypeInfo.Field>(reflFields.Length, Allocator.Temp);
-                for (int j = 0; j < fields.Length; ++j)
-                    fields[j] = reflFields[j];
-            }
-
+            var componentTypeHash = typeInfoTypeHashes[i];
+            var fields = GetFields(componentTypeHash);
             ref var patchedFields = ref typeInfo.Value.fields;
             for(int j = 0; j < fields.Length; ++j)
                 patchedFields[j] = fields[j];

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mpr.Blobs;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -170,6 +171,14 @@ public unsafe class ExpressionBakingContext : IDisposable
     public void FinalizeBake()
     {
         ExprAuthoring.BakeConstStorage(ref builder, ref *data, constStorage);
+        
+        var localComponents = builder.Allocate(ref data->localComponents, this.localComponents.Count);
+        for (int i = 0; i < localComponents.Length; ++i)
+            localComponents[i] = new BlobComponentType(this.localComponents[i]);
+        
+        var lookupComponents = builder.Allocate(ref data->lookupComponents, this.lookupComponents.Count);
+        for (int i = 0; i < lookupComponents.Length; ++i)
+            lookupComponents[i] = new BlobComponentType(this.lookupComponents[i]);
         
         // patching info for component reflection
         

@@ -1,6 +1,8 @@
+using System;
 using Mpr.Expr;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Mpr.Blobs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
@@ -23,6 +25,8 @@ namespace Mpr.Behavior.Test
 		[SetUp]
 		public void SetUp()
 		{
+			ExpressionTypeManager.Initialize();
+			
 			world = new World("TestWorld");
 			testSystem = world.GetOrCreateSystemManaged<BehaviorTestSystem>();
 			em = world.EntityManager;
@@ -41,6 +45,7 @@ namespace Mpr.Behavior.Test
 			try
 			{
 				data = btAsset.LoadPersistent();
+				data.Value.exprData.RuntimeInitialize();
 				BTState state = default;
 				Game.MoveTarget moveTarget = default;
 				LocalTransform localTransform = LocalTransform.FromScale(1);
@@ -52,11 +57,24 @@ namespace Mpr.Behavior.Test
 				//foreach(var line in dump)
 				//	UnityEngine.Debug.Log(line);
 
+				ref var localComponents = ref data.Value.exprData.localComponents;
+
 				NativeArray<UnsafeComponentReference> comps =
-					new NativeArray<UnsafeComponentReference>(3, Allocator.Temp);
-				comps[0] = UnsafeComponentReference.Make(ref moveTarget);
-				comps[1] = UnsafeComponentReference.Make(ref targetEntity);
-				comps[2] = UnsafeComponentReference.Make(ref localTransform);
+					new NativeArray<UnsafeComponentReference>(localComponents.Length, Allocator.Temp);
+				
+				for(int i = 0; i < localComponents.Length; ++i)
+				{
+					var type = localComponents[i].ResolveComponentType();
+					var typeIndex = type.TypeIndex;
+					if (typeIndex == TypeManager.GetTypeIndex<Game.MoveTarget>())
+						comps[i] = UnsafeComponentReference.Make(ref moveTarget);
+					else if (typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
+						comps[i] = UnsafeComponentReference.Make(ref localTransform);
+					else if (typeIndex == TypeManager.GetTypeIndex<Game.NpcTargetEntity>())
+						comps[i] = UnsafeComponentReference.Make(ref targetEntity);
+					else
+						throw new Exception($"component {type.GetManagedType().FullName} not available in test");
+				}
 
 				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1,  Allocator.Temp);
 				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);

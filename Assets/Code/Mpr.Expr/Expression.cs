@@ -373,6 +373,9 @@ public struct ExpressionData
 
     public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
     {
+        if (evaluateFuncPtr == 0)
+            throw new InvalidOperationException("call BlobExpressionData.RuntimeInitialize() first");
+        
         unsafe
         {
             var funcPtr = new FunctionPointer<ExpressionEvalDelegate>((IntPtr)evaluateFuncPtr);

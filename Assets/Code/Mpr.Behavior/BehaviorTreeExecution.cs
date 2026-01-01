@@ -37,7 +37,7 @@ namespace Mpr.Behavior
 			for(int i = 0; i < data.exprData.localComponents.Length; ++i)
 				if(data.exprData.localComponents[i].stableTypeHash != componentPtrs[i].stableTypeHash)
 					throw new Exception($"wrong type at index {i}, expected " +
-						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.localComponents[i].stableTypeHash)).DebugTypeName}, found" +
+						$"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.localComponents[i].stableTypeHash)).DebugTypeName}, found " +
 						$"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
 
 			for (int i = 0; i < data.exprData.lookupComponents.Length; ++i)
@@ -48,7 +48,7 @@ namespace Mpr.Behavior
 				// TODO: this is an expensive check, remove it somehow
 				if (data.exprData.lookupComponents[i].ResolveComponentType().TypeIndex != lookups[i].TypeIndex)
 					throw new Exception($"wrong type at index {i}, expected " +
-					                    $"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.lookupComponents[i].stableTypeHash)).DebugTypeName}, found" +
+					                    $"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(data.exprData.lookupComponents[i].stableTypeHash)).DebugTypeName}, found " +
 					                    $"{TypeManager.GetTypeInfo(lookups[i].TypeIndex).DebugTypeName}");
 			}
 

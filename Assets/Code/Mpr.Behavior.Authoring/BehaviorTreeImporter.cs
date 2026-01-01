@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Mpr.Behavior
 {
-	[ScriptedImporter(1, BehaviorTreeGraph.AssetExtension)]
+	[ScriptedImporter(2, BehaviorTreeGraph.AssetExtension)]
 	internal class BehaviorTreeImporter : ScriptedImporter
 	{
 		public override void OnImportAsset(AssetImportContext ctx)

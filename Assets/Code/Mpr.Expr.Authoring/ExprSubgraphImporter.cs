@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Mpr.Expr.Authoring
 {
-	[ScriptedImporter(1, ExprSubgraph.AssetExtension)]
+	[ScriptedImporter(2, ExprSubgraph.AssetExtension)]
 	internal class ExprSubgraphImporter : ScriptedImporter
 	{
 		public override void OnImportAsset(AssetImportContext ctx)

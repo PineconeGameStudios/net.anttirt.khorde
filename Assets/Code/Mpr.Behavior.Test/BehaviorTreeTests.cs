@@ -79,11 +79,18 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_CreateBlob()
 		{
-			baker.InitializeBake(0, 0);
+			baker.InitializeBake(1, 0);
+			
+			AddExpression(new BinaryFloat()
+			{
+				Input0 = baker.Const(0.0f),
+				Input1 = baker.Const(1.0f),
+				@operator = BinaryMathOp.Add,
+			});
         
 			var execs = baker.Builder.Allocate(ref data.execs, 1);
-			var expressions = baker.Builder.Allocate(ref data.exprData.expressions, 1);
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 			Assert.IsTrue(asset.IsCreated);
 			Assert.IsTrue(asset.Value.execs.Length == 1);
 			Assert.IsTrue(asset.Value.exprData.expressions.Length == 1);
@@ -95,12 +102,12 @@ namespace Mpr.Behavior.Test
 			baker.InitializeBake(0, 0);
         
 			var execs = baker.Builder.Allocate(ref data.execs, 100);
-			var expressions = baker.Builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExec.BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			BTState state = default;
 
@@ -129,7 +136,6 @@ namespace Mpr.Behavior.Test
 			baker.InitializeBake(0, 0);
 			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -138,6 +144,7 @@ namespace Mpr.Behavior.Test
 			execs[2].data.fail = new Fail { };
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			BTState state = default;
 
@@ -166,7 +173,6 @@ namespace Mpr.Behavior.Test
 			baker.InitializeBake(0, 0);
 			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -178,6 +184,7 @@ namespace Mpr.Behavior.Test
 			execs[3].data.fail = new Fail { };
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			BTState state = default;
 
@@ -208,7 +215,6 @@ namespace Mpr.Behavior.Test
 			baker.InitializeBake(0, 0);
 			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -223,6 +229,7 @@ namespace Mpr.Behavior.Test
 			execs[4].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			BTState state = default;
 
@@ -258,7 +265,6 @@ namespace Mpr.Behavior.Test
 			var True = baker.Const(true);
 			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -275,6 +281,7 @@ namespace Mpr.Behavior.Test
 			execs[5].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			BTState state = default;
 
@@ -305,7 +312,6 @@ namespace Mpr.Behavior.Test
 			baker.InitializeBake(0, 0);
 
 			var execs = builder.Allocate(ref data.execs, 100);
-			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -320,6 +326,7 @@ namespace Mpr.Behavior.Test
 			execs[4].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			BTState state = default;
 
@@ -349,7 +356,6 @@ namespace Mpr.Behavior.Test
 			baker.InitializeBake(0, 0);
 
 			var execs = builder.Allocate(ref data.execs, 100);
-			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetSequence(ref builder, execs, 3, 4);
@@ -358,6 +364,7 @@ namespace Mpr.Behavior.Test
 			execs[5].type = BTExecType.Fail;
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			BTState state = default;
 
@@ -419,6 +426,7 @@ namespace Mpr.Behavior.Test
 			execs[6].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
@@ -466,6 +474,7 @@ namespace Mpr.Behavior.Test
 			execs[2].SetWriteField(ref builder, 0, WriteField(baker.Const(true), typeof(TestComponent1).GetField(nameof(TestComponent1.field1))));
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
@@ -518,6 +527,7 @@ namespace Mpr.Behavior.Test
 			execs[2].SetData(new Wait { until = TestComponent1_field1 });
 
 			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
