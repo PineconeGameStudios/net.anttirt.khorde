@@ -19,7 +19,7 @@ namespace Mpr.Query.Authoring
 		public void Bake(ref QSScorer scorer, QueryBakingContext queryBakingContext)
 		{
 			scorer.type = QSScorer.ScorerType.Expression;
-			scorer.expr = queryBakingContext.GetExprNodeRef(GetInputPort(0));
+			scorer.expr = queryBakingContext.GetExpressionRef(GetInputPort(0));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)

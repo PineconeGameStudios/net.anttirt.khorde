@@ -2,20 +2,37 @@ using Mpr.Expr.Authoring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mpr.Expr;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
 namespace Mpr.Query.Authoring
 {
-	public class QueryBakingContext : ExprBakingContext
+	public unsafe class QueryBakingContext : GraphExpressionBakingContext
 	{
+		QSData* data;
 		IQuery query;
 
-		public QueryBakingContext(Graph rootGraph) : base(rootGraph)
+		public QueryBakingContext(Graph rootGraph, Allocator allocator)
+			: base(rootGraph, allocator)
 		{
 		}
 
-		protected override bool RegisterNodes()
+		protected override ref BlobExpressionData ConstructRoot()
+		{
+			ref var qsData = ref builder.ConstructRoot<QSData>();
+			fixed (QSData* dataPtr = &qsData)
+				this.data = dataPtr;
+			return ref qsData.exprData;
+		}
+
+		public override void InitializeBake(int expressionCount, int outputCount)
+		{
+			base.InitializeBake(expressionCount, outputCount);
+		}
+
+		protected override bool RegisterGraphNodes()
 		{
 			var queries = rootGraph.GetNodes().OfType<IQuery>().ToList();
 			if(queries.Count == 0)
@@ -31,14 +48,12 @@ namespace Mpr.Query.Authoring
 			}
 
 			query = queries[0];
-			return base.RegisterNodes();
+			
+			return base.RegisterGraphNodes();
 		}
 
-		protected override void Bake()
+		protected override bool BakeGraphNodes()
 		{
-			ref var qsData = ref builder.ConstructRoot<QSData>();
-			BakeExprData(ref qsData.exprData);
-
 			List<IPass> passNodes = new();
 			foreach(var port in query.GetPassPorts())
 			{
@@ -47,19 +62,15 @@ namespace Mpr.Query.Authoring
 					passNodes.Add(pass);
 			}
 
-			var passes = builder.Allocate(ref qsData.passes, passNodes.Count);
+			var passes = builder.Allocate(ref data->passes, passNodes.Count);
 
 			for(int i = 0; i < passNodes.Count; ++i)
 				BakePass(passNodes[i], ref passes[i]);
 
-			// TODO: verify item type somehow
-			// qsData.itemTypeHash = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(query.ItemType)).StableTypeHash;
+			data->itemType = query.ItemType.GetExpressionValueType();
+			data->resultCount = GetExpressionRef(query.GetResultCountPort());
 
-			qsData.resultCount = GetExprNodeRef(query.GetResultCountPort());
-
-			// TODO: bake custom function pointer nodes
-
-			BakeConstData(ref qsData.exprData);
+			return true;
 		}
 
 		void BakePass(IPass node, ref QSPass pass)

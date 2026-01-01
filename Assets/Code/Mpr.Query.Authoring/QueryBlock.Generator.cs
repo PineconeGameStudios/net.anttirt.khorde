@@ -20,10 +20,10 @@ namespace Mpr.Query.Authoring
 			generator.generatorType = QSGenerator.GeneratorType.Float2Rectangle;
 			generator.data.float2Rectangle = new QSGenerator.Float2Rectangle
 			{
-				center = queryBakingContext.GetExprNodeRef(GetInputPortByName("center")),
-				orientation = queryBakingContext.GetExprNodeRef(GetInputPortByName("orientation")),
-				size = queryBakingContext.GetExprNodeRef(GetInputPortByName("size")),
-				spacing = queryBakingContext.GetExprNodeRef(GetInputPortByName("spacing")),
+				center = queryBakingContext.GetExpressionRef(GetInputPortByName("center")),
+				orientation = queryBakingContext.GetExpressionRef(GetInputPortByName("orientation")),
+				size = queryBakingContext.GetExpressionRef(GetInputPortByName("size")),
+				spacing = queryBakingContext.GetExpressionRef(GetInputPortByName("spacing")),
 			};
 		}
 

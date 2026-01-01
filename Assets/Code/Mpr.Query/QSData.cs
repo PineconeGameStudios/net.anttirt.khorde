@@ -52,7 +52,7 @@ namespace Mpr.Query
 		/// <summary>
 		/// Baked data for all expressions in the query graph
 		/// </summary>
-		public ExprData exprData;
+		public BlobExpressionData exprData;
 
 		/// <summary>
 		/// List of passes for this query graph, in evaluation order.
@@ -66,14 +66,14 @@ namespace Mpr.Query
 		public BlobArray<QSPass> passes;
 
 		/// <summary>
-		/// Stable type hash for the query result item type
+		/// Result item type
 		/// </summary>
-		public ulong itemTypeHash;
+		public ExpressionValueType itemType;
 
 		/// <summary>
 		/// An expression to evaluate to determine the desired result item count
 		/// </summary>
-		public ExprNodeRef resultCount;
+		public ExpressionRef resultCount;
 	}
 
 	public struct QSEntityQueryReference : IBufferElementData
@@ -161,13 +161,12 @@ namespace Mpr.Query
 		public BlobArray<QSScorer> scorers;
 	}
 
-	[StructLayout(LayoutKind.Explicit)]
 	public struct QSCurrentItemStorage
 	{
-		[FieldOffset(0)] double4 data0;
-		[FieldOffset(32)] double4 data1;
-		[FieldOffset(64)] double4 data2;
-		[FieldOffset(96)] double4 data3;
+		double4 data0;
+		double4 data1;
+		double4 data2;
+		double4 data3;
 	}
 
 	/// <summary>
@@ -228,14 +227,14 @@ namespace Mpr.Query
 
 		public struct Float2Rectangle
 		{
-			public ExprNodeRef center;
-			public ExprNodeRef size;
-			public ExprNodeRef orientation;
-			public ExprNodeRef spacing;
+			public ExpressionRef center;
+			public ExpressionRef size;
+			public ExpressionRef orientation;
+			public ExpressionRef spacing;
 
 			public void Generate(
 				ref QSData data,
-				in ExprEvalContext ctx,
+				in ExpressionEvalContext ctx,
 				DynamicBuffer<QSEntityQueryReference> entityQueries,
 				NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup,
 				NativeList<float2> items)
@@ -272,7 +271,7 @@ namespace Mpr.Query
 		{
 			public int queryIndex;
 
-			public void Generate(ref QSData data, in ExprEvalContext ctx, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<Entity> items)
+			public void Generate(ref QSData data, in ExpressionEvalContext ctx, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<Entity> items)
 			{
 				if(queryResultLookup.TryGetValue(entityQueries[queryIndex].GetRuntimeKey(), out var results))
 					items.CopyFrom(results);
@@ -285,7 +284,7 @@ namespace Mpr.Query
 				throw new Exception();
 		}
 
-		public void Generate<TItem>(ref QSData data, in ExprEvalContext ctx, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<TItem> items) where TItem : unmanaged
+		public void Generate<TItem>(ref QSData data, in ExpressionEvalContext ctx, DynamicBuffer<QSEntityQueryReference> entityQueries, NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup, NativeList<TItem> items) where TItem : unmanaged
 		{
 			switch(generatorType)
 			{
@@ -313,7 +312,7 @@ namespace Mpr.Query
 
 	public struct QSFilter
 	{
-		public ExprNodeRef expr;
+		public ExpressionRef expr;
 		public int nodeIndex;
 		public FilterType type;
 
@@ -325,7 +324,7 @@ namespace Mpr.Query
 			// Function,
 		}
 
-		public void Pass<TItem>(ref QSData data, in ExprEvalContext ctx, ref QSTempState tempState, Span<TItem> items, NativeBitArray passBits) where TItem : unmanaged
+		public void Pass<TItem>(ref QSData data, in ExpressionEvalContext ctx, ref QSTempState tempState, Span<TItem> items, NativeBitArray passBits) where TItem : unmanaged
 		{
 			switch(type)
 			{
@@ -350,7 +349,7 @@ namespace Mpr.Query
 
 	public struct QSScorer
 	{
-		public ExprNodeRef expr;
+		public ExpressionRef expr;
 		public ScorerType type;
 
 		public enum ScorerType
@@ -358,7 +357,7 @@ namespace Mpr.Query
 			Expression,
 		}
 
-		public void Score<TItem>(in ExprEvalContext ctx, ref QSTempState tempState, Span<TItem> items, Span<QSItem> scores, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
+		public void Score<TItem>(in ExpressionEvalContext ctx, ref QSTempState tempState, Span<TItem> items, Span<QSItem> scores, Span<UnsafeComponentReference> componentPtrs) where TItem : unmanaged
 		{
 			switch(type)
 			{
@@ -397,21 +396,21 @@ namespace Mpr.Query
 		/// <returns></returns>
 		public static void Execute<TItem>(
 			ref QSData data,
-			Span<UnsafeComponentReference> componentPtrs,
+			NativeArray<UnsafeComponentReference> componentPtrs,
 			DynamicBuffer<QSEntityQueryReference> entityQueries,
 			NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup,
 			DynamicBuffer<QSResultItemStorage> results,
 			Allocator tempAlloc = Allocator.Temp
 			) where TItem : unmanaged
 		{
-			var exprContext = new ExprEvalContext(ref data.exprData, componentPtrs, default);
+			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, default);
 
 			int resultCount = data.resultCount.Evaluate<int>(in exprContext);
 
 			var items = new NativeList<TItem>(tempAlloc);
 			QSTempState tempState = default;
 
-			Span<UnsafeComponentReference> supComponentPtrs = stackalloc UnsafeComponentReference[componentPtrs.Length + 1];
+			NativeArray<UnsafeComponentReference> supComponentPtrs = new NativeArray<UnsafeComponentReference>(componentPtrs.Length + 1, Allocator.Temp);
 			componentPtrs.CopyTo(supComponentPtrs);
 			supComponentPtrs[^1] = UnsafeComponentReference.Make(ref tempState);
 

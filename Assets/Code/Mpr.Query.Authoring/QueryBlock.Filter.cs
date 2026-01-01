@@ -19,7 +19,7 @@ namespace Mpr.Query.Authoring
 		public void Bake(ref QSFilter qsFilter, QueryBakingContext queryBakingContext)
 		{
 			qsFilter.type = QSFilter.FilterType.Expression;
-			qsFilter.expr = queryBakingContext.GetExprNodeRef(GetInputPort(0));
+			qsFilter.expr = queryBakingContext.GetExpressionRef(GetInputPort(0));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
