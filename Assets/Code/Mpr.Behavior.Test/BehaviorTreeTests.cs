@@ -1,8 +1,10 @@
+using System;
 using Mpr.Expr;
 using Mpr.Expr.Authoring;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
+using Mpr.Expr.Test;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -13,40 +15,55 @@ using static Mpr.Behavior.BTExecTrace;
 namespace Mpr.Behavior.Test
 {
 	[TestFixture]
-	public class BehaviorTreeTests
+	public class BehaviorTreeTests : ExpressionTestBase
 	{
-		World world;
-		EntityManager em;
 		Entity testEntity;
 		DynamicBuffer<BTStackFrame> stack;
 		DynamicBuffer<BTExecTrace> trace;
-		ushort exprCount;
-		NativeList<byte> constStorage;
-		ExprNodeRef False;
-		ExprNodeRef True;
+		Dictionary<Type, ulong> hashCache;
+		new BTTestBakingContext baker;
+		ref BTData data => ref baker.GetData();
+		ref BlobBuilder builder => ref baker.Builder;
+
+		unsafe class BTTestBakingContext : ExpressionBakingContext
+		{
+			private BTData* data;
+			
+			public ref BTData GetData()
+			{
+				return ref *data;
+			}
+			
+			public BTTestBakingContext() : base(Allocator.Temp) { }
+
+			protected override ref BlobExpressionData ConstructRoot()
+			{
+				ref var data = ref builder.ConstructRoot<BTData>();
+				fixed (BTData* ptr = &data)
+					this.data = ptr;
+				return ref data.exprData;
+			}
+
+			public BlobAssetReference<BTData> Bake()
+			{
+				FinalizeBake();
+				return CreateAsset<BTData>(Allocator.Temp);
+			}
+		}
 
 		[SetUp]
-		public void SetUp()
+		public override void SetUp()
 		{
-			world = new World("TestWorld");
-			em = world.EntityManager;
+			base.baker = baker = new BTTestBakingContext();
+			
+			base.SetUp();
+
 			testEntity = em.CreateEntity();
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
 			stack = em.GetBuffer<BTStackFrame>(testEntity);
 			trace = em.GetBuffer<BTExecTrace>(testEntity);
-			exprCount = 0;
-			constStorage = new NativeList<byte>(Allocator.Temp);
-			False = ExprAuthoring.WriteConstant(false, constStorage);
-			True = ExprAuthoring.WriteConstant(true, constStorage);
-		}
-
-		[TearDown]
-		public void TearDown()
-		{
-			em = default;
-			world.Dispose();
-			world = null;
+			hashCache = new();
 		}
 
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());
@@ -60,41 +77,30 @@ namespace Mpr.Behavior.Test
 		}
 
 		[Test]
-		public void Test_FailWriteConstantManaged()
-		{
-			Assert.That(
-				() => ExprAuthoring.WriteConstant(new ManagedStruct(), out var length, constStorage),
-				Throws.Exception
-				);
-		}
-
-		[Test]
 		public void Test_CreateBlob()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
-			var execs = builder.Allocate(ref data.execs, 1);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 1);
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			baker.InitializeBake(0, 0);
+        
+			var execs = baker.Builder.Allocate(ref data.execs, 1);
+			var expressions = baker.Builder.Allocate(ref data.exprData.expressions, 1);
+			var asset = baker.Bake();
 			Assert.IsTrue(asset.IsCreated);
 			Assert.IsTrue(asset.Value.execs.Length == 1);
-			Assert.IsTrue(asset.Value.exprData.exprs.Length == 1);
+			Assert.IsTrue(asset.Value.exprData.expressions.Length == 1);
 		}
 
 		[Test]
 		public void Test_Execute()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
-			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			baker.InitializeBake(0, 0);
+        
+			var execs = baker.Builder.Allocate(ref data.execs, 100);
+			var expressions = baker.Builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExec.BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			BTState state = default;
 
@@ -120,10 +126,10 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Fail()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.InitializeBake(0, 0);
+			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -131,8 +137,7 @@ namespace Mpr.Behavior.Test
 			execs[2].type = BTExecType.Fail;
 			execs[2].data.fail = new Fail { };
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			BTState state = default;
 
@@ -158,10 +163,10 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Catch()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.InitializeBake(0, 0);
+			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -172,8 +177,7 @@ namespace Mpr.Behavior.Test
 			execs[3].type = BTExecType.Fail;
 			execs[3].data.fail = new Fail { };
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			BTState state = default;
 
@@ -201,10 +205,10 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Sequence()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.InitializeBake(0, 0);
+			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -218,8 +222,7 @@ namespace Mpr.Behavior.Test
 			execs[3].type = BTExecType.Nop;
 			execs[4].type = BTExecType.Nop;
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			BTState state = default;
 
@@ -249,10 +252,13 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Selector()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.InitializeBake(0, 0);
+
+			var False = baker.Const(false);
+			var True = baker.Const(true);
+			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -268,8 +274,7 @@ namespace Mpr.Behavior.Test
 			execs[4].type = BTExecType.Nop;
 			execs[5].type = BTExecType.Nop;
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			BTState state = default;
 
@@ -297,10 +302,10 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Sequence_Fail()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.InitializeBake(0, 0);
+
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].type = BTExecType.Root;
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
@@ -314,8 +319,7 @@ namespace Mpr.Behavior.Test
 			execs[3].type = BTExecType.Fail;
 			execs[4].type = BTExecType.Nop;
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			BTState state = default;
 
@@ -342,10 +346,10 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Sequence_Catch()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.InitializeBake(0, 0);
+
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
+			var expressions = builder.Allocate(ref data.exprData.expressions, 100);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetSequence(ref builder, execs, 3, 4);
@@ -353,8 +357,7 @@ namespace Mpr.Behavior.Test
 			execs[4].type = BTExecType.Nop;
 			execs[5].type = BTExecType.Fail;
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			BTState state = default;
 
@@ -383,29 +386,7 @@ namespace Mpr.Behavior.Test
 			}
 		}
 
-		ExprNodeRef ReadExpr(ref BlobBuilder builder, BlobBuilderArray<BTExpr> exprs, byte componentIndex, System.Reflection.FieldInfo fieldInfo)
-		{
-			exprs[exprCount] = new BTExpr
-			{
-				type = BTExpr.BTExprType.ReadField,
-				data = new BTExpr.Data
-				{
-					readField = new BTExpr.ReadField
-					{
-						componentIndex = componentIndex,
-					}
-				}
-			};
-
-			var read1Fields = builder.Allocate(ref exprs[exprCount].data.readField.fields, 1);
-			read1Fields[0] = fieldInfo;
-
-			++exprCount;
-
-			return ExprNodeRef.Node((ushort)(exprCount - 1), 0);
-		}
-
-		static WriteField.Field WriteField(ExprNodeRef input, System.Reflection.FieldInfo fieldInfo)
+		static WriteField.Field WriteField(ExpressionRef input, System.Reflection.FieldInfo fieldInfo)
 		{
 			return new WriteField.Field
 			{
@@ -418,33 +399,33 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Read()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);
+			baker.InitializeBake(1, 0);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.localComponents, 1);
-			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetSequence(ref builder, execs, 3, 5);
 
-			var TestComponent1_field1 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field1)));
-			var TestComponent1_field2 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field2)));
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+			var TestComponent1_field2 = n0.WithOutputIndex(2);
 
 			execs[3].SetData(new Optional { condition = TestComponent1_field1, child = new BTExecNodeId(4) });
 			execs[4].type = BTExecType.Nop;
 			execs[5].SetData(new Optional { condition = TestComponent1_field2, child = new BTExecNodeId(6) });
 			execs[6].type = BTExecType.Nop;
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
+			NativeArray<UnsafeComponentReference> componentPtrs = new  NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
-			System.Span<UntypedComponentLookup> lookups = default;
+			NativeArray<UntypedComponentLookup> lookups = default;
 
 			BTState state = default;
 
@@ -476,25 +457,22 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Write()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.localComponents, 1);
-			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
-			execs[2].SetWriteField(ref builder, 0, WriteField(True, typeof(TestComponent1).GetField(nameof(TestComponent1.field1))));
+			execs[2].SetWriteField(ref builder, 0, WriteField(baker.Const(true), typeof(TestComponent1).GetField(nameof(TestComponent1.field1))));
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
-			System.Span<UntypedComponentLookup> lookups = default;
+			NativeArray<UntypedComponentLookup> lookups = default;
 
 			BTState state = default;
 
@@ -526,27 +504,27 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Wait()
 		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+			
 			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.localComponents, 1);
-			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent1>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
 
-			var TestComponent1_field1 = ReadExpr(ref builder, exprs, 0, typeof(TestComponent1).GetField(nameof(TestComponent1.field1)));
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
 			execs[2].SetData(new Wait { until = TestComponent1_field1 });
 
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
+			var asset = baker.Bake();
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
+			NativeArray<UnsafeComponentReference> componentPtrs = new  NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
-			System.Span<UntypedComponentLookup> lookups = default;
+			NativeArray<UntypedComponentLookup> lookups = default;
 
 			BTState state = default;
 
@@ -596,119 +574,6 @@ namespace Mpr.Behavior.Test
 			if(type == typeof(int)) return "int";
 			if(type == typeof(float)) return "float";
 			return type.Name;
-		}
-
-		private static MathType[] mathTypes = System.Enum.GetValues(typeof(MathType)).Cast<MathType>().ToArray();
-		private static BinaryMathOp[] binaryOps = System.Enum.GetValues(typeof(BinaryMathOp)).Cast<BinaryMathOp>().ToArray();
-		private static Dictionary<MathType, System.Type> realTypes = mathTypes.ToDictionary(t => t, t => t switch
-		{
-			MathType.Int => typeof(int),
-			MathType.Int2 => typeof(int2),
-			MathType.Int3 => typeof(int3),
-			MathType.Int4 => typeof(int4),
-			MathType.Float => typeof(float),
-			MathType.Float2 => typeof(float2),
-			MathType.Float3 => typeof(float3),
-			MathType.Float4 => typeof(float4),
-			_ => throw new System.NotImplementedException(),
-		});
-		private static object Replicate(MathType type, int value) => type switch
-		{
-			MathType.Int => value,
-			MathType.Int2 => new int2(value),
-			MathType.Int3 => new int3(value),
-			MathType.Int4 => new int4(value),
-			MathType.Float => (float)value,
-			MathType.Float2 => new float2(value),
-			MathType.Float3 => new float3(value),
-			MathType.Float4 => new float4(value),
-			_ => throw new System.NotImplementedException(),
-		};
-		private static int Compute(int a, int b, BinaryMathOp op) => op switch
-		{
-			BinaryMathOp.Add => a + b,
-			BinaryMathOp.Sub => a - b,
-			BinaryMathOp.Mul => a * b,
-			BinaryMathOp.Div => a / b,
-			_ => throw new System.NotImplementedException(),
-		};
-
-		public static object[] TestCases =
-			binaryOps
-			.SelectMany(op => mathTypes.Select(type => (op, type)))
-			.Select(pair => new object[] { pair.op, pair.type, Replicate(pair.type, 6), Replicate(pair.type, 2), Replicate(pair.type, Compute(6, 2, pair.op)) })
-			.ToArray()
-			;
-
-		[TestCaseSource(nameof(TestCases))]
-		public void Test_Math(BinaryMathOp op, MathType mathType, object left, object right, object result)
-		{
-			var builder = new BlobBuilder(Allocator.Temp);
-			ref var data = ref builder.ConstructRoot<BTData>();
-			var execs = builder.Allocate(ref data.execs, 100);
-			var exprs = builder.Allocate(ref data.exprData.exprs, 100);
-			var types = builder.Allocate(ref data.exprData.localComponents, 1);
-			types[0] = new Blobs.BlobComponentType(TypeManager.GetTypeInfo<TestComponent2>().StableTypeHash, ComponentType.AccessMode.ReadWrite);
-
-			execs[1].type = BTExec.BTExecType.Root;
-			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
-
-			//BTBinaryOp op = BTBinaryOp.Add;
-			//BTMathType mathType = BTMathType.Int;
-			//int left = 1;
-			//int right = 2;
-			//int result = 3;
-
-			System.Reflection.FieldInfo field = typeof(TestComponent2)
-				.GetField(GetShortName(left.GetType()), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-
-			var const0 = ExprAuthoring.WriteConstant(left, constStorage);
-			var const1 = ExprAuthoring.WriteConstant(right, constStorage);
-
-			exprs[0].type = BTExpr.BTExprType.BinaryMath;
-			exprs[0].data.binaryMath = new BTExpr.BinaryMath
-			{
-				left = const0,
-				right = const1,
-				op = op,
-				type = mathType,
-			};
-
-			var expr = ExprNodeRef.Node(0, 0);
-
-			execs[2].SetWriteField(ref builder, 0, WriteField(expr, field));
-
-			TestComponent2 tc2 = new TestComponent2 { };
-
-			System.Span<UnsafeComponentReference> componentPtrs = stackalloc UnsafeComponentReference[1];
-			componentPtrs[0] = UnsafeComponentReference.Make(ref tc2);
-
-			ExprAuthoring.BakeConstStorage(ref builder, ref data.exprData, constStorage);
-			var asset = builder.CreateBlobAssetReference<BTData>(Allocator.Temp);
-
-			System.Span<UntypedComponentLookup> lookups = default;
-
-			BTState state = default;
-
-			try
-			{
-				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
-
-				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
-					Trace(BTExecType.Root, 1, 1, Event.Call),
-					Trace(BTExecType.WriteField, 2, 2, Event.Return),
-					Trace(BTExecType.Root, 1, 1, Event.Yield)
-				);
-
-				Assert.AreEqual(result, field.GetValue(tc2));
-			}
-			finally
-			{
-				foreach(var item in trace)
-					TestContext.WriteLine(item);
-			}
 		}
 	}
 

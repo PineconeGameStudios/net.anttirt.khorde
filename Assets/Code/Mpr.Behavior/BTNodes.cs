@@ -41,7 +41,7 @@ namespace Mpr.Behavior
 
 	public struct ConditionalBlock
 	{
-		public ExprNodeRef condition;
+		public ExpressionRef condition;
 		public BTExecNodeId nodeId;
 
 		public override string ToString()
@@ -93,7 +93,7 @@ namespace Mpr.Behavior
 
 		public struct Field
 		{
-			public ExprNodeRef input;
+			public ExpressionRef input;
 			public ushort offset;
 			public ushort size;
 
@@ -105,13 +105,13 @@ namespace Mpr.Behavior
 
 		public BlobArray<Field> fields;
 
-		public void Evaluate(in ExprEvalContext ctx)
+		public void Evaluate(in ExpressionEvalContext ctx)
 		{
 			for(int i = 0; i < fields.Length; ++i)
 			{
 				ref var field = ref fields[i];
-				var fieldSpan = ctx.componentPtrs[componentIndex].AsSpan().Slice(field.offset, field.size);
-				field.input.Evaluate(in ctx, fieldSpan);
+				var fieldSpan = ctx.componentPtrs[componentIndex].AsNativeArray(field.offset, field.size);
+				field.input.Evaluate(in ctx, ref fieldSpan);
 			}
 		}
 
@@ -123,7 +123,7 @@ namespace Mpr.Behavior
 
 	public struct Wait
 	{
-		public ExprNodeRef until;
+		public ExpressionRef until;
 
 		public string DumpString()
 		{
@@ -141,7 +141,7 @@ namespace Mpr.Behavior
 
 	public struct Optional
 	{
-		public ExprNodeRef condition;
+		public ExpressionRef condition;
 		public BTExecNodeId child;
 
 		public string DumpString()

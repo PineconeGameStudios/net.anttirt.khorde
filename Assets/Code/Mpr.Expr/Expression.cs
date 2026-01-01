@@ -6,28 +6,10 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.Entities.Content;
-using Unity.Entities.Serialization;
 using Unity.Mathematics;
 using Debug = UnityEngine.Debug;
 
 namespace Mpr.Expr;
-
-/// <summary>
-/// Store strong asset references so the baking system can find them.
-/// </summary>
-public struct BlobExpressionObjectReference : IBufferElementData
-{
-    public UnityObjectRef<UnityEngine.Object> asset;
-}
-    
-/// <summary>
-/// Store weak asset references so the baking system can find them.
-/// </summary>
-public struct BlobExpressionWeakObjectReference : IBufferElementData
-{
-    public WeakObjectReference<UnityEngine.Object> asset;
-}
 
 /// <summary>
 /// Component field layout info for reading and writing field values
@@ -56,64 +38,6 @@ public struct ExpressionComponentTypeInfo
         
     public int componentIndex;
     public BlobArray<Field> fields;
-}
-
-/// <summary>
-/// This needs to be binary-compatible with <see cref="UnityObjectRef{T}"/>
-/// </summary>
-public struct UntypedExpressionObjectId
-{
-    // TODO: add a preprocessor branch when UnityObjectRef switches to 64-bit EntityId
-    public int instanceId;
-
-    public static UntypedExpressionObjectId FromUnityObjectRef<T>(UnityObjectRef<T> r) where T : UnityEngine.Object
-    {
-        UntypedExpressionObjectId result = default;
-        unsafe
-        {
-            result = *(UntypedExpressionObjectId*)&r;
-        }
-
-        return result;
-    }
-}
-    
-/// <summary>
-/// Version of <see cref="UnityObjectRef{T}"/> that can be stored
-/// in an <see cref="ExpressionData"/> blob.
-/// Used with expression blob data. The baker stores a separate
-/// UnityObjectRef in a patch buffer that also guarantees
-/// the object is available when the subscene is loaded.
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public struct ExpressionObjectRef<T> where T : UnityEngine.Object
-{
-    public UntypedExpressionObjectId objectId;
-
-    public T Value
-    {
-        get
-        {
-            unsafe
-            {
-                fixed (void* ptr = &objectId)
-                    return ((UnityObjectRef<T>*)ptr)->Value;
-            }
-        }
-    }
-}
-    
-/// <summary>
-/// Version of <see cref="WeakObjectReference{TObject}"/> that
-/// can be stored in an <see cref="ExpressionData"/> blob.
-/// </summary>
-/// <typeparam name="TObject"></typeparam>
-public struct WeakExpressionObjectRef<TObject> where TObject : UnityEngine.Object
-{
-    public RuntimeGlobalObjectId GlobalId;
-    public WeakReferenceGenerationType GenerationType;
-
-    public WeakObjectReference<TObject> AsWeakObjectReference => new(new UntypedWeakReferenceId(GlobalId, GenerationType));
 }
 
 public unsafe ref struct ExpressionEvalContext

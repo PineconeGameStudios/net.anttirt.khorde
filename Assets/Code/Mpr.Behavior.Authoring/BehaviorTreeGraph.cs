@@ -77,13 +77,13 @@ namespace Mpr.Behavior
 
 		public void Bake(BinaryWriter writer)
 		{
-			using(var context = new BTBakingContext(this))
+			using(var context = new BTBakingContext(this, Allocator.Temp))
 			{
-				var builder = context.Bake(Allocator.Temp);
+				var builder = context.Build();
 
-				if(context.errors.Count > 0)
+				if(context.Errors.Count > 0)
 				{
-					throw new System.Exception($"Errors while baking {this}:\n\t" + string.Join("\n\t", context.errors));
+					throw new System.Exception($"Errors while baking {this}:\n\t" + string.Join("\n\t", context.Errors));
 				}
 
 				BlobAssetReference<BTData>.Write(writer, builder, 0);

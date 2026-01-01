@@ -20,8 +20,6 @@ public unsafe class GraphExpressionTests
     Entity bakedExpressionEntity;
     GraphExpressionBakingContext baker;
     ushort exprIndex;
-    DynamicBuffer<BlobExpressionObjectReference> strongRefs;
-    DynamicBuffer<BlobExpressionWeakObjectReference> weakRefs;
 
     [SetUp]
     public void SetUp()
@@ -33,12 +31,9 @@ public unsafe class GraphExpressionTests
         em = world.EntityManager;
         bakedExpressionEntity = em.CreateEntity();
 
-        strongRefs = em.AddBuffer<BlobExpressionObjectReference>(bakedExpressionEntity);
-        weakRefs = em.AddBuffer<BlobExpressionWeakObjectReference>(bakedExpressionEntity);
-
         var graph = GraphDatabase.LoadGraphForImporter<ExprSubgraph>("Assets/Prefabs/TestExpr.exprg");
         
-        baker = new GraphExpressionBakingContext(graph, strongRefs, weakRefs, Allocator.Temp);
+        baker = new GraphExpressionBakingContext(graph, Allocator.Temp);
         exprIndex = 0;
     }
 
@@ -56,11 +51,10 @@ public unsafe class GraphExpressionTests
     [Test]
     public void Test_Graph()
     {
-        var asset = baker.Bake(Allocator.Temp);
+        var asset = baker.Build().CreateBlobAssetReference<BlobExpressionData>(Allocator.Temp);
         Assert.IsFalse(asset.Value.IsRuntimeInitialized);
-        asset.Value.RuntimeInitialize(strongRefs, weakRefs);
+        asset.Value.RuntimeInitialize();
         Assert.IsTrue(asset.Value.IsRuntimeInitialized);
-        Assert.That(asset.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
         
         var lt = LocalTransform.FromPositionRotationScale(new float3(1, 2, 4), quaternion.identity, 1);
         

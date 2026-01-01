@@ -11,10 +11,10 @@ namespace Mpr.Behavior
 	public static class BehaviorTreeExecution
 	{
 
-		public static void Execute(this BlobAssetReference<BTData> asset, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, ReadOnlySpan<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
+		public static void Execute(this BlobAssetReference<BTData> asset, ref BTState state, DynamicBuffer<BTStackFrame> stack, NativeArray<UnsafeComponentReference> componentPtrs, NativeArray<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
 			=> Execute(ref asset.Value, ref state, stack, componentPtrs, lookups, now, trace);
 
-		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, ReadOnlySpan<UnsafeComponentReference> componentPtrs, ReadOnlySpan<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
+		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, NativeArray<UnsafeComponentReference> componentPtrs, NativeArray<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
 		{
 			if (data.exprData.localComponents.Length > componentPtrs.Length)
 			{
@@ -60,7 +60,7 @@ namespace Mpr.Behavior
 				stack.Add(data.Root);
 			}
 
-			var exprContext = new ExprEvalContext(ref data.exprData, componentPtrs, lookups);
+			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, lookups);
 			
 			bool rootVisited = false;
 
@@ -247,7 +247,7 @@ namespace Mpr.Behavior
 
 		public static void DumpNodes(ref BTData data, List<string> output)
 		{
-			output.Add($"const data: {data.exprData.constData.Length} bytes");
+			output.Add($"const data: {data.exprData.constants.Length} bytes");
 
 			output.Add("");
 
@@ -261,9 +261,9 @@ namespace Mpr.Behavior
 			output.Add("");
 
 			j = 0;
-			foreach(ref var expr in data.exprData.exprs.AsSpan())
+			foreach(ref var expr in data.exprData.expressions.AsSpan())
 			{
-				output.Add("Expr " + j.ToString() + ": " + expr.DumpString());
+				output.Add("Expr " + j.ToString() + ": (TODO)");// + expr.DumpString());
 			}
 		}
 	}

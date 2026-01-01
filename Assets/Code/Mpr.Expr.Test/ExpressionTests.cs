@@ -9,35 +9,28 @@ using Unity.Mathematics;
 
 namespace Mpr.Expr.Test;
 
-[TestFixture]
-public unsafe class ExpressionTests
+public unsafe class ExpressionTestBase
 {
-    World world;
-    EntityManager em;
-    ExpressionTestSystem testSystem;
-    Entity bakedExpressionEntity;
-    ExpressionBakingContext baker;
-    ushort exprIndex;
+    protected World world;
+    protected EntityManager em;
+    protected ExpressionTestSystem testSystem;
+    protected ExpressionBakingContext baker;
+    protected ushort exprIndex;
 
     [SetUp]
-    public void SetUp()
+    public virtual void SetUp()
     {
         ExpressionTypeManager.Initialize();
         
         world = new World("TestWorld");
         testSystem = world.GetOrCreateSystemManaged<ExpressionTestSystem>();
         em = world.EntityManager;
-        bakedExpressionEntity = em.CreateEntity();
-        
-        var strongRefs = em.AddBuffer<BlobExpressionObjectReference>(bakedExpressionEntity);
-        var weakRefs = em.AddBuffer<BlobExpressionWeakObjectReference>(bakedExpressionEntity);
-        
-        baker = new ExpressionBakingContext(strongRefs, weakRefs, Allocator.Temp);
+        baker ??= new ExpressionBakingContext(Allocator.Temp);
         exprIndex = 0;
     }
 
     [TearDown]
-    public void TearDown()
+    public virtual void TearDown()
     {
         em = default;
         testSystem = null;
@@ -47,7 +40,7 @@ public unsafe class ExpressionTests
         exprIndex = 0;
     }
     
-    ref TExpression Allocate<TExpression>(out ExpressionRef node)
+    protected ref TExpression Allocate<TExpression>(out ExpressionRef node)
         where TExpression : unmanaged, IExpressionBase
     {
         if (exprIndex >= baker.ExpressionCount)
@@ -57,13 +50,17 @@ public unsafe class ExpressionTests
         return ref baker.Allocate<TExpression>(baker.GetStorage(exprIndex++));
     }
 
-    ExpressionRef AddExpression<TExpression>(TExpression expression)
+    protected ExpressionRef AddExpression<TExpression>(TExpression expression)
         where TExpression : unmanaged, IExpressionBase
     {
         Allocate<TExpression>(out var node) = expression;
         return node;
     }
+}
 
+[TestFixture]
+public unsafe class ExpressionTests : ExpressionTestBase
+{
     [Test]
     public void Test_Const()
     {
@@ -137,10 +134,9 @@ public unsafe class ExpressionTests
 
         var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-        blob.Value.RuntimeInitialize(default, default);
+        blob.Value.RuntimeInitialize();
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
-        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
         
         var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
 
@@ -201,10 +197,9 @@ public unsafe class ExpressionTests
 
         var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-        blob.Value.RuntimeInitialize(default, default);
+        blob.Value.RuntimeInitialize();
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
-        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
         
         var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
 
@@ -219,23 +214,22 @@ public unsafe class ExpressionTests
     [Test]
     public void Test_Field()
     {
-        baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Lookup, ComponentType.AccessMode.ReadOnly);
+        baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);
         baker.InitializeBake(1, 0);
 
-        ref var rcf = ref Allocate<LookupComponentField>(out var n0);
-        baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Lookup);
+        ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+        baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
         
         var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-        blob.Value.RuntimeInitialize(default, default);
+        blob.Value.RuntimeInitialize();
 
         Assert.Greater(
-            blob.Value.expressions[0].storage.GetUnsafePtr<LookupComponentField>()->typeInfo.fields[0].length,
+            blob.Value.expressions[0].storage.GetUnsafePtr<ReadComponentField>()->typeInfo.fields[0].length,
             0
             );
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
-        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
 
         TestComponent1 tc1 = new TestComponent1
         {
@@ -257,7 +251,7 @@ public unsafe class ExpressionTests
     [Test]
     public void Test_Lookup()
     {
-        baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);
+        baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Lookup, ComponentType.AccessMode.ReadOnly);
         baker.InitializeBake(1, 0);
 
         var otherEntity = em.CreateEntity();
@@ -269,12 +263,12 @@ public unsafe class ExpressionTests
         });
         
         ref var rcf = ref Allocate<LookupComponentField>(out var n0);
-        baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+        baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Lookup);
         rcf.Input0 = baker.Const(otherEntity);
         
         var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-        blob.Value.RuntimeInitialize(default, default);
+        blob.Value.RuntimeInitialize();
 
         Assert.Greater(
             blob.Value.expressions[0].storage.GetUnsafePtr<LookupComponentField>()->typeInfo.fields[0].length,
@@ -282,7 +276,6 @@ public unsafe class ExpressionTests
         );
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
-        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
 
         NativeArray<UntypedComponentLookup> componentLookups = new  NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
         componentLookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestComponent1>(true);
@@ -328,10 +321,9 @@ public unsafe class ExpressionTests
 
         var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-        blob.Value.RuntimeInitialize(default, default);
+        blob.Value.RuntimeInitialize();
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
-        Assert.That(blob.Value.LoadingStatus, Is.EqualTo(ObjectLoadingStatus.Completed));
         
         var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
 
@@ -368,7 +360,7 @@ public unsafe class ExpressionTests
 }
 
 [DisableAutoCreation]
-partial class ExpressionTestSystem : SystemBase
+public partial class ExpressionTestSystem : SystemBase
 {
     protected override void OnUpdate()
     {

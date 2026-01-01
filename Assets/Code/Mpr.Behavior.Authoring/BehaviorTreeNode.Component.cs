@@ -18,7 +18,7 @@ namespace Mpr.Behavior.Authoring
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			var componentIndex = context.localComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
+			var componentIndex = context.LocalComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
 			if(componentIndex == -1)
 				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
 
@@ -61,7 +61,7 @@ namespace Mpr.Behavior.Authoring
 
 					var bakedField = new WriteField.Field
 					{
-						input = context.GetExprNodeRef(port),
+						input = context.GetExpressionRef(port),
 						offset = (ushort)offset,
 						size = (ushort)UnsafeUtility.SizeOf(field.FieldType),
 					};

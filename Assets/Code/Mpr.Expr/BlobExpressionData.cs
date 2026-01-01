@@ -32,11 +32,6 @@ public struct BlobExpressionData
     public BlobArray<ulong> expressionTypeHashes;
 
     /// <summary>
-    /// Internal pointers to patch strong asset references at runtime
-    /// </summary>
-    public BlobArray<BlobPtr<UntypedExpressionObjectId>> patchableObjectRefs;
-
-    /// <summary>
     /// Component types (especially non-[ChunkSerializable] ones) might have a
     /// different layout on the target platform so we have to initialize layouts
     /// at runtime
@@ -58,6 +53,20 @@ public struct BlobExpressionData
     /// Output definitions for graph types that can be evaluated directly.
     /// </summary>
     public BlobArray<ExpressionOutput> outputs;
+
+    /// <summary>
+    /// List of local component types used by this expression graph.
+    /// Indices in this array correspond to <see cref="ExpressionComponentTypeInfo.componentIndex"/>
+    /// for local components.
+    /// </summary>
+    public BlobArray<BlobComponentType> localComponents;
+    
+    /// <summary>
+    /// List of local component types used by this expression graph.
+    /// Indices in this array correspond to <see cref="ExpressionComponentTypeInfo.componentIndex"/>
+    /// for lookup components.
+    /// </summary>
+    public BlobArray<BlobComponentType> lookupComponents;
     
     /// <summary>
     /// Get constants buffer as a NativeArray
@@ -108,11 +117,6 @@ public struct BlobExpressionData
     /// </summary>
     public bool IsRuntimeInitialized => isRuntimeInitialized;
         
-    /// <summary>
-    /// Latest loading status for weakly referenced assets.
-    /// </summary>
-    public ObjectLoadingStatus LoadingStatus => loadingStatus;
-    
     public static FieldInfo[] GetComponentFields<T>() where T : unmanaged, IComponentData
         => GetComponentFields(typeof(T));
     
@@ -124,31 +128,13 @@ public struct BlobExpressionData
     /// <summary>
     /// Initialize expression function pointers, patch strong object refs, start loading weak object refs, etc.
     /// </summary>
-    public void RuntimeInitialize(
-        DynamicBuffer<BlobExpressionObjectReference> objectReferences,
-        DynamicBuffer<BlobExpressionWeakObjectReference> weakObjectReferences
-    )
+    public void RuntimeInitialize()
     {
         if (isRuntimeInitialized)
             return;
 
         isRuntimeInitialized = true;
 
-        for (int i = 0; i < patchableObjectRefs.Length; ++i)
-        {
-            patchableObjectRefs[i].Value = UntypedExpressionObjectId.FromUnityObjectRef(objectReferences[i].asset);
-        }
-
-        if (weakObjectReferences.IsCreated)
-        {
-            foreach (var weakObjectReference in weakObjectReferences)
-            {
-                weakObjectReference.asset.LoadAsync();
-            }
-        }
-
-        UpdateLoadingStatus(objectReferences, weakObjectReferences);
-            
         if (expressions.Length != expressionTypeHashes.Length)
         {
             throw new InvalidOperationException("corrupted data: must have the same amount of expressions and expression type hashes");
@@ -191,48 +177,6 @@ public struct BlobExpressionData
             ref var patchedFields = ref typeInfo.Value.fields;
             for(int j = 0; j < fields.Length; ++j)
                 patchedFields[j] = fields[j];
-        }
-    }
-
-    public void UpdateLoadingStatus(DynamicBuffer<BlobExpressionObjectReference> objectReferences,
-        DynamicBuffer<BlobExpressionWeakObjectReference> weakObjectReferences)
-    {
-        if (loadingStatus == ObjectLoadingStatus.Completed)
-            return;
-
-        if (weakObjectReferences.IsCreated)
-        {
-            foreach (var weakObjectReference in weakObjectReferences)
-            {
-                if (weakObjectReference.asset.LoadingStatus != ObjectLoadingStatus.Completed)
-                {
-                    loadingStatus = weakObjectReference.asset.LoadingStatus;
-                    return;
-                }
-            }
-        }
-
-        loadingStatus = ObjectLoadingStatus.Completed;
-    }
-
-    /// <summary>
-    /// Release weak asset references, etc.
-    /// </summary>
-    /// <param name="objectReferences"></param>
-    /// <param name="weakObjectReferences"></param>
-    public void RuntimeDeinitialize(DynamicBuffer<BlobExpressionObjectReference> objectReferences, DynamicBuffer<BlobExpressionWeakObjectReference> weakObjectReferences)
-    {
-        if (!isRuntimeInitialized)
-            return;
-
-        isRuntimeInitialized = false;
-
-        if (weakObjectReferences.IsCreated)
-        {
-            foreach (var weakObjectReference in weakObjectReferences)
-            {
-                weakObjectReference.asset.Release();
-            }
         }
     }
 }

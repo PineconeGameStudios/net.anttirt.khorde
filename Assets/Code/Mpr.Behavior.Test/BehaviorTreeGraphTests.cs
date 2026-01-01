@@ -1,6 +1,7 @@
 using Mpr.Expr;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEditor;
@@ -51,12 +52,13 @@ namespace Mpr.Behavior.Test
 				//foreach(var line in dump)
 				//	UnityEngine.Debug.Log(line);
 
-				System.Span<UnsafeComponentReference> comps = stackalloc UnsafeComponentReference[3];
+				NativeArray<UnsafeComponentReference> comps =
+					new NativeArray<UnsafeComponentReference>(3, Allocator.Temp);
 				comps[0] = UnsafeComponentReference.Make(ref moveTarget);
 				comps[1] = UnsafeComponentReference.Make(ref targetEntity);
 				comps[2] = UnsafeComponentReference.Make(ref localTransform);
 
-				System.Span<UntypedComponentLookup> lookups = stackalloc UntypedComponentLookup[1];
+				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1,  Allocator.Temp);
 				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
 
 				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);

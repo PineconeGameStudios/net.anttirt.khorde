@@ -84,7 +84,7 @@ namespace Mpr.Behavior.Authoring
 			{
 				var option = (SubTreeOption)GetBlock(i);
 				outputPorts[i].nodeId = context.GetTargetNodeId(option.GetOutputPort(0));
-				outputPorts[i].condition = context.GetExprNodeRef(option.GetInputPort(0));
+				outputPorts[i].condition = context.GetExpressionRef(option.GetInputPort(0));
 			}
 		}
 
@@ -129,7 +129,7 @@ namespace Mpr.Behavior.Authoring
 			exec.data.optional = new Behavior.Optional
 			{
 				child = context.GetTargetNodeId(GetOutputPort(0)),
-				condition = context.GetExprNodeRef(GetInputPort(1)),
+				condition = context.GetExpressionRef(GetInputPort(1)),
 			};
 		}
 
@@ -213,7 +213,7 @@ namespace Mpr.Behavior.Authoring
 			exec.type = BTExec.BTExecType.Wait;
 			exec.data.wait = new Behavior.Wait
 			{
-				until = context.GetExprNodeRef(GetInputPort(1)),
+				until = context.GetExpressionRef(GetInputPort(1)),
 			};
 		}
 

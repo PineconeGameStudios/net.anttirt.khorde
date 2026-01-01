@@ -4,19 +4,24 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
+using UnityEditorInternal;
 
 namespace Mpr.Expr.Authoring;
 
 public class GraphExpressionBakingContext : ExpressionBakingContext
 {
-    private Graph rootGraph;
-    private SubgraphStack subgraphStack = new();
+    protected Graph rootGraph;
+    protected SubgraphStack subgraphStack = new();
     private Dictionary<NodeKey<IExprNode>, ushort> exprNodeMap = new();
     private Dictionary<NodeKey<IVariableNode>, ushort> outputNodeMap = new();
-    private List<string> errors = new();
+    protected List<string> errors = new();
+    protected List<string> warnings = new();
     
-    public GraphExpressionBakingContext(Graph rootGraph, DynamicBuffer<BlobExpressionObjectReference> strongReferences, DynamicBuffer<BlobExpressionWeakObjectReference> weakReferences, Allocator allocator)
-        : base(strongReferences, weakReferences, allocator)
+    public List<string> Warnings => warnings;
+    public List<string> Errors => errors;
+    
+    public GraphExpressionBakingContext(Graph rootGraph, Allocator allocator)
+        : base(allocator)
     {
         this.rootGraph = rootGraph;
     }
@@ -112,12 +117,17 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 	    }
     }
 
-    public BlobAssetReference<BlobExpressionData> Bake(Allocator allocator)
+    public BlobBuilder Build()
     {
 	    RegisterExprNodes(this.rootGraph);
+	    if (!RegisterGraphNodes())
+		    return default;
         InitializeBake(exprNodeMap.Count, outputNodeMap.Count);
         BakeExprNodes(this.rootGraph);
-        return CreateAsset<BlobExpressionData>(allocator);
+        if (!BakeGraphNodes())
+	        return default;
+        FinalizeBake();
+        return builder;
     }
     
     void RegisterExprNodes(Graph graph)
@@ -157,6 +167,11 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
         }
     }
 
+    protected virtual bool RegisterGraphNodes()
+    {
+	    return true;
+    }
+
     private void RegisterExprNode(IExprNode exprNode)
     {
         var index = exprNodeMap.Count;
@@ -172,7 +187,7 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 	    if (!outputNodeMap.TryAdd(GetNodeKey(outputNode), (ushort)index))
 		    throw new InvalidOperationException("duplicate node key");
     }
-    
+
     void BakeExprNodes(Graph graph)
     {
 	    foreach(var node in graph.GetNodes())
@@ -201,6 +216,11 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 			    };
 		    }
 	    }
+    }
+
+    protected virtual bool BakeGraphNodes()
+    {
+	    return true;
     }
 
     public NodeKey<IExprNode> GetNodeKey(IExprNode exprNode) => new(subgraphStack.GetKey(), exprNode);

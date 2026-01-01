@@ -24,8 +24,6 @@ static unsafe class ExpressionTypeRegistry
         new ExpressionTypeInfo(typeof(Swizzle32x2), Swizzle32x2.EvaluateFunc, true),
         new ExpressionTypeInfo(typeof(Swizzle32x3), Swizzle32x3.EvaluateFunc, true),
         new ExpressionTypeInfo(typeof(Swizzle32x4), Swizzle32x4.EvaluateFunc, true),
-        new ExpressionTypeInfo(typeof(TestLargeExpression), TestLargeExpression.EvaluateFunc, true),
-        new ExpressionTypeInfo(typeof(TestManagedExpression), TestManagedExpression.EvaluateFunc, false),
         new ExpressionTypeInfo(typeof(ReadComponentField), ReadComponentField.EvaluateFunc, true),
         new ExpressionTypeInfo(typeof(LookupComponentField), LookupComponentField.EvaluateFunc, true),
         new ExpressionTypeInfo(typeof(BinaryBool), BinaryBool.EvaluateFunc, true),

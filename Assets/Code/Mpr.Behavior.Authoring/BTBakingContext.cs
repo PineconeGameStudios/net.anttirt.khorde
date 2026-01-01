@@ -2,22 +2,47 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mpr.Expr;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
+using Hash128 = UnityEngine.Hash128;
 
 namespace Mpr.Behavior.Authoring
 {
-	public class BTBakingContext : ExprBakingContext
+	public unsafe class BTBakingContext : GraphExpressionBakingContext
 	{
 		public Dictionary<NodeKey<IExecNode>, BTExecNodeId> execNodeMap;
+		private BTData* data;
+		private NativeArray<BTExec> builderExecs;
+		private NativeArray<Hash128> builderExecNodeIds;
+		private NativeArray<BlobArray<Hash128>> builderExecNodeSubgraphStacks;
 
-		public BTBakingContext(Graph rootGraph)
-			: base(rootGraph)
+		public BTBakingContext(Graph rootGraph, Allocator allocator)
+			: base(rootGraph, allocator)
 		{
 			execNodeMap = new();
 		}
 
-		protected override bool RegisterNodes()
+		public override void Dispose()
+		{
+			base.Dispose();
+			
+			builderExecs = default;
+			builderExecNodeIds = default;
+			builderExecNodeSubgraphStacks = default;
+		}
+
+		protected override ref BlobExpressionData ConstructRoot()
+		{
+			ref var data = ref builder.ConstructRoot<BTData>();
+			fixed (BTData* dataPtr = &data)
+				this.data = dataPtr;
+			return ref data.exprData;
+		}
+
+		protected override bool RegisterGraphNodes()
 		{
 			var roots = rootGraph.GetNodes().OfType<Root>().ToList();
 			if(roots.Count == 0)
@@ -36,7 +61,7 @@ namespace Mpr.Behavior.Authoring
 			RegisterExecNode(roots[0]); // 1: Root
 			RegisterExecNodes(rootGraph);
 
-			return base.RegisterNodes();
+			return true;
 		}
 
 		public NodeKey<IExecNode> GetNodeKey(IExecNode execNode) => new(subgraphStack.GetKey(), execNode);
@@ -54,44 +79,41 @@ namespace Mpr.Behavior.Authoring
 			return execNodeMap[GetNodeKey(execNode)];
 		}
 
-		protected override void Bake()
+		public override void InitializeBake(int expressionCount, int outputCount)
 		{
-			ref var data = ref builder.ConstructRoot<BTData>();
-			BakeExprData(ref data.exprData);
-			var execs = builder.Allocate(ref data.execs, execNodeMap.Count);
-			var execNodeIds = builder.Allocate(ref data.execNodeIds, execNodeMap.Count);
-			var execNodeSubgraphStacks = builder.Allocate(ref data.execNodeSubgraphStacks, execNodeMap.Count);
-
-			BakeExecNodes(rootGraph, ref builder, ref execs, ref execNodeIds, ref execNodeSubgraphStacks);
-
-			BakeConstData(ref data.exprData);
+			base.InitializeBake(expressionCount, outputCount);
+			
+			builderExecs = AsArray(builder.Allocate(ref data->execs, execNodeMap.Count));
+			builderExecNodeIds = AsArray(builder.Allocate(ref data->execNodeIds, execNodeMap.Count));
+			builderExecNodeSubgraphStacks = AsArray(builder.Allocate(ref data->execNodeSubgraphStacks, execNodeMap.Count));
 		}
 
-		void BakeExecNodes(Graph graph,
-			ref BlobBuilder builder,
-			ref BlobBuilderArray<BTExec> execs,
-			ref BlobBuilderArray<UnityEngine.Hash128> execNodeIds,
-			ref BlobBuilderArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStack
-			)
+		protected override bool BakeGraphNodes()
+		{
+			BakeExecNodes(rootGraph);
+			return true;
+		}
+
+		void BakeExecNodes(Graph graph)
 		{
 			foreach(var node in graph.GetNodes())
 			{
 				if(node is ISubgraphNode subgraphNode)
 				{
 					PushSubgraph(subgraphNode);
-					BakeExecNodes(subgraphNode.GetSubgraph(), ref builder, ref execs, ref execNodeIds, ref execNodeSubgraphStack);
+					BakeExecNodes(subgraphNode.GetSubgraph());
 					PopSubgraph();
 				}
 				else if(node is IExecNode execNode)
 				{
 					var index = GetNodeId(execNode).index;
-					execNodeIds[index] = execNode.Guid;
-					var subgraphStackIds = builder.Allocate(ref execNodeSubgraphStack[index], subgraphStack.Depth);
+					builderExecNodeIds[index] = execNode.Guid;
+					var subgraphStackIds = builder.Allocate(ref builderExecNodeSubgraphStacks.UnsafeElementAt(index), subgraphStack.Depth);
 					int i = 0;
 					foreach(var hash in subgraphStack.Hashes)
 						subgraphStackIds[i++] = hash;
 
-					execNode.Bake(ref builder, ref execs[index], this);
+					execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index), this);
 				}
 			}
 		}
@@ -110,22 +132,6 @@ namespace Mpr.Behavior.Authoring
 				{
 					if(node is not Root) // Root is registered separately
 						RegisterExecNode(execNode);
-				}
-
-				if(node is IComponentAccess componentAccess)
-				{
-					var managedType = componentAccess.ComponentType.GetManagedType();
-					localComponentsDict.TryGetValue(managedType, out var access);
-					access |= componentAccess.ComponentType.AccessModeType;
-					localComponentsDict[managedType] = access;
-				}
-
-				if(node is IComponentLookup componentLookup)
-				{
-					var managedType = componentLookup.ComponentType.GetManagedType();
-					lookupComponentsDict.TryGetValue(managedType, out var access);
-					access |= componentLookup.ComponentType.AccessModeType;
-					lookupComponentsDict[managedType] = access;
 				}
 			}
 		}
