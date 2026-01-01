@@ -1,8 +1,42 @@
-﻿using Unity.Burst;
+﻿using System.Runtime.CompilerServices;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Mpr.Expr;
+
+public enum BinaryMathOp
+{
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+public interface IBTBinaryOp
+{
+    BinaryMathOp Op { get; }
+}
+
+public struct BTBinaryOp_Add : IBTBinaryOp
+{
+    public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Add; }
+}
+
+public struct BTBinaryOp_Sub : IBTBinaryOp
+{
+    public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Sub; }
+}
+
+public struct BTBinaryOp_Mul : IBTBinaryOp
+{
+    public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Mul; }
+}
+
+public struct BTBinaryOp_Div : IBTBinaryOp
+{
+    public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Div; }
+}
 
 public partial struct BinaryFloat : IExpression<float, float>
 {

@@ -24,40 +24,6 @@ namespace Mpr.Expr.Authoring
 
 		public override string Title => $"{default(OpT).Op} ({typeof(T).Name})";
 
-		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
-		{
-			expr.type = BTExpr.BTExprType.BinaryMath;
-
-			MathType type;
-
-			if(typeof(T) == typeof(int))
-				type = MathType.Int;
-			else if(typeof(T) == typeof(int2))
-				type = MathType.Int2;
-			else if(typeof(T) == typeof(int3))
-				type = MathType.Int3;
-			else if(typeof(T) == typeof(int4))
-				type = MathType.Int4;
-			else if(typeof(T) == typeof(float))
-				type = MathType.Float;
-			else if(typeof(T) == typeof(float2))
-				type = MathType.Float2;
-			else if(typeof(T) == typeof(float3))
-				type = MathType.Float3;
-			else if(typeof(T) == typeof(float4))
-				type = MathType.Float4;
-			else
-				throw new NotImplementedException();
-
-			expr.data.binaryMath = new BTExpr.BinaryMath
-			{
-				left = context.GetExprNodeRef(GetInputPort(0)),
-				right = context.GetExprNodeRef(GetInputPort(1)),
-				op = default(OpT).Op,
-				type = type,
-			};
-		}
-
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			var left = context.GetExpressionRef(GetInputPort(0));

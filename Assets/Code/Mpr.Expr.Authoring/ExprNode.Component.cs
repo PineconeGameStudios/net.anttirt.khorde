@@ -14,31 +14,6 @@ namespace Mpr.Expr.Authoring
 
 		public override string Title => $"Read {typeof(T).Name}";
 
-		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
-		{
-			var index = context.localComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
-			if(index == -1)
-				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
-
-			expr.type = BTExpr.BTExprType.ReadField;
-			expr.data.readField = new BTExpr.ReadField
-			{
-				componentIndex = (byte)index,
-			};
-
-			var fields = BlobExpressionData.GetComponentFields<T>();
-
-			var bakedFields = builder.Allocate(ref expr.data.readField.fields, fields.Length);
-			for(int i = 0; i < fields.Length; i++)
-			{
-				int offset = UnsafeUtility.GetFieldOffset(fields[i]);
-				if(offset > ushort.MaxValue)
-					throw new Exception("component too large; field offset over 65k");
-
-				bakedFields[i] = fields[i];
-			}
-		}
-
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			ref var data = ref context.Allocate<ReadComponentField>(storage);
@@ -65,32 +40,6 @@ namespace Mpr.Expr.Authoring
 		public bool IsReadOnly => true;
 
 		public override string Title => $"Lookup {typeof(T).Name}";
-
-		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
-		{
-			var index = context.lookupComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
-			if(index == -1)
-				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
-
-			expr.type = BTExpr.BTExprType.LookupField;
-			expr.data.lookupField = new BTExpr.LookupField
-			{
-				entity = context.GetExprNodeRef(GetInputPort(0)),
-				componentIndex = (byte)index,
-			};
-
-			var fields = BlobExpressionData.GetComponentFields<T>();
-
-			var bakedFields = builder.Allocate(ref expr.data.lookupField.fields, fields.Length);
-			for(int i = 0; i < fields.Length; i++)
-			{
-				int offset = UnsafeUtility.GetFieldOffset(fields[i]);
-				if(offset > ushort.MaxValue)
-					throw new Exception("component too large; field offset over 65k");
-
-				bakedFields[i] = fields[i];
-			}
-		}
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

@@ -10,22 +10,6 @@ namespace Mpr.Expr.Authoring
 	{
 		public override string Title => "And (bool)";
 
-		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
-		{
-			expr.type = BTExpr.BTExprType.Bool;
-			expr.data.@bool = new BTExpr.Bool
-			{
-				index = BTExpr.Bool.BoolType.And,
-				data = new BTExpr.Bool.Data
-				{
-					and = new BTExpr.Bool.And(
-						context.GetExprNodeRef(GetInputPort(0)),
-						context.GetExprNodeRef(GetInputPort(1))
-						),
-				}
-			};
-		}
-
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			ref var data = ref context.Allocate<BinaryBool>(storage);
@@ -48,22 +32,6 @@ namespace Mpr.Expr.Authoring
 	{
 		public override string Title => "Or (bool)";
 
-		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
-		{
-			expr.type = BTExpr.BTExprType.Bool;
-			expr.data.@bool = new BTExpr.Bool
-			{
-				index = BTExpr.Bool.BoolType.Or,
-				data = new BTExpr.Bool.Data
-				{
-					or = new BTExpr.Bool.Or(
-						context.GetExprNodeRef(GetInputPort(0)),
-						context.GetExprNodeRef(GetInputPort(1))
-						),
-				}
-			};
-		}
-		
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			ref var data = ref context.Allocate<BinaryBool>(storage);
@@ -85,21 +53,6 @@ namespace Mpr.Expr.Authoring
 	internal class NotBool : ExprBase
 	{
 		public override string Title => "Not (bool)";
-
-		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
-		{
-			expr.type = BTExpr.BTExprType.Bool;
-			expr.data.@bool = new BTExpr.Bool
-			{
-				index = BTExpr.Bool.BoolType.Not,
-				data = new BTExpr.Bool.Data
-				{
-					not = new BTExpr.Bool.Not(
-						context.GetExprNodeRef(GetInputPort(0))
-						),
-				}
-			};
-		}
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

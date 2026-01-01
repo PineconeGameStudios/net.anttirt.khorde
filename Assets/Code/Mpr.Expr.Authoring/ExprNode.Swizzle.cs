@@ -73,11 +73,6 @@ namespace Mpr.Expr.Authoring
 	[Serializable]
 	internal abstract class SwizzleBase<T> : SwizzleBase where T : unmanaged
 	{
-		public override void Bake(ref BlobBuilder builder, ref BTExpr expr, ExprBakingContext context)
-		{
-			UnityEngine.Debug.LogWarning($"{GetType().Name}.Bake() not implemented");
-		}
-
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			var (baseType, inputCount) = Decompose(typeof(T));

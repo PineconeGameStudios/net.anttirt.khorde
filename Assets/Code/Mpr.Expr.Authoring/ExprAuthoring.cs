@@ -32,13 +32,6 @@ namespace Mpr.Expr.Authoring
 
 		public const ushort MaxConstantSize = 0x7fff;
 
-		public static ExprNodeRef WriteConstant(object value, NativeList<byte> constStorage,
-			Dictionary<object, (ushort offset, ushort length)> cache = null)
-		{
-			ushort offset = WriteConstant(value, out var length, constStorage, cache);
-			return ExprNodeRef.Const(offset, (byte)length);
-		}
-		
 		public static ExpressionRef WriteConstant2(object value, NativeList<byte> constStorage,
 			Dictionary<object, (ushort offset, ushort length)> cache = null)
 		{
@@ -78,21 +71,6 @@ namespace Mpr.Expr.Authoring
 		{
 			T value = (T)objectValue;
 			return WriteConstant(value, out length, constStorage, cache);
-		}
-
-		/// <summary>
-		/// Write a value to constant storage, returning an <see cref="ExprNodeRef"/> pointing to the constant.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="value"></param>
-		/// <param name="constStorage"></param>
-		/// <param name="cache">Value cache for constant value deduplication</param>
-		/// <returns></returns>
-		/// <exception cref="System.Exception"></exception>
-		public static ExprNodeRef WriteConstant<T>(T value, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
-		{
-			var offset = WriteConstant<T>(value, out var length, constStorage, cache);
-			return ExprNodeRef.Const(offset, (byte)length);
 		}
 
 		/// <summary>
@@ -163,18 +141,6 @@ namespace Mpr.Expr.Authoring
 			return (ushort)offset;
 		}
 
-		public static void BakeConstStorage(ref BlobBuilder builder, ref ExprData exprData, NativeList<byte> constStorage)
-		{
-			unsafe
-			{
-				UnsafeUtility.MemCpy(
-					builder.Allocate(ref exprData.constData, constStorage.Length).GetUnsafePtr(),
-					constStorage.GetUnsafePtr(),
-					constStorage.Length
-					);
-			}
-		}
-		
 		public static void BakeConstStorage(ref BlobBuilder builder, ref BlobExpressionData exprData, NativeList<byte> constStorage)
 		{
 			unsafe
