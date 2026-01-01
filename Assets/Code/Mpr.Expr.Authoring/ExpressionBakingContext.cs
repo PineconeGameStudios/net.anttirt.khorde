@@ -10,7 +10,14 @@ namespace Mpr.Expr.Authoring;
 
 public enum ExpressionComponentLocation
 {
+    /// <summary>
+    /// Components local to the expression's owning entity
+    /// </summary>
     Local,
+    
+    /// <summary>
+    /// Components on other entities accessed via ComponentLookup
+    /// </summary>
     Lookup,
 }
 
@@ -25,6 +32,7 @@ public unsafe class ExpressionBakingContext
     private BlobExpressionData* data;
     private NativeList<byte> constStorage;
     private Dictionary<Type, ulong> hashCache;
+    private Dictionary<object, (ushort offset, ushort length)> constCache = new();
     
     // components accessed directly on the current entity (behavior trees / queries)
     private Dictionary<Type, ComponentType.AccessMode> localComponentsDict;
@@ -36,6 +44,7 @@ public unsafe class ExpressionBakingContext
     protected NativeArray<ExpressionData> builderExpressions;
     protected NativeArray<ulong> builderTypeHashes;
     protected NativeArray<UnityEngine.Hash128> builderSourceGraphNodeIds;
+    protected NativeArray<ExpressionOutput> builderOutputs;
     private Allocator allocator;
 
     public ExpressionBakingContext(
@@ -85,11 +94,14 @@ public unsafe class ExpressionBakingContext
     /// Call this before baking individual expressions
     /// </summary>
     /// <param name="expressionCount"></param>
-    public void InitializeBake(int expressionCount)
+    /// <param name="outputCount"></param>
+    public void InitializeBake(int expressionCount, int outputCount)
     {
         builderExpressions = AsArray(builder.Allocate(ref data->expressions, expressionCount));
         builderTypeHashes = AsArray(builder.Allocate(ref data->expressionTypeHashes, expressionCount));
         builderSourceGraphNodeIds = AsArray(builder.Allocate(ref data->sourceGraphNodeIds, expressionCount));
+        
+        builderOutputs = AsArray(builder.Allocate(ref data->outputs, outputCount));
 
         localComponents = localComponentsDict.Select(kv => new ComponentType(kv.Key, kv.Value)).ToList();
         lookupComponents = lookupComponentsDict.Select(kv => new ComponentType(kv.Key, kv.Value)).ToList();
@@ -261,5 +273,8 @@ public unsafe class ExpressionBakingContext
     }
 
     public ExpressionRef Const<TConstant>(TConstant constant) where TConstant : unmanaged
-        => ExprAuthoring.WriteConstant2(constant, constStorage);
+        => ExprAuthoring.WriteConstant2(constant, constStorage, constCache);
+    
+    public ExpressionRef Const(object constant)
+        => ExprAuthoring.WriteConstant2(constant, constStorage, constCache);
 }

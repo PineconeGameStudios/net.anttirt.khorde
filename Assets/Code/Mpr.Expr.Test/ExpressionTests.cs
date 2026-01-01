@@ -67,7 +67,7 @@ public unsafe class ExpressionTests
     [Test]
     public void Test_Const()
     {
-        baker.InitializeBake(0);
+        baker.InitializeBake(0, 0);
         
         var True = baker.Const(true);
         var False = baker.Const(false);
@@ -89,7 +89,7 @@ public unsafe class ExpressionTests
     [Test]
     public void Test_Boolean()
     {
-        baker.InitializeBake(6);
+        baker.InitializeBake(6, 0);
         
         var True = baker.Const(true);
         var False = baker.Const(false);
@@ -155,7 +155,7 @@ public unsafe class ExpressionTests
     [Test]
     public void Test_Math()
     {
-        baker.InitializeBake(6);
+        baker.InitializeBake(6, 0);
         
         var n0 = AddExpression(new BinaryFloat2
         {
@@ -220,7 +220,7 @@ public unsafe class ExpressionTests
     public void Test_Field()
     {
         baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Lookup, ComponentType.AccessMode.ReadOnly);
-        baker.InitializeBake(1);
+        baker.InitializeBake(1, 0);
 
         ref var rcf = ref Allocate<LookupComponentField>(out var n0);
         baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Lookup);
@@ -258,7 +258,7 @@ public unsafe class ExpressionTests
     public void Test_Lookup()
     {
         baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);
-        baker.InitializeBake(1);
+        baker.InitializeBake(1, 0);
 
         var otherEntity = em.CreateEntity();
         em.AddComponentData(otherEntity, new TestComponent1
@@ -301,7 +301,7 @@ public unsafe class ExpressionTests
     [Test]
     public void Test_Swizzle()
     {
-        baker.InitializeBake(18);
+        baker.InitializeBake(18, 0);
         
         var n11 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("x") });
         var n12 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("xx") });

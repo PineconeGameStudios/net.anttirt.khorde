@@ -8,6 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.Serialization;
+using Unity.Mathematics;
 using Debug = UnityEngine.Debug;
 
 namespace Mpr.Expr;
@@ -456,5 +457,91 @@ public struct ExpressionData
                 funcPtr.Invoke(ptr, in ctx, outputIndex, ref untypedResult);
             }
         }
+    }
+}
+
+public enum ExpressionValueType : ushort
+{
+    /// <summary>
+    /// Type not mapped.
+    /// </summary>
+    Unknown    =  0,
+    Entity     =  1,
+    Bool       =  2,
+    Bool2      =  3,
+    Bool3      =  4,
+    Bool4      =  5,
+    Int        =  6,
+    Int2       =  7,
+    Int3       =  8,
+    Int4       =  9,
+    Float      = 10,
+    Float2     = 11,
+    Float3     = 12,
+    Float4     = 13,
+    Quaternion = 14,
+}
+
+public static class ExpressionValueTypeExt
+{
+    public static bool IsType<T>(this ExpressionValueType valueType) where T : unmanaged
+    {
+        switch (valueType)
+        {
+            case ExpressionValueType.Unknown: return false;
+            case ExpressionValueType.Entity: return typeof(T) == typeof(Entity);
+            case ExpressionValueType.Bool: return typeof(T) == typeof(bool);
+            case ExpressionValueType.Bool2: return typeof(T) == typeof(bool2);
+            case ExpressionValueType.Bool3: return typeof(T) == typeof(bool3);
+            case ExpressionValueType.Bool4: return typeof(T) == typeof(bool4);
+            case ExpressionValueType.Int: return typeof(T) == typeof(int);
+            case ExpressionValueType.Int2: return typeof(T) == typeof(int2);
+            case ExpressionValueType.Int3: return typeof(T) == typeof(int3);
+            case ExpressionValueType.Int4: return typeof(T) == typeof(int4);
+            case ExpressionValueType.Float: return typeof(T) == typeof(float);
+            case ExpressionValueType.Float2: return typeof(T) == typeof(float2);
+            case ExpressionValueType.Float3: return typeof(T) == typeof(float3);
+            case ExpressionValueType.Float4: return typeof(T) == typeof(float4);
+            case ExpressionValueType.Quaternion: return typeof(T) == typeof(quaternion);
+            default: throw new ArgumentOutOfRangeException(nameof(valueType));
+        }
+    }
+
+    public static ExpressionValueType GetExpressionValueType(this Type type)
+    {
+        if (type == typeof(Entity)) return ExpressionValueType.Entity;
+        if (type == typeof(bool)) return ExpressionValueType.Bool;
+        if (type == typeof(bool2)) return ExpressionValueType.Bool2;
+        if (type == typeof(bool3)) return ExpressionValueType.Bool3;
+        if (type == typeof(bool4)) return ExpressionValueType.Bool4;
+        if (type == typeof(int)) return ExpressionValueType.Int;
+        if (type == typeof(int2)) return ExpressionValueType.Int2;
+        if (type == typeof(int3)) return ExpressionValueType.Int3;
+        if (type == typeof(int4)) return ExpressionValueType.Int4;
+        if (type == typeof(float)) return ExpressionValueType.Float;
+        if (type == typeof(float2)) return ExpressionValueType.Float2;
+        if (type == typeof(float3)) return ExpressionValueType.Float3;
+        if (type == typeof(float4)) return ExpressionValueType.Float4;
+        if (type == typeof(quaternion)) return ExpressionValueType.Quaternion;
+        return ExpressionValueType.Unknown;
+    }
+}
+
+public struct ExpressionOutput
+{
+    public ExpressionRef expression;
+    public ExpressionValueType valueType;
+    public ushort valueSize;
+
+    public bool TryEvaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
+    {
+        if (valueType.IsType<T>())
+        {
+            result = expression.Evaluate<T>(in ctx);
+            return true;
+        }
+
+        result = default;
+        return false;
     }
 }

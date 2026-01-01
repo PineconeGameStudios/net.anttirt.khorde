@@ -53,6 +53,11 @@ public struct BlobExpressionData
     /// Source graph node ids corresponding to nodes in the <see cref="expressions"/> array. Used for debugging.
     /// </summary>
     public BlobArray<UnityEngine.Hash128> sourceGraphNodeIds;
+
+    /// <summary>
+    /// Output definitions for graph types that can be evaluated directly.
+    /// </summary>
+    public BlobArray<ExpressionOutput> outputs;
     
     /// <summary>
     /// Get constants buffer as a NativeArray
