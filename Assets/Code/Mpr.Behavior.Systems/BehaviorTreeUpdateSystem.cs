@@ -137,6 +137,9 @@ namespace Mpr.Behavior
 					}
 
 					ref var btData = ref value.tree.Value;
+					
+					btData.exprData.RuntimeInitialize();
+					
 					ref var componentTypes = ref btData.exprData.localComponents;
 
 					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(entity);

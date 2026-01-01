@@ -155,13 +155,17 @@ public struct BlobExpressionData
     static readonly SharedStatic<ComponentReflectionCache> Cache
         = SharedStatic<ComponentReflectionCache>.GetOrCreate<ComponentReflectionCache>();
 
-    static readonly ComponentReflectionCache.ComputeFieldsDelegate ComputeFieldsDelegate
-        = ComponentReflectionCache.GetFieldsImpl;
+    private static ComponentReflectionCache.ComputeFieldsDelegate s_computeFields;
 
-    static BlobExpressionData()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    #if UNITY_EDITOR
+    [UnityEditor.InitializeOnLoadMethod]
+    #endif
+    static void Initialize()
     {
+        s_computeFields = ComponentReflectionCache.GetFieldsImpl;
         Cache.Data.Cache = new(0, Allocator.Domain);
-        Cache.Data.ComputeFields = new(Marshal.GetFunctionPointerForDelegate(ComputeFieldsDelegate));
+        Cache.Data.ComputeFields = new(Marshal.GetFunctionPointerForDelegate(s_computeFields));
     }
 
     static UnsafeList<ExpressionComponentTypeInfo.Field> GetFields(ulong typeHash)
