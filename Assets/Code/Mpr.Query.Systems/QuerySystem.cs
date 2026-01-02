@@ -27,23 +27,28 @@ namespace Mpr.Query
 				if(!query.query.IsCreated)
 					return;
 
+				var queries = entityQueries.AsNativeArray();
+
 				var components = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+				
+				var qctx = new QueryExecutionContext(ref query.query.Value, components, queries, queryResultLookup);
+				
 				switch (query.query.Value.itemType)
 				{
-					case ExpressionValueType.Entity: QueryExecution.Execute<Entity>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Bool: QueryExecution.Execute<bool>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Bool2: QueryExecution.Execute<bool2>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Bool3: QueryExecution.Execute<bool3>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Bool4: QueryExecution.Execute<bool4>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Int: QueryExecution.Execute<int>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Int2: QueryExecution.Execute<int2>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Int3: QueryExecution.Execute<int3>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Int4: QueryExecution.Execute<int4>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Float: QueryExecution.Execute<float>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Float2: QueryExecution.Execute<float2>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Float3: QueryExecution.Execute<float3>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Float4: QueryExecution.Execute<float4>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
-					case ExpressionValueType.Quaternion: QueryExecution.Execute<quaternion>(ref query.query.Value, components, entityQueries, queryResultLookup, results); break;
+					case ExpressionValueType.Entity: qctx.Execute<Entity>(results); break;
+					case ExpressionValueType.Bool: qctx.Execute<bool>(results); break;
+					case ExpressionValueType.Bool2: qctx.Execute<bool2>(results); break;
+					case ExpressionValueType.Bool3: qctx.Execute<bool3>(results); break;
+					case ExpressionValueType.Bool4: qctx.Execute<bool4>(results); break;
+					case ExpressionValueType.Int: qctx.Execute<int>(results); break;
+					case ExpressionValueType.Int2: qctx.Execute<int2>(results); break;
+					case ExpressionValueType.Int3: qctx.Execute<int3>(results); break;
+					case ExpressionValueType.Int4: qctx.Execute<int4>(results); break;
+					case ExpressionValueType.Float: qctx.Execute<float>(results); break;
+					case ExpressionValueType.Float2: qctx.Execute<float2>(results); break;
+					case ExpressionValueType.Float3: qctx.Execute<float3>(results); break;
+					case ExpressionValueType.Float4: qctx.Execute<float4>(results); break;
+					case ExpressionValueType.Quaternion: qctx.Execute<quaternion>(results); break;
 				}
 			}
 		}
