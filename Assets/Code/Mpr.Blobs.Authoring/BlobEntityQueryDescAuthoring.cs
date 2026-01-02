@@ -29,8 +29,9 @@ public static class BlobEntityQueryDescAuthoring
         {
             var managedType = type.Type;
             
-            typeDictionary[managedType.Name] = type.StableTypeHash;
-
+            if(managedType == null)
+                continue;
+            
             if (!ambiguousTypes.ContainsKey(managedType.Name))
             {
                 if (!typeDictionary.TryAdd(managedType.Name, type.StableTypeHash))
@@ -57,7 +58,7 @@ public static class BlobEntityQueryDescAuthoring
     /// <param name="entityQueryDesc"></param>
     /// <param name="description"></param>
     /// <param name="blobBuilder"></param>
-    public static void Bake(ref this BlobEntityQueryDesc entityQueryDesc, string description, ref BlobBuilder blobBuilder)
+    public static void Bake(ref this BlobEntityQueryDesc entityQueryDesc, string description, ref BlobBuilder blobBuilder, Action<string> logError)
     {
         var all = new NativeList<ulong>(Allocator.Temp);
         var any = new NativeList<ulong>(Allocator.Temp);
@@ -73,12 +74,13 @@ public static class BlobEntityQueryDescAuthoring
         {
             foreach (var ctype in src.Split(',', StringSplitOptions.RemoveEmptyEntries))
             {
-                if (typeLookup.TryGetValue(ctype, out ulong stableTypeHash))
+                var trimmed = ctype.Trim();
+                if (typeLookup.TryGetValue(trimmed, out ulong stableTypeHash))
                     dst.Add(stableTypeHash);
-                else if (ambLookup.TryGetValue(ctype, out var ambs))
-                    Debug.LogError($"type name '{ctype}' is ambiguous between [{(string.Join(", ", ambs.Select(t => t.FullName)))}]");
+                else if (ambLookup.TryGetValue(trimmed, out var ambs))
+                    logError($"type name '{trimmed}' is ambiguous between [{(string.Join(", ", ambs.Select(t => t.FullName)))}]");
                 else
-                    Debug.LogError($"type name '{ctype}' is unknown");
+                    logError($"type name '{trimmed}' is unknown");
             }
         }
         
@@ -88,7 +90,7 @@ public static class BlobEntityQueryDescAuthoring
 
             if (parts.Length != 2)
             {
-                Debug.LogError($"could not parse '{line}'");
+                logError($"could not parse '{line}'");
                 continue;
             }
             
@@ -105,7 +107,7 @@ public static class BlobEntityQueryDescAuthoring
                     if (Enum.TryParse<EntityQueryOptions>(value, true, out var options))
                         entityQueryDesc.pendingOptions |= options;
                     else
-                        Debug.LogError($"could not parse '{value}' as EntityQueryOptions");
+                        logError($"could not parse '{value}' as EntityQueryOptions");
                     break;
             }
         }

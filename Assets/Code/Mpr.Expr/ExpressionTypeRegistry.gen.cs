@@ -28,5 +28,10 @@ static unsafe class ExpressionTypeRegistry
         new ExpressionTypeInfo(typeof(LookupComponentField), LookupComponentField.EvaluateFunc, true),
         new ExpressionTypeInfo(typeof(BinaryBool), BinaryBool.EvaluateFunc, true),
         new ExpressionTypeInfo(typeof(UnaryBool), UnaryBool.EvaluateFunc, true),
+        new ExpressionTypeInfo(typeof(LengthFloat2), LengthFloat2.EvaluateFunc, true),
+        new ExpressionTypeInfo(typeof(LengthFloat3), LengthFloat3.EvaluateFunc, true),
+        new ExpressionTypeInfo(typeof(LengthFloat4), LengthFloat4.EvaluateFunc, true),
+        new ExpressionTypeInfo(typeof(BinaryCompareFloat), BinaryCompareFloat.EvaluateFunc, true),
+        new ExpressionTypeInfo(typeof(BinaryCompareInt), BinaryCompareInt.EvaluateFunc, true),
     };
 }

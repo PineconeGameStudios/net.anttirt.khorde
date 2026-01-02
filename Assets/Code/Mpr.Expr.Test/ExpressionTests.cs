@@ -47,7 +47,7 @@ public unsafe class ExpressionTestBase
             throw new InvalidOperationException("too many expressions; increase initial allocation size");
 
         node = ExpressionRef.Node(exprIndex, 0);
-        return ref baker.Allocate<TExpression>(baker.GetStorage(exprIndex++));
+        return ref baker.CreateExpression<TExpression>(baker.GetStorage(exprIndex++));
     }
 
     protected ExpressionRef AddExpression<TExpression>(TExpression expression)

@@ -31,56 +31,56 @@ namespace Mpr.Expr.Authoring
 			
 			if(typeof(T) == typeof(float))
 			{
-				ref var data = ref context.Allocate<BinaryFloat>(storage);
+				ref var data = ref context.CreateExpression<BinaryFloat>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
 			}
 			else if (typeof(T) == typeof(float2))
 			{
-				ref var data = ref context.Allocate<BinaryFloat2>(storage);
+				ref var data = ref context.CreateExpression<BinaryFloat2>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
 			}
 			else if (typeof(T) == typeof(float3))
 			{
-				ref var data = ref context.Allocate<BinaryFloat3>(storage);
+				ref var data = ref context.CreateExpression<BinaryFloat3>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
 			}
 			else if (typeof(T) == typeof(float4))
 			{
-				ref var data = ref context.Allocate<BinaryFloat4>(storage);
+				ref var data = ref context.CreateExpression<BinaryFloat4>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
 			}
 			else if(typeof(T) == typeof(int))
 			{
-				ref var data = ref context.Allocate<BinaryInt>(storage);
+				ref var data = ref context.CreateExpression<BinaryInt>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
 			}
 			else if (typeof(T) == typeof(int2))
 			{
-				ref var data = ref context.Allocate<BinaryInt2>(storage);
+				ref var data = ref context.CreateExpression<BinaryInt2>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
 			}
 			else if (typeof(T) == typeof(int3))
 			{
-				ref var data = ref context.Allocate<BinaryInt3>(storage);
+				ref var data = ref context.CreateExpression<BinaryInt3>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
 			}
 			else if (typeof(T) == typeof(int4))
 			{
-				ref var data = ref context.Allocate<BinaryInt4>(storage);
+				ref var data = ref context.CreateExpression<BinaryInt4>(storage);
 				data.@operator = default(OpT).Op;
 				data.Input0 = left;
 				data.Input1 = right;
@@ -140,4 +140,35 @@ namespace Mpr.Expr.Authoring
 	[Serializable] [NodeCategory("Math/Sub")] internal class SubFloat4 : OpBase<float4, BTBinaryOp_Sub> { }
 	[Serializable] [NodeCategory("Math/Mul")] internal class MulFloat4 : OpBase<float4, BTBinaryOp_Mul> { }
 	[Serializable] [NodeCategory("Math/Div")] internal class DivFloat4 : OpBase<float4, BTBinaryOp_Div> { }
+
+	internal abstract class LengthBase<TExpr, TArg> : ExprBase where TExpr : unmanaged, IExpression<TArg> where TArg : unmanaged
+	{
+		public override string Title => "Length";
+
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
+		{
+			TExpr expr = default;
+			expr.Input0 = context.GetExpressionRef(GetInputPort(0));
+			context.CreateExpression(storage, expr);
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<TArg>("input")
+				.WithDisplayName("")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			context.AddOutputPort<float>("output")
+				.WithDisplayName("")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Multi)
+				.Build();
+		}
+	}
+	
+	[Serializable] [NodeCategory("Math/Length")] internal class LengthFloat2Node : LengthBase<LengthFloat2, float2> { }
+	[Serializable] [NodeCategory("Math/Length")] internal class LengthFloat3Node : LengthBase<LengthFloat3, float3> { }
+	[Serializable] [NodeCategory("Math/Length")] internal class LengthFloat4Node : LengthBase<LengthFloat4, float4> { }
 }

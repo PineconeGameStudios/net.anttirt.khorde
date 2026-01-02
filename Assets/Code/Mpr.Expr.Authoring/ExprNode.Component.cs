@@ -16,7 +16,7 @@ namespace Mpr.Expr.Authoring
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			ref var data = ref context.Allocate<ReadComponentField>(storage);
+			ref var data = ref context.CreateExpression<ReadComponentField>(storage);
 			context.Bake<T>(ref data.typeInfo, ExpressionComponentLocation.Local);
 		}
 
@@ -43,7 +43,7 @@ namespace Mpr.Expr.Authoring
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			ref var data = ref context.Allocate<LookupComponentField>(storage);
+			ref var data = ref context.CreateExpression<LookupComponentField>(storage);
 			context.Bake<T>(ref data.typeInfo, ExpressionComponentLocation.Lookup);
 			data.Input0 = context.GetExpressionRef(GetInputPort(0));
 		}

@@ -91,3 +91,36 @@ public partial struct BinaryInt4
         EvalHelper.Evaluate<BinaryInt4, int4, int4>(self, in ctx, outputIndex, ref untypedResult);
     }
 }
+
+[BurstCompile]
+public partial struct LengthFloat2
+{
+    [BurstCompile]
+    public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeArray<byte> untypedResult)
+    {
+        EvalHelper.Evaluate<LengthFloat2, float2>(self, in ctx, outputIndex, ref untypedResult);
+    }
+}
+
+[BurstCompile]
+public partial struct LengthFloat3
+{
+    [BurstCompile]
+    public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeArray<byte> untypedResult)
+    {
+        EvalHelper.Evaluate<LengthFloat3, float3>(self, in ctx, outputIndex, ref untypedResult);
+    }
+}
+
+[BurstCompile]
+public partial struct LengthFloat4
+{
+    [BurstCompile]
+    public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+        ref NativeArray<byte> untypedResult)
+    {
+        EvalHelper.Evaluate<LengthFloat4, float4>(self, in ctx, outputIndex, ref untypedResult);
+    }
+}

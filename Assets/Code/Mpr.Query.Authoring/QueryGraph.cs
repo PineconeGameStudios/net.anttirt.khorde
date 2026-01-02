@@ -1,10 +1,13 @@
 
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
+using Unity.Mathematics;
 using UnityEditor;
+using UnityEngine;
 
 namespace Mpr.Query.Authoring
 {
@@ -57,22 +60,78 @@ namespace Mpr.Query.Authoring
 		/// which is the default reporting mechanism for a Graph Toolkit tool. </remarks>
 		void CheckGraphErrors(GraphLogger infos)
 		{
-			// List<StartNode> startNodes = GetNodes().OfType<StartNode>().ToList();
+			List<IQuery> queryNodes = new();
+			
+			foreach (var node in GetNodes())
+			{
+				if (node is IQuery query)
+				{
+					queryNodes.Add(query);
+				}
+			}
 
-			// switch (startNodes.Count)
-			// {
-			//     case 0:
-			//         infos.LogError("Add a StartNode in your Visual Novel graph.", this);
-			//         break;
-			//     case >= 1:
-			//         {
-			//             foreach (var startNode in startNodes.Skip(1))
-			//             {
-			//                 infos.LogWarning($"VisualNovelDirector only supports one StartNode per graph. Only the first created one will be used.", startNode);
-			//             }
-			//             break;
-			//         }
-			// }
+			if (queryNodes.Count == 0)
+			{
+				infos.LogError("The graph needs to have a Query node");
+				return;
+			}
+
+			if (queryNodes.Count > 1)
+			{
+				foreach(var node in queryNodes)
+					infos.LogError("More than one Query node found", node);
+				
+				return;
+			}
+
+			Type itemType = queryNodes[0].ItemType;
+
+			foreach (var node in GetNodes())
+			{
+				if (node is IQueryCurrentItemNode currentItemNode)
+				{
+					if (itemType != currentItemNode.ItemType)
+					{
+						infos.LogError(
+							$"Wrong item type. Expected '{itemType.FullName}'",
+							node);
+					}
+				}
+
+				if (node is QueryGraphContextBase context)
+				{
+					foreach (var blockNode in context.blockNodes)
+					{
+						if (blockNode is IQueryGraphNode iqn)
+						{
+							try
+							{
+								iqn.Validate(infos);
+							}
+							catch (Exception e)
+							{
+								infos.LogError(e.Message, blockNode);
+								Debug.LogException(e);
+							}
+						}
+					}
+				}
+
+				{
+					if (node is IQueryGraphNode iqn)
+					{
+						try
+						{
+							iqn.Validate(infos);
+						}
+						catch (Exception e)
+						{
+							infos.LogError(e.Message, node);
+							Debug.LogException(e);
+						}
+					}
+				}
+			}
 		}
 
 		public void Bake(BinaryWriter writer)

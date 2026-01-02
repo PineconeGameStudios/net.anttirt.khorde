@@ -200,3 +200,35 @@ public partial struct BinaryInt4 : IExpression<int4, int4>
     }
 }
 
+public partial struct LengthFloat2 : IExpression<float2>
+{
+    public ExpressionRef Input0 { get; set; }
+    
+    [BurstCompile]
+    public void Evaluate(in ExpressionEvalContext ctx, in float2 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+    {
+        untypedResult.AsSingle<float>() = math.length(input0);
+    }
+}
+
+public partial struct LengthFloat3 : IExpression<float3>
+{
+    public ExpressionRef Input0 { get; set; }
+    
+    [BurstCompile]
+    public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+    {
+        untypedResult.AsSingle<float>() = math.length(input0);
+    }
+}
+
+public partial struct LengthFloat4 : IExpression<float4>
+{
+    public ExpressionRef Input0 { get; set; }
+    
+    [BurstCompile]
+    public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+    {
+        untypedResult.AsSingle<float>() = math.length(input0);
+    }
+}

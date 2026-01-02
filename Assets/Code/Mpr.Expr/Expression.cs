@@ -267,14 +267,14 @@ public interface IExpression : IExpressionBase
 
 public interface IExpression<T0> : IExpressionBase where T0 : unmanaged
 {
-    ExpressionRef Input0 { get; }
+    ExpressionRef Input0 { get; set; }
     void Evaluate(in ExpressionEvalContext ctx, in T0 input0, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 public interface IExpression<T0, T1> : IExpressionBase where T0 : unmanaged where T1 : unmanaged
 {
-    ExpressionRef Input0 { get; }
-    ExpressionRef Input1 { get; }
+    ExpressionRef Input0 { get; set; }
+    ExpressionRef Input1 { get; set; }
     void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
@@ -282,7 +282,7 @@ public interface IExpression<T0, T1> : IExpressionBase where T0 : unmanaged wher
 public unsafe delegate void ExpressionEvalDelegate(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
     ref NativeArray<byte> untypedResult);
 
-static unsafe class EvalHelper
+public static unsafe class EvalHelper
 {
     [BurstDiscard]
     static void TestBurst(ref bool isBurst) => isBurst = false;

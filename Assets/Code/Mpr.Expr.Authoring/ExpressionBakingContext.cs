@@ -216,16 +216,26 @@ public unsafe class ExpressionBakingContext : IDisposable
     }
 
     /// <summary>
-    /// Allocate storage for an expression and record its type.
+    /// Allocate storage for an expression and record its type, returning a reference to the data that can be further initialized.
     /// </summary>
     /// <param name="storageRef">Reference to the storage slot for the expression being currently baked</param>
     /// <typeparam name="TExpression"></typeparam>
     /// <returns></returns>
-    public ref TExpression Allocate<TExpression>(ExpressionStorageRef storageRef)
+    public ref TExpression CreateExpression<TExpression>(ExpressionStorageRef storageRef)
         where TExpression : unmanaged, IExpressionBase
     {
         return ref ExprAuthoring.Allocate<TExpression>(ref builder, storageRef, hashCache);
     }
+    
+    /// <summary>
+    /// Allocate storage for an expression, initialize it and record its type.
+    /// </summary>
+    /// <param name="storageRef">Reference to the storage slot for the expression being currently baked</param>
+    /// <param name="expression">The value to initialize the expression to</param>
+    /// <typeparam name="TExpression"></typeparam>
+    public void CreateExpression<TExpression>(ExpressionStorageRef storageRef, TExpression expression)
+        where TExpression : unmanaged, IExpressionBase
+        => CreateExpression<TExpression>(storageRef) = expression;
 
     public void Bake<TComponentData>(ref ExpressionComponentTypeInfo typeInfo, ExpressionComponentLocation location) where TComponentData : unmanaged, IComponentData
     {

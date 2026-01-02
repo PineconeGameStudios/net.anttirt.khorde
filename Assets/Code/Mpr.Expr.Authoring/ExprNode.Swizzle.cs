@@ -96,7 +96,7 @@ namespace Mpr.Expr.Authoring
 			{
 				case 1:
 				{
-					ref var swizzle = ref context.Allocate<Swizzle32x1>(storage);
+					ref var swizzle = ref context.CreateExpression<Swizzle32x1>(storage);
 					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
 					swizzle.@operator = op;
 					break;
@@ -104,7 +104,7 @@ namespace Mpr.Expr.Authoring
 				
 				case 2:
 				{
-					ref var swizzle = ref context.Allocate<Swizzle32x2>(storage);
+					ref var swizzle = ref context.CreateExpression<Swizzle32x2>(storage);
 					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
 					swizzle.@operator = op;
 					break;
@@ -112,7 +112,7 @@ namespace Mpr.Expr.Authoring
 				
 				case 3:
 				{
-					ref var swizzle = ref context.Allocate<Swizzle32x3>(storage);
+					ref var swizzle = ref context.CreateExpression<Swizzle32x3>(storage);
 					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
 					swizzle.@operator = op;
 					break;
@@ -120,7 +120,7 @@ namespace Mpr.Expr.Authoring
 				
 				case 4:
 				{
-					ref var swizzle = ref context.Allocate<Swizzle32x4>(storage);
+					ref var swizzle = ref context.CreateExpression<Swizzle32x4>(storage);
 					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
 					swizzle.@operator = op;
 					break;

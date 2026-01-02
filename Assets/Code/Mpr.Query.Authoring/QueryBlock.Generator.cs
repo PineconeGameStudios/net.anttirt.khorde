@@ -1,5 +1,8 @@
 
 using System;
+using Mpr.Blobs;
+using Mpr.Blobs.Authoring;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
@@ -95,18 +98,32 @@ namespace Mpr.Query.Authoring
 	[UseWithContext(typeof(IPass<Entity>))]
 	class GeneratorEntityQuery : QueryGraphBlockBase, IGenerator
 	{
+		private INodeOption query;
+		
 		public void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext)
 		{
-			throw new NotImplementedException();
+			generator.generatorType = QSGenerator.GeneratorType.Entities;
+			generator.data.entities = new QSGenerator.Entities
+			{
+				queryIndex = 0,
+			};
 		}
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
-			context.AddOption<string>("query")
+			query = context.AddOption<string>("query")
 				.WithDefaultValue("all: LocalTransform; none: Disabled")
 				.WithDisplayName("Query")
 				.WithTooltip("Entity query description to be parsed")
 				.Build();
+		}
+
+		public override void Validate(GraphLogger logger)
+		{
+			var bb = new BlobBuilder(Allocator.Temp);
+			ref var desc = ref bb.ConstructRoot<BlobEntityQueryDesc>();
+			query.TryGetValue(out string pattern);
+			BlobEntityQueryDescAuthoring.Bake(ref desc, pattern, ref bb, err => logger.LogError(err, this));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
