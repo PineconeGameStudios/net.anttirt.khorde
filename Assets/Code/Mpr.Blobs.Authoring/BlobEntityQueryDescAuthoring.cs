@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -125,5 +126,48 @@ public static class BlobEntityQueryDescAuthoring
         CopyComponentTypes(ref entityQueryDesc.disabled, disabled, ref blobBuilder);
         CopyComponentTypes(ref entityQueryDesc.absent, absent, ref blobBuilder);
         CopyComponentTypes(ref entityQueryDesc.present, present, ref blobBuilder);
+    }
+
+    /// <summary>
+    /// Read the entity query description back into a text format
+    /// </summary>
+    /// <param name="entityQueryDesc"></param>
+    /// <returns></returns>
+    public static string Unbake(ref this BlobEntityQueryDesc entityQueryDesc)
+    {
+        var sb = new StringBuilder();
+        
+        WriteComponents(sb, ref entityQueryDesc.all, "all");
+        WriteComponents(sb, ref entityQueryDesc.any, "any");
+        WriteComponents(sb, ref entityQueryDesc.none, "none");
+        WriteComponents(sb, ref entityQueryDesc.disabled, "disabled");
+        WriteComponents(sb, ref entityQueryDesc.absent, "absent");
+        WriteComponents(sb, ref entityQueryDesc.present, "present");
+        
+        if (entityQueryDesc.pendingOptions != default)
+        {
+            sb.Append("options: ");
+            sb.Append(entityQueryDesc.pendingOptions.ToString());
+        }
+        
+        return sb.ToString();
+
+        static void WriteComponents(StringBuilder stringBuilder, ref BlobArray<BlobComponentType> blobArray, string name)
+        {
+            if (blobArray.Length > 0)
+            {
+                stringBuilder.Append(name);
+                stringBuilder.Append(": ");
+                var sep = "";
+                foreach (ref var ctype in blobArray.AsSpan())
+                {
+                    stringBuilder.Append(sep);
+                    stringBuilder.Append(ctype.ResolveComponentType().GetManagedType().FullName);
+                    sep = ", ";
+                }
+
+                stringBuilder.Append("\n");
+            }
+        }
     }
 }

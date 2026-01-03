@@ -8,6 +8,8 @@ namespace Mpr.Blobs;
 /// </summary>
 public struct BlobEntityQueryDesc
 {
+    public const int SchemaVersion = 1;
+    
     public BlobArray<BlobComponentType> all;
     public BlobArray<BlobComponentType> any;
     public BlobArray<BlobComponentType> none;
@@ -24,6 +26,30 @@ public struct BlobEntityQueryDesc
             dst.Add(src[i].ResolveComponentType());
         
         return dst;
+    }
+
+    public BlobAssetReference<BlobEntityQueryDesc> Instantiate(Allocator allocator)
+    {
+        var bb = new BlobBuilder(Allocator.Temp);
+        ref var result = ref bb.ConstructRoot<BlobEntityQueryDesc>();
+        
+        Copy(bb, ref result.all, ref all);
+        Copy(bb, ref result.any, ref any);
+        Copy(bb, ref result.none, ref none);
+        Copy(bb, ref result.disabled, ref disabled);
+        Copy(bb, ref result.absent, ref absent);
+        Copy(bb, ref result.present, ref present);
+
+        result.pendingOptions = pendingOptions;
+        
+        return bb.CreateBlobAssetReference<BlobEntityQueryDesc>(allocator);
+        
+        static void Copy(BlobBuilder bb, ref BlobArray<BlobComponentType> dst, ref BlobArray<BlobComponentType> src)
+        {
+            var dstR = bb.Allocate(ref dst, src.Length);
+            for (int i = 0; i < src.Length; i++)
+                dstR[i] = src[i];
+        }
     }
 
     public EntityQuery CreateQuery(EntityManager entityManager)

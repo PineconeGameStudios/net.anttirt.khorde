@@ -67,9 +67,9 @@ namespace Mpr.Query
 
 			foreach(ref var component in components.AsArray().AsSpan())
 			{
-				if(component.runtimeEntityQuery == default && component.entityQueryDesc.IsCreated)
+				if(component.runtimeEntityQuery == default && component.IsCreated)
 				{
-					component.runtimeEntityQuery = component.entityQueryDesc.Value.CreateQuery(state.EntityManager);
+					component.runtimeEntityQuery = component.GetDesc().CreateQuery(state.EntityManager);
 				}
 
 				if(component.runtimeEntityQuery != default)

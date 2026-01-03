@@ -56,7 +56,7 @@ public unsafe ref struct QueryExecutionContext
         QSTempState tempState = default;
 
         NativeArray<UnsafeComponentReference> supComponentPtrs = new NativeArray<UnsafeComponentReference>(componentPtrs.Length + 1, Allocator.Temp);
-        componentPtrs.CopyTo(supComponentPtrs);
+        componentPtrs.CopyTo(supComponentPtrs.GetSubArray(0, componentPtrs.Length));
         supComponentPtrs[^1] = UnsafeComponentReference.Make(ref tempState);
 
         int passIndex = 0;

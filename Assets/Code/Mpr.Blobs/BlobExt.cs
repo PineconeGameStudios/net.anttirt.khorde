@@ -1,5 +1,7 @@
 using System;
 using Unity.Entities;
+using Unity.Entities.Serialization;
+using UnityEngine;
 
 namespace Mpr.Blobs
 {
@@ -14,6 +16,22 @@ namespace Mpr.Blobs
 
 				return new Span<T>(array.GetUnsafePtr(), array.Length);
 			}
+		}
+
+		public static TextAsset CreateTextAsset<T>(ref this BlobBuilder builder) where T : unmanaged
+		{
+			var writer = new MemoryBinaryWriter();
+			
+			BlobAssetReference<BlobEntityQueryDesc>.Write(writer, builder, 0);
+	
+			ReadOnlySpan<byte> bytes;
+
+			unsafe
+			{
+				bytes = new ReadOnlySpan<byte>(writer.Data, writer.Length);
+			}
+	
+			return new TextAsset(bytes);
 		}
 	}
 }

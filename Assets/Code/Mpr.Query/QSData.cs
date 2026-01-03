@@ -74,6 +74,11 @@ namespace Mpr.Query
         /// An expression to evaluate to determine the desired result item count
         /// </summary>
         public ExpressionRef resultCount;
+
+        /// <summary>
+        /// Entity queries for the Entities generator
+        /// </summary>
+        public BlobArray<BlobEntityQueryDesc> entityQueries;
     }
 
     public struct QSEntityQueryReference : IBufferElementData
@@ -98,6 +103,10 @@ namespace Mpr.Query
     public struct QSEntityQuery : ISharedComponentData, IEquatable<QSEntityQuery>
     {
         public BlobAssetReference<BlobEntityQueryDesc> entityQueryDesc;
+
+        public ref BlobEntityQueryDesc GetDesc() => ref entityQueryDesc.Value;
+        
+        public bool IsCreated => entityQueryDesc.IsCreated;
 
         /// <summary>
         /// Runtime-resolved query for this description
@@ -173,7 +182,7 @@ namespace Mpr.Query
     /// Temporary stack-bound state for query execution
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct QSTempState
+    public struct QSTempState : IComponentData
     {
         QSCurrentItemStorage currentItemStorage;
 

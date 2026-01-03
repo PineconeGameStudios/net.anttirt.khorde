@@ -1,3 +1,4 @@
+using Mpr.Blobs;
 using Mpr.Query.Authoring;
 using Unity.Entities;
 using UnityEngine;

@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Mpr.Query.Authoring
 {
@@ -98,6 +99,8 @@ namespace Mpr.Query.Authoring
 	[UseWithContext(typeof(IPass<Entity>))]
 	class GeneratorEntityQuery : QueryGraphBlockBase, IGenerator
 	{
+		public EntityQueryAsset queryAsset;
+		
 		private INodeOption query;
 		
 		public void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext)
