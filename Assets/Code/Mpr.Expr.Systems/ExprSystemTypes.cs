@@ -189,4 +189,75 @@ namespace Mpr.Expr
             componentTypeHashes.Add(holder.stableTypeHash);
         }
     }
+
+    public static class ExpressionSystemUtility
+    {
+        /// <summary>
+        /// Set up component dependencies, lookups for an expression graph system based on expression data
+        /// </summary>
+        /// <param name="state">The expression system that schedules IJobChunk jobs over instances using this expression graph</param>
+        /// <param name="exprData">The baked expression graph</param>
+        /// <param name="typeHandles"></param>
+        /// <param name="lookups"></param>
+        /// <param name="instanceComponents">List of components required for IJobChunk iteration over instances using this expression graph</param>
+        /// <returns></returns>
+        public static bool TryAddQueriesAndComponents(
+            ref SystemState state,
+            ref BlobExpressionData exprData,
+            DynamicBuffer<ExprSystemTypeHandleHolder> typeHandles,
+            DynamicBuffer<ExprSystemComponentLookupHolder> lookups,
+            NativeList<ComponentType> instanceComponents)
+        {
+            exprData.RuntimeInitialize();
+
+            ref var componentTypes = ref exprData.localComponents;
+
+            for (int i = 0; i < componentTypes.Length; ++i)
+            {
+                var type = componentTypes[i].ResolveComponentType();
+                if (type.TypeIndex == TypeIndex.Null)
+                {
+                    UnityEngine.Debug.LogError(
+                        $"type with stableTypeHash={componentTypes[i].stableTypeHash} required by BehaviorTree not found");
+                    return false;
+                }
+
+                instanceComponents.Add(type);
+                state.AddDependency(type);
+
+                typeHandles.Add(new ExprSystemTypeHandleHolder
+                {
+                    typeHandle = state.EntityManager.GetDynamicComponentTypeHandle(type),
+                    typeIndex = type.TypeIndex,
+                    stableTypeHash = componentTypes[i].stableTypeHash,
+                    typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
+                });
+            }
+
+            ref var lookupTypes = ref exprData.lookupComponents;
+
+            for (int i = 0; i < lookupTypes.Length; ++i)
+            {
+                var type = lookupTypes[i].ResolveComponentType();
+                if (type.TypeIndex == TypeIndex.Null)
+                {
+                    UnityEngine.Debug.LogError(
+                        $"type with stableTypeHash={componentTypes[i].stableTypeHash} required by BehaviorTree not found");
+                    return false;
+                }
+
+                state.AddDependency(type);
+
+                lookups.Add(new ExprSystemComponentLookupHolder
+                {
+                    componentLookup = state.GetUntypedComponentLookup(type.TypeIndex, true),
+                    stableTypeHash = lookupTypes[i].stableTypeHash,
+                    typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
+                });
+            }
+
+            return true;
+        }
+					
+    }
 }

@@ -120,10 +120,11 @@ namespace Mpr.Behavior
 					types[1] = ComponentType.ReadWrite<ExprSystemTypeHandleHolder>();
 					types[2] = ComponentType.ReadWrite<ExprSystemComponentLookupHolder>();
 
-					var entity = state.EntityManager.CreateEntity(types);
+					var queryHolder = state.EntityManager.CreateEntity(types);
 
 					var builder = new EntityQueryBuilder(Allocator.Temp);
-					var components = new NativeList<ComponentType>(Allocator.Temp)
+					
+					var instanceComponents = new NativeList<ComponentType>(Allocator.Temp)
 					{
 						ComponentType.ReadOnly<BehaviorTree>(),
 						ComponentType.ReadWrite<BTState>(),
@@ -132,69 +133,28 @@ namespace Mpr.Behavior
 
 					if(clientWorld)
 					{
-						components.Add(ComponentType.ReadOnly<PredictedGhost>());
-						components.Add(ComponentType.ReadOnly<Simulate>());
+						instanceComponents.Add(ComponentType.ReadOnly<PredictedGhost>());
+						instanceComponents.Add(ComponentType.ReadOnly<Simulate>());
 					}
 
 					ref var btData = ref value.tree.Value;
+
+					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(queryHolder);
+					var lookups = state.EntityManager.GetBuffer<ExprSystemComponentLookupHolder>(queryHolder);
 					
-					btData.exprData.RuntimeInitialize();
+					if (!ExpressionSystemUtility.TryAddQueriesAndComponents(ref state, ref btData.exprData, typeHandles, lookups, instanceComponents))
+					{
+						state.Enabled = false;
+						return false;
+					}
 					
-					ref var componentTypes = ref btData.exprData.localComponents;
-
-					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(entity);
-					for(int i = 0; i < componentTypes.Length; ++i)
-					{
-						var type = componentTypes[i].ResolveComponentType();
-						if(type.TypeIndex == TypeIndex.Null)
-						{
-							UnityEngine.Debug.LogError($"type with stableTypeHash={componentTypes[i].stableTypeHash} required by BehaviorTree not found");
-							state.Enabled = false;
-							return false;
-						}
-
-						components.Add(type);
-						state.AddDependency(type);
-
-						typeHandles.Add(new ExprSystemTypeHandleHolder
-						{
-							typeHandle = state.EntityManager.GetDynamicComponentTypeHandle(type),
-							typeIndex = type.TypeIndex,
-							stableTypeHash = componentTypes[i].stableTypeHash,
-							typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
-						});
-					}
-
-					ref var lookupTypes = ref btData.exprData.lookupComponents;
-
-					var lookups = state.EntityManager.GetBuffer<ExprSystemComponentLookupHolder>(entity);
-					for(int i = 0; i < lookupTypes.Length; ++i)
-					{
-						var type = lookupTypes[i].ResolveComponentType();
-						if(type.TypeIndex == TypeIndex.Null)
-						{
-							UnityEngine.Debug.LogError($"type with stableTypeHash={componentTypes[i].stableTypeHash} required by BehaviorTree not found");
-							state.Enabled = false;
-							return false;
-						}
-						
-						state.AddDependency(type);
-
-						lookups.Add(new ExprSystemComponentLookupHolder
-						{
-							componentLookup = state.GetUntypedComponentLookup(type.TypeIndex, true),
-							stableTypeHash = lookupTypes[i].stableTypeHash,
-							typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
-						});
-					}
-
-					builder.WithAll(ref components);
+					builder.WithAll(ref instanceComponents);
 
 					var btQuery = builder.Build(state.EntityManager);
 					btQuery.AddSharedComponentFilter(value);
 
-					state.EntityManager.AddSharedComponent(entity, value);
-					state.EntityManager.SetComponentData(entity, new BTQueryHolder
+					state.EntityManager.AddSharedComponent(queryHolder, value);
+					state.EntityManager.SetComponentData(queryHolder, new BTQueryHolder
 					{
 						query = btQuery,
 					});

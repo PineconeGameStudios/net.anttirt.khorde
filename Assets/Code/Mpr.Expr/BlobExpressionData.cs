@@ -215,7 +215,7 @@ public struct BlobExpressionData
                 FixedString512Bytes typeName = default;
                 expressionDebugTypeNames[i].CopyTo(ref typeName);
                 msg.Append(typeName);
-                msg.Append(")");
+                msg.Append(')');
                 Debug.LogError(msg);
                 throw new InvalidOperationException("couldn't find generated type info");
             }
