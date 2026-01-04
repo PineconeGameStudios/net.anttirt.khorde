@@ -4,9 +4,9 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace Mpr.Expr.Authoring;
+namespace Mpr.Expr;
 
-public static class ExprBakingNativeArrayExt
+public static class NativeArrayExt
 {
     [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

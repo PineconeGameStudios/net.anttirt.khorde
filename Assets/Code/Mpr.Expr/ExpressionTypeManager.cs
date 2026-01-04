@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -56,17 +57,15 @@ public static class ExpressionTypeManager
         s_initialized = true;
         
         var thisAssembly = typeof(ExpressionTypeManager).Assembly;
+        var thisAssemblyName = thisAssembly.GetName();
         var hashCache = new Dictionary<Type, ulong>();
 
         var functions = EvaluateFunctions.Ref.Data =
             new NativeHashMap<ulong, FunctionPointer<ExpressionEvalDelegate>>(0, Allocator.Domain);
-        
-        var directStorageSize = UnsafeUtility.SizeOf<ExpressionStorage>();
 
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
-            var refs = asm.GetReferencedAssemblies();
-            if (asm != thisAssembly && Array.IndexOf(refs, thisAssembly) == -1)
+            if (!IsOrReferences(asm, thisAssembly))
                 continue;
 
             var registryType = asm.GetType("Mpr.Expr.Generated.ExpressionTypeRegistry");
@@ -80,7 +79,10 @@ public static class ExpressionTypeManager
                 as ExpressionTypeInfo[];
 
             if (types == null)
+            {
+                Debug.LogError($"skipping assembly {asm}: type registry found but couldn't get ExpressionTypes array");
                 continue;
+            }
 
             foreach (var typeInfo in types)
             {
@@ -88,8 +90,11 @@ public static class ExpressionTypeManager
 
                 var evaluateDelegate = typeInfo.Evaluate;
                 if (evaluateDelegate == null)
+                {
+                    Debug.LogError($"Evaluate delegate for {typeInfo.Type.FullName} was not registered");
                     continue;
-
+                }
+                
                 FunctionPointer<ExpressionEvalDelegate> function;
 
                 if (typeInfo.IsBurstCompiled)
@@ -105,6 +110,20 @@ public static class ExpressionTypeManager
                 functions[stableTypeHash] = function;
             }
         }
+    }
+    
+    static bool IsOrReferences(Assembly assembly, Assembly referent)
+    {
+        if(assembly == referent)
+            return true;
+
+        var referentName = referent.GetName();
+            
+        foreach(var reference in assembly.GetReferencedAssemblies())
+            if (AssemblyName.ReferenceMatchesDefinition(reference, referentName))
+                return true;
+
+        return false;
     }
 
     public static ulong GetTypeHash<TExpression>(Dictionary<Type, ulong> hashCache) where TExpression : unmanaged

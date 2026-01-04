@@ -163,12 +163,27 @@ namespace Mpr.Blobs
         /// </summary>
         /// <param name="asset"></param>
         /// <param name="version"></param>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TBlob">The contained blob type</typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public static unsafe ref T GetValue<T>(ref this WeakObjectReference<BlobAsset<T>> asset, int version)
-            where T : unmanaged
+        public static ref TBlob GetValue<TBlob>(ref this WeakObjectReference<BlobAsset<TBlob>> asset, int version)
+            where TBlob : unmanaged
         {
+            return ref GetValue<TBlob, BlobAsset<TBlob>>(ref asset, version);
+        }
+
+        /// <summary>
+        /// Get a direct reference to data from the asset. The reference will be invalidated when the asset is unloaded / destroyed.
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <param name="version"></param>
+        /// <typeparam name="TBlob">The contained blob type</typeparam>
+        /// <typeparam name="TAsset">The actual asset type</typeparam>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static unsafe ref TBlob GetValue<TBlob, TAsset>(ref this WeakObjectReference<BlobAsset<TBlob>> asset, int version)
+                where TBlob : unmanaged
+            {
             NativeArray<byte> rawBytes = default;
 
             fixed (UntypedWeakReferenceId* assetId = &asset.Id)
@@ -181,7 +196,7 @@ namespace Mpr.Blobs
                 }
             }
 
-            if (BlobAssetReferenceExt.TryReadInplace<T>(
+            if (BlobAssetReferenceExt.TryReadInplace<TBlob>(
                     (byte*)rawBytes.GetUnsafePtr() + BlobAssetBase.PaddingSize,
                     rawBytes.Length - BlobAssetBase.PaddingSize,
                     version, out var loaded, out _))
@@ -197,10 +212,25 @@ namespace Mpr.Blobs
         /// </summary>
         /// <param name="asset"></param>
         /// <param name="version"></param>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TBlob">The contained blob type</typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public static unsafe ref T GetValue<T>(this UnityObjectRef<BlobAsset<T>> asset, int version) where T : unmanaged
+        public static ref TBlob GetValue<TBlob>(this UnityObjectRef<BlobAsset<TBlob>> asset, int version) where TBlob : unmanaged
+        {
+            return ref GetValue<TBlob, BlobAsset<TBlob>>(asset, version);
+        }
+
+        /// <summary>
+        /// Get a direct reference to data from the asset. The reference will be invalidated when the asset is unloaded / destroyed.
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <param name="version"></param>
+        /// <typeparam name="TBlob">The contained blob type</typeparam>
+        /// <typeparam name="TAsset">The actual asset type</typeparam>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static unsafe ref TBlob GetValue<TBlob, TAsset>(this UnityObjectRef<TAsset> asset, int version)
+            where TBlob : unmanaged where TAsset : BlobAsset<TBlob>
         {
             NativeArray<byte> rawBytes = default;
 
@@ -210,7 +240,7 @@ namespace Mpr.Blobs
                 throw new InvalidOperationException("asset not loaded");
             }
 
-            if (BlobAssetReferenceExt.TryReadInplace<T>(
+            if (BlobAssetReferenceExt.TryReadInplace<TBlob>(
                     (byte*)rawBytes.GetUnsafePtr() + BlobAssetBase.PaddingSize,
                     rawBytes.Length - BlobAssetBase.PaddingSize,
                     version, out var loaded, out _))
@@ -218,7 +248,7 @@ namespace Mpr.Blobs
                 return ref loaded.Value;
             }
 
-            throw new InvalidOperationException("invalid blob data");
+            throw new InvalidOperationException("invalid blob data");           
         }
     }
 }

@@ -22,19 +22,15 @@ namespace Mpr.Query
 			[NativeDisableContainerSafetyRestriction]
 			public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 
-			public void Execute(Query query,
-				DynamicBuffer<QSEntityQueryReference> entityQueries,
-				DynamicBuffer<QSResultItemStorage> results
-				)
+			public void Execute(Query query, DynamicBuffer<QSResultItemStorage> results)
 			{
 				if(!query.query.IsCreated)
 					return;
 
-				var queries = entityQueries.AsNativeArray();
-
-				var components = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+				var components = new NativeArray<UnsafeComponentReference>(0, Allocator.Temp);
+				var lookups = new NativeArray<UntypedComponentLookup>(0, Allocator.Temp);
 				
-				var qctx = new QueryExecutionContext(ref query.query.Value, components, queryResultLookup);
+				var qctx = new QueryExecutionContext(ref query.query.Value, components, lookups, queryResultLookup);
 				
 				switch (query.query.Value.itemType)
 				{

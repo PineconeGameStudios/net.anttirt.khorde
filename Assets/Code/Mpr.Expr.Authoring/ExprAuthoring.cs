@@ -14,13 +14,16 @@ namespace Mpr.Expr.Authoring
 	{
 		public ExpressionStorage* storage;
 		public ulong* typeHash;
+		public BlobString* debugTypeName;
 
-		public ExpressionStorageRef(ref ExpressionStorage storage, ref ulong typeHash)
+		public ExpressionStorageRef(ref ExpressionStorage storage, ref ulong typeHash, ref BlobString debugTypeName)
 		{
 			fixed(ExpressionStorage* ptr = &storage)
 				this.storage = ptr;
 			fixed(ulong* ptr = &typeHash)
 				this.typeHash = ptr;
+			fixed(BlobString* ptr = &debugTypeName)
+				this.debugTypeName = ptr;
 		}
 	}
 	
@@ -164,6 +167,7 @@ namespace Mpr.Expr.Authoring
 		public static unsafe ref TExpression Allocate<TExpression>(ref BlobBuilder builder, ExpressionStorageRef storage, Dictionary<Type, ulong> hashCache) where TExpression : unmanaged, IExpressionBase
 		{
 			*storage.typeHash = ExpressionTypeManager.GetTypeHash<TExpression>(hashCache);
+			builder.AllocateString(ref *storage.debugTypeName, typeof(TExpression).FullName);
 			if (UnsafeUtility.SizeOf<TExpression>() <= UnsafeUtility.SizeOf<ExpressionStorage>())
 			{
 				return ref *(TExpression*)storage.storage;

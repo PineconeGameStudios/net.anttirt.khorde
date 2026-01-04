@@ -4,8 +4,11 @@ using Mpr.Burst;
 using Mpr.Expr;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Collections.NotBurstCompatible;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Query;
 
@@ -14,6 +17,7 @@ public unsafe ref struct QueryExecutionContext
     readonly QSData* pData;
     public ref QSData data => ref *pData;
     public NativeArray<UnsafeComponentReference> componentPtrs;
+    public NativeArray<UntypedComponentLookup> lookups;
     public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 
     /// <summary>
@@ -26,12 +30,14 @@ public unsafe ref struct QueryExecutionContext
     public QueryExecutionContext(
         ref QSData data,
         NativeArray<UnsafeComponentReference> componentPtrs,
+        NativeArray<UntypedComponentLookup> lookups,
         NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup
     )
     {
         fixed(QSData* pData = &data)
             this.pData =  pData;
         this.componentPtrs = componentPtrs;
+        this.lookups = lookups;
         this.queryResultLookup = queryResultLookup;
     }
     
@@ -44,9 +50,7 @@ public unsafe ref struct QueryExecutionContext
     /// <returns></returns>
     public void Execute<TItem>(DynamicBuffer<QSResultItemStorage> results, Allocator tempAlloc = Allocator.Temp) where TItem : unmanaged
     {
-        var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, default);
-
-        int resultCount = data.resultCount.Evaluate<int>(in exprContext);
+        data.exprData.CheckExpressionComponents(componentPtrs, lookups);
 
         var items = new NativeList<TItem>(tempAlloc);
         QSTempState tempState = default;
@@ -55,6 +59,9 @@ public unsafe ref struct QueryExecutionContext
         componentPtrs.CopyTo(supComponentPtrs.GetSubArray(0, componentPtrs.Length));
         supComponentPtrs[^1] = UnsafeComponentReference.Make(ref tempState);
 
+        var exprContext = new ExpressionEvalContext(ref data.exprData, supComponentPtrs, lookups);
+        int resultCount = data.resultCount.Evaluate<int>(in exprContext);
+        
         int passIndex = 0;
         int passItemStartIndex = 0;
 
@@ -69,14 +76,26 @@ public unsafe ref struct QueryExecutionContext
             // generate items
             foreach(ref var generator in pass.generators.AsSpan())
                 generator.Generate(in this, in exprContext, items);
+            
+            var unfilteredItems = items.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 
-            var unfilteredItems = items.AsArray().AsSpan().Slice(passItemStartIndex);
+            //foreach (var unfilteredItem in unfilteredItems)
+            //{
+            //    Debug.Log($"generated {unfilteredItem}");
+            //}
+            
             int newItemCount = unfilteredItems.Length;
             passBits.Resize(newItemCount, NativeArrayOptions.UninitializedMemory);
 
             // compute filters
             foreach(ref var filter in pass.filters.AsSpan())
                 filter.Pass(in this, in exprContext, ref tempState, unfilteredItems, passBits);
+
+            //for (int i = passItemStartIndex; i < passItemStartIndex + newItemCount; ++i)
+            //{
+            //    int passItemIndex = i - passItemStartIndex;
+            //    Debug.Log($"{unfilteredItems[i]}: pass: {passBits.IsSet(passItemIndex)}");
+            //}
 
             // remove filtered items
             for(int i = passItemStartIndex; i < items.Length;)
@@ -96,12 +115,15 @@ public unsafe ref struct QueryExecutionContext
                 }
             }
 
+            scores.Resize(items.Length, NativeArrayOptions.ClearMemory);
+
             // score remaining items
-            var filteredItems = items.AsArray().AsSpan().Slice(passItemStartIndex);
-            var passScores = scores.AsArray().AsSpan().Slice(passItemStartIndex);
+            var filteredItems = items.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
+            var passScores = scores.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 
-            scores.ResizeUninitialized(items.Length);
-
+            //foreach (var filteredItem in filteredItems)
+            //    Debug.Log($"generated {filteredItem}");
+            
             foreach(ref var scorer in pass.scorers.AsSpan())
                 scorer.Score(in this, in exprContext, ref tempState, filteredItems, passScores);
 
@@ -111,8 +133,21 @@ public unsafe ref struct QueryExecutionContext
                 break; // got enough items, skipping further fallback passes
         }
 
+        for (int i = 0; i < scores.Length; ++i)
+            scores.ElementAt(i).itemIndex = i;
+
         // TODO: this is O(n log n + k) but can be done in O(kn) or O(n log k)
-        scores.Sort(default(QSItem.ScoreComparer));
+        if(data.scoringDirection == QueryScoringDirection.LargestWins)
+            scores.Sort(default(QSItem.ScoreComparerGreater));
+        else
+            scores.Sort(default(QSItem.ScoreComparerLess));
+
+        //int scoreIndex = 0;
+        //foreach (var score in scores)
+        //{
+        //    Debug.Log($"#{scoreIndex+1}: [{score.itemIndex}] {items[score.itemIndex]} (@{score.score})");
+        //    scoreIndex++;
+        //}
 
         resultCount = math.min(resultCount, items.Length);
 

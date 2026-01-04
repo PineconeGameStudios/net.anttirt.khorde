@@ -64,6 +64,11 @@ namespace Mpr.Query
         /// items but they will not be considered.
         /// </remarks>
         public BlobArray<QSPass> passes;
+        
+        /// <summary>
+        /// Which way to select results
+        /// </summary>
+        public QueryScoringDirection scoringDirection;
 
         /// <summary>
         /// Result item type
@@ -81,21 +86,10 @@ namespace Mpr.Query
         public BlobArray<BlobEntityQueryDesc> entityQueries;
     }
 
-    public struct QSEntityQueryReference : IBufferElementData
+    public enum QueryScoringDirection
     {
-        public BlobAssetReference<BlobEntityQueryDesc> entityQueryDesc;
-
-        /// <summary>
-        /// Gets a runtime key that can be used to look up the results for a query
-        /// </summary>
-        /// <returns></returns>
-        public IntPtr GetRuntimeKey()
-        {
-            unsafe
-            {
-                return (IntPtr)entityQueryDesc.GetUnsafePtr();
-            }
-        }
+        SmallestWins,
+        LargestWins
     }
 
     [ChunkSerializable]
@@ -196,7 +190,13 @@ namespace Mpr.Query
         public float score;
         public int itemIndex;
 
-        public struct ScoreComparer : IComparer<QSItem>
+        public struct ScoreComparerLess : IComparer<QSItem>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int Compare(QSItem x, QSItem y) => x.score.CompareTo(y.score);
+        }
+        
+        public struct ScoreComparerGreater : IComparer<QSItem>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int Compare(QSItem x, QSItem y) => y.score.CompareTo(x.score);
@@ -281,8 +281,10 @@ namespace Mpr.Query
 
             public void Generate(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, NativeList<Entity> items)
             {
-                if(qctx.queryResultLookup.TryGetValue(queryHash, out var results))
+                if (qctx.queryResultLookup.TryGetValue(queryHash, out var results))
                     items.CopyFrom(results);
+                else
+                    throw new InvalidOperationException($"results for query with hash {queryHash} not available");
             }
         }
 
@@ -332,7 +334,12 @@ namespace Mpr.Query
             // Function,
         }
 
-        public void Pass<TItem>(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, ref QSTempState tempState, Span<TItem> items, NativeBitArray passBits) where TItem : unmanaged
+        public void Pass<TItem>(
+            in QueryExecutionContext qctx,
+            in ExpressionEvalContext ctx,
+            ref QSTempState tempState,
+            NativeArray<TItem> items,
+            NativeBitArray passBits) where TItem : unmanaged
         {
             switch(type)
             {
@@ -340,10 +347,10 @@ namespace Mpr.Query
                 {
                     // TODO: vectorized expressions
                     int i = 0;
-                    foreach(ref var item in items)
+                    foreach(var item in items)
                     {
                         tempState.GetCurrentItem<TItem>() = item;
-                        passBits.Set(i, expr.Evaluate<bool>(in ctx));
+                        passBits.Set(i++, expr.Evaluate<bool>(in ctx));
                     }
 
                     break;
@@ -359,13 +366,23 @@ namespace Mpr.Query
     {
         public ExpressionRef expr;
         public ScorerType type;
+        public Normalizer normalizer;
+        public bool negate;
 
         public enum ScorerType
         {
             Expression,
         }
 
-        public void Score<TItem>(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, ref QSTempState tempState, Span<TItem> items, Span<QSItem> scores) where TItem : unmanaged
+        public enum Normalizer
+        {
+            None,
+            Reinhard,
+            Sigmoid,
+            Saturate,
+        }
+
+        public void Score<TItem>(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, ref QSTempState tempState, NativeArray<TItem> items, NativeArray<QSItem> scores) where TItem : unmanaged
         {
             switch(type)
             {
@@ -374,7 +391,37 @@ namespace Mpr.Query
                     for(int i = 0; i < items.Length; ++i)
                     {
                         tempState.GetCurrentItem<TItem>() = items[i];
-                        scores[i].score += expr.Evaluate<float>(in ctx);
+                        float raw = expr.Evaluate<float>(in ctx);
+                        float score = raw;
+
+                        if (negate)
+                            score = -score;
+
+                        switch (normalizer)
+                        {
+                            case Normalizer.None:
+                                break;
+
+                            case Normalizer.Reinhard:
+                            {
+                                float s = math.sign(score);
+                                float a = math.abs(score);
+                                score = 2 * (1 + s * (a / (1 + a)));
+                            } break;
+
+                            case Normalizer.Sigmoid:
+                            {
+                                score = 1 / (1 + math.exp(-score));
+                            } break;
+
+                            case Normalizer.Saturate:
+                            {
+                                score = math.saturate(score);
+                            } break;
+                        }
+
+                        //UnityEngine.Debug.Log($"{raw} {normalizer} -> {score}");
+                        scores.UnsafeElementAt(i).score += score;
                     }
                     break;
 

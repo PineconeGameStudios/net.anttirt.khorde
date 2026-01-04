@@ -42,6 +42,7 @@ public unsafe class ExpressionBakingContext : IDisposable
     public List<ComponentType> LookupComponents => lookupComponents;
     protected NativeArray<ExpressionData> builderExpressions;
     protected NativeArray<ulong> builderTypeHashes;
+    protected NativeArray<BlobString> builderDebugTypeNames;
     protected NativeArray<UnityEngine.Hash128> builderSourceGraphNodeIds;
     protected NativeArray<ExpressionOutput> builderOutputs;
     private Allocator allocator;
@@ -101,6 +102,7 @@ public unsafe class ExpressionBakingContext : IDisposable
     {
         builderExpressions = AsArray(builder.Allocate(ref data->expressions, expressionCount));
         builderTypeHashes = AsArray(builder.Allocate(ref data->expressionTypeHashes, expressionCount));
+        builderDebugTypeNames = AsArray(builder.Allocate(ref data->expressionDebugTypeNames, expressionCount));
         builderSourceGraphNodeIds = AsArray(builder.Allocate(ref data->sourceGraphNodeIds, expressionCount));
         
         builderOutputs = AsArray(builder.Allocate(ref data->outputs, outputCount));
@@ -163,8 +165,9 @@ public unsafe class ExpressionBakingContext : IDisposable
             throw new ArgumentOutOfRangeException(nameof(index));
         
         return new ExpressionStorageRef(
-            ref ((ExpressionData*)builderExpressions.GetUnsafePtr())[index].storage,
-            ref ((ulong*)builderTypeHashes.GetUnsafePtr())[index]
+            ref builderExpressions.UnsafeElementAt(index).storage,
+            ref builderTypeHashes.UnsafeElementAt(index),
+            ref builderDebugTypeNames.UnsafeElementAt(index)
         );
     }
 

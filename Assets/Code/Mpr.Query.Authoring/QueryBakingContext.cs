@@ -77,6 +77,7 @@ namespace Mpr.Query.Authoring
 
 			data->itemType = query.ItemType.GetExpressionValueType();
 			data->resultCount = GetExpressionRef(query.GetResultCountPort());
+			data->scoringDirection = query.ScoringDirection;
 
 			return true;
 		}

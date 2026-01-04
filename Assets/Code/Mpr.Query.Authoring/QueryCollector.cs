@@ -38,20 +38,35 @@ namespace Mpr.Query.Authoring
 		List<IPort> GetPassPorts();
 		IPort GetResultCountPort();
 		Type ItemType { get; }
+		QueryScoringDirection ScoringDirection { get; }
 	}
 
 	public abstract class Query<T> : QueryGraphNodeBase, IQuery
 	{
+		private INodeOption scoringDirection;
 		public override string Title => $"Query ({typeof(T).Name})";
 
 		public Type ItemType => typeof(T);
 		public Type PassRefType => typeof(PassRef<T>);
+
+		public QueryScoringDirection ScoringDirection
+		{
+			get
+			{
+				scoringDirection.TryGetValue<QueryScoringDirection>(out var value);
+				return value;
+			}
+		}
 
 		public List<IPort> GetPassPorts() => GetInputPorts().Where(p => p.dataType == PassRefType).ToList();
 		public IPort GetResultCountPort() => GetInputPort(0);
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
+			scoringDirection = context.AddOption<QueryScoringDirection>("scoring_direction")
+				.WithDisplayName("Scoring Direction")
+				.Build();
+			
 			context.AddOption<int>("pass_count")
 				.WithDisplayName("Pass Count")
 				.WithTooltip("Passes are evaluated in order until there are enough results or all passes have been evaluated.")

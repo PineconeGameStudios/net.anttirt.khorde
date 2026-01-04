@@ -36,6 +36,11 @@ public struct BlobExpressionData
     public BlobArray<ulong> expressionTypeHashes;
 
     /// <summary>
+    /// Debug type names matching <see cref="expressionTypeHashes"/>
+    /// </summary>
+    public BlobArray<BlobString> expressionDebugTypeNames;
+    
+    /// <summary>
     /// Component types (especially non-[ChunkSerializable] ones) might have a
     /// different layout on the target platform so we have to initialize layouts
     /// at runtime
@@ -206,7 +211,12 @@ public struct BlobExpressionData
             }
             else
             {
-                Debug.LogError($"couldn't find generated type info for hash {expressionTypeHash} at index {i}");
+                FixedString512Bytes msg = $"couldn't find generated type info for hash {expressionTypeHash} at index {i} (type ";
+                FixedString512Bytes typeName = default;
+                expressionDebugTypeNames[i].CopyTo(ref typeName);
+                msg.Append(typeName);
+                msg.Append(")");
+                Debug.LogError(msg);
                 throw new InvalidOperationException("couldn't find generated type info");
             }
         }
@@ -219,6 +229,52 @@ public struct BlobExpressionData
             ref var patchedFields = ref typeInfo.Value.fields;
             for(int j = 0; j < fields.Length; ++j)
                 patchedFields[j] = fields[j];
+        }
+    }
+
+    public void CheckExpressionComponents(NativeArray<UnsafeComponentReference> componentPtrs, NativeArray<UntypedComponentLookup> lookups)
+    {
+        if (localComponents.Length > componentPtrs.Length)
+        {
+            var missing = new NativeHashSet<TypeIndex>(0, Allocator.Temp);
+            foreach (ref var bct in localComponents.AsSpan())
+                missing.Add(bct.ResolveComponentType().TypeIndex);
+
+            foreach (var cptr in componentPtrs)
+                missing.Remove(cptr.typeIndex);
+
+            foreach (var m in missing)
+                Debug.LogError($"missing local component {TypeManager.GetTypeInfo(m).DebugTypeName}");
+
+            throw new Exception(
+                $"not enough components; bt requires {localComponents.Length} but only {componentPtrs.Length} found");
+        }
+
+        if (localComponents.Length < componentPtrs.Length)
+            throw new Exception(
+                $"too many components; bt requires {localComponents.Length} but {componentPtrs.Length} found");
+
+        for (int i = 0; i < localComponents.Length; ++i)
+            if (localComponents[i].stableTypeHash != componentPtrs[i].stableTypeHash)
+                throw new Exception($"wrong type at index {i}, expected " +
+                                    $"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(localComponents[i].stableTypeHash)).DebugTypeName}, found " +
+                                    $"{TypeManager.GetTypeInfo(componentPtrs[i].typeIndex).DebugTypeName}");
+
+        if (lookups.Length != lookupComponents.Length)
+        {
+            throw new Exception($"wrong number of lookups; expected {lookupComponents.Length}, found {lookups.Length}");
+        }
+        
+        for (int i = 0; i < lookupComponents.Length; ++i)
+        {
+            if (!lookups[i].IsCreated)
+                throw new Exception($"component lookup at index {i} was not created");
+
+            // TODO: this is an expensive check, remove it somehow
+            if (lookupComponents[i].ResolveComponentType().TypeIndex != lookups[i].TypeIndex)
+                throw new Exception($"wrong type at index {i}, expected " +
+                                    $"{TypeManager.GetTypeInfo(TypeManager.GetTypeIndexFromStableTypeHash(lookupComponents[i].stableTypeHash)).DebugTypeName}, found " +
+                                    $"{TypeManager.GetTypeInfo(lookups[i].TypeIndex).DebugTypeName}");
         }
     }
 }

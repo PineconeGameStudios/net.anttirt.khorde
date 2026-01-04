@@ -25,7 +25,7 @@ namespace Mpr.Query.Authoring
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
 			context.AddInputPort<bool>("in_pass")
-				.WithDisplayName(string.Empty)
+				.WithDisplayName("Accept Item")
 				.WithPortCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
