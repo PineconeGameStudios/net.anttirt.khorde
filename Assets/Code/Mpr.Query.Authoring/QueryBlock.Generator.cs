@@ -99,39 +99,30 @@ namespace Mpr.Query.Authoring
 	[UseWithContext(typeof(IPass<Entity>))]
 	class GeneratorEntityQuery : QueryGraphBlockBase, IGenerator
 	{
-		public EntityQueryAsset queryAsset;
-		
 		private INodeOption query;
 		
 		public void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext)
 		{
+			if (!query.TryGetValue<EntityQueryAsset>(out var entityQuery))
+			{
+				return;
+			}
+
 			generator.generatorType = QSGenerator.GeneratorType.Entities;
 			generator.data.entities = new QSGenerator.Entities
 			{
-				queryIndex = 0,
+				queryHash = entityQuery.GetHash128(),
 			};
+			
+			queryBakingContext.AddQuery(entityQuery);
 		}
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
-			query = context.AddOption<string>("query")
-				.WithDefaultValue("all: LocalTransform; none: Disabled")
-				.WithDisplayName("Query")
-				.WithTooltip("Entity query description to be parsed")
+			query = context.AddOption<EntityQueryAsset>("entityQuery")
+				.WithDisplayName(string.Empty)
+				.WithTooltip("Entity query asset to use for base entity generation")
 				.Build();
-		}
-
-		public override void Validate(GraphLogger logger)
-		{
-			var bb = new BlobBuilder(Allocator.Temp);
-			ref var desc = ref bb.ConstructRoot<BlobEntityQueryDesc>();
-			query.TryGetValue(out string pattern);
-			BlobEntityQueryDescAuthoring.Bake(ref desc, pattern, ref bb, err => logger.LogError(err, this));
-		}
-
-		protected override void OnDefinePorts(IPortDefinitionContext context)
-		{
-
 		}
 	}
 }

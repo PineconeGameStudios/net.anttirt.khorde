@@ -83,7 +83,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: a9955df826efc8bae9086f473dd620b6
         m_Version: 2
-        m_Position: {x: 561.37604, y: -2.0691013}
+        m_Position: {x: 514.226, y: -23.919102}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:
@@ -173,8 +173,10 @@ MonoBehaviour:
         m_InputConstantsById:
           m_KeyList:
           - __option_query
+          - __option_entityQuery
           m_ValueList:
           - rid: 8055170663063224435
+          - rid: 8055170706964742416
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -792,6 +794,10 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: 
+    - rid: 8055170706964742416
+      type: {class: 'Constant`1[[Mpr.Blobs.EntityQueryAsset, Mpr.Blobs]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: {fileID: -295462882486227724, guid: 3a3ca0e8ad4c039419bb32f94ce755d9, type: 3}
     - rid: 8259216464963436637
       type: {class: GraphModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:
@@ -830,9 +836,9 @@ MonoBehaviour:
         m_LastKnownBounds:
           serializedVersion: 2
           x: -508
-          y: -2
+          y: -24
           width: 1648
-          height: 488
+          height: 510
         m_GraphElementMetaData:
         - m_Guid:
             m_Value0: 10874879846791009068

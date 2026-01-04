@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Query.Test;
 
@@ -42,9 +43,9 @@ public class QueryTests
         
         var components = new NativeArray<UnsafeComponentReference>(0,  Allocator.Temp);
         var entityQueries = new NativeArray<QSEntityQueryReference>(0, Allocator.Temp);
-        var queryResultLookup = new NativeHashMap<IntPtr, NativeList<Entity>>(0,  Allocator.Temp);
+        var queryResultLookup = new NativeHashMap<Hash128, NativeList<Entity>>(0,  Allocator.Temp);
         
-        var qctx = new QueryExecutionContext(ref asset.Value, components, entityQueries, queryResultLookup);
+        var qctx = new QueryExecutionContext(ref asset.Value, components, queryResultLookup);
         
         qctx.Execute<Entity>(untypedResults);
 

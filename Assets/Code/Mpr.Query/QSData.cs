@@ -102,11 +102,12 @@ namespace Mpr.Query
     [BurstCompile]
     public struct QSEntityQuery : ISharedComponentData, IEquatable<QSEntityQuery>
     {
-        public BlobAssetReference<BlobEntityQueryDesc> entityQueryDesc;
-
-        public ref BlobEntityQueryDesc GetDesc() => ref entityQueryDesc.Value;
+        public UnityObjectRef<BlobAsset<BlobEntityQueryDesc>> queryDesc;
         
-        public bool IsCreated => entityQueryDesc.IsCreated;
+        /// <summary>
+        /// Hash of the query data to deduplicate and look up query results
+        /// </summary>
+        public Hash128 hash;
 
         /// <summary>
         /// Runtime-resolved query for this description
@@ -122,7 +123,7 @@ namespace Mpr.Query
         [BurstCompile]
         public bool Equals(QSEntityQuery other)
         {
-            return entityQueryDesc.Equals(other.entityQueryDesc);
+            return hash == other.hash;
         }
 
         public override bool Equals(object obj)
@@ -133,21 +134,9 @@ namespace Mpr.Query
         [BurstCompile]
         public override int GetHashCode()
         {
-            return entityQueryDesc.GetHashCode();
+            return hash.GetHashCode();
         }
         #endregion
-
-        /// <summary>
-        /// Gets a runtime key that can be used to look up the results for a query
-        /// </summary>
-        /// <returns></returns>
-        public IntPtr GetRuntimeKey()
-        {
-            unsafe
-            {
-                return (IntPtr)entityQueryDesc.GetUnsafePtr();
-            }
-        }
     }
 
     public struct QSPass
@@ -288,11 +277,11 @@ namespace Mpr.Query
 
         public struct Entities
         {
-            public int queryIndex;
+            public Hash128 queryHash;
 
             public void Generate(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, NativeList<Entity> items)
             {
-                if(qctx.queryResultLookup.TryGetValue(qctx.entityQueries[queryIndex].GetRuntimeKey(), out var results))
+                if(qctx.queryResultLookup.TryGetValue(queryHash, out var results))
                     items.CopyFrom(results);
             }
         }

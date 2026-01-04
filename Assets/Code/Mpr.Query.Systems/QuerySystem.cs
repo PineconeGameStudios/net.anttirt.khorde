@@ -1,5 +1,6 @@
 using Mpr.Expr;
 using System;
+using Mpr.Blobs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -10,14 +11,16 @@ namespace Mpr.Query
 {
 	public partial struct QuerySystem : ISystem
 	{
-		private NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup;
+		private NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 
 		// TODO: turn this into IJobChunk to pass dynamic expression component data as in BTUpdateSystem
 		[BurstCompile]
 		partial struct ExecuteQueriesJob : IJobEntity
 		{
+			// NOTE: have to disable safety here because
+			// ToEntityListAsync returns a NativeList
 			[NativeDisableContainerSafetyRestriction]
-			public NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup;
+			public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 
 			public void Execute(Query query,
 				DynamicBuffer<QSEntityQueryReference> entityQueries,
@@ -31,7 +34,7 @@ namespace Mpr.Query
 
 				var components = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
 				
-				var qctx = new QueryExecutionContext(ref query.query.Value, components, queries, queryResultLookup);
+				var qctx = new QueryExecutionContext(ref query.query.Value, components, queryResultLookup);
 				
 				switch (query.query.Value.itemType)
 				{
@@ -56,9 +59,10 @@ namespace Mpr.Query
 		void ISystem.OnCreate(ref SystemState state)
 		{
 			state.RequireForUpdate<Query>();
-			queryResultLookup = new NativeHashMap<IntPtr, NativeList<Entity>>(1, Allocator.Persistent);
+			queryResultLookup = new NativeHashMap<Hash128, NativeList<Entity>>(1, Allocator.Persistent);
 		}
 
+		[BurstCompile]
 		void ISystem.OnUpdate(ref SystemState state)
 		{
 			state.EntityManager.GetAllUniqueSharedComponents<QSEntityQuery>(out var components, Allocator.Temp);
@@ -67,16 +71,18 @@ namespace Mpr.Query
 
 			foreach(ref var component in components.AsArray().AsSpan())
 			{
-				if(component.runtimeEntityQuery == default && component.IsCreated)
+				if(component.runtimeEntityQuery == default && component.queryDesc.IsValid())
 				{
-					component.runtimeEntityQuery = component.GetDesc().CreateQuery(state.EntityManager);
+					component.runtimeEntityQuery = component.queryDesc
+						.GetValue(BlobEntityQueryDesc.SchemaVersion)
+						.CreateQuery(state.EntityManager);
 				}
 
 				if(component.runtimeEntityQuery != default)
 				{
 					component.results = component.runtimeEntityQuery.ToEntityListAsync(state.WorldUpdateAllocator, state.Dependency, out var dep);
 					state.Dependency = dep;
-					queryResultLookup[component.GetRuntimeKey()] = component.results;
+					queryResultLookup[component.hash] = component.results;
 				}
 			}
 

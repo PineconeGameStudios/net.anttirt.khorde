@@ -14,28 +14,24 @@ public unsafe ref struct QueryExecutionContext
     readonly QSData* pData;
     public ref QSData data => ref *pData;
     public NativeArray<UnsafeComponentReference> componentPtrs;
-    public NativeArray<QSEntityQueryReference> entityQueries;
-    public NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup;
+    public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 
     /// <summary>
     /// Create a query execution context
     /// </summary>
     /// <param name="data"></param>
     /// <param name="componentPtrs">Components on the querier entity</param>
-    /// <param name="entityQueries">List of resolved generator entity queries attached to the querier entity</param>
     /// <param name="queryResultLookup">Result lookup for entity queries if any are present</param>
     /// <param name="results">Result item storage buffer</param>
     public QueryExecutionContext(
         ref QSData data,
         NativeArray<UnsafeComponentReference> componentPtrs,
-        NativeArray<QSEntityQueryReference> entityQueries,
-        NativeHashMap<IntPtr, NativeList<Entity>> queryResultLookup
+        NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup
     )
     {
         fixed(QSData* pData = &data)
             this.pData =  pData;
         this.componentPtrs = componentPtrs;
-        this.entityQueries = entityQueries;
         this.queryResultLookup = queryResultLookup;
     }
     

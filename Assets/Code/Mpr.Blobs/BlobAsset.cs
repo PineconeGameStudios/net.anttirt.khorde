@@ -6,7 +6,9 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.Serialization;
+using Unity.Mathematics;
 using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Blobs
 {
@@ -32,8 +34,20 @@ namespace Mpr.Blobs
         static unsafe ReadOnlySpan<byte> SerializeTempBytes(BlobBuilder builder, int version)
         {
             var writer = new MemoryBinaryWriter();
+            writer.Write(new byte[PaddingSize]);
             BlobAssetReference<T>.Write(writer, builder, version);
             return new ReadOnlySpan<byte>(writer.Data, writer.Length);
+        }
+
+        public unsafe Hash128 GetHash128()
+        {
+            var rawBytes = data.GetData<byte>();
+
+            Hash128 hash = default;
+            if(rawBytes.Length > PayloadOffset)
+                hash.Value.x = math.hash((byte*)rawBytes.GetUnsafeReadOnlyPtr() + PayloadOffset, rawBytes.Length - PayloadOffset);
+            
+            return hash;
         }
 
         /// <summary>
@@ -46,12 +60,15 @@ namespace Mpr.Blobs
         {
             var rawBytes = data.GetData<byte>();
 
-            unsafe
+            if (rawBytes.Length > PaddingSize)
             {
-                var reader = new MemoryBinaryReader((byte*)rawBytes.GetUnsafePtr(), rawBytes.Length);
-                if (BlobAssetReference<T>.TryRead(reader, version, out var result))
-                    return result;
-                result.Dispose();
+                unsafe
+                {
+                    var reader = new MemoryBinaryReader((byte*)rawBytes.GetUnsafePtr() + PaddingSize,
+                        rawBytes.Length - PaddingSize);
+                    if (BlobAssetReference<T>.TryRead(reader, version, out var result))
+                        return result;
+                }
             }
 
             throw new InvalidOperationException("invalid blob data");
@@ -164,8 +181,10 @@ namespace Mpr.Blobs
                 }
             }
 
-            if (BlobAssetReferenceExt.TryReadInplace<T>((byte*)rawBytes.GetUnsafePtr(), rawBytes.Length, version,
-                    out var loaded, out _))
+            if (BlobAssetReferenceExt.TryReadInplace<T>(
+                    (byte*)rawBytes.GetUnsafePtr() + BlobAssetBase.PaddingSize,
+                    rawBytes.Length - BlobAssetBase.PaddingSize,
+                    version, out var loaded, out _))
             {
                 return ref loaded.Value;
             }
@@ -191,8 +210,10 @@ namespace Mpr.Blobs
                 throw new InvalidOperationException("asset not loaded");
             }
 
-            if (BlobAssetReferenceExt.TryReadInplace<T>((byte*)rawBytes.GetUnsafePtr(), rawBytes.Length, version,
-                    out var loaded, out _))
+            if (BlobAssetReferenceExt.TryReadInplace<T>(
+                    (byte*)rawBytes.GetUnsafePtr() + BlobAssetBase.PaddingSize,
+                    rawBytes.Length - BlobAssetBase.PaddingSize,
+                    version, out var loaded, out _))
             {
                 return ref loaded.Value;
             }

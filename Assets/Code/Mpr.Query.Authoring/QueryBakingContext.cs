@@ -2,6 +2,7 @@ using Mpr.Expr.Authoring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mpr.Blobs;
 using Mpr.Expr;
 using Unity.Collections;
 using Unity.Entities;
@@ -13,6 +14,13 @@ namespace Mpr.Query.Authoring
 	{
 		QSData* data;
 		IQuery query;
+		HashSet<EntityQueryAsset> entityQueries = new();
+
+		/// <summary>
+		/// Entity query assets used by this graph. The query results
+		/// should be made available to query execution at runtime.
+		/// </summary>
+		public IEnumerable<EntityQueryAsset> EntityQueries => entityQueries;
 
 		public QueryBakingContext(Graph rootGraph, Allocator allocator)
 			: base(rootGraph, allocator)
@@ -176,6 +184,11 @@ namespace Mpr.Query.Authoring
 					}
 				}
 			}
+		}
+
+		public void AddQuery(EntityQueryAsset entityQuery)
+		{
+			entityQueries.Add(entityQuery);
 		}
 	}
 }
