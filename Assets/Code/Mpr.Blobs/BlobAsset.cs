@@ -6,9 +6,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.Serialization;
-using Unity.Mathematics;
 using UnityEngine;
-using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Blobs
 {
@@ -27,6 +25,7 @@ namespace Mpr.Blobs
         public TextAsset SetAssetData(BlobBuilder builder, int version)
         {
             data = new(SerializeTempBytes(builder, version));
+            dataHash = ComputeDataHash();
             return data;
         }
 #endif
@@ -37,17 +36,6 @@ namespace Mpr.Blobs
             writer.Write(new byte[PaddingSize]);
             BlobAssetReference<T>.Write(writer, builder, version);
             return new ReadOnlySpan<byte>(writer.Data, writer.Length);
-        }
-
-        public unsafe Hash128 GetHash128()
-        {
-            var rawBytes = data.GetData<byte>();
-
-            Hash128 hash = default;
-            if(rawBytes.Length > PayloadOffset)
-                hash.Value.x = math.hash((byte*)rawBytes.GetUnsafeReadOnlyPtr() + PayloadOffset, rawBytes.Length - PayloadOffset);
-            
-            return hash;
         }
 
         /// <summary>
@@ -181,9 +169,10 @@ namespace Mpr.Blobs
         /// <typeparam name="TAsset">The actual asset type</typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public static unsafe ref TBlob GetValue<TBlob, TAsset>(ref this WeakObjectReference<BlobAsset<TBlob>> asset, int version)
-                where TBlob : unmanaged
-            {
+        public static unsafe ref TBlob GetValue<TBlob, TAsset>(ref this WeakObjectReference<TAsset> asset, int version)
+            where TBlob : unmanaged
+            where TAsset : BlobAsset<TBlob>
+        {
             NativeArray<byte> rawBytes = default;
 
             fixed (UntypedWeakReferenceId* assetId = &asset.Id)

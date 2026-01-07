@@ -111,7 +111,7 @@ namespace Mpr.Query.Authoring
 			generator.generatorType = QSGenerator.GeneratorType.Entities;
 			generator.data.entities = new QSGenerator.Entities
 			{
-				queryHash = entityQuery.GetHash128(),
+				queryHash = entityQuery.DataHash,
 			};
 			
 			queryBakingContext.AddQuery(entityQuery);

@@ -23,7 +23,7 @@ namespace Mpr.Behavior
 		}
 
 		[BurstCompile]
-		partial struct UpdateJob : IJobChunk
+		struct UpdateJob : IJobChunk
 		{
 			public ExprJobComponentTypeHandles typeHandles;
 			public ExprJobComponentLookups componentLookups;

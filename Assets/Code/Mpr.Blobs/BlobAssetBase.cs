@@ -1,11 +1,17 @@
 ﻿using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Blobs
 {
     public abstract class BlobAssetBase : ScriptableObject
     {
         [SerializeField] protected TextAsset data;
+        [SerializeField] protected Hash128 dataHash;
+        
+        public Hash128 DataHash => dataHash;
 
         public bool TryGetData(out NativeArray<byte> result)
         {
@@ -33,5 +39,17 @@ namespace Mpr.Blobs
             PaddingSize +
             BlobVersionSize +
             BlobHeaderSize;
+
+        public unsafe Hash128 ComputeDataHash()
+        {
+            var rawBytes = data.GetData<byte>();
+
+            Hash128 hash = default;
+            if(rawBytes.Length > PayloadOffset)
+                hash.Value.x = math.hash((byte*)rawBytes.GetUnsafeReadOnlyPtr() + PayloadOffset, rawBytes.Length - PayloadOffset);
+            
+            return hash;
+        }
+
     }
 }

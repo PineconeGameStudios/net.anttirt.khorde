@@ -49,6 +49,8 @@ namespace Mpr.Query
 {
     public struct QSData
     {
+        public const int SchemaVersion = 1;
+        
         /// <summary>
         /// Baked data for all expressions in the query graph
         /// </summary>

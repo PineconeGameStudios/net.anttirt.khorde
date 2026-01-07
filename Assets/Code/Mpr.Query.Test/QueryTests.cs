@@ -61,7 +61,7 @@ public class QueryTests
         foreach (var entityQuery in baker.EntityQueries)
         {
             var entityQueryResults = entityQuery.CreateEntityQuery(entityManager).ToEntityArray(Allocator.Temp);
-            var list = queryResultLookup[entityQuery.GetHash128()] = new(entityQueryResults.Length, Allocator.Temp);
+            var list = queryResultLookup[entityQuery.DataHash] = new(entityQueryResults.Length, Allocator.Temp);
             list.CopyFrom(entityQueryResults);
         }
 

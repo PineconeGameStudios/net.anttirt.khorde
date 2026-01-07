@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using Unity.Collections;
+using Unity.Entities;
 using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor.AssetImporters;
@@ -28,23 +31,31 @@ namespace Mpr.Query.Authoring
 			}
 			else
 			{
-				var asset = ScriptableObject.CreateInstance<QueryGraphAsset>();
+				var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
 
-				var writer = new MemoryBinaryWriter();
-				graph.Bake(writer);
-				ReadOnlySpan<byte> data;
-
-				unsafe
+				using (var context = new QueryBakingContext(graph, Allocator.Temp))
 				{
-					data = new ReadOnlySpan<byte>(writer.Data, writer.Length);
+					var builder = context.Build();
+					if (!builder.IsCreated)
+					{
+						ctx.LogImportError("Build failed");
+						return;
+					}
+
+					if (context.Errors.Count > 0)
+					{
+						foreach (var error in context.Errors)
+							ctx.LogImportError(error);
+
+						return;
+					}
+
+					var data = obj.SetAssetData(builder, QSData.SchemaVersion);
+					obj.entityQueries = context.EntityQueries.ToList();
+					ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+					ctx.AddObjectToAsset("data", data);
+					ctx.SetMainObject(obj);
 				}
-
-				asset.bakedQuery = new TextAsset(data);
-				asset.bakedQuery.name = "Data";
-
-				ctx.AddObjectToAsset("Data", asset.bakedQuery);
-				ctx.AddObjectToAsset("BehaviorTree", asset);
-				ctx.SetMainObject(asset);
 			}
 		}
 	}
