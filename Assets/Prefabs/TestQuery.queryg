@@ -176,7 +176,7 @@ MonoBehaviour:
           m_KeyList:
           - __option_entityQuery
           m_ValueList:
-          - rid: 8055170706964742416
+          - rid: 8055170789968183356
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -762,10 +762,6 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: 
-    - rid: 8055170706964742416
-      type: {class: 'Constant`1[[Mpr.Blobs.EntityQueryAsset, Mpr.Blobs]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: {fileID: -295462882486227724, guid: 3a3ca0e8ad4c039419bb32f94ce755d9, type: 3}
     - rid: 8055170710518366267
       type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
@@ -824,6 +820,10 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: Accept Item
+    - rid: 8055170789968183356
+      type: {class: 'Constant`1[[Mpr.Blobs.EntityQueryAsset, Mpr.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: {fileID: -295462882486227724, guid: 3a3ca0e8ad4c039419bb32f94ce755d9, type: 3}
     - rid: 8259216464963436637
       type: {class: GraphModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:

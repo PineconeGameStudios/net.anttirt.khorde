@@ -92,6 +92,9 @@ namespace Mpr.Blobs
         public bool TryReadInPlace(int version, out BlobAssetHandle<T> result)
         {
             var rawBytes = data.GetData<byte>();
+            if (rawBytes.Length < PaddingSize)
+                throw new InvalidOperationException("blob data too short");
+            
             var payload = rawBytes.GetSubArray(PaddingSize, rawBytes.Length - PaddingSize);
 
             return BlobAssetHandle<T>.TryReadInplace(payload, version, out result, out _);
@@ -107,9 +110,13 @@ namespace Mpr.Blobs
         /// <exception cref="InvalidOperationException"></exception>
         public unsafe ref T GetValue(int version)
         {
-            NativeArray<byte> rawBytes = data.GetData<byte>();
+            var rawBytes = data.GetData<byte>();
+            if (rawBytes.Length < PaddingSize)
+                throw new InvalidOperationException("blob data too short");
+            
+            var payload = rawBytes.GetSubArray(PaddingSize, rawBytes.Length - PaddingSize);
 
-            if (BlobAssetReferenceExt.TryReadInplace<T>((byte*)rawBytes.GetUnsafePtr(), rawBytes.Length, version,
+            if (BlobAssetReferenceExt.TryReadInplace<T>((byte*)payload.GetUnsafePtr(), payload.Length, version,
                     out var loaded, out _))
             {
                 return ref loaded.Value;
