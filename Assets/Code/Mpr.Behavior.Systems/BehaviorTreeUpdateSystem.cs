@@ -81,7 +81,7 @@ namespace Mpr.Behavior
 					job.typeHandles.AddType(holder);
 				}
 
-				foreach(var holder in lookupHolder.AsNativeArray().AsSpan())
+				foreach(ref var holder in lookupHolder.AsNativeArray().AsSpan())
 				{
 					holder.componentLookup.Update(ref state);
 					job.componentLookups.AddLookup(holder);
@@ -142,7 +142,7 @@ namespace Mpr.Behavior
 					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(queryHolder);
 					var lookups = state.EntityManager.GetBuffer<ExprSystemComponentLookupHolder>(queryHolder);
 					
-					if (!ExpressionSystemUtility.TryAddQueriesAndComponents(ref state, ref btData.exprData, typeHandles, lookups, instanceComponents))
+					if (!ExpressionSystemUtility.TryAddQueriesAndComponents(ref state, ref btData.exprData, ref typeHandles, ref lookups, instanceComponents))
 					{
 						state.Enabled = false;
 						return false;

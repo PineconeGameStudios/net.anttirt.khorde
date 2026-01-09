@@ -439,6 +439,11 @@ namespace Mpr.Query
         public long storage;
     }
 
+    public struct PendingQuery : IComponentData, IEnableableComponent
+    {
+        public UnityObjectRef<QueryGraphAsset> query;
+    }
+
     public static class QSResultExt
     {
         /// <summary>

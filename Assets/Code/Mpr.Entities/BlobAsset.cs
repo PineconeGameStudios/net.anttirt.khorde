@@ -10,6 +10,13 @@ using Unity.Entities.Serialization;
 using UnityEngine;
 using Hash128 = Unity.Entities.Hash128;
 
+#if UNITY_6000_4_OR_NEWER
+#error TODO: fix when UnityObjectRef switches to EntityId
+using UnityObjectRefId = UnityEngine.EntityId;
+#else
+using UnityObjectRefId = System.Int32;
+#endif
+
 namespace Mpr.Blobs
 {
     /// <summary>
@@ -114,17 +121,17 @@ namespace Mpr.Blobs
 
     public static class BlobAssetExt
     {
-        unsafe delegate bool GetDataStrongDelegate(int instanceId, NativeArray<byte>* result);
+        unsafe delegate bool GetDataStrongDelegate(UnityObjectRefId objectId, NativeArray<byte>* result);
         unsafe delegate bool GetDataWeakDelegate(UntypedWeakReferenceId* weakReferenceId, NativeArray<byte>* result);
-        unsafe delegate bool GetHashStrongDelegate(int instanceId, Hash128* result);
+        unsafe delegate bool GetHashStrongDelegate(UnityObjectRefId objectId, Hash128* result);
         unsafe delegate bool GetHashWeakDelegate(UntypedWeakReferenceId* weakReferenceId, Hash128* result);
 
         [AOT.MonoPInvokeCallback(typeof(GetDataStrongDelegate))]
-        static unsafe bool GetDataStrong(int instanceId, NativeArray<byte>* result)
+        static unsafe bool GetDataStrong(UnityObjectRefId objectId, NativeArray<byte>* result)
         {
             // NOTE: disable warning until UnityObjectRef<T> changes to EntityId instead of int instanceId
 #pragma warning disable CS0618 // Type or member is obsolete
-            var asset = Resources.InstanceIDToObject(instanceId) as BlobAssetBase;
+            var asset = Resources.InstanceIDToObject(objectId) as BlobAssetBase;
 #pragma warning restore CS0618 // Type or member is obsolete
             if (asset == null)
                 return false;
@@ -145,11 +152,11 @@ namespace Mpr.Blobs
 
         
         [AOT.MonoPInvokeCallback(typeof(GetHashStrongDelegate))]
-        static unsafe bool GetHashStrong(int instanceId, Hash128* result)
+        static unsafe bool GetHashStrong(UnityObjectRefId objectId, Hash128* result)
         {
             // NOTE: disable warning until UnityObjectRef<T> changes to EntityId instead of int instanceId
 #pragma warning disable CS0618 // Type or member is obsolete
-            var asset = Resources.InstanceIDToObject(instanceId) as BlobAssetBase;
+            var asset = Resources.InstanceIDToObject(objectId) as BlobAssetBase;
 #pragma warning restore CS0618 // Type or member is obsolete
             if (asset == null)
                 return false;
@@ -289,8 +296,7 @@ namespace Mpr.Blobs
         {
             NativeArray<byte> rawBytes = default;
 
-            if (!new FunctionPointer<GetDataStrongDelegate>(FunctionPointers.Data.GetDataStrong).Invoke(
-                    UnsafeUtility.As<UnityObjectRef<TAsset>, int>(ref asset), &rawBytes))
+            if (!new FunctionPointer<GetDataStrongDelegate>(FunctionPointers.Data.GetDataStrong).Invoke(asset.GetObjectId(), &rawBytes))
             {
                 throw new InvalidOperationException("asset not loaded");
             }
@@ -307,6 +313,28 @@ namespace Mpr.Blobs
         }
 
         /// <summary>
+        /// Get a handle to the data within the blob asset
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <param name="version"></param>
+        /// <typeparam name="TBlob"></typeparam>
+        /// <typeparam name="TAsset"></typeparam>
+        /// <returns></returns>
+        public unsafe static BlobAssetHandle<TBlob> GetHandle<TBlob, TAsset>(this UnityObjectRef<TAsset> asset, int version)
+            where TBlob : unmanaged where TAsset : BlobAsset<TBlob>
+        {
+            NativeArray<byte> rawBytes = default;
+
+            if (!new FunctionPointer<GetDataStrongDelegate>(FunctionPointers.Data.GetDataStrong).Invoke(asset.GetObjectId(), &rawBytes))
+            {
+                return default;
+            }
+
+            BlobAssetHandle<TBlob>.TryReadInplace(rawBytes, version, out var result, out _);
+            return result;
+        }
+
+        /// <summary>
         /// Get the data hash of this <see cref="BlobAsset{T}"/>
         /// </summary>
         /// <param name="asset"></param>
@@ -319,8 +347,7 @@ namespace Mpr.Blobs
         {
             Hash128 result = default;
 
-            if (!new FunctionPointer<GetHashStrongDelegate>(FunctionPointers.Data.GetHashStrong).Invoke(
-                    UnsafeUtility.As<UnityObjectRef<TAsset>, int>(ref asset), &result))
+            if (!new FunctionPointer<GetHashStrongDelegate>(FunctionPointers.Data.GetHashStrong).Invoke(asset.GetObjectId(), &result))
             {
                 throw new InvalidOperationException("asset not loaded");
             }

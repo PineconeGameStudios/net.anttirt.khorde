@@ -201,12 +201,14 @@ namespace Mpr.Expr
         /// <param name="lookups"></param>
         /// <param name="instanceComponents">List of components required for IJobChunk iteration over instances using this expression graph</param>
         /// <returns></returns>
-        public static bool TryAddQueriesAndComponents(
+        public static bool TryAddQueriesAndComponents<TTypeHandles, TLookups>(
             ref SystemState state,
             ref BlobExpressionData exprData,
-            DynamicBuffer<ExprSystemTypeHandleHolder> typeHandles,
-            DynamicBuffer<ExprSystemComponentLookupHolder> lookups,
+            ref TTypeHandles typeHandles,
+            ref TLookups lookups,
             NativeList<ComponentType> instanceComponents)
+            where TTypeHandles : INativeList<ExprSystemTypeHandleHolder>
+            where TLookups : INativeList<ExprSystemComponentLookupHolder>
         {
             exprData.RuntimeInitialize();
 
@@ -229,15 +231,15 @@ namespace Mpr.Expr
                 }
 
                 instanceComponents.Add(type);
-                state.AddDependency(type);
 
-                typeHandles.Add(new ExprSystemTypeHandleHolder
+                typeHandles.Length++;
+                typeHandles[^1] = new ExprSystemTypeHandleHolder
                 {
-                    typeHandle = state.EntityManager.GetDynamicComponentTypeHandle(type),
+                    typeHandle = state.GetDynamicComponentTypeHandle(type),
                     typeIndex = type.TypeIndex,
                     stableTypeHash = componentTypes[i].stableTypeHash,
                     typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
-                });
+                };
             }
 
             if (componentTypes.Length > 0 && !instanceComponents.IsCreated)
@@ -257,12 +259,13 @@ namespace Mpr.Expr
 
                 state.AddDependency(type);
 
-                lookups.Add(new ExprSystemComponentLookupHolder
+                lookups.Length++;
+                lookups[^1] = new ExprSystemComponentLookupHolder
                 {
                     componentLookup = state.GetUntypedComponentLookup(type.TypeIndex, true),
                     stableTypeHash = lookupTypes[i].stableTypeHash,
                     typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
-                });
+                };
             }
 
             return true;
