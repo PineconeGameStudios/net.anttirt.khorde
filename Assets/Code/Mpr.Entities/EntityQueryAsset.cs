@@ -23,10 +23,10 @@ namespace Mpr.Blobs
     
     public static class EntityQueryAssetExt
     {
-        public static ref BlobEntityQueryDesc GetValue(ref this WeakObjectReference<EntityQueryAsset> asset, int version)
-            => ref asset.GetValue<BlobEntityQueryDesc, EntityQueryAsset>(version);
+        public static ref BlobEntityQueryDesc GetValue(ref this WeakObjectReference<EntityQueryAsset> asset)
+            => ref asset.GetValue<BlobEntityQueryDesc, EntityQueryAsset>(BlobEntityQueryDesc.SchemaVersion);
 
-        public static ref BlobEntityQueryDesc GetValue(this UnityObjectRef<EntityQueryAsset> asset, int version)
-            => ref asset.GetValue<BlobEntityQueryDesc, EntityQueryAsset>(version);
+        public static ref BlobEntityQueryDesc GetValue(this UnityObjectRef<EntityQueryAsset> asset)
+            => ref asset.GetValue<BlobEntityQueryDesc, EntityQueryAsset>(BlobEntityQueryDesc.SchemaVersion);
     }
 }

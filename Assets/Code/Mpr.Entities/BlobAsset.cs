@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Mpr.Entities;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -7,6 +8,7 @@ using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.Serialization;
 using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Blobs
 {
@@ -30,6 +32,18 @@ namespace Mpr.Blobs
         }
 #endif
 
+        public void DestroyAsset()
+        {
+            Destroy(data);
+            Destroy(this);
+        }
+
+        public void DestroyAssetImmediate()
+        {
+            DestroyImmediate(data);
+            DestroyImmediate(this);
+        }
+
         static unsafe ReadOnlySpan<byte> SerializeTempBytes(BlobBuilder builder, int version)
         {
             var writer = new MemoryBinaryWriter();
@@ -39,12 +53,12 @@ namespace Mpr.Blobs
         }
 
         /// <summary>
-        /// Load data from the asset to a <see cref="BlobAssetReference{T}"/> backed by <see cref="Allocator.Persistent"/>. The asset reference must be disposed of later to release the memory
+        /// Load data from the asset to a <see cref="BlobAssetHandle{T}"/> backed by <see cref="Allocator.Persistent"/>. The asset reference must be disposed of later to release the memory
         /// </summary>
         /// <param name="version"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public BlobAssetReference<T> LoadPersistent(int version)
+        public BlobAssetHandle<T> LoadPersistent(int version)
         {
             var rawBytes = data.GetData<byte>();
 
@@ -54,12 +68,26 @@ namespace Mpr.Blobs
                 {
                     var reader = new MemoryBinaryReader((byte*)rawBytes.GetUnsafePtr() + PaddingSize,
                         rawBytes.Length - PaddingSize);
-                    if (BlobAssetReference<T>.TryRead(reader, version, out var result))
+                    if (BlobAssetHandle<T>.TryRead(reader, version, out var result))
                         return result;
                 }
             }
 
             throw new InvalidOperationException("invalid blob data");
+        }
+
+        /// <summary>
+        /// Read the binary data in-place into a handle that can be used to access blob data
+        /// </summary>
+        /// <param name="version"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public bool TryReadInPlace(int version, out BlobAssetHandle<T> result)
+        {
+            var rawBytes = data.GetData<byte>();
+            var payload = rawBytes.GetSubArray(PaddingSize, rawBytes.Length - PaddingSize);
+
+            return BlobAssetHandle<T>.TryReadInplace(payload, version, out result, out _);
         }
 
         /// <summary>
@@ -86,10 +114,13 @@ namespace Mpr.Blobs
 
     public static class BlobAssetExt
     {
-        unsafe delegate bool GetDataReferenceManagedDelegate(int instanceId, NativeArray<byte>* result);
+        unsafe delegate bool GetDataStrongDelegate(int instanceId, NativeArray<byte>* result);
+        unsafe delegate bool GetDataWeakDelegate(UntypedWeakReferenceId* weakReferenceId, NativeArray<byte>* result);
+        unsafe delegate bool GetHashStrongDelegate(int instanceId, Hash128* result);
+        unsafe delegate bool GetHashWeakDelegate(UntypedWeakReferenceId* weakReferenceId, Hash128* result);
 
-        [AOT.MonoPInvokeCallback(typeof(GetDataReferenceManagedDelegate))]
-        static unsafe bool GetDataReferenceManaged(int instanceId, NativeArray<byte>* result)
+        [AOT.MonoPInvokeCallback(typeof(GetDataStrongDelegate))]
+        static unsafe bool GetDataStrong(int instanceId, NativeArray<byte>* result)
         {
             // NOTE: disable warning until UnityObjectRef<T> changes to EntityId instead of int instanceId
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -101,11 +132,8 @@ namespace Mpr.Blobs
             return asset.TryGetData(out *result);
         }
 
-        unsafe delegate bool GetWeakDataReferenceManagedDelegate(UntypedWeakReferenceId* weakReferenceId,
-            NativeArray<byte>* result);
-
-        [AOT.MonoPInvokeCallback(typeof(GetWeakDataReferenceManagedDelegate))]
-        static unsafe bool GetWeakDataReferenceManaged(UntypedWeakReferenceId* weakReferenceId,
+        [AOT.MonoPInvokeCallback(typeof(GetDataWeakDelegate))]
+        static unsafe bool GetDataWeak(UntypedWeakReferenceId* weakReferenceId,
             NativeArray<byte>* result)
         {
             var asset = RuntimeContentManager.GetObjectValue<BlobAssetBase>(*weakReferenceId);
@@ -115,20 +143,52 @@ namespace Mpr.Blobs
             return asset.TryGetData(out *result);
         }
 
+        
+        [AOT.MonoPInvokeCallback(typeof(GetHashStrongDelegate))]
+        static unsafe bool GetHashStrong(int instanceId, Hash128* result)
+        {
+            // NOTE: disable warning until UnityObjectRef<T> changes to EntityId instead of int instanceId
+#pragma warning disable CS0618 // Type or member is obsolete
+            var asset = Resources.InstanceIDToObject(instanceId) as BlobAssetBase;
+#pragma warning restore CS0618 // Type or member is obsolete
+            if (asset == null)
+                return false;
+
+            *result = asset.DataHash;
+            return true;
+        }
+
+        [AOT.MonoPInvokeCallback(typeof(GetHashWeakDelegate))]
+        static unsafe bool GetHashWeak(UntypedWeakReferenceId* weakReferenceId,
+            Hash128* result)
+        {
+            var asset = RuntimeContentManager.GetObjectValue<BlobAssetBase>(*weakReferenceId);
+            if (asset == null)
+                return false;
+
+            *result = asset.DataHash;
+            return true;
+        }
+
         struct Pointers
         {
-            public IntPtr GetDataReference;
-            public IntPtr GetWeakDataReference;
+            public IntPtr GetDataStrong;
+            public IntPtr GetDataWeak;
+            public IntPtr GetHashStrong;
+            public IntPtr GetHashWeak;
         }
 
         struct Delegates
         {
-            public GetDataReferenceManagedDelegate GetDataReference;
-            public GetWeakDataReferenceManagedDelegate GetWeakDataReference;
+            public GetDataStrongDelegate GetDataStrong;
+            public GetDataWeakDelegate GetDataWeak;
+            public GetHashStrongDelegate GetHashStrong;
+            public GetHashWeakDelegate GetHashWeak;
         }
 
+        private struct Ctx1 {}
         private static readonly SharedStatic<Pointers>
-            FunctionPointers = SharedStatic<Pointers>.GetOrCreate<Pointers>();
+            FunctionPointers = SharedStatic<Pointers>.GetOrCreate<Pointers, Ctx1>();
 
         private static Delegates DelegateHolders;
 
@@ -137,12 +197,14 @@ namespace Mpr.Blobs
         {
             unsafe
             {
-                DelegateHolders.GetDataReference = GetDataReferenceManaged;
-                DelegateHolders.GetWeakDataReference = GetWeakDataReferenceManaged;
-                FunctionPointers.Data.GetDataReference =
-                    Marshal.GetFunctionPointerForDelegate(DelegateHolders.GetDataReference);
-                FunctionPointers.Data.GetWeakDataReference =
-                    Marshal.GetFunctionPointerForDelegate(DelegateHolders.GetWeakDataReference);
+                DelegateHolders.GetDataStrong = GetDataStrong;
+                DelegateHolders.GetDataWeak = GetDataWeak;
+                DelegateHolders.GetHashStrong = GetHashStrong;
+                DelegateHolders.GetHashWeak = GetHashWeak;
+                FunctionPointers.Data.GetDataStrong = Marshal.GetFunctionPointerForDelegate(DelegateHolders.GetDataStrong);
+                FunctionPointers.Data.GetDataWeak = Marshal.GetFunctionPointerForDelegate(DelegateHolders.GetDataWeak);
+                FunctionPointers.Data.GetHashStrong = Marshal.GetFunctionPointerForDelegate(DelegateHolders.GetHashStrong);
+                FunctionPointers.Data.GetHashWeak = Marshal.GetFunctionPointerForDelegate(DelegateHolders.GetHashWeak);
             }
         }
 
@@ -154,6 +216,7 @@ namespace Mpr.Blobs
         /// <typeparam name="TBlob">The contained blob type</typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>Can be called from Burst-compiled code</remarks>
         public static ref TBlob GetValue<TBlob>(ref this WeakObjectReference<BlobAsset<TBlob>> asset, int version)
             where TBlob : unmanaged
         {
@@ -169,6 +232,7 @@ namespace Mpr.Blobs
         /// <typeparam name="TAsset">The actual asset type</typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>Can be called from Burst-compiled code</remarks>
         public static unsafe ref TBlob GetValue<TBlob, TAsset>(ref this WeakObjectReference<TAsset> asset, int version)
             where TBlob : unmanaged
             where TAsset : BlobAsset<TBlob>
@@ -177,8 +241,8 @@ namespace Mpr.Blobs
 
             fixed (UntypedWeakReferenceId* assetId = &asset.Id)
             {
-                if (!new FunctionPointer<GetWeakDataReferenceManagedDelegate>(
-                            FunctionPointers.Data.GetWeakDataReference)
+                if (!new FunctionPointer<GetDataWeakDelegate>(
+                            FunctionPointers.Data.GetDataWeak)
                         .Invoke(assetId, &rawBytes))
                 {
                     throw new InvalidOperationException("asset not loaded");
@@ -204,6 +268,7 @@ namespace Mpr.Blobs
         /// <typeparam name="TBlob">The contained blob type</typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>Can be called from Burst-compiled code</remarks>
         public static ref TBlob GetValue<TBlob>(this UnityObjectRef<BlobAsset<TBlob>> asset, int version) where TBlob : unmanaged
         {
             return ref GetValue<TBlob, BlobAsset<TBlob>>(asset, version);
@@ -218,13 +283,14 @@ namespace Mpr.Blobs
         /// <typeparam name="TAsset">The actual asset type</typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>Can be called from Burst-compiled code</remarks>
         public static unsafe ref TBlob GetValue<TBlob, TAsset>(this UnityObjectRef<TAsset> asset, int version)
             where TBlob : unmanaged where TAsset : BlobAsset<TBlob>
         {
             NativeArray<byte> rawBytes = default;
 
-            if (!new FunctionPointer<GetDataReferenceManagedDelegate>(FunctionPointers.Data.GetDataReference).Invoke(
-                    *(int*)&asset, &rawBytes))
+            if (!new FunctionPointer<GetDataStrongDelegate>(FunctionPointers.Data.GetDataStrong).Invoke(
+                    UnsafeUtility.As<UnityObjectRef<TAsset>, int>(ref asset), &rawBytes))
             {
                 throw new InvalidOperationException("asset not loaded");
             }
@@ -238,6 +304,53 @@ namespace Mpr.Blobs
             }
 
             throw new InvalidOperationException("invalid blob data");           
+        }
+
+        /// <summary>
+        /// Get the data hash of this <see cref="BlobAsset{T}"/>
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <typeparam name="TAsset"></typeparam>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>Can be called from Burst-compiled code</remarks>
+        public static unsafe Hash128 GetDataHash<TAsset>(this UnityObjectRef<TAsset> asset)
+            where TAsset : BlobAssetBase
+        {
+            Hash128 result = default;
+
+            if (!new FunctionPointer<GetHashStrongDelegate>(FunctionPointers.Data.GetHashStrong).Invoke(
+                    UnsafeUtility.As<UnityObjectRef<TAsset>, int>(ref asset), &result))
+            {
+                throw new InvalidOperationException("asset not loaded");
+            }
+
+            return result;
+        }
+        
+        /// <summary>
+        /// Get the data hash of this <see cref="BlobAsset{T}"/>
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <typeparam name="TAsset"></typeparam>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>Can be called from Burst-compiled code</remarks>
+        public static unsafe Hash128 GetDataHash<TAsset>(ref this WeakObjectReference<TAsset> asset)
+            where TAsset : BlobAssetBase
+        {
+            Hash128 result = default;
+
+            fixed (UntypedWeakReferenceId* assetId = &asset.Id)
+            {
+                if (!new FunctionPointer<GetHashWeakDelegate>(FunctionPointers.Data.GetHashWeak).Invoke(
+                        assetId, &result))
+                {
+                    throw new InvalidOperationException("asset not loaded");
+                }
+            }
+
+            return result;
         }
     }
 }

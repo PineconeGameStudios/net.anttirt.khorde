@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Mpr.Blobs;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using UnityEngine;
 
 namespace Mpr.Query
 {
@@ -25,7 +27,7 @@ namespace Mpr.Query
 
 	public struct QueryQueueEntry
 	{
-		public BlobAssetReference<QSData> query;
+		public UnityObjectRef<QueryGraphAsset> query;
 		
 		// results are stored as a DynamicBuffer<QSResultItemStorage> on the querier
 		public Entity querier;
@@ -34,14 +36,14 @@ namespace Mpr.Query
 		{
 			public int Compare(QueryQueueEntry x, QueryQueueEntry y)
 			{
-				unsafe
-				{
-					if (x.query.GetUnsafePtr() < y.query.GetUnsafePtr())
-						return -1;
-					if (x.query.GetUnsafePtr() > y.query.GetUnsafePtr())
-						return 1;
-					return x.querier.CompareTo(y.querier);
-				}
+				// TODO: fix this when UnityObjectRef switches to EntityId
+				var xid = UnsafeUtility.As<UnityObjectRef<QueryGraphAsset>, int>(ref x.query);
+				var yid = UnsafeUtility.As<UnityObjectRef<QueryGraphAsset>, int>(ref y.query);
+				
+				int c = xid.CompareTo(yid);
+				if(c != 0)
+					return c;
+				return x.querier.CompareTo(y.querier);
 			}
 		}
 	}

@@ -20,5 +20,6 @@
         {
             return BlobAssetReference<T>.TryReadInplace(data, size, version, out result, out numBytesRead);
         }
+        
     }
 }

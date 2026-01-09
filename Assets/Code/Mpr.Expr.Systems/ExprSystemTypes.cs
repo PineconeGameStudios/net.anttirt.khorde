@@ -222,6 +222,12 @@ namespace Mpr.Expr
                     return false;
                 }
 
+                if (!instanceComponents.IsCreated)
+                {
+                    UnityEngine.Debug.LogError($"expression graph references local component {TypeManager.GetTypeInfo(type.TypeIndex).DebugTypeName} but local components are not allowed");
+                    continue;
+                }
+
                 instanceComponents.Add(type);
                 state.AddDependency(type);
 
@@ -233,6 +239,9 @@ namespace Mpr.Expr
                     typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
                 });
             }
+
+            if (componentTypes.Length > 0 && !instanceComponents.IsCreated)
+                return false;
 
             ref var lookupTypes = ref exprData.lookupComponents;
 
