@@ -1,3 +1,4 @@
+using Mpr.Query;
 using Unity.Entities;
 using UnityEngine;
 
@@ -18,10 +19,6 @@ namespace Mpr.Behavior
 
 				var entity = GetEntity(authoring, TransformUsageFlags.None);
 
-				//var treeHandle = authoring.behaviorTree.LoadPersistent(BTData.SchemaVersion);
-				//var tree = treeHandle.Reference;
-				//AddBlobAsset(ref tree, out _);
-
 				AddSharedComponent(entity, new BehaviorTree
 				{
 					tree = authoring.behaviorTree,
@@ -31,6 +28,14 @@ namespace Mpr.Behavior
 				AddComponent(entity, new BTState
 				{
 				});
+
+				if (authoring.behaviorTree.Queries.Count > 0)
+				{
+					var reg = new QueryAssetRegistration();
+					foreach (var query in authoring.behaviorTree.Queries)
+						reg.Add(query);
+					AddSharedComponent(entity, reg);
+				}
 			}
 		}
 	}

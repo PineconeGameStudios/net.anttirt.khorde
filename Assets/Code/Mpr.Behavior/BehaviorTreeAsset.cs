@@ -1,10 +1,14 @@
+using System.Collections.Generic;
 using Mpr.Blobs;
+using Mpr.Query;
 using UnityEngine;
 
 namespace Mpr.Behavior
 {
 	public class BehaviorTreeAsset : BlobAsset<BTData>
 	{
+		public List<QueryGraphAsset> Queries { get; private set; } = new();
+		
 		private void OnEnable()
 		{
 			#if UNITY_EDITOR
