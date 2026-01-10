@@ -33,6 +33,8 @@ namespace Mpr.Entities
             result = default;
             return false;
         }
+        
+        public BlobAssetReference<T> Reference => m_Asset;
 
         /// <summary>
         /// Interpret data in-place from an array into a blob asset handle.

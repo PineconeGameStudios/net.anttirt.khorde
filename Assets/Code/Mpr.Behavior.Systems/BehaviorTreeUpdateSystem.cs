@@ -9,6 +9,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.NetCode;
 using Unity.NetCode.LowLevel.Unsafe;
+using UnityEngine;
 
 namespace Mpr.Behavior
 {
@@ -65,6 +66,8 @@ namespace Mpr.Behavior
 				return;
 			}
 
+			int knownTrees = 0;
+
 			foreach(var (queryHolder, typeHandleHolder, lookupHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<ExprSystemTypeHandleHolder>, DynamicBuffer<ExprSystemComponentLookupHolder>, BehaviorTree>())
 			{
 				var job = new UpdateJob
@@ -86,15 +89,17 @@ namespace Mpr.Behavior
 					holder.componentLookup.Update(ref state);
 					job.componentLookups.AddLookup(holder);
 				}
-
+				
 				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
+
+				++knownTrees;
 			}
 		}
 
 		private bool CreateQueries(ref SystemState state)
 		{
 			state.EntityManager.GetAllUniqueSharedComponents<BehaviorTree>(out var values, Allocator.Temp);
-
+			
 			var holderQuery = SystemAPI.QueryBuilder()
 				.WithAllRW<BTQueryHolder>()
 				.WithAllRW<ExprSystemTypeHandleHolder>()
@@ -144,6 +149,7 @@ namespace Mpr.Behavior
 					
 					if (!ExpressionSystemUtility.TryAddQueriesAndComponents(ref state, ref btData.exprData, ref typeHandles, ref lookups, instanceComponents))
 					{
+						Debug.LogError("Failed to create queries / components");
 						state.Enabled = false;
 						return false;
 					}

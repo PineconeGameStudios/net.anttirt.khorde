@@ -44,7 +44,7 @@ namespace Mpr.Behavior.Test
 			BlobAssetReference<BTData> data = default;
 			try
 			{
-				data = btAsset.LoadPersistent();
+				data = btAsset.LoadPersistent(BTData.SchemaVersion).Reference;
 				data.Value.exprData.RuntimeInitialize();
 				BTState state = default;
 				Game.MoveTarget moveTarget = default;

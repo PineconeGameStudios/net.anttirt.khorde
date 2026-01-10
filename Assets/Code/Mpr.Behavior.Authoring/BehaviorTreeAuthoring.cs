@@ -18,7 +18,8 @@ namespace Mpr.Behavior
 
 				var entity = GetEntity(authoring, TransformUsageFlags.None);
 
-				var tree = authoring.behaviorTree.LoadPersistent();
+				var treeHandle = authoring.behaviorTree.LoadPersistent(BTData.SchemaVersion);
+				var tree = treeHandle.Reference;
 				AddBlobAsset(ref tree, out _);
 
 				AddSharedComponent(entity, new BehaviorTree

@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using Mpr.Behavior.Authoring;
+using Unity.Collections;
 using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor.AssetImporters;
@@ -7,7 +10,7 @@ using UnityEngine;
 
 namespace Mpr.Behavior
 {
-	[ScriptedImporter(2, BehaviorTreeGraph.AssetExtension)]
+	[ScriptedImporter(3, BehaviorTreeGraph.AssetExtension)]
 	internal class BehaviorTreeImporter : ScriptedImporter
 	{
 		public override void OnImportAsset(AssetImportContext ctx)
@@ -31,23 +34,45 @@ namespace Mpr.Behavior
 			}
 			else
 			{
-				var asset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
-
-				var writer = new MemoryBinaryWriter();
-				graph.Bake(writer);
-				ReadOnlySpan<byte> data;
-
-				unsafe
+				using (var context = new BTBakingContext(graph, Allocator.Temp))
 				{
-					data = new ReadOnlySpan<byte>(writer.Data, writer.Length);
+					var builder = context.Build();
+					if (!builder.IsCreated)
+					{
+						ctx.LogImportError("Build failed");
+						return;
+					}
+
+					if (context.Errors.Count > 0)
+					{
+						foreach (var error in context.Errors)
+							ctx.LogImportError(error);
+
+						return;
+					}
+					
+					var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+					var data = obj.SetAssetData(builder, BTData.SchemaVersion);
+					ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+					ctx.AddObjectToAsset("data", data);
+					ctx.SetMainObject(obj);
 				}
 
-				asset.bakedGraph = new TextAsset(data);
-				asset.bakedGraph.name = "Data";
+				//var writer = new MemoryBinaryWriter();
+				//graph.Bake(writer);
+				//ReadOnlySpan<byte> data;
 
-				ctx.AddObjectToAsset("Data", asset.bakedGraph);
-				ctx.AddObjectToAsset("BehaviorTree", asset);
-				ctx.SetMainObject(asset);
+				//unsafe
+				//{
+				//	data = new ReadOnlySpan<byte>(writer.Data, writer.Length);
+				//}
+
+				//asset.bakedGraph = new TextAsset(data);
+				//asset.bakedGraph.name = "Data";
+
+				//ctx.AddObjectToAsset("Data", asset.bakedGraph);
+				//ctx.AddObjectToAsset("BehaviorTree", asset);
+				//ctx.SetMainObject(asset);
 			}
 		}
 	}

@@ -81,6 +81,8 @@ namespace Mpr.Behavior
 
 	public struct BTData
 	{
+		public const int SchemaVersion = 1;
+		
 		public BlobExpressionData exprData;
 		public BlobArray<BTExec> execs;
 		public BlobArray<UnityEngine.Hash128> execNodeIds;
