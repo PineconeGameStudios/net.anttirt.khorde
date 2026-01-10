@@ -52,6 +52,10 @@ namespace Mpr.Query
 				.GetOrCreate<Ctx0>();
 
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+		#if UNITY_EDITOR
+		// NOTE: need InitializeOnLoadMethod for this to be available for unit tests
+		[UnityEditor.InitializeOnLoadMethod]
+		#endif
 		static void StaticInit()
 		{
 			GetQueriesFunc.Data = new(GetQueriesImpl);

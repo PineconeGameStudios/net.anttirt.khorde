@@ -23,6 +23,8 @@ public readonly struct BurstTrampoline
     public BurstTrampoline(Delegate method)
     {
         functionPointer = StaticInvoker;
+        if (!functionPointer.IsCreated)
+            throw new InvalidOperationException();
         context = GCHandle.ToIntPtr(GCHandle.Alloc(method));
     }
 
@@ -54,6 +56,8 @@ public readonly unsafe struct BurstTrampoline<T0> where T0 : unmanaged
     public BurstTrampoline(Delegate method)
     {
         functionPointer = StaticInvoker;
+        if (!functionPointer.IsCreated)
+            throw new InvalidOperationException();
         context = GCHandle.ToIntPtr(GCHandle.Alloc(method));
     }
 
@@ -94,6 +98,8 @@ public readonly unsafe struct BurstTrampoline<T0, T1>
     public BurstTrampoline(Delegate method)
     {
         functionPointer = StaticInvoker;
+        if (!functionPointer.IsCreated)
+            throw new InvalidOperationException();
         context = GCHandle.ToIntPtr(GCHandle.Alloc(method));
     }
 
@@ -137,6 +143,8 @@ public readonly unsafe struct BurstTrampoline<T0, T1, T2>
     public BurstTrampoline(Delegate method)
     {
         functionPointer = StaticInvoker;
+        if (!functionPointer.IsCreated)
+            throw new InvalidOperationException();
         context = GCHandle.ToIntPtr(GCHandle.Alloc(method));
     }
 
@@ -174,6 +182,8 @@ public readonly unsafe struct BurstTrampolineOut<T0> where T0 : unmanaged
     public BurstTrampolineOut(Delegate method)
     {
         functionPointer = StaticInvoker;
+        if (!functionPointer.IsCreated)
+            throw new InvalidOperationException();
         context = GCHandle.ToIntPtr(GCHandle.Alloc(method));
     }
 
@@ -214,6 +224,8 @@ public readonly unsafe struct BurstTrampolineOut<T0, T1>
     public BurstTrampolineOut(Delegate method)
     {
         functionPointer = StaticInvoker;
+        if (!functionPointer.IsCreated)
+            throw new InvalidOperationException();
         context = GCHandle.ToIntPtr(GCHandle.Alloc(method));
     }
 
@@ -257,6 +269,8 @@ public readonly unsafe struct BurstTrampolineOut<T0, T1, T2>
     public BurstTrampolineOut(Delegate method)
     {
         functionPointer = StaticInvoker;
+        if (!functionPointer.IsCreated)
+            throw new InvalidOperationException();
         context = GCHandle.ToIntPtr(GCHandle.Alloc(method));
     }
 

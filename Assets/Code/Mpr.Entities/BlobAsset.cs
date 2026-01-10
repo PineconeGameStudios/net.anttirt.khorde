@@ -207,6 +207,9 @@ namespace Mpr.Blobs
         private static Delegates DelegateHolders;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+        #if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+        #endif
         static void Initialize()
         {
             unsafe
@@ -334,10 +337,21 @@ namespace Mpr.Blobs
 
             if (!new FunctionPointer<GetDataStrongDelegate>(FunctionPointers.Data.GetDataStrong).Invoke(asset.GetObjectId(), &rawBytes))
             {
-                return default;
+                throw new NullReferenceException("asset not loaded");
             }
 
-            BlobAssetHandle<TBlob>.TryReadInplace(rawBytes, version, out var result, out _);
+            if (rawBytes.Length < BlobAssetBase.PaddingSize)
+            {
+                throw new InvalidOperationException("blob data too short");
+            }
+            
+            var payload = rawBytes.GetSubArray(BlobAssetBase.PaddingSize, rawBytes.Length - BlobAssetBase.PaddingSize);
+
+            if(!BlobAssetHandle<TBlob>.TryReadInplace(payload, version, out var result, out _))
+            {
+                throw new InvalidOperationException("invalid blob data");
+            }
+
             return result;
         }
 

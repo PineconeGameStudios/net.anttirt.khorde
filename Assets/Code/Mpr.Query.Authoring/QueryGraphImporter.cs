@@ -31,8 +31,6 @@ namespace Mpr.Query.Authoring
 			}
 			else
 			{
-				var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
-
 				using (var context = new QueryBakingContext(graph, Allocator.Temp))
 				{
 					var builder = context.Build();
@@ -50,6 +48,7 @@ namespace Mpr.Query.Authoring
 						return;
 					}
 
+					var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
 					var data = obj.SetAssetData(builder, QSData.SchemaVersion);
 					obj.entityQueries = context.EntityQueries.ToList();
 					ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);

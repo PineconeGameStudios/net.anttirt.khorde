@@ -12,7 +12,9 @@
         "GUID:70ef9a24f4cfc4aec911c1414e3f90ad",
         "GUID:bb37301e0d8cf5547ac941c396c1a95e",
         "GUID:07f90efd59ad1d84798b1949d158ad9a",
-        "GUID:f978e00eb6af5064c95d4d1823b104c3"
+        "GUID:f978e00eb6af5064c95d4d1823b104c3",
+        "GUID:6f263a91ed0ca4740b641732f808fca2",
+        "GUID:2665a8d13d1b3f18800f46e256720795"
     ],
     "includePlatforms": [
         "Editor"
@@ -22,7 +24,9 @@
     "overrideReferences": true,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }

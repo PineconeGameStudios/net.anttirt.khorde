@@ -469,7 +469,7 @@ namespace Mpr.Query
         /// <param name="results"></param>
         /// <typeparam name="TItem"></typeparam>
         /// <returns></returns>
-        public static NativeArray<TItem> AsResultArray<TItem>(ref this DynamicBuffer<QSResultItemStorage> results) where TItem : unmanaged
+        public static NativeArray<TItem> AsResultArray<TItem>(this DynamicBuffer<QSResultItemStorage> results) where TItem : unmanaged
         {
             if (results.Length == 0)
             {

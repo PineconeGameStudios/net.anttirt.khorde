@@ -75,10 +75,17 @@ namespace Mpr.Query
 				var asset = pair.Key;
 				ref var metaData = ref pair.Value;
 
+				if (asset.GetObjectId() == default)
+					throw new InvalidOperationException("query graph asset reference is null");
+
+				var data = asset.GetHandle<QSData, QueryGraphAsset>(QSData.SchemaVersion);
+				if (!data.IsCreated)
+					throw new InvalidOperationException("failed to get data handle from query graph asset");
+				
 				var job = new ExecuteQueryJob
 				{
 					query = asset,
-					data = asset.GetHandle<QSData, QueryGraphAsset>(QSData.SchemaVersion),
+					data = data,
 					pendingQuery = SystemAPI.GetComponentTypeHandle<PendingQuery>(),
 					resultItemStorage = SystemAPI.GetBufferTypeHandle<QSResultItemStorage>(),
 					queryResultLookup = entityQueryResultLookup,
