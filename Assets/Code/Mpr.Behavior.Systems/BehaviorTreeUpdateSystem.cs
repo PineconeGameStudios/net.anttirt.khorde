@@ -1,6 +1,8 @@
 using Mpr.Expr;
 using System;
 using System.Runtime.InteropServices;
+using Mpr.Blobs;
+using Mpr.Entities;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -72,7 +74,7 @@ namespace Mpr.Behavior
 			{
 				var job = new UpdateJob
 				{
-					btData = tree.tree,
+					btData = tree.tree.GetHandle<BTData, BehaviorTreeAsset>(BTData.SchemaVersion).Reference,
 					now = (float)SystemAPI.Time.ElapsedTime,
 					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BTState>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
@@ -111,7 +113,7 @@ namespace Mpr.Behavior
 
 			foreach(var value in values)
 			{
-				if(!value.tree.IsCreated)
+				if(value.tree.GetObjectId() == default)
 					continue;
 
 				holderQuery.AddSharedComponentFilter(value);
@@ -142,7 +144,7 @@ namespace Mpr.Behavior
 						instanceComponents.Add(ComponentType.ReadOnly<Simulate>());
 					}
 
-					ref var btData = ref value.tree.Value;
+					ref var btData = ref value.tree.GetValue<BTData, BehaviorTreeAsset>(BTData.SchemaVersion);
 
 					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(queryHolder);
 					var lookups = state.EntityManager.GetBuffer<ExprSystemComponentLookupHolder>(queryHolder);

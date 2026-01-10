@@ -1,4 +1,5 @@
 using System.Linq;
+using Mpr.Blobs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
@@ -55,7 +56,7 @@ namespace Mpr.Behavior
 					if(em.HasComponent<BehaviorTree>(entity)
 						&& em.HasBuffer<BTStackFrame>(entity))
 					{
-						ref var btData = ref em.GetSharedComponent<BehaviorTree>(entity).tree.Value;
+						ref var btData = ref em.GetSharedComponent<BehaviorTree>(entity).tree.GetValue<BTData, BehaviorTreeAsset>(BTData.SchemaVersion);
 						var stack = em.GetBuffer<BTStackFrame>(entity);
 
 						foreach(var frame in stack)

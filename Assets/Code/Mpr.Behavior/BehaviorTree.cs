@@ -8,7 +8,7 @@ namespace Mpr.Behavior
 {
 	public struct BehaviorTree : ISharedComponentData
 	{
-		public BlobAssetReference<BTData> tree;
+		public UnityObjectRef<BehaviorTreeAsset> tree;
 	}
 
 	public struct BTState : IComponentData
