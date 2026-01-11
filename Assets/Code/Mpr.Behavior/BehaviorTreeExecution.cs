@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using UnityEngine;
 
 namespace Mpr.Behavior
 {
@@ -17,11 +16,14 @@ namespace Mpr.Behavior
 			DynamicBuffer<BTStackFrame> stack,
 			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
+			NativeArray<UnityObjectRef<Mpr.Query.QueryGraphAsset>> queries,
+			EnabledRefRW<Mpr.Query.PendingQuery> pendingQueryEnabled,
+			ref Mpr.Query.PendingQuery pendingQuery,
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
 			float now,
 			DynamicBuffer<BTExecTrace> trace)
-			=> Execute(ref asset.Value, ref state, stack, blackboard, ref blackboardLayout, componentPtrs, lookups, now, trace);
+			=> Execute(ref asset.Value, ref state, stack, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, trace);
 
 		public static void Execute(
 			ref BTData data,
@@ -29,6 +31,9 @@ namespace Mpr.Behavior
 			DynamicBuffer<BTStackFrame> stack,
 			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
+			NativeArray<UnityObjectRef<Mpr.Query.QueryGraphAsset>> queries,
+			EnabledRefRW<Mpr.Query.PendingQuery> pendingQueryEnabled,
+			ref Mpr.Query.PendingQuery pendingQuery,
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
 			float now,
@@ -45,7 +50,7 @@ namespace Mpr.Behavior
 			}
 
 			NativeArray<byte> blackboardBytes = default;
-			if (blackboard.IsCreated)
+			if(blackboard.IsCreated)
 			{
 				blackboardBytes = blackboard.AsNativeArray()
 					.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
@@ -53,7 +58,7 @@ namespace Mpr.Behavior
 
 			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, lookups, blackboardBytes,
 				ref blackboardLayout);
-			
+
 			bool rootVisited = false;
 
 			for(int cycle = 0; ; ++cycle)
@@ -68,7 +73,7 @@ namespace Mpr.Behavior
 				if(trace.IsCreated && cycle == 0)
 					trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, stack.Length, cycle));
 
-				if(cycle == 0 && node.type != BTExec.BTExecType.Root && node.type != BTExec.BTExecType.Wait)
+				if(cycle == 0 && node.type != BTExec.BTExecType.Root && node.type != BTExec.BTExecType.Wait && node.type != BTExec.BTExecType.Query)
 					throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
 
 				void Trace(ref BTExec node, BTExecTrace.Event @event)
@@ -229,6 +234,21 @@ namespace Mpr.Behavior
 						{
 							Return(ref data, ref node);
 						}
+						break;
+
+					case BTExec.BTExecType.WriteVar:
+						{
+							var varBytes = exprContext.GetBlackboardVariable(node.data.writeVar.variableIndex);
+							node.data.writeVar.input.Evaluate(exprContext, ref varBytes);
+						}
+
+						Return(ref data, ref node);
+						break;
+
+					case BTExec.BTExecType.Query:
+						// TODO: run query and wait for results
+
+						Return(ref data, ref node);
 						break;
 
 					default:

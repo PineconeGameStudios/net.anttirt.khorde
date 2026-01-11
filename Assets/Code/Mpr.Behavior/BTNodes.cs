@@ -159,4 +159,25 @@ namespace Mpr.Behavior
 			return $"{{ child={child} }}";
 		}
 	}
+
+	public struct WriteVar
+	{
+		public ExpressionRef input;
+		public int variableIndex;
+
+		public string DumpString()
+		{
+			return $"{{ input={input} varIndex={variableIndex} }}";
+		}
+	}
+
+	public struct Query
+	{
+		public int queryIndex;
+
+		public string DumpString()
+		{
+			return $"{{ query(TODO) }}";
+		}
+	}
 }

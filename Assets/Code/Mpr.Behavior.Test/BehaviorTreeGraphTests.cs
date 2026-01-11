@@ -1,8 +1,8 @@
-using System;
 using Mpr.Expr;
+using Mpr.Query;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
-using Mpr.Blobs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
@@ -19,15 +19,16 @@ namespace Mpr.Behavior.Test
 		EntityManager em;
 		Entity testEntity;
 		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
-		DynamicBuffer<BTExecTrace> trace =>  em.GetBuffer<BTExecTrace>(testEntity);
+		DynamicBuffer<BTExecTrace> trace => em.GetBuffer<BTExecTrace>(testEntity);
 		DynamicBuffer<ExpressionBlackboardStorage> blackboard => em.GetBuffer<ExpressionBlackboardStorage>(testEntity);
 		BehaviorTestSystem testSystem;
+		PendingQuery defaultPendingQuery;
 
 		[SetUp]
 		public void SetUp()
 		{
 			ExpressionTypeManager.Initialize();
-			
+
 			world = new World("TestWorld");
 			testSystem = world.GetOrCreateSystemManaged<BehaviorTestSystem>();
 			em = world.EntityManager;
@@ -61,25 +62,25 @@ namespace Mpr.Behavior.Test
 
 				NativeArray<UnsafeComponentReference> comps =
 					new NativeArray<UnsafeComponentReference>(localComponents.Length, Allocator.Temp);
-				
+
 				for(int i = 0; i < localComponents.Length; ++i)
 				{
 					var type = localComponents[i].ResolveComponentType();
 					var typeIndex = type.TypeIndex;
-					if (typeIndex == TypeManager.GetTypeIndex<Game.MoveTarget>())
+					if(typeIndex == TypeManager.GetTypeIndex<Game.MoveTarget>())
 						comps[i] = UnsafeComponentReference.Make(ref moveTarget);
-					else if (typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
+					else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
 						comps[i] = UnsafeComponentReference.Make(ref localTransform);
-					else if (typeIndex == TypeManager.GetTypeIndex<Game.NpcTargetEntity>())
+					else if(typeIndex == TypeManager.GetTypeIndex<Game.NpcTargetEntity>())
 						comps[i] = UnsafeComponentReference.Make(ref targetEntity);
 					else
 						throw new Exception($"component {type.GetManagedType().FullName} not available in test");
 				}
 
-				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1,  Allocator.Temp);
+				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
 				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -95,7 +96,7 @@ namespace Mpr.Behavior.Test
 
 				trace.Clear();
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -107,7 +108,7 @@ namespace Mpr.Behavior.Test
 
 				moveTarget.enabled = false;
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(

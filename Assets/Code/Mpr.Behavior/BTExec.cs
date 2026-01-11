@@ -23,6 +23,8 @@ namespace Mpr.Behavior
 			Fail,
 			Optional,
 			Catch,
+			WriteVar,
+			Query,
 		}
 
 		[StructLayout(LayoutKind.Explicit, Pack = 8)]
@@ -36,6 +38,8 @@ namespace Mpr.Behavior
 			[FieldOffset(0)] public Fail fail;
 			[FieldOffset(0)] public Optional optional;
 			[FieldOffset(0)] public Catch @catch;
+			[FieldOffset(0)] public WriteVar writeVar;
+			[FieldOffset(0)] public Query query;
 		}
 
 		public string DumpString()
@@ -53,6 +57,8 @@ namespace Mpr.Behavior
 				case BTExecType.Fail: result += data.fail.DumpString(); break;
 				case BTExecType.Optional: result += data.optional.DumpString(); break;
 				case BTExecType.Catch: result += data.@catch.DumpString(); break;
+				case BTExecType.WriteVar: result += data.writeVar.DumpString(); break;
+				case BTExecType.Query: result += data.query.DumpString(); break;
 				default: break;
 			}
 

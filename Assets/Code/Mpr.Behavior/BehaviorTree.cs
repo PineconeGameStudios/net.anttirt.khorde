@@ -87,6 +87,7 @@ namespace Mpr.Behavior
 		public BlobArray<BTExec> execs;
 		public BlobArray<UnityEngine.Hash128> execNodeIds;
 		public BlobArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStacks;
+		public bool hasQueries;
 
 		public BTExecNodeId Root
 		{

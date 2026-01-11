@@ -1,16 +1,14 @@
-using Mpr.Expr;
-using System;
-using System.Runtime.InteropServices;
 using Mpr.Blobs;
 using Mpr.Entities;
+using Mpr.Expr;
+using Mpr.Query;
+using System;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.NetCode;
-using Unity.NetCode.LowLevel.Unsafe;
 using UnityEngine;
 using Hash128 = Unity.Entities.Hash128;
 
@@ -36,10 +34,12 @@ namespace Mpr.Behavior
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
 			public BufferTypeHandle<ExpressionBlackboardStorage> blackboardTypeHandle;
 			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
+			public SharedComponentTypeHandle<QueryAssetRegistration> queriesTypeHandle;
+			public ComponentTypeHandle<PendingQuery> pendingQueryHandle;
 			public Hash128 dataHash;
 			public float now;
 
-			public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+			public unsafe void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
 			{
 				typeHandles.Initialize(chunk);
 
@@ -50,15 +50,33 @@ namespace Mpr.Behavior
 				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
 				ref var layout = ref layouts.FindLayout(dataHash);
 
+				NativeArray<UnityObjectRef<QueryGraphAsset>> queries = default;
+				EnabledMask pendingQueryEnabledMask = default;
+				NativeArray<PendingQuery> pendingQueries = default;
+
+				if(btData.Value.hasQueries)
+				{
+					queries = chunk.GetSharedComponent(queriesTypeHandle).Assets;
+					pendingQueryEnabledMask = chunk.GetEnabledMask(ref pendingQueryHandle);
+					pendingQueries = chunk.GetNativeArray(ref pendingQueryHandle);
+				}
+
+				PendingQuery defaultValue = default;
+
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
 				while(enumerator.NextEntityIndex(out var entityIndex))
 				{
+					EnabledRefRW<PendingQuery> pendingQueryEnabled = default;
+					if(btData.Value.hasQueries)
+						pendingQueryEnabled = pendingQueryEnabledMask.GetEnabledRefRW<PendingQuery>(entityIndex);
+
 					BehaviorTreeExecution.Execute(
 						ref btData.Value,
 						ref states[entityIndex],
 						stacks[entityIndex],
 						blackboards[entityIndex],
 						ref layout,
+						queries, pendingQueryEnabled, ref (pendingQueries.IsCreated ? ref pendingQueries.UnsafeElementAt(entityIndex) : ref defaultValue),
 						typeHandles.GetComponents(entityIndex),
 						lookups,
 						now,
@@ -88,6 +106,8 @@ namespace Mpr.Behavior
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
 					blackboardTypeHandle = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
+					queriesTypeHandle = SystemAPI.GetSharedComponentTypeHandle<QueryAssetRegistration>(),
+					pendingQueryHandle = SystemAPI.GetComponentTypeHandle<PendingQuery>(),
 					dataHash = tree.tree.GetDataHash(),
 				};
 
@@ -102,7 +122,7 @@ namespace Mpr.Behavior
 					holder.componentLookup.Update(ref state);
 					job.componentLookups.AddLookup(holder);
 				}
-				
+
 				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
 
 				++knownTrees;
@@ -112,7 +132,7 @@ namespace Mpr.Behavior
 		private bool CreateQueries(ref SystemState state)
 		{
 			state.EntityManager.GetAllUniqueSharedComponents<BehaviorTree>(out var values, Allocator.Temp);
-			
+
 			var holderQuery = SystemAPI.QueryBuilder()
 				.WithAllRW<BTQueryHolder>()
 				.WithAllRW<ExprSystemTypeHandleHolder>()
@@ -141,13 +161,14 @@ namespace Mpr.Behavior
 					var queryHolder = state.EntityManager.CreateEntity(types);
 
 					var builder = new EntityQueryBuilder(Allocator.Temp);
-					
+
 					var instanceComponents = new NativeList<ComponentType>(Allocator.Temp)
 					{
 						ComponentType.ReadOnly<BehaviorTree>(),
 						ComponentType.ReadWrite<BTState>(),
 						ComponentType.ReadWrite<BTStackFrame>(),
 						ComponentType.ReadWrite<ExpressionBlackboardStorage>(),
+						ComponentType.ReadWrite<ExpressionBlackboardLayouts>(),
 					};
 
 					if(clientWorld)
@@ -158,16 +179,22 @@ namespace Mpr.Behavior
 
 					ref var btData = ref value.tree.GetValue<BTData, BehaviorTreeAsset>(BTData.SchemaVersion);
 
+					if(btData.hasQueries)
+					{
+						instanceComponents.Add(ComponentType.ReadOnly<QueryAssetRegistration>());
+						instanceComponents.Add(ComponentType.ReadWrite<PendingQuery>());
+					}
+
 					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(queryHolder);
 					var lookups = state.EntityManager.GetBuffer<ExprSystemComponentLookupHolder>(queryHolder);
-					
-					if (!ExpressionSystemUtility.TryAddQueriesAndComponents(ref state, ref btData.exprData, ref typeHandles, ref lookups, instanceComponents))
+
+					if(!ExpressionSystemUtility.TryAddQueriesAndComponents(ref state, ref btData.exprData, ref typeHandles, ref lookups, instanceComponents))
 					{
 						Debug.LogError("Failed to create queries / components");
 						state.Enabled = false;
 						return false;
 					}
-					
+
 					builder.WithAll(ref instanceComponents);
 
 					var btQuery = builder.Build(state.EntityManager);

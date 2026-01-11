@@ -1,10 +1,10 @@
-using System;
 using Mpr.Expr;
 using Mpr.Expr.Authoring;
-using NUnit.Framework;
-using System.Collections.Generic;
-using System.Linq;
 using Mpr.Expr.Test;
+using Mpr.Query;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -24,22 +24,23 @@ namespace Mpr.Behavior.Test
 		new BTTestBakingContext baker;
 		ref BTData data => ref baker.GetData();
 		ref BlobBuilder builder => ref baker.Builder;
+		PendingQuery defaultPendingQuery;
 
 		unsafe class BTTestBakingContext : ExpressionBakingContext
 		{
 			private BTData* data;
-			
-			public ref BTData GetData()
+
+			public new ref BTData GetData()
 			{
 				return ref *data;
 			}
-			
+
 			public BTTestBakingContext() : base(Allocator.Temp) { }
 
 			protected override ref BlobExpressionData ConstructRoot()
 			{
 				ref var data = ref builder.ConstructRoot<BTData>();
-				fixed (BTData* ptr = &data)
+				fixed(BTData* ptr = &data)
 					this.data = ptr;
 				return ref data.exprData;
 			}
@@ -55,7 +56,7 @@ namespace Mpr.Behavior.Test
 		public override void SetUp()
 		{
 			base.baker = baker = new BTTestBakingContext();
-			
+
 			base.SetUp();
 
 			testEntity = em.CreateEntity();
@@ -80,14 +81,14 @@ namespace Mpr.Behavior.Test
 		public void Test_CreateBlob()
 		{
 			baker.InitializeBake(1, 0);
-			
+
 			AddExpression(new BinaryFloat()
 			{
 				Input0 = baker.Const(0.0f),
 				Input1 = baker.Const(1.0f),
 				@operator = BinaryMathOp.Add,
 			});
-        
+
 			var execs = baker.Builder.Allocate(ref data.execs, 1);
 			var asset = baker.Bake();
 			asset.Value.exprData.RuntimeInitialize();
@@ -100,7 +101,7 @@ namespace Mpr.Behavior.Test
 		public void Test_Execute()
 		{
 			baker.InitializeBake(0, 0);
-        
+
 			var execs = baker.Builder.Allocate(ref data.execs, 100);
 
 			execs[1].type = BTExec.BTExecType.Root;
@@ -113,7 +114,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -134,7 +135,7 @@ namespace Mpr.Behavior.Test
 		public void Test_Fail()
 		{
 			baker.InitializeBake(0, 0);
-			
+
 			var execs = builder.Allocate(ref data.execs, 100);
 
 			execs[1].type = BTExecType.Root;
@@ -150,7 +151,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -171,7 +172,7 @@ namespace Mpr.Behavior.Test
 		public void Test_Catch()
 		{
 			baker.InitializeBake(0, 0);
-			
+
 			var execs = builder.Allocate(ref data.execs, 100);
 
 			execs[1].type = BTExecType.Root;
@@ -190,7 +191,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -213,7 +214,7 @@ namespace Mpr.Behavior.Test
 		public void Test_Sequence()
 		{
 			baker.InitializeBake(0, 0);
-			
+
 			var execs = builder.Allocate(ref data.execs, 100);
 
 			execs[1].type = BTExecType.Root;
@@ -235,7 +236,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -263,7 +264,7 @@ namespace Mpr.Behavior.Test
 
 			var False = baker.Const(false);
 			var True = baker.Const(true);
-			
+
 			var execs = builder.Allocate(ref data.execs, 100);
 
 			execs[1].type = BTExecType.Root;
@@ -287,7 +288,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -332,7 +333,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -370,7 +371,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -411,7 +412,7 @@ namespace Mpr.Behavior.Test
 
 			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
 			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
-			
+
 			var execs = builder.Allocate(ref data.execs, 100);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
@@ -430,7 +431,7 @@ namespace Mpr.Behavior.Test
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			NativeArray<UnsafeComponentReference> componentPtrs = new  NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
 			NativeArray<UntypedComponentLookup> lookups = default;
@@ -439,7 +440,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -467,7 +468,7 @@ namespace Mpr.Behavior.Test
 		{
 			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
 			baker.InitializeBake(1, 0);
-			
+
 			var execs = builder.Allocate(ref data.execs, 100);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
@@ -490,7 +491,7 @@ namespace Mpr.Behavior.Test
 				Assert.IsFalse(tc1.field1);
 				Assert.IsTrue(tc1.field2);
 
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -515,7 +516,7 @@ namespace Mpr.Behavior.Test
 		{
 			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
 			baker.InitializeBake(1, 0);
-			
+
 			var execs = builder.Allocate(ref data.execs, 100);
 
 			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
@@ -531,7 +532,7 @@ namespace Mpr.Behavior.Test
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
-			NativeArray<UnsafeComponentReference> componentPtrs = new  NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
 			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
 
 			NativeArray<UntypedComponentLookup> lookups = default;
@@ -540,7 +541,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -551,7 +552,7 @@ namespace Mpr.Behavior.Test
 
 				trace.Clear();
 
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Wait, 2, 2, Event.Start),
@@ -562,7 +563,7 @@ namespace Mpr.Behavior.Test
 
 				tc1.field1 = true;
 
-				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Wait, 2, 2, Event.Start),
