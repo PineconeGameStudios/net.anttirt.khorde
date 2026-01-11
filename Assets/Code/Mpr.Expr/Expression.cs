@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Mpr.Blobs;
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Mpr.Blobs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -17,192 +17,198 @@ namespace Mpr.Expr;
 /// </summary>
 public struct ExpressionComponentTypeInfo
 {
-    public struct Field
-    {
-        public ushort offset;
-        public ushort length;
+	public struct Field
+	{
+		public ushort offset;
+		public ushort length;
 
-        public static implicit operator Field(System.Reflection.FieldInfo fieldInfo)
-        {
-            return new Field
-            {
-                offset = (ushort)UnsafeUtility.GetFieldOffset(fieldInfo),
-                length = (ushort)UnsafeUtility.SizeOf(fieldInfo.FieldType),
-            };
-        }
+		public static implicit operator Field(System.Reflection.FieldInfo fieldInfo)
+		{
+			return new Field
+			{
+				offset = (ushort)UnsafeUtility.GetFieldOffset(fieldInfo),
+				length = (ushort)UnsafeUtility.SizeOf(fieldInfo.FieldType),
+			};
+		}
 
-        public override string ToString()
-        {
-            return $"{{ offset={offset}, length={length} }}";
-        }
-    }
-        
-    public int componentIndex;
-    public BlobArray<Field> fields;
+		public override string ToString()
+		{
+			return $"{{ offset={offset}, length={length} }}";
+		}
+	}
+
+	public int componentIndex;
+	public BlobArray<Field> fields;
 }
 
 public struct ExpressionBlackboardLayout
 {
-    public struct Slice
-    {
-        public int offset;
-        public int length;
-    }
+	public struct Slice
+	{
+		public int offset;
+		public int length;
+	}
 
-    public Hash128 asset;
-    
-    /// <summary>
-    /// Minimum required size of blackboard storage in bytes
-    /// </summary>
-    public int minByteLength;
-    public BlobArray<Slice> variables;
+	public Hash128 asset;
 
-    private static readonly SharedStatic<FixedList64Bytes<byte>> s_emptyStorage = SharedStatic<FixedList64Bytes<byte>>.GetOrCreate<ExpressionBlackboardLayout>();
-    public static unsafe ref ExpressionBlackboardLayout Empty => ref *(ExpressionBlackboardLayout*)s_emptyStorage.UnsafeDataPointer;
+	/// <summary>
+	/// Minimum required size of blackboard storage in bytes
+	/// </summary>
+	public int minByteLength;
+	public BlobArray<Slice> variables;
+
+	private static readonly SharedStatic<FixedList64Bytes<byte>> s_emptyStorage = SharedStatic<FixedList64Bytes<byte>>.GetOrCreate<ExpressionBlackboardLayout>();
+	public static unsafe ref ExpressionBlackboardLayout Empty => ref *(ExpressionBlackboardLayout*)s_emptyStorage.UnsafeDataPointer;
 }
 
 public struct ExpressionBlackboardLayouts : ISharedComponentData
 {
-    public struct LayoutContainer
-    {
-        public BlobArray<ExpressionBlackboardLayout> layouts;
-        
-        /// <summary>
-        /// Compute the number of storage elements required for this blackboard layout
-        /// </summary>
-        /// <typeparam name="TStorage"></typeparam>
-        /// <returns></returns>
-        public int ComputeStorageLength<TStorage>() where TStorage : unmanaged
-        {
-            int maxLength = 0;
-            foreach (ref var layout in layouts.AsSpan())
-            {
-                var elemSize = UnsafeUtility.SizeOf<TStorage>();
-                int byteSize = layout.variables.Length > 0 ? (layout.variables[^1].offset + layout.variables[^1].length) : 0;
-                maxLength = math.max(maxLength, (byteSize + elemSize - 1) / elemSize);
-            }
+	public struct LayoutContainer
+	{
+		public BlobArray<ExpressionBlackboardLayout> layouts;
 
-            return maxLength;
-        }
-    }
-    
-    public BlobAssetReference<LayoutContainer> asset;
+		/// <summary>
+		/// Compute the number of storage elements required for this blackboard layout
+		/// </summary>
+		/// <typeparam name="TStorage"></typeparam>
+		/// <returns></returns>
+		public int ComputeStorageLength<TStorage>() where TStorage : unmanaged
+		{
+			int maxLength = 0;
+			foreach(ref var layout in layouts.AsSpan())
+			{
+				var elemSize = UnsafeUtility.SizeOf<TStorage>();
+				int byteSize = layout.variables.Length > 0 ? (layout.variables[^1].offset + layout.variables[^1].length) : 0;
+				maxLength = math.max(maxLength, (byteSize + elemSize - 1) / elemSize);
+			}
 
-    public ref ExpressionBlackboardLayout FindLayout(Hash128 assetHash)
-    {
-        if(!asset.IsCreated)
-            return ref ExpressionBlackboardLayout.Empty;
-        
-        foreach(ref var layout in asset.Value.layouts.AsSpan())
-            if (layout.asset == assetHash)
-                return ref layout;
-        
-        return ref ExpressionBlackboardLayout.Empty;
-    }
+			return maxLength;
+		}
+
+		public ref ExpressionBlackboardLayout FindLayout(Hash128 assetHash)
+		{
+
+			foreach(ref var layout in layouts.AsSpan())
+				if(layout.asset == assetHash)
+					return ref layout;
+
+			return ref ExpressionBlackboardLayout.Empty;
+		}
+	}
+
+	public BlobAssetReference<LayoutContainer> asset;
+
+	public ref ExpressionBlackboardLayout FindLayout(Hash128 assetHash)
+	{
+		if(!asset.IsCreated)
+			return ref ExpressionBlackboardLayout.Empty;
+
+		return ref asset.Value.FindLayout(assetHash);
+	}
 }
 
 public unsafe ref struct ExpressionEvalContext
 {
-    public ExpressionEvalContext(
-        ref BlobExpressionData data,
-        NativeArray<UnsafeComponentReference> componentPtrs,
-        NativeArray<UntypedComponentLookup> componentLookups,
-        NativeArray<byte> blackboard,
-        ref ExpressionBlackboardLayout blackboardLayout
-        )
-    {
-        fixed (BlobExpressionData* pData = &data)
-            this.dataPtr = pData;
-        this.componentPtrs = componentPtrs;
-        this.componentLookups = componentLookups;
-        this.blackboard = blackboard;
-        fixed (ExpressionBlackboardLayout* pLayout = &blackboardLayout)
-            this.blackboardLayout = pLayout;
+	public ExpressionEvalContext(
+		ref BlobExpressionData data,
+		NativeArray<UnsafeComponentReference> componentPtrs,
+		NativeArray<UntypedComponentLookup> componentLookups,
+		NativeArray<byte> blackboard,
+		ref ExpressionBlackboardLayout blackboardLayout
+		)
+	{
+		fixed(BlobExpressionData* pData = &data)
+			this.dataPtr = pData;
+		this.componentPtrs = componentPtrs;
+		this.componentLookups = componentLookups;
+		this.blackboard = blackboard;
+		fixed(ExpressionBlackboardLayout* pLayout = &blackboardLayout)
+			this.blackboardLayout = pLayout;
 
-        if (blackboard.Length < blackboardLayout.minByteLength)
-            throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
-        
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-        this.callStack = new(Allocator.Temp);
-        this.callStackLookup = new(8, Allocator.Temp);
-#endif
-    }
+		if(blackboard.Length < blackboardLayout.minByteLength)
+			throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-    public ExpressionEvalContext(
-        ref BlobExpressionData data,
-        NativeArray<UnsafeComponentReference> componentPtrs,
-        NativeArray<UntypedComponentLookup> componentLookups,
-        NativeArray<byte> blackboard,
-        ref ExpressionBlackboardLayout blackboardLayout,
-        NativeList<ushort> callStack,
-        NativeHashSet<ushort> callStackLookup)
-    {
-        fixed (BlobExpressionData* pData = &data)
-            this.dataPtr = pData;
-        this.componentPtrs = componentPtrs;
-        this.componentLookups = componentLookups;
-        this.blackboard = blackboard;
-        fixed (ExpressionBlackboardLayout* pLayout = &blackboardLayout)
-            this.blackboardLayout = pLayout;
-        
-        if (blackboard.Length < blackboardLayout.minByteLength)
-            throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
-        
-        this.callStack = callStack;
-        this.callStackLookup = callStackLookup;
-    }
+		this.callStack = new(Allocator.Temp);
+		this.callStackLookup = new(8, Allocator.Temp);
 #endif
-
-    BlobExpressionData* dataPtr;
-    public NativeArray<UnsafeComponentReference> componentPtrs;
-    public NativeArray<UntypedComponentLookup> componentLookups;
-    public NativeArray<byte> blackboard;
-    ExpressionBlackboardLayout* blackboardLayout;
+	}
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-    public NativeList<ushort> callStack;
-    public NativeHashSet<ushort> callStackLookup;
+	public ExpressionEvalContext(
+		ref BlobExpressionData data,
+		NativeArray<UnsafeComponentReference> componentPtrs,
+		NativeArray<UntypedComponentLookup> componentLookups,
+		NativeArray<byte> blackboard,
+		ref ExpressionBlackboardLayout blackboardLayout,
+		NativeList<ushort> callStack,
+		NativeHashSet<ushort> callStackLookup)
+	{
+		fixed(BlobExpressionData* pData = &data)
+			this.dataPtr = pData;
+		this.componentPtrs = componentPtrs;
+		this.componentLookups = componentLookups;
+		this.blackboard = blackboard;
+		fixed(ExpressionBlackboardLayout* pLayout = &blackboardLayout)
+			this.blackboardLayout = pLayout;
+
+		if(blackboard.Length < blackboardLayout.minByteLength)
+			throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
+
+		this.callStack = callStack;
+		this.callStackLookup = callStackLookup;
+	}
 #endif
 
-    public ref BlobExpressionData data => ref *dataPtr;
-    public ref ExpressionBlackboardLayout layout => ref *blackboardLayout;
+	BlobExpressionData* dataPtr;
+	public NativeArray<UnsafeComponentReference> componentPtrs;
+	public NativeArray<UntypedComponentLookup> componentLookups;
+	public NativeArray<byte> blackboard;
+	ExpressionBlackboardLayout* blackboardLayout;
 
-    public NativeArray<byte> GetBlackboardVariable(int index)
-    {
-        var slice = layout.variables[index];
-        return blackboard.GetSubArray(slice.offset, slice.length);
-    }
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+	public NativeList<ushort> callStack;
+	public NativeHashSet<ushort> callStackLookup;
+#endif
+
+	public ref BlobExpressionData data => ref *dataPtr;
+	public ref ExpressionBlackboardLayout layout => ref *blackboardLayout;
+
+	public NativeArray<byte> GetBlackboardVariable(int index)
+	{
+		var slice = layout.variables[index];
+		return blackboard.GetSubArray(slice.offset, slice.length);
+	}
 }
 
 public static class ExprNativeArrayExt
 {
-    /// <summary>
-    /// Interpret the slice as a single element of type <typeparamref name="T"/>
-    /// </summary>
-    /// <param name="slice"></param>
-    /// <typeparam name="T"><c>unmanaged</c> type to interpret slice contents as</typeparam>
-    /// <returns></returns>
-    public static ref T AsSingle<T>(this ref NativeArray<byte> slice) where T : unmanaged
-    {
-        unsafe
-        {
-            var converted = slice.Reinterpret<T>(1);
-            return ref *(T*)converted.GetUnsafePtr();
-        }
-    }
+	/// <summary>
+	/// Interpret the slice as a single element of type <typeparamref name="T"/>
+	/// </summary>
+	/// <param name="slice"></param>
+	/// <typeparam name="T"><c>unmanaged</c> type to interpret slice contents as</typeparam>
+	/// <returns></returns>
+	public static ref T AsSingle<T>(this ref NativeArray<byte> slice) where T : unmanaged
+	{
+		unsafe
+		{
+			var converted = slice.Reinterpret<T>(1);
+			return ref *(T*)converted.GetUnsafePtr();
+		}
+	}
 
-    /// <summary>
-    /// Clear the contents of the slice, setting all bytes to zero.
-    /// </summary>
-    /// <param name="slice"></param>
-    public static void Clear(this ref NativeArray<byte> slice)
-    {
-        unsafe
-        {
-            UnsafeUtility.MemClear(slice.GetUnsafePtr(), slice.Length);
-        }
-    }
+	/// <summary>
+	/// Clear the contents of the slice, setting all bytes to zero.
+	/// </summary>
+	/// <param name="slice"></param>
+	public static void Clear(this ref NativeArray<byte> slice)
+	{
+		unsafe
+		{
+			UnsafeUtility.MemClear(slice.GetUnsafePtr(), slice.Length);
+		}
+	}
 }
 
 /// <summary>
@@ -210,209 +216,209 @@ public static class ExprNativeArrayExt
 /// </summary>
 public struct ExpressionRef
 {
-    private readonly ushort index;
-    private readonly ushort packedIndexOrLength;
-    private const ushort FlagConstant = (ushort)0x8000u;
-    private const ushort IndexMask = (ushort)0x7fffu;
-        
-    private bool isConstant
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (packedIndexOrLength & FlagConstant) != 0;
-    }
+	private readonly ushort index;
+	private readonly ushort packedIndexOrLength;
+	private const ushort FlagConstant = (ushort)0x8000u;
+	private const ushort IndexMask = (ushort)0x7fffu;
 
-    private ushort outputIndexOrConstantLength
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get { unchecked { return (ushort)(packedIndexOrLength & IndexMask); } }
-    }
+	private bool isConstant
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => (packedIndexOrLength & FlagConstant) != 0;
+	}
 
-    ExpressionRef(ushort index, ushort outputIndex, bool constant)
-    {
-        this.index = index;
-        this.packedIndexOrLength = (ushort)(outputIndex | (constant ? FlagConstant : 0u));
-    }
+	private ushort outputIndexOrConstantLength
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get { unchecked { return (ushort)(packedIndexOrLength & IndexMask); } }
+	}
 
-    public static ExpressionRef Node(ushort index, ushort outputIndex) => new ExpressionRef(index, outputIndex, false);
-    public static ExpressionRef Const(ushort offset, ushort length) => new ExpressionRef(offset, length, true);
+	ExpressionRef(ushort index, ushort outputIndex, bool constant)
+	{
+		this.index = index;
+		this.packedIndexOrLength = (ushort)(outputIndex | (constant ? FlagConstant : 0u));
+	}
 
-    public ExpressionRef WithOutputIndex(ushort outputIndex) => Node(index, outputIndex);
+	public static ExpressionRef Node(ushort index, ushort outputIndex) => new ExpressionRef(index, outputIndex, false);
+	public static ExpressionRef Const(ushort offset, ushort length) => new ExpressionRef(offset, length, true);
 
-    public T Evaluate<T>(in ExpressionEvalContext ctx) where T : unmanaged
-    {
-        if (isConstant)
-        {
-            return ctx.data.GetConstant<T>(index);
-        }
-        else
-        {
-            T result = default;
+	public ExpressionRef WithOutputIndex(ushort outputIndex) => Node(index, outputIndex);
 
-            unsafe
-            {
-                var size = UnsafeUtility.SizeOf<T>();
-                var resultSlice =
-                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(&result, size, Allocator.None);
+	public T Evaluate<T>(in ExpressionEvalContext ctx) where T : unmanaged
+	{
+		if(isConstant)
+		{
+			return ctx.data.GetConstant<T>(index);
+		}
+		else
+		{
+			T result = default;
+
+			unsafe
+			{
+				var size = UnsafeUtility.SizeOf<T>();
+				var resultSlice =
+					NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(&result, size, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice,
-                    AtomicSafetyHandle.GetTempMemoryHandle());
+				NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice,
+					AtomicSafetyHandle.GetTempMemoryHandle());
 #endif
-                CheckStackPush(in ctx, index);
-                ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
-                CheckStackPop(in ctx, index);
-            }
+				CheckStackPush(in ctx, index);
+				ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
+				CheckStackPop(in ctx, index);
+			}
 
-            return result;
-        }
-    }
+			return result;
+		}
+	}
 
-    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-    private void CheckStackPush(in ExpressionEvalContext ctx, ushort index)
-    {
+	[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+	private void CheckStackPush(in ExpressionEvalContext ctx, ushort index)
+	{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        if (!ctx.callStack.IsCreated)
-            return;
-        
-        if (!ctx.callStackLookup.Add(index))
-            throw new InvalidOperationException($"expression cycle: {index} calls itself");
-                
-        ctx.callStack.Add(index);
-#endif
-    }
+		if(!ctx.callStack.IsCreated)
+			return;
 
-    [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-    private void CheckStackPop(in ExpressionEvalContext ctx, ushort index)
-    {
+		if(!ctx.callStackLookup.Add(index))
+			throw new InvalidOperationException($"expression cycle: {index} calls itself");
+
+		ctx.callStack.Add(index);
+#endif
+	}
+
+	[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+	private void CheckStackPop(in ExpressionEvalContext ctx, ushort index)
+	{
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        if (!ctx.callStack.IsCreated)
-            return;
-        
-        var top = ctx.callStack[ctx.callStack.Length - 1];
-        if (top != index)
-            throw new InvalidOperationException($"inconsistent stack: {index} call resulted in {top} at the top");
-        
-        ctx.callStackLookup.Remove(top);
-        ctx.callStack.RemoveAt(ctx.callStack.Length - 1);
-#endif
-    }
+		if(!ctx.callStack.IsCreated)
+			return;
 
-    public void Evaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
-    {
-        if (isConstant)
-        {
-            result = ctx.data.GetConstant<T>(index);
-        }
-        else
-        {
-            unsafe
-            {
-                var size = UnsafeUtility.SizeOf<T>();
-                fixed (T* pResult = &result)
-                {
-                    var resultSlice =
-                        NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(pResult, size, Allocator.None);
+		var top = ctx.callStack[ctx.callStack.Length - 1];
+		if(top != index)
+			throw new InvalidOperationException($"inconsistent stack: {index} call resulted in {top} at the top");
+
+		ctx.callStackLookup.Remove(top);
+		ctx.callStack.RemoveAt(ctx.callStack.Length - 1);
+#endif
+	}
+
+	public void Evaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
+	{
+		if(isConstant)
+		{
+			result = ctx.data.GetConstant<T>(index);
+		}
+		else
+		{
+			unsafe
+			{
+				var size = UnsafeUtility.SizeOf<T>();
+				fixed(T* pResult = &result)
+				{
+					var resultSlice =
+						NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(pResult, size, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice,
-                        AtomicSafetyHandle.GetTempMemoryHandle());
+					NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref resultSlice,
+						AtomicSafetyHandle.GetTempMemoryHandle());
 #endif
 
-                    CheckStackPush(in ctx, index);
-                    ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
-                    CheckStackPop(in ctx, index);
-                }
-            }
-        }
-    }
+					CheckStackPush(in ctx, index);
+					ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref resultSlice);
+					CheckStackPop(in ctx, index);
+				}
+			}
+		}
+	}
 
-    public void Evaluate(in ExpressionEvalContext ctx, ref NativeArray<byte> result)
-    {
-        if (isConstant)
-        {
-            result.CopyFrom(
-                ctx.data.GetConstants()
-                    .GetSubArray(index, outputIndexOrConstantLength)
-            );
-        }
-        else
-        {
-            CheckStackPush(in ctx, index);
-            ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref result);
-            CheckStackPop(in ctx, index);
-        }
-    }
+	public void Evaluate(in ExpressionEvalContext ctx, ref NativeArray<byte> result)
+	{
+		if(isConstant)
+		{
+			result.CopyFrom(
+				ctx.data.GetConstants()
+					.GetSubArray(index, outputIndexOrConstantLength)
+			);
+		}
+		else
+		{
+			CheckStackPush(in ctx, index);
+			ctx.data.expressions[index].Evaluate(in ctx, outputIndexOrConstantLength, ref result);
+			CheckStackPop(in ctx, index);
+		}
+	}
 
-    public override string ToString()
-    {
-        return isConstant ? $"const(off={index}, sz={outputIndexOrConstantLength}) " : $"ref(expr={index} out={outputIndexOrConstantLength})";
-    }
+	public override string ToString()
+	{
+		return isConstant ? $"const(off={index}, sz={outputIndexOrConstantLength}) " : $"ref(expr={index} out={outputIndexOrConstantLength})";
+	}
 }
 
 public interface IExpressionBase { }
 
 public interface IExpression : IExpressionBase
 {
-    void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult);
+	void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 public interface IExpression<T0> : IExpressionBase where T0 : unmanaged
 {
-    ExpressionRef Input0 { get; set; }
-    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, int outputIndex, ref NativeArray<byte> untypedResult);
+	ExpressionRef Input0 { get; set; }
+	void Evaluate(in ExpressionEvalContext ctx, in T0 input0, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 public interface IExpression<T0, T1> : IExpressionBase where T0 : unmanaged where T1 : unmanaged
 {
-    ExpressionRef Input0 { get; set; }
-    ExpressionRef Input1 { get; set; }
-    void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, int outputIndex, ref NativeArray<byte> untypedResult);
+	ExpressionRef Input0 { get; set; }
+	ExpressionRef Input1 { get; set; }
+	void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public unsafe delegate void ExpressionEvalDelegate(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
-    ref NativeArray<byte> untypedResult);
+	ref NativeArray<byte> untypedResult);
 
 public static unsafe class EvalHelper
 {
-    [BurstDiscard]
-    static void TestBurst(ref bool isBurst) => isBurst = false;
+	[BurstDiscard]
+	static void TestBurst(ref bool isBurst) => isBurst = false;
 
-    public static void ReportBurst()
-    {
-        bool isBurst = true;
-        TestBurst(ref isBurst);
-        
-        if (isBurst)
-            Debug.Log("running from burst");
-        else
-            Debug.Log("running from mono/il2cpp");
-    }
+	public static void ReportBurst()
+	{
+		bool isBurst = true;
+		TestBurst(ref isBurst);
 
-    public static void Evaluate<TExpr>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
-        where TExpr : unmanaged, IExpression
-    {
-        TExpr* expr = self->GetUnsafePtr<TExpr>();
-        expr->Evaluate(in ctx, outputIndex, ref untypedResult);
-    }
+		if(isBurst)
+			Debug.Log("running from burst");
+		else
+			Debug.Log("running from mono/il2cpp");
+	}
 
-    public static void Evaluate<TExpr, TInput0>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
-        where TExpr : unmanaged, IExpression<TInput0>
-        where TInput0 : unmanaged
-    {
-        TExpr* expr = self->GetUnsafePtr<TExpr>();
-        expr->Input0.Evaluate(in ctx, out TInput0 input0);
-        expr->Evaluate(in ctx, in input0, outputIndex, ref untypedResult);
-    }
+	public static void Evaluate<TExpr>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
+		where TExpr : unmanaged, IExpression
+	{
+		TExpr* expr = self->GetUnsafePtr<TExpr>();
+		expr->Evaluate(in ctx, outputIndex, ref untypedResult);
+	}
 
-    public static void Evaluate<TExpr, TInput0, TInput1>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
-        where TExpr : unmanaged, IExpression<TInput0, TInput1>
-        where TInput0 : unmanaged
-        where TInput1 : unmanaged
-    {
-        TExpr* expr = self->GetUnsafePtr<TExpr>();
-        expr->Input0.Evaluate(in ctx, out TInput0 input0);
-        expr->Input1.Evaluate(in ctx, out TInput1 input1);
-        expr->Evaluate(in ctx, in input0, in input1, outputIndex, ref untypedResult);
-    }
+	public static void Evaluate<TExpr, TInput0>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
+		where TExpr : unmanaged, IExpression<TInput0>
+		where TInput0 : unmanaged
+	{
+		TExpr* expr = self->GetUnsafePtr<TExpr>();
+		expr->Input0.Evaluate(in ctx, out TInput0 input0);
+		expr->Evaluate(in ctx, in input0, outputIndex, ref untypedResult);
+	}
+
+	public static void Evaluate<TExpr, TInput0, TInput1>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
+		where TExpr : unmanaged, IExpression<TInput0, TInput1>
+		where TInput0 : unmanaged
+		where TInput1 : unmanaged
+	{
+		TExpr* expr = self->GetUnsafePtr<TExpr>();
+		expr->Input0.Evaluate(in ctx, out TInput0 input0);
+		expr->Input1.Evaluate(in ctx, out TInput1 input1);
+		expr->Evaluate(in ctx, in input0, in input1, outputIndex, ref untypedResult);
+	}
 }
 
 /// <summary>
@@ -421,149 +427,149 @@ public static unsafe class EvalHelper
 [StructLayout(LayoutKind.Explicit)]
 public struct ExpressionStorage
 {
-    // 16 bytes of inline storage, fits for example 4 input node references.
-    // This covers the most common functionality: unary and binary operators, and component lookups.
-    [FieldOffset(0)] private long s0;
-    [FieldOffset(8)] private long s1;
-        
-    // if that's not enough, use an indirect pointer (into the same blob)
-    [FieldOffset(0)] public BlobPtr<byte> dataReference;
+	// 16 bytes of inline storage, fits for example 4 input node references.
+	// This covers the most common functionality: unary and binary operators, and component lookups.
+	[FieldOffset(0)] private long s0;
+	[FieldOffset(8)] private long s1;
 
-    public unsafe TExpr* GetUnsafePtr<TExpr>() where TExpr : unmanaged
-    {
-        if (sizeof(TExpr) <= sizeof(ExpressionStorage))
-        {
-            fixed (long* ptr = &s0)
-                return (TExpr*)ptr;
-        }
-        else
-        {
-            return (TExpr*)dataReference.GetUnsafePtr();
-        }
-    }
+	// if that's not enough, use an indirect pointer (into the same blob)
+	[FieldOffset(0)] public BlobPtr<byte> dataReference;
 
-    public ref BlobPtr<T> GetDataReference<T>() where T : unmanaged
-    {
-        unsafe
-        {
-            fixed(BlobPtr<byte>* pref = &dataReference)
-                return ref *(BlobPtr<T>*)pref;
-        }
-    }
+	public unsafe TExpr* GetUnsafePtr<TExpr>() where TExpr : unmanaged
+	{
+		if(sizeof(TExpr) <= sizeof(ExpressionStorage))
+		{
+			fixed(long* ptr = &s0)
+				return (TExpr*)ptr;
+		}
+		else
+		{
+			return (TExpr*)dataReference.GetUnsafePtr();
+		}
+	}
+
+	public ref BlobPtr<T> GetDataReference<T>() where T : unmanaged
+	{
+		unsafe
+		{
+			fixed(BlobPtr<byte>* pref = &dataReference)
+				return ref *(BlobPtr<T>*)pref;
+		}
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
 public struct ExpressionData
 {
-    public ExpressionStorage storage;
+	public ExpressionStorage storage;
 
-    // filled in at runtime
-    public long evaluateFuncPtr;
+	// filled in at runtime
+	public long evaluateFuncPtr;
 
-    public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
-    {
-        if (evaluateFuncPtr == 0)
-            throw new InvalidOperationException("call BlobExpressionData.RuntimeInitialize() first");
-        
-        unsafe
-        {
-            var funcPtr = new FunctionPointer<ExpressionEvalDelegate>((IntPtr)evaluateFuncPtr);
-            fixed (ExpressionStorage* ptr = &storage)
-            {
-                funcPtr.Invoke(ptr, in ctx, outputIndex, ref untypedResult);
-            }
-        }
-    }
+	public void Evaluate(in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
+	{
+		if(evaluateFuncPtr == 0)
+			throw new InvalidOperationException("call BlobExpressionData.RuntimeInitialize() first");
+
+		unsafe
+		{
+			var funcPtr = new FunctionPointer<ExpressionEvalDelegate>((IntPtr)evaluateFuncPtr);
+			fixed(ExpressionStorage* ptr = &storage)
+			{
+				funcPtr.Invoke(ptr, in ctx, outputIndex, ref untypedResult);
+			}
+		}
+	}
 }
 
 public enum ExpressionValueType : ushort
 {
-    /// <summary>
-    /// Type not mapped.
-    /// </summary>
-    Unknown    =  0,
-    Entity     =  1,
-    Bool       =  2,
-    Bool2      =  3,
-    Bool3      =  4,
-    Bool4      =  5,
-    Int        =  6,
-    Int2       =  7,
-    Int3       =  8,
-    Int4       =  9,
-    Float      = 10,
-    Float2     = 11,
-    Float3     = 12,
-    Float4     = 13,
-    Quaternion = 14,
+	/// <summary>
+	/// Type not mapped.
+	/// </summary>
+	Unknown = 0,
+	Entity = 1,
+	Bool = 2,
+	Bool2 = 3,
+	Bool3 = 4,
+	Bool4 = 5,
+	Int = 6,
+	Int2 = 7,
+	Int3 = 8,
+	Int4 = 9,
+	Float = 10,
+	Float2 = 11,
+	Float3 = 12,
+	Float4 = 13,
+	Quaternion = 14,
 }
 
 public static class ExpressionValueTypeExt
 {
-    public static bool IsType<T>(this ExpressionValueType valueType) where T : unmanaged
-    {
-        switch (valueType)
-        {
-            case ExpressionValueType.Unknown: return false;
-            case ExpressionValueType.Entity: return typeof(T) == typeof(Entity);
-            case ExpressionValueType.Bool: return typeof(T) == typeof(bool);
-            case ExpressionValueType.Bool2: return typeof(T) == typeof(bool2);
-            case ExpressionValueType.Bool3: return typeof(T) == typeof(bool3);
-            case ExpressionValueType.Bool4: return typeof(T) == typeof(bool4);
-            case ExpressionValueType.Int: return typeof(T) == typeof(int);
-            case ExpressionValueType.Int2: return typeof(T) == typeof(int2);
-            case ExpressionValueType.Int3: return typeof(T) == typeof(int3);
-            case ExpressionValueType.Int4: return typeof(T) == typeof(int4);
-            case ExpressionValueType.Float: return typeof(T) == typeof(float);
-            case ExpressionValueType.Float2: return typeof(T) == typeof(float2);
-            case ExpressionValueType.Float3: return typeof(T) == typeof(float3);
-            case ExpressionValueType.Float4: return typeof(T) == typeof(float4);
-            case ExpressionValueType.Quaternion: return typeof(T) == typeof(quaternion);
-            default: throw new ArgumentOutOfRangeException(nameof(valueType));
-        }
-    }
+	public static bool IsType<T>(this ExpressionValueType valueType) where T : unmanaged
+	{
+		switch(valueType)
+		{
+			case ExpressionValueType.Unknown: return false;
+			case ExpressionValueType.Entity: return typeof(T) == typeof(Entity);
+			case ExpressionValueType.Bool: return typeof(T) == typeof(bool);
+			case ExpressionValueType.Bool2: return typeof(T) == typeof(bool2);
+			case ExpressionValueType.Bool3: return typeof(T) == typeof(bool3);
+			case ExpressionValueType.Bool4: return typeof(T) == typeof(bool4);
+			case ExpressionValueType.Int: return typeof(T) == typeof(int);
+			case ExpressionValueType.Int2: return typeof(T) == typeof(int2);
+			case ExpressionValueType.Int3: return typeof(T) == typeof(int3);
+			case ExpressionValueType.Int4: return typeof(T) == typeof(int4);
+			case ExpressionValueType.Float: return typeof(T) == typeof(float);
+			case ExpressionValueType.Float2: return typeof(T) == typeof(float2);
+			case ExpressionValueType.Float3: return typeof(T) == typeof(float3);
+			case ExpressionValueType.Float4: return typeof(T) == typeof(float4);
+			case ExpressionValueType.Quaternion: return typeof(T) == typeof(quaternion);
+			default: throw new ArgumentOutOfRangeException(nameof(valueType));
+		}
+	}
 
-    public static ExpressionValueType GetExpressionValueType(this Type type)
-    {
-        if (type == typeof(Entity)) return ExpressionValueType.Entity;
-        if (type == typeof(bool)) return ExpressionValueType.Bool;
-        if (type == typeof(bool2)) return ExpressionValueType.Bool2;
-        if (type == typeof(bool3)) return ExpressionValueType.Bool3;
-        if (type == typeof(bool4)) return ExpressionValueType.Bool4;
-        if (type == typeof(int)) return ExpressionValueType.Int;
-        if (type == typeof(int2)) return ExpressionValueType.Int2;
-        if (type == typeof(int3)) return ExpressionValueType.Int3;
-        if (type == typeof(int4)) return ExpressionValueType.Int4;
-        if (type == typeof(float)) return ExpressionValueType.Float;
-        if (type == typeof(float2)) return ExpressionValueType.Float2;
-        if (type == typeof(float3)) return ExpressionValueType.Float3;
-        if (type == typeof(float4)) return ExpressionValueType.Float4;
-        if (type == typeof(quaternion)) return ExpressionValueType.Quaternion;
-        return ExpressionValueType.Unknown;
-    }
+	public static ExpressionValueType GetExpressionValueType(this Type type)
+	{
+		if(type == typeof(Entity)) return ExpressionValueType.Entity;
+		if(type == typeof(bool)) return ExpressionValueType.Bool;
+		if(type == typeof(bool2)) return ExpressionValueType.Bool2;
+		if(type == typeof(bool3)) return ExpressionValueType.Bool3;
+		if(type == typeof(bool4)) return ExpressionValueType.Bool4;
+		if(type == typeof(int)) return ExpressionValueType.Int;
+		if(type == typeof(int2)) return ExpressionValueType.Int2;
+		if(type == typeof(int3)) return ExpressionValueType.Int3;
+		if(type == typeof(int4)) return ExpressionValueType.Int4;
+		if(type == typeof(float)) return ExpressionValueType.Float;
+		if(type == typeof(float2)) return ExpressionValueType.Float2;
+		if(type == typeof(float3)) return ExpressionValueType.Float3;
+		if(type == typeof(float4)) return ExpressionValueType.Float4;
+		if(type == typeof(quaternion)) return ExpressionValueType.Quaternion;
+		return ExpressionValueType.Unknown;
+	}
 }
 
 public struct ExpressionOutput
 {
-    public ExpressionRef expression;
-    public ExpressionValueType valueType;
-    public ushort valueSize;
+	public ExpressionRef expression;
+	public ExpressionValueType valueType;
+	public ushort valueSize;
 
-    public bool TryEvaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
-    {
-        if (valueType.IsType<T>())
-        {
-            result = expression.Evaluate<T>(in ctx);
-            return true;
-        }
+	public bool TryEvaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
+	{
+		if(valueType.IsType<T>())
+		{
+			result = expression.Evaluate<T>(in ctx);
+			return true;
+		}
 
-        result = default;
-        return false;
-    }
+		result = default;
+		return false;
+	}
 }
 
 [InternalBufferCapacity(1)]
 public struct ExpressionBlackboardStorage : IBufferElementData
 {
-    long data;
+	long data;
 }
