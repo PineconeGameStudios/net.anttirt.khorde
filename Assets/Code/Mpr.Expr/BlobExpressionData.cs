@@ -76,7 +76,20 @@ public struct BlobExpressionData
     /// for lookup components.
     /// </summary>
     public BlobArray<BlobComponentType> lookupComponents;
-    
+
+    public struct BlackboardVariable
+    {
+        public BlobString name;
+        public BlobString typeAssembly;
+        public BlobString typeName;
+        public bool isGlobal;
+    }
+
+    /// <summary>
+    /// Blackboard variable definitions for baking and debugging
+    /// </summary>
+    public BlobArray<BlackboardVariable> blackboardVariables;
+
     /// <summary>
     /// Get constants buffer as a NativeArray
     /// </summary>

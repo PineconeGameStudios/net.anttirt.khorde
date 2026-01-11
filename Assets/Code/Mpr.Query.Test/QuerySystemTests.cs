@@ -47,7 +47,9 @@ public class QuerySystemTests : ECSTestsFixture
             typeof(QSResultItemStorage),
             typeof(QueryAssetRegistration),
             typeof(PendingQuery),
-            typeof(LocalTransform)
+            typeof(LocalTransform),
+            typeof(ExpressionBlackboardStorage),
+            typeof(ExpressionBlackboardLayouts)
         );
 
         var reg = new QueryAssetRegistration();

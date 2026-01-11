@@ -18,8 +18,9 @@ namespace Mpr.Behavior.Test
 		World world;
 		EntityManager em;
 		Entity testEntity;
-		DynamicBuffer<BTStackFrame> stack;
-		DynamicBuffer<BTExecTrace> trace;
+		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
+		DynamicBuffer<BTExecTrace> trace =>  em.GetBuffer<BTExecTrace>(testEntity);
+		DynamicBuffer<ExpressionBlackboardStorage> blackboard => em.GetBuffer<ExpressionBlackboardStorage>(testEntity);
 		BehaviorTestSystem testSystem;
 
 		[SetUp]
@@ -33,8 +34,7 @@ namespace Mpr.Behavior.Test
 			testEntity = em.CreateEntity();
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
-			stack = em.GetBuffer<BTStackFrame>(testEntity);
-			trace = em.GetBuffer<BTExecTrace>(testEntity);
+			em.AddBuffer<ExpressionBlackboardStorage>(testEntity);
 		}
 
 		[Test]
@@ -79,7 +79,7 @@ namespace Mpr.Behavior.Test
 				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1,  Allocator.Temp);
 				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -95,7 +95,7 @@ namespace Mpr.Behavior.Test
 
 				trace.Clear();
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -107,7 +107,7 @@ namespace Mpr.Behavior.Test
 
 				moveTarget.enabled = false;
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, comps, lookups, 0, trace);
 
 				AssertTrace
 				(

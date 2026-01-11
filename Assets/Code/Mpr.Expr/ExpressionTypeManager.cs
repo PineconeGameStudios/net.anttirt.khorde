@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Mpr.Entities;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -29,9 +30,7 @@ public static class ExpressionTypeManager
 {
     private static bool s_initialized;
     
-    private struct ExpressionTypeManagerKeyContext
-    {
-    }
+    private struct ExpressionTypeManagerKeyContext { }
 
     struct EvaluateFunctions
     {
@@ -39,7 +38,7 @@ public static class ExpressionTypeManager
             SharedStatic<NativeHashMap<ulong, FunctionPointer<ExpressionEvalDelegate>>>
                 .GetOrCreate<ExpressionTypeManagerKeyContext, EvaluateFunctions>();
     }
-
+    
     public static bool TryGetEvaluateFunction(ulong stableTypeHash, out FunctionPointer<ExpressionEvalDelegate> function)
     {
         if (!EvaluateFunctions.Ref.Data.IsCreated)
@@ -78,36 +77,37 @@ public static class ExpressionTypeManager
                     .GetValue(null)
                 as ExpressionTypeInfo[];
 
-            if (types == null)
+            if (types != null)
+            {
+                foreach (var typeInfo in types)
+                {
+                    var stableTypeHash = GetTypeHash(typeInfo.Type, hashCache);
+
+                    var evaluateDelegate = typeInfo.Evaluate;
+                    if (evaluateDelegate == null)
+                    {
+                        Debug.LogError($"Evaluate delegate for {typeInfo.Type.FullName} was not registered");
+                        continue;
+                    }
+
+                    FunctionPointer<ExpressionEvalDelegate> function;
+
+                    if (typeInfo.IsBurstCompiled)
+                    {
+                        function = BurstCompiler.CompileFunctionPointer(evaluateDelegate);
+                    }
+                    else
+                    {
+                        function = new FunctionPointer<ExpressionEvalDelegate>(
+                            Marshal.GetFunctionPointerForDelegate(evaluateDelegate));
+                    }
+
+                    functions[stableTypeHash] = function;
+                }
+            }
+            else
             {
                 Debug.LogError($"skipping assembly {asm}: type registry found but couldn't get ExpressionTypes array");
-                continue;
-            }
-
-            foreach (var typeInfo in types)
-            {
-                var stableTypeHash = GetTypeHash(typeInfo.Type, hashCache);
-
-                var evaluateDelegate = typeInfo.Evaluate;
-                if (evaluateDelegate == null)
-                {
-                    Debug.LogError($"Evaluate delegate for {typeInfo.Type.FullName} was not registered");
-                    continue;
-                }
-                
-                FunctionPointer<ExpressionEvalDelegate> function;
-
-                if (typeInfo.IsBurstCompiled)
-                {
-                    function = BurstCompiler.CompileFunctionPointer(evaluateDelegate);
-                }
-                else
-                {
-                    function = new FunctionPointer<ExpressionEvalDelegate>(
-                        Marshal.GetFunctionPointerForDelegate(evaluateDelegate));
-                }
-
-                functions[stableTypeHash] = function;
             }
         }
     }

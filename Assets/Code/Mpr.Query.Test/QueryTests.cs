@@ -23,7 +23,8 @@ public class QueryTests
     EntityManager entityManager;
     QueryBakingContext baker;
     Entity resultsHolder;
-    DynamicBuffer<QSResultItemStorage> untypedResults;
+    DynamicBuffer<ExpressionBlackboardStorage> blackboard => entityManager.GetBuffer<ExpressionBlackboardStorage>(resultsHolder);
+    DynamicBuffer<QSResultItemStorage> untypedResults => entityManager.GetBuffer<QSResultItemStorage>(resultsHolder);
     TestSystem testSystem;
 
     [SetUp]
@@ -33,8 +34,7 @@ public class QueryTests
         entityManager = world.EntityManager;
         var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Assets/Prefabs/TestQuery.queryg");
         baker = new QueryBakingContext(graph, Allocator.Temp);
-        resultsHolder = entityManager.CreateEntity(typeof(QSResultItemStorage));
-        untypedResults = entityManager.GetBuffer<QSResultItemStorage>(resultsHolder);
+        resultsHolder = entityManager.CreateEntity(typeof(QSResultItemStorage), typeof(ExpressionBlackboardStorage));
         testSystem = world.GetOrCreateSystemManaged<TestSystem>();
     }
 
@@ -75,8 +75,8 @@ public class QueryTests
         lookups[0] = this.testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
         
         var qctx = new QueryExecutionContext(ref asset.Value, components, lookups, queryResultLookup);
-        
-        qctx.Execute<Entity>(untypedResults);
+
+        qctx.Execute<Entity>(blackboard, ref ExpressionBlackboardLayout.Empty, untypedResults);
 
         var results = untypedResults.AsResultArray<Entity>();
         Assert.That(results.Length, Is.GreaterThan(0));

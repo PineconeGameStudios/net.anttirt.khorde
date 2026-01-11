@@ -45,10 +45,15 @@ public unsafe ref struct QueryExecutionContext
     /// Execute a query, getting the N best items based on query data.
     /// </summary>
     /// <typeparam name="TItem"></typeparam>
+    /// <param name="blackboard">The blackboard buffer containing input variables</param>
     /// <param name="results">The buffer to store the results in</param>
     /// <param name="tempAlloc">Temporary allocator for working data within the Execute function</param>
     /// <returns></returns>
-    public void Execute<TItem>(DynamicBuffer<QSResultItemStorage> results, Allocator tempAlloc = Allocator.Temp) where TItem : unmanaged
+    public void Execute<TItem>(
+        DynamicBuffer<ExpressionBlackboardStorage> blackboard,
+        ref ExpressionBlackboardLayout blackboardLayout,
+        DynamicBuffer<QSResultItemStorage> results,
+        Allocator tempAlloc = Allocator.Temp) where TItem : unmanaged
     {
         data.exprData.CheckExpressionComponents(componentPtrs, lookups);
 
@@ -59,7 +64,14 @@ public unsafe ref struct QueryExecutionContext
         componentPtrs.CopyTo(supComponentPtrs.GetSubArray(0, componentPtrs.Length));
         supComponentPtrs[^1] = UnsafeComponentReference.Make(ref tempState);
 
-        var exprContext = new ExpressionEvalContext(ref data.exprData, supComponentPtrs, lookups);
+        NativeArray<byte> blackboardBytes = default;
+        if (blackboard.IsCreated)
+        {
+            blackboardBytes = blackboard.AsNativeArray()
+                .Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+        }
+
+        var exprContext = new ExpressionEvalContext(ref data.exprData, supComponentPtrs, lookups, blackboardBytes, ref blackboardLayout);
         int resultCount = data.resultCount.Evaluate<int>(in exprContext);
         
         int passIndex = 0;

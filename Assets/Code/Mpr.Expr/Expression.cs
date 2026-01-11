@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Mpr.Blobs;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -40,17 +41,87 @@ public struct ExpressionComponentTypeInfo
     public BlobArray<Field> fields;
 }
 
+public struct ExpressionBlackboardLayout
+{
+    public struct Slice
+    {
+        public int offset;
+        public int length;
+    }
+
+    public Hash128 asset;
+    
+    /// <summary>
+    /// Minimum required size of blackboard storage in bytes
+    /// </summary>
+    public int minByteLength;
+    public BlobArray<Slice> variables;
+
+    private static readonly SharedStatic<FixedList64Bytes<byte>> s_emptyStorage = SharedStatic<FixedList64Bytes<byte>>.GetOrCreate<ExpressionBlackboardLayout>();
+    public static unsafe ref ExpressionBlackboardLayout Empty => ref *(ExpressionBlackboardLayout*)s_emptyStorage.UnsafeDataPointer;
+}
+
+public struct ExpressionBlackboardLayouts : ISharedComponentData
+{
+    public struct LayoutContainer
+    {
+        public BlobArray<ExpressionBlackboardLayout> layouts;
+        
+        /// <summary>
+        /// Compute the number of storage elements required for this blackboard layout
+        /// </summary>
+        /// <typeparam name="TStorage"></typeparam>
+        /// <returns></returns>
+        public int ComputeStorageLength<TStorage>() where TStorage : unmanaged
+        {
+            int maxLength = 0;
+            foreach (ref var layout in layouts.AsSpan())
+            {
+                var elemSize = UnsafeUtility.SizeOf<TStorage>();
+                int byteSize = layout.variables.Length > 0 ? (layout.variables[^1].offset + layout.variables[^1].length) : 0;
+                maxLength = math.max(maxLength, (byteSize + elemSize - 1) / elemSize);
+            }
+
+            return maxLength;
+        }
+    }
+    
+    public BlobAssetReference<LayoutContainer> asset;
+
+    public ref ExpressionBlackboardLayout FindLayout(Hash128 assetHash)
+    {
+        if(!asset.IsCreated)
+            return ref ExpressionBlackboardLayout.Empty;
+        
+        foreach(ref var layout in asset.Value.layouts.AsSpan())
+            if (layout.asset == assetHash)
+                return ref layout;
+        
+        return ref ExpressionBlackboardLayout.Empty;
+    }
+}
+
 public unsafe ref struct ExpressionEvalContext
 {
     public ExpressionEvalContext(
         ref BlobExpressionData data,
         NativeArray<UnsafeComponentReference> componentPtrs,
-        NativeArray<UntypedComponentLookup> componentLookups)
+        NativeArray<UntypedComponentLookup> componentLookups,
+        NativeArray<byte> blackboard,
+        ref ExpressionBlackboardLayout blackboardLayout
+        )
     {
         fixed (BlobExpressionData* pData = &data)
             this.dataPtr = pData;
         this.componentPtrs = componentPtrs;
         this.componentLookups = componentLookups;
+        this.blackboard = blackboard;
+        fixed (ExpressionBlackboardLayout* pLayout = &blackboardLayout)
+            this.blackboardLayout = pLayout;
+
+        if (blackboard.Length < blackboardLayout.minByteLength)
+            throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
+        
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         this.callStack = new(Allocator.Temp);
         this.callStackLookup = new(8, Allocator.Temp);
@@ -62,6 +133,8 @@ public unsafe ref struct ExpressionEvalContext
         ref BlobExpressionData data,
         NativeArray<UnsafeComponentReference> componentPtrs,
         NativeArray<UntypedComponentLookup> componentLookups,
+        NativeArray<byte> blackboard,
+        ref ExpressionBlackboardLayout blackboardLayout,
         NativeList<ushort> callStack,
         NativeHashSet<ushort> callStackLookup)
     {
@@ -69,6 +142,13 @@ public unsafe ref struct ExpressionEvalContext
             this.dataPtr = pData;
         this.componentPtrs = componentPtrs;
         this.componentLookups = componentLookups;
+        this.blackboard = blackboard;
+        fixed (ExpressionBlackboardLayout* pLayout = &blackboardLayout)
+            this.blackboardLayout = pLayout;
+        
+        if (blackboard.Length < blackboardLayout.minByteLength)
+            throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
+        
         this.callStack = callStack;
         this.callStackLookup = callStackLookup;
     }
@@ -77,6 +157,8 @@ public unsafe ref struct ExpressionEvalContext
     BlobExpressionData* dataPtr;
     public NativeArray<UnsafeComponentReference> componentPtrs;
     public NativeArray<UntypedComponentLookup> componentLookups;
+    public NativeArray<byte> blackboard;
+    ExpressionBlackboardLayout* blackboardLayout;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
     public NativeList<ushort> callStack;
@@ -84,6 +166,13 @@ public unsafe ref struct ExpressionEvalContext
 #endif
 
     public ref BlobExpressionData data => ref *dataPtr;
+    public ref ExpressionBlackboardLayout layout => ref *blackboardLayout;
+
+    public NativeArray<byte> GetBlackboardVariable(int index)
+    {
+        var slice = layout.variables[index];
+        return blackboard.GetSubArray(slice.offset, slice.length);
+    }
 }
 
 public static class ExprNativeArrayExt
@@ -471,4 +560,10 @@ public struct ExpressionOutput
         result = default;
         return false;
     }
+}
+
+[InternalBufferCapacity(1)]
+public struct ExpressionBlackboardStorage : IBufferElementData
+{
+    long data;
 }

@@ -61,7 +61,7 @@ public unsafe class GraphExpressionTests
         var componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
         componentPtrs[0] = UnsafeComponentReference.Make(ref lt);
         
-        var ctx = new ExpressionEvalContext(ref asset.Value, componentPtrs, default);
+        var ctx = new ExpressionEvalContext(ref asset.Value, componentPtrs, default, default, ref ExpressionBlackboardLayout.Empty);
         
         Assert.That(asset.Value.outputs.Length, Is.EqualTo(1));
         Assert.IsTrue(asset.Value.outputs[0].TryEvaluate<float>(in ctx, out var result));

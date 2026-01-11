@@ -89,6 +89,9 @@ namespace Mpr.Query
 					pendingQuery = SystemAPI.GetComponentTypeHandle<PendingQuery>(),
 					resultItemStorage = SystemAPI.GetBufferTypeHandle<QSResultItemStorage>(),
 					queryResultLookup = entityQueryResultLookup,
+					blackboards = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
+					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
+					dataHash = asset.GetDataHash(),
 				};
 
 				// TODO: optimize dependencies to enable different queries to run in parallel
@@ -119,7 +122,10 @@ namespace Mpr.Query
 			public ExprJobComponentTypeHandles typeHandles;
 			public ExprJobComponentLookups componentLookups;
 			public ComponentTypeHandle<PendingQuery> pendingQuery;
+			public BufferTypeHandle<ExpressionBlackboardStorage> blackboards;
 			public BufferTypeHandle<QSResultItemStorage> resultItemStorage;
+			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
+			public Hash128 dataHash;
 
 			// need to disable safety because the results of the entity
 			// query job go into a nested NativeList and nested containers
@@ -133,53 +139,56 @@ namespace Mpr.Query
 				typeHandles.Initialize(chunk);
 				var pendingEnabled = chunk.GetEnabledMask(ref pendingQuery);
 				var pendingQueries = chunk.GetNativeArray(ref pendingQuery);
+				var blackboardBuffers = chunk.GetBufferAccessor(ref blackboards);
 				var resultBuffers = chunk.GetBufferAccessor(ref resultItemStorage);
+				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
+				ref var layout = ref layouts.FindLayout(dataHash);
 
 				switch (data.ValueRO.itemType)
 				{
 					case ExpressionValueType.Unknown: break;
 					case ExpressionValueType.Entity:
 						ExecuteImpl<Entity>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Bool:
 						ExecuteImpl<bool>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Bool2:
 						ExecuteImpl<bool2>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Bool3:
 						ExecuteImpl<bool3>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Bool4:
 						ExecuteImpl<bool4>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Int:
 						ExecuteImpl<int>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Int2:
 						ExecuteImpl<int2>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Int3:
 						ExecuteImpl<int3>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Int4:
 						ExecuteImpl<int4>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Float:
 						ExecuteImpl<float>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Float2:
 						ExecuteImpl<float2>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Float3:
 						ExecuteImpl<float3>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Float4:
 						ExecuteImpl<float4>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					case ExpressionValueType.Quaternion:
 						ExecuteImpl<quaternion>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers); break;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
@@ -189,7 +198,10 @@ namespace Mpr.Query
 
 			private void ExecuteImpl<TItem>(in ArchetypeChunk chunk, bool useEnabledMask, in v128 chunkEnabledMask,
 				EnabledMask pendingEnabled,
-				NativeArray<PendingQuery> pendingQueries, BufferAccessor<QSResultItemStorage> resultBuffers)
+				NativeArray<PendingQuery> pendingQueries,
+				BufferAccessor<ExpressionBlackboardStorage> blackboardBuffers,
+				ref ExpressionBlackboardLayout blackboardLayout,
+				BufferAccessor<QSResultItemStorage> resultBuffers)
 				where TItem : unmanaged
 			{
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
@@ -205,8 +217,9 @@ namespace Mpr.Query
 							componentLookups.Lookups,
 							queryResultLookup);
 
+						var blackboard = blackboardBuffers[entityIndex];
 						var results = resultBuffers[entityIndex];
-						qctx.Execute<TItem>(results);
+						qctx.Execute<TItem>(blackboard, ref blackboardLayout, results);
 					}
 				}
 			}

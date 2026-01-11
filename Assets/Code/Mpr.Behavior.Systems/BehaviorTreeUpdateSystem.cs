@@ -12,6 +12,7 @@ using Unity.Jobs;
 using Unity.NetCode;
 using Unity.NetCode.LowLevel.Unsafe;
 using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Behavior
 {
@@ -33,6 +34,9 @@ namespace Mpr.Behavior
 			public BlobAssetReference<BTData> btData;
 			public ComponentTypeHandle<BTState> stateTypeHandle;
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
+			public BufferTypeHandle<ExpressionBlackboardStorage> blackboardTypeHandle;
+			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
+			public Hash128 dataHash;
 			public float now;
 
 			public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -41,8 +45,10 @@ namespace Mpr.Behavior
 
 				var states = chunk.GetNativeArray(ref stateTypeHandle).AsSpan();
 				var stacks = chunk.GetBufferAccessor(ref stackTypeHandle);
-
+				var blackboards = chunk.GetBufferAccessor(ref blackboardTypeHandle);
 				var lookups = componentLookups.Lookups;
+				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
+				ref var layout = ref layouts.FindLayout(dataHash);
 
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
 				while(enumerator.NextEntityIndex(out var entityIndex))
@@ -51,6 +57,8 @@ namespace Mpr.Behavior
 						ref btData.Value,
 						ref states[entityIndex],
 						stacks[entityIndex],
+						blackboards[entityIndex],
+						ref layout,
 						typeHandles.GetComponents(entityIndex),
 						lookups,
 						now,
@@ -78,6 +86,9 @@ namespace Mpr.Behavior
 					now = (float)SystemAPI.Time.ElapsedTime,
 					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BTState>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
+					blackboardTypeHandle = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
+					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
+					dataHash = tree.tree.GetDataHash(),
 				};
 
 				foreach(ref var holder in typeHandleHolder.AsNativeArray().AsSpan())
@@ -136,6 +147,7 @@ namespace Mpr.Behavior
 						ComponentType.ReadOnly<BehaviorTree>(),
 						ComponentType.ReadWrite<BTState>(),
 						ComponentType.ReadWrite<BTStackFrame>(),
+						ComponentType.ReadWrite<ExpressionBlackboardStorage>(),
 					};
 
 					if(clientWorld)

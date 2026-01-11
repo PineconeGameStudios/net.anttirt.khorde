@@ -3,6 +3,7 @@ using Mpr.Expr;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using UnityEngine;
 
@@ -10,11 +11,28 @@ namespace Mpr.Behavior
 {
 	public static class BehaviorTreeExecution
 	{
+		public static void Execute(
+			this BlobAssetReference<BTData> asset,
+			ref BTState state,
+			DynamicBuffer<BTStackFrame> stack,
+			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
+			ref ExpressionBlackboardLayout blackboardLayout,
+			NativeArray<UnsafeComponentReference> componentPtrs,
+			NativeArray<UntypedComponentLookup> lookups,
+			float now,
+			DynamicBuffer<BTExecTrace> trace)
+			=> Execute(ref asset.Value, ref state, stack, blackboard, ref blackboardLayout, componentPtrs, lookups, now, trace);
 
-		public static void Execute(this BlobAssetReference<BTData> asset, ref BTState state, DynamicBuffer<BTStackFrame> stack, NativeArray<UnsafeComponentReference> componentPtrs, NativeArray<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
-			=> Execute(ref asset.Value, ref state, stack, componentPtrs, lookups, now, trace);
-
-		public static void Execute(ref BTData data, ref BTState state, DynamicBuffer<BTStackFrame> stack, NativeArray<UnsafeComponentReference> componentPtrs, NativeArray<UntypedComponentLookup> lookups, float now, DynamicBuffer<BTExecTrace> trace)
+		public static void Execute(
+			ref BTData data,
+			ref BTState state,
+			DynamicBuffer<BTStackFrame> stack,
+			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
+			ref ExpressionBlackboardLayout blackboardLayout,
+			NativeArray<UnsafeComponentReference> componentPtrs,
+			NativeArray<UntypedComponentLookup> lookups,
+			float now,
+			DynamicBuffer<BTExecTrace> trace)
 		{
 			data.exprData.CheckExpressionComponents(componentPtrs, lookups);
 
@@ -26,7 +44,15 @@ namespace Mpr.Behavior
 				stack.Add(data.Root);
 			}
 
-			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, lookups);
+			NativeArray<byte> blackboardBytes = default;
+			if (blackboard.IsCreated)
+			{
+				blackboardBytes = blackboard.AsNativeArray()
+					.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			}
+
+			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, lookups, blackboardBytes,
+				ref blackboardLayout);
 			
 			bool rootVisited = false;
 

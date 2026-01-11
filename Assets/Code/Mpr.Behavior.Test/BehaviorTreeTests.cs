@@ -113,7 +113,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -150,7 +150,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -190,7 +190,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -235,7 +235,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -287,7 +287,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -332,7 +332,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -370,7 +370,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, default, default, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -439,7 +439,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -490,7 +490,7 @@ namespace Mpr.Behavior.Test
 				Assert.IsFalse(tc1.field1);
 				Assert.IsTrue(tc1.field2);
 
-				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -540,7 +540,7 @@ namespace Mpr.Behavior.Test
 
 			try
 			{
-				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Root, 1, 0, Event.Init),
@@ -551,7 +551,7 @@ namespace Mpr.Behavior.Test
 
 				trace.Clear();
 
-				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Wait, 2, 2, Event.Start),
@@ -562,7 +562,7 @@ namespace Mpr.Behavior.Test
 
 				tc1.field1 = true;
 
-				asset.Execute(ref state, stack, componentPtrs, lookups, 0, trace);
+				asset.Execute(ref state, stack, default, ref ExpressionBlackboardLayout.Empty, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
 					Trace(BTExecType.Wait, 2, 2, Event.Start),

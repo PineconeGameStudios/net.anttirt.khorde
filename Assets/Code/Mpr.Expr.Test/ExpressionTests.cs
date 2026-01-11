@@ -78,7 +78,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
         Assert.Greater(constants.Length, 0);
         Assert.That((IntPtr)constants.GetUnsafePtr(), Is.Not.Zero);
         
-        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
 
         Assert.AreEqual(false, False.Evaluate<bool>(in ctx));
         Assert.AreEqual(true, True.Evaluate<bool>(in ctx));
@@ -139,7 +139,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
         
-        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
 
         Assert.AreEqual(false, n0.Evaluate<bool>(in ctx));
         Assert.AreEqual(true, n1.Evaluate<bool>(in ctx));
@@ -202,7 +202,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
         
-        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
 
         Assert.AreEqual(new float2(3, 5), n0.Evaluate<float2>(in ctx));
         Assert.AreEqual(new float2(-1, 1), n1.Evaluate<float2>(in ctx));
@@ -242,7 +242,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
         NativeArray<UnsafeComponentReference> componentPtrs = new  NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
         componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
         
-        var ctx = new ExpressionEvalContext(ref blob.Value, componentPtrs, default);
+        var ctx = new ExpressionEvalContext(ref blob.Value, componentPtrs, default, default, ref ExpressionBlackboardLayout.Empty);
 
         Assert.AreEqual(42, n0.WithOutputIndex(0).Evaluate<int>(in ctx));
         Assert.AreEqual(true, n0.WithOutputIndex(1).Evaluate<bool>(in ctx));
@@ -281,7 +281,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
         NativeArray<UntypedComponentLookup> componentLookups = new  NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
         componentLookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestComponent1>(true);
         
-        var ctx = new ExpressionEvalContext(ref blob.Value, default, componentLookups);
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, componentLookups, default, ref ExpressionBlackboardLayout.Empty);
 
         // HasComponent
         Assert.AreEqual(true, n0.WithOutputIndex(0).Evaluate<bool>(in ctx));
@@ -326,7 +326,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
         
         Assert.IsTrue(blob.Value.IsRuntimeInitialized);
         
-        var ctx = new ExpressionEvalContext(ref blob.Value, default, default);
+        var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
 
         Assert.AreEqual(1,                      n11.Evaluate<float>(in ctx));
         Assert.AreEqual(new float2(1, 1),       n12.Evaluate<float2>(in ctx));
