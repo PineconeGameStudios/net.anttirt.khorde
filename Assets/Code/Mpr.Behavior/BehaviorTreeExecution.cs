@@ -1,5 +1,6 @@
 using Mpr.Blobs;
 using Mpr.Expr;
+using Mpr.Query;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -16,9 +17,9 @@ namespace Mpr.Behavior
 			DynamicBuffer<BTStackFrame> stack,
 			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
-			NativeArray<UnityObjectRef<Mpr.Query.QueryGraphAsset>> queries,
-			EnabledRefRW<Mpr.Query.PendingQuery> pendingQueryEnabled,
-			ref Mpr.Query.PendingQuery pendingQuery,
+			NativeArray<UnityObjectRef<QueryGraphAsset>> queries,
+			EnabledRefRW<PendingQuery> pendingQueryEnabled,
+			ref PendingQuery pendingQuery,
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
 			float now,
@@ -31,9 +32,9 @@ namespace Mpr.Behavior
 			DynamicBuffer<BTStackFrame> stack,
 			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
-			NativeArray<UnityObjectRef<Mpr.Query.QueryGraphAsset>> queries,
-			EnabledRefRW<Mpr.Query.PendingQuery> pendingQueryEnabled,
-			ref Mpr.Query.PendingQuery pendingQuery,
+			NativeArray<UnityObjectRef<QueryGraphAsset>> queries,
+			EnabledRefRW<PendingQuery> pendingQueryEnabled,
+			ref PendingQuery pendingQuery,
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
 			float now,
@@ -246,7 +247,33 @@ namespace Mpr.Behavior
 						break;
 
 					case BTExec.BTExecType.Query:
-						// TODO: run query and wait for results
+						if(!pendingQuery.complete && !pendingQueryEnabled.ValueRO)
+						{
+							// start query now
+							pendingQueryEnabled.ValueRW = true;
+							pendingQuery.query = queries[node.data.query.queryIndex];
+							pendingQuery.results = exprContext.GetBlackboardVariableSlice(node.data.query.variableIndex);
+							Trace(ref node, BTExecTrace.Event.Wait);
+							return;
+						}
+						else if(pendingQueryEnabled.ValueRO)
+						{
+							// query still running, can't execute any more nodes until input data changes
+							Trace(ref node, BTExecTrace.Event.Wait);
+							return;
+						}
+						else
+						{
+							// query finished running
+
+							// allow a new query to start the next time a Query node is reached
+							pendingQuery.complete = false;
+
+							// TODO: this would be an excellent moment to write the result count somewhere
+							// on the bt execution stack, but a blackboard variable will do for now
+							exprContext.GetBlackboardVariable(node.data.query.resultCountVariableIndex).ReinterpretStore(0, pendingQuery.resultCount);
+							Return(ref data, ref node);
+						}
 
 						Return(ref data, ref node);
 						break;

@@ -47,465 +47,471 @@ using Unity.Mathematics;
 
 namespace Mpr.Query
 {
-    public struct QSData
-    {
-        public const int SchemaVersion = 1;
-        
-        /// <summary>
-        /// Baked data for all expressions in the query graph
-        /// </summary>
-        public BlobExpressionData exprData;
+	public struct QSData
+	{
+		public const int SchemaVersion = 1;
 
-        /// <summary>
-        /// List of passes for this query graph, in evaluation order.
-        /// </summary>
-        /// <remarks>
-        /// Passes are evaluated with their generators and filters until
-        /// the desired amount of items has been accepted by filters. This
-        /// means that further passes could still have generated better-scoring
-        /// items but they will not be considered.
-        /// </remarks>
-        public BlobArray<QSPass> passes;
-        
-        /// <summary>
-        /// Which way to select results
-        /// </summary>
-        public QueryScoringDirection scoringDirection;
+		/// <summary>
+		/// Baked data for all expressions in the query graph
+		/// </summary>
+		public BlobExpressionData exprData;
 
-        /// <summary>
-        /// Result item type
-        /// </summary>
-        public ExpressionValueType itemType;
+		/// <summary>
+		/// List of passes for this query graph, in evaluation order.
+		/// </summary>
+		/// <remarks>
+		/// Passes are evaluated with their generators and filters until
+		/// the desired amount of items has been accepted by filters. This
+		/// means that further passes could still have generated better-scoring
+		/// items but they will not be considered.
+		/// </remarks>
+		public BlobArray<QSPass> passes;
 
-        /// <summary>
-        /// An expression to evaluate to determine the desired result item count
-        /// </summary>
-        public ExpressionRef resultCount;
+		/// <summary>
+		/// Which way to select results
+		/// </summary>
+		public QueryScoringDirection scoringDirection;
 
-        /// <summary>
-        /// Entity queries for the Entities generator
-        /// </summary>
-        public BlobArray<BlobEntityQueryDesc> entityQueries;
-    }
+		/// <summary>
+		/// Result item type
+		/// </summary>
+		public ExpressionValueType itemType;
 
-    public enum QueryScoringDirection
-    {
-        SmallestWins,
-        LargestWins
-    }
+		/// <summary>
+		/// An expression to evaluate to determine the desired result item count
+		/// </summary>
+		public ExpressionRef resultCount;
 
-    [ChunkSerializable]
-    [BurstCompile]
-    public struct QSEntityQuery : ISharedComponentData, IEquatable<QSEntityQuery>
-    {
-        public UnityObjectRef<BlobAsset<BlobEntityQueryDesc>> queryDesc;
-        
-        /// <summary>
-        /// Hash of the query data to deduplicate and look up query results
-        /// </summary>
-        public Hash128 hash;
+		/// <summary>
+		/// Entity queries for the Entities generator
+		/// </summary>
+		public BlobArray<BlobEntityQueryDesc> entityQueries;
+	}
 
-        /// <summary>
-        /// Runtime-resolved query for this description
-        /// </summary>
-        public EntityQuery runtimeEntityQuery;
+	public enum QueryScoringDirection
+	{
+		SmallestWins,
+		LargestWins
+	}
 
-        /// <summary>
-        /// Most recent results for evaluating the entity query.
-        /// </summary>
-        public NativeList<Entity> results;
+	[ChunkSerializable]
+	[BurstCompile]
+	public struct QSEntityQuery : ISharedComponentData, IEquatable<QSEntityQuery>
+	{
+		public UnityObjectRef<BlobAsset<BlobEntityQueryDesc>> queryDesc;
 
-        #region IEquatable for SharedComponent keying
-        [BurstCompile]
-        public bool Equals(QSEntityQuery other)
-        {
-            return hash == other.hash;
-        }
+		/// <summary>
+		/// Hash of the query data to deduplicate and look up query results
+		/// </summary>
+		public Hash128 hash;
 
-        public override bool Equals(object obj)
-        {
-            return obj is QSEntityQuery other && Equals(other);
-        }
+		/// <summary>
+		/// Runtime-resolved query for this description
+		/// </summary>
+		public EntityQuery runtimeEntityQuery;
 
-        [BurstCompile]
-        public override int GetHashCode()
-        {
-            return hash.GetHashCode();
-        }
-        #endregion
-    }
+		/// <summary>
+		/// Most recent results for evaluating the entity query.
+		/// </summary>
+		public NativeList<Entity> results;
 
-    public struct QSPass
-    {
-        /// <summary>
-        /// Generators for the pass. At the start of pass evaluation, all generators are evaluated.
-        /// </summary>
-        public BlobArray<QSGenerator> generators;
+		#region IEquatable for SharedComponent keying
+		[BurstCompile]
+		public bool Equals(QSEntityQuery other)
+		{
+			return hash == other.hash;
+		}
 
-        /// <summary>
-        /// Filters for the pass. After generators have been run, all generated items are filtered.
-        /// If this doesn't result in enough items, further passes will be evaluated to generate
-        /// and filter more items.
-        /// </summary>
-        public BlobArray<QSFilter> filters;
+		public override bool Equals(object obj)
+		{
+			return obj is QSEntityQuery other && Equals(other);
+		}
 
-        /// <summary>
-        /// Scorers for the pass. After filters have been run, all generated items are scored.
-        /// </summary>
-        public BlobArray<QSScorer> scorers;
-    }
+		[BurstCompile]
+		public override int GetHashCode()
+		{
+			return hash.GetHashCode();
+		}
+		#endregion
+	}
 
-    public struct QSCurrentItemStorage
-    {
-        double4 data0;
-        double4 data1;
-        double4 data2;
-        double4 data3;
-    }
+	public struct QSPass
+	{
+		/// <summary>
+		/// Generators for the pass. At the start of pass evaluation, all generators are evaluated.
+		/// </summary>
+		public BlobArray<QSGenerator> generators;
 
-    /// <summary>
-    /// Temporary stack-bound state for query execution
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct QSTempState : IComponentData
-    {
-        QSCurrentItemStorage currentItemStorage;
+		/// <summary>
+		/// Filters for the pass. After generators have been run, all generated items are filtered.
+		/// If this doesn't result in enough items, further passes will be evaluated to generate
+		/// and filter more items.
+		/// </summary>
+		public BlobArray<QSFilter> filters;
 
-        public ref T GetCurrentItem<T>() where T : unmanaged
-        {
-            if(UnsafeUtility.SizeOf<T>() > UnsafeUtility.SizeOf<QSCurrentItemStorage>())
-                throw new Exception();
+		/// <summary>
+		/// Scorers for the pass. After filters have been run, all generated items are scored.
+		/// </summary>
+		public BlobArray<QSScorer> scorers;
+	}
 
-            if(UnsafeUtility.AlignOf<T>() > UnsafeUtility.AlignOf<QSCurrentItemStorage>())
-                throw new Exception();
+	public struct QSCurrentItemStorage
+	{
+		double4 data0;
+		double4 data1;
+		double4 data2;
+		double4 data3;
+	}
 
-            unsafe
-            {
-                fixed(QSCurrentItemStorage* data = &currentItemStorage)
-                    return ref *((T*)data);
-            }
-        }
-    }
+	/// <summary>
+	/// Temporary stack-bound state for query execution
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential)]
+	public struct QSTempState : IComponentData
+	{
+		QSCurrentItemStorage currentItemStorage;
 
-    public struct QSItem
-    {
-        public float score;
-        public int itemIndex;
+		public ref T GetCurrentItem<T>() where T : unmanaged
+		{
+			if(UnsafeUtility.SizeOf<T>() > UnsafeUtility.SizeOf<QSCurrentItemStorage>())
+				throw new Exception();
 
-        public struct ScoreComparerLess : IComparer<QSItem>
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Compare(QSItem x, QSItem y) => x.score.CompareTo(y.score);
-        }
-        
-        public struct ScoreComparerGreater : IComparer<QSItem>
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Compare(QSItem x, QSItem y) => y.score.CompareTo(x.score);
-        }
-    }
+			if(UnsafeUtility.AlignOf<T>() > UnsafeUtility.AlignOf<QSCurrentItemStorage>())
+				throw new Exception();
 
-    public struct QSGenerator
-    {
-        public Data data;
-        public GeneratorType generatorType;
+			unsafe
+			{
+				fixed(QSCurrentItemStorage* data = &currentItemStorage)
+					return ref *((T*)data);
+			}
+		}
+	}
 
-        [StructLayout(LayoutKind.Explicit)]
-        public struct Data
-        {
-            [FieldOffset(0)]
-            public Float2Rectangle float2Rectangle;
+	public struct QSItem
+	{
+		public float score;
+		public int itemIndex;
 
-            [FieldOffset(0)] public Entities entities;
-        }
+		public struct ScoreComparerLess : IComparer<QSItem>
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public int Compare(QSItem x, QSItem y) => x.score.CompareTo(y.score);
+		}
 
-        public enum GeneratorType
-        {
-            Float2Rectangle,
-            Entities,
-        }
+		public struct ScoreComparerGreater : IComparer<QSItem>
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public int Compare(QSItem x, QSItem y) => y.score.CompareTo(x.score);
+		}
+	}
 
-        public struct Float2Rectangle
-        {
-            public ExpressionRef center;
-            public ExpressionRef size;
-            public ExpressionRef orientation;
-            public ExpressionRef spacing;
+	public struct QSGenerator
+	{
+		public Data data;
+		public GeneratorType generatorType;
 
-            public void Generate(
-                in QueryExecutionContext qctx,
-                in ExpressionEvalContext ctx,
-                NativeList<float2> items)
-            {
-                float2 center = this.center.Evaluate<float2>(in ctx);
-                float2 size = this.size.Evaluate<float2>(in ctx);
-                float orientation = this.orientation.Evaluate<float>(in ctx);
-                float spacing = this.spacing.Evaluate<float>(in ctx);
+		[StructLayout(LayoutKind.Explicit)]
+		public struct Data
+		{
+			[FieldOffset(0)]
+			public Float2Rectangle float2Rectangle;
 
-                math.sincos(orientation, out var s, out var c);
-                var basis = spacing * new float2(c - s, s + c);
+			[FieldOffset(0)] public Entities entities;
+		}
 
-                var extent = 0.5f * size;
+		public enum GeneratorType
+		{
+			Float2Rectangle,
+			Entities,
+		}
 
-                int xi = 0;
-                for (float x = 0; x <= extent.x; x += spacing, xi++)
-                    ;
-				
-                int yi = 0;
-                for (float y = 0; y <= extent.y; y += spacing, yi++)
-                    ;
+		public struct Float2Rectangle
+		{
+			public ExpressionRef center;
+			public ExpressionRef size;
+			public ExpressionRef orientation;
+			public ExpressionRef spacing;
 
-                int itemCount = (xi * 2 - 1) * (yi * 2 - 1);
-				
-                if(items.Capacity < itemCount)
-                    items.SetCapacity(itemCount);
-				
-                items.Add(center);
+			public void Generate(
+				in QueryExecutionContext qctx,
+				in ExpressionEvalContext ctx,
+				NativeList<float2> items)
+			{
+				float2 center = this.center.Evaluate<float2>(in ctx);
+				float2 size = this.size.Evaluate<float2>(in ctx);
+				float orientation = this.orientation.Evaluate<float>(in ctx);
+				float spacing = this.spacing.Evaluate<float>(in ctx);
 
-                yi = 0;
-                for(float y = 0; y <= extent.y; y += spacing, yi++)
-                {
-                    xi = 1;
-                    for(float x = spacing; x <= extent.x; x += spacing, xi++)
-                    {
-                        items.Add(center + new float2(basis.x * xi, basis.y * yi));
-                        items.Add(center + new float2(basis.x * xi, -basis.y * yi));
-                        items.Add(center + new float2(-basis.x * xi, basis.y * yi));
-                        items.Add(center + new float2(-basis.x * xi, -basis.y * yi));
-                    }
-                }
-            }
-        }
+				math.sincos(orientation, out var s, out var c);
+				var basis = spacing * new float2(c - s, s + c);
 
-        public struct Entities
-        {
-            public Hash128 queryHash;
+				var extent = 0.5f * size;
 
-            public void Generate(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, NativeList<Entity> items)
-            {
-                if (qctx.queryResultLookup.TryGetValue(queryHash, out var results))
-                    items.CopyFrom(results);
-                else
-                    throw new InvalidOperationException($"results for query with hash {queryHash} not available");
-            }
-        }
+				int xi = 0;
+				for(float x = 0; x <= extent.x; x += spacing, xi++)
+					;
 
-        static void CheckType<TExpected, TActual>()
-        {
-            if(typeof(TExpected) != typeof(TActual))
-                throw new Exception();
-        }
+				int yi = 0;
+				for(float y = 0; y <= extent.y; y += spacing, yi++)
+					;
 
-        public void Generate<TItem>(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, NativeList<TItem> items) where TItem : unmanaged
-        {
-            switch(generatorType)
-            {
-                case GeneratorType.Float2Rectangle:
-                    CheckType<float2, TItem>();
-                    unsafe
-                    {
-                        data.float2Rectangle.Generate(in qctx, in ctx, *(NativeList<float2>*)&items);
-                    }
-                    break;
+				int itemCount = (xi * 2 - 1) * (yi * 2 - 1);
 
-                case GeneratorType.Entities:
-                    CheckType<Entity, TItem>();
-                    unsafe
-                    {
-                        data.entities.Generate(in qctx, in ctx, *(NativeList<Entity>*)&items);
-                    }
-                    break;
+				if(items.Capacity < itemCount)
+					items.SetCapacity(itemCount);
 
-                default:
-                    throw new NotImplementedException();
-            }
-        }
-    }
+				items.Add(center);
 
-    public struct QSFilter
-    {
-        public ExpressionRef expr;
-        public int nodeIndex;
-        public FilterType type;
+				yi = 0;
+				for(float y = 0; y <= extent.y; y += spacing, yi++)
+				{
+					xi = 1;
+					for(float x = spacing; x <= extent.x; x += spacing, xi++)
+					{
+						items.Add(center + new float2(basis.x * xi, basis.y * yi));
+						items.Add(center + new float2(basis.x * xi, -basis.y * yi));
+						items.Add(center + new float2(-basis.x * xi, basis.y * yi));
+						items.Add(center + new float2(-basis.x * xi, -basis.y * yi));
+					}
+				}
+			}
+		}
 
-        public enum FilterType
-        {
-            Expression,
+		public struct Entities
+		{
+			public Hash128 queryHash;
 
-            // TODO
-            // Function,
-        }
+			public void Generate(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, NativeList<Entity> items)
+			{
+				if(qctx.queryResultLookup.TryGetValue(queryHash, out var results))
+					items.CopyFrom(results);
+				else
+					throw new InvalidOperationException($"results for query with hash {queryHash} not available");
+			}
+		}
 
-        public void Pass<TItem>(
-            in QueryExecutionContext qctx,
-            in ExpressionEvalContext ctx,
-            ref QSTempState tempState,
-            NativeArray<TItem> items,
-            NativeBitArray passBits) where TItem : unmanaged
-        {
-            switch(type)
-            {
-                case FilterType.Expression:
-                {
-                    // TODO: vectorized expressions
-                    int i = 0;
-                    foreach(var item in items)
-                    {
-                        tempState.GetCurrentItem<TItem>() = item;
-                        passBits.Set(i++, expr.Evaluate<bool>(in ctx));
-                    }
+		static void CheckType<TExpected, TActual>()
+		{
+			if(typeof(TExpected) != typeof(TActual))
+				throw new Exception();
+		}
 
-                    break;
-                }
+		public void Generate<TItem>(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, NativeList<TItem> items) where TItem : unmanaged
+		{
+			switch(generatorType)
+			{
+				case GeneratorType.Float2Rectangle:
+					CheckType<float2, TItem>();
+					unsafe
+					{
+						data.float2Rectangle.Generate(in qctx, in ctx, *(NativeList<float2>*)&items);
+					}
+					break;
 
-                default:
-                    throw new NotImplementedException();
-            }
-        }
-    }
+				case GeneratorType.Entities:
+					CheckType<Entity, TItem>();
+					unsafe
+					{
+						data.entities.Generate(in qctx, in ctx, *(NativeList<Entity>*)&items);
+					}
+					break;
 
-    public struct QSScorer
-    {
-        public ExpressionRef expr;
-        public ScorerType type;
-        public Normalizer normalizer;
-        public bool negate;
+				default:
+					throw new NotImplementedException();
+			}
+		}
+	}
 
-        public enum ScorerType
-        {
-            Expression,
-        }
+	public struct QSFilter
+	{
+		public ExpressionRef expr;
+		public int nodeIndex;
+		public FilterType type;
 
-        public enum Normalizer
-        {
-            None,
-            Reinhard,
-            Sigmoid,
-            Saturate,
-        }
+		public enum FilterType
+		{
+			Expression,
 
-        public void Score<TItem>(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, ref QSTempState tempState, NativeArray<TItem> items, NativeArray<QSItem> scores) where TItem : unmanaged
-        {
-            switch(type)
-            {
-                case ScorerType.Expression:
-                    // TODO: vectorized expressions
-                    for(int i = 0; i < items.Length; ++i)
-                    {
-                        tempState.GetCurrentItem<TItem>() = items[i];
-                        float raw = expr.Evaluate<float>(in ctx);
-                        float score = raw;
+			// TODO
+			// Function,
+		}
 
-                        if (negate)
-                            score = -score;
+		public void Pass<TItem>(
+			in QueryExecutionContext qctx,
+			in ExpressionEvalContext ctx,
+			ref QSTempState tempState,
+			NativeArray<TItem> items,
+			NativeBitArray passBits) where TItem : unmanaged
+		{
+			switch(type)
+			{
+				case FilterType.Expression:
+					{
+						// TODO: vectorized expressions
+						int i = 0;
+						foreach(var item in items)
+						{
+							tempState.GetCurrentItem<TItem>() = item;
+							passBits.Set(i++, expr.Evaluate<bool>(in ctx));
+						}
 
-                        switch (normalizer)
-                        {
-                            case Normalizer.None:
-                                break;
+						break;
+					}
 
-                            case Normalizer.Reinhard:
-                            {
-                                float s = math.sign(score);
-                                float a = math.abs(score);
-                                score = 2 * (1 + s * (a / (1 + a)));
-                            } break;
+				default:
+					throw new NotImplementedException();
+			}
+		}
+	}
 
-                            case Normalizer.Sigmoid:
-                            {
-                                score = 1 / (1 + math.exp(-score));
-                            } break;
+	public struct QSScorer
+	{
+		public ExpressionRef expr;
+		public ScorerType type;
+		public Normalizer normalizer;
+		public bool negate;
 
-                            case Normalizer.Saturate:
-                            {
-                                score = math.saturate(score);
-                            } break;
-                        }
+		public enum ScorerType
+		{
+			Expression,
+		}
 
-                        //UnityEngine.Debug.Log($"{raw} {normalizer} -> {score}");
-                        scores.UnsafeElementAt(i).score += score;
-                    }
-                    break;
+		public enum Normalizer
+		{
+			None,
+			Reinhard,
+			Sigmoid,
+			Saturate,
+		}
 
-                default:
-                    throw new NotImplementedException();
-            }
-        }
-    }
+		public void Score<TItem>(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, ref QSTempState tempState, NativeArray<TItem> items, NativeArray<QSItem> scores) where TItem : unmanaged
+		{
+			switch(type)
+			{
+				case ScorerType.Expression:
+					// TODO: vectorized expressions
+					for(int i = 0; i < items.Length; ++i)
+					{
+						tempState.GetCurrentItem<TItem>() = items[i];
+						float raw = expr.Evaluate<float>(in ctx);
+						float score = raw;
 
-    [InternalBufferCapacity(8)]
-    public struct QSResultItemStorage : IBufferElementData
-    {
-        public long storage;
-    }
+						if(negate)
+							score = -score;
 
-    public struct PendingQuery : IComponentData, IEnableableComponent
-    {
-        public UnityObjectRef<QueryGraphAsset> query;
-    }
+						switch(normalizer)
+						{
+							case Normalizer.None:
+								break;
 
-    public static class QSResultExt
-    {
-        /// <summary>
-        /// Allocate space for <paramref name="resultCount"/> results and return an array view for the results with uninitialized memory
-        /// </summary>
-        /// <param name="results"></param>
-        /// <param name="resultCount"></param>
-        /// <typeparam name="TItem"></typeparam>
-        /// <returns></returns>
-        public static NativeArray<TItem> AllocateResultArray<TItem>(ref this DynamicBuffer<QSResultItemStorage> results, int resultCount) where TItem : unmanaged
-        {
-            int itemSize = UnsafeUtility.SizeOf<TItem>();
-            int elemSize = UnsafeUtility.SizeOf<QSResultItemStorage>();
-            int storageElemCount = 1 + (resultCount * itemSize + elemSize - 1) / elemSize;
-            results.ResizeUninitialized(storageElemCount);
-            results.ElementAt(0).storage = resultCount;
-            return GetResultSubArray<TItem>(results, resultCount);
-        }
-        
-        /// <summary>
-        /// Get an array view of results of the given type
-        /// </summary>
-        /// <param name="results"></param>
-        /// <typeparam name="TItem"></typeparam>
-        /// <returns></returns>
-        public static NativeArray<TItem> AsResultArray<TItem>(this DynamicBuffer<QSResultItemStorage> results) where TItem : unmanaged
-        {
-            if (results.Length == 0)
-            {
-                return results.AsNativeArray().Reinterpret<TItem>(UnsafeUtility.SizeOf<QSResultItemStorage>());
-            }
-            
-            int resultCount = (int)results.ElementAt(0).storage;
-            CheckResultRange<TItem>(results, resultCount);
-            return GetResultSubArray<TItem>(results, resultCount);
-        }
+							case Normalizer.Reinhard:
+								{
+									float s = math.sign(score);
+									float a = math.abs(score);
+									score = 2 * (1 + s * (a / (1 + a)));
+								}
+								break;
 
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        private static void CheckResultRange<TItem>(DynamicBuffer<QSResultItemStorage> results, int resultCount) where TItem : unmanaged
-        {
-            int itemSize = UnsafeUtility.SizeOf<TItem>();
-            int elemSize = UnsafeUtility.SizeOf<QSResultItemStorage>();
-            int storageElemCount = 1 + (resultCount * itemSize + elemSize - 1) / elemSize;
-            if (results.Length < storageElemCount)
-                throw new InvalidOperationException($"corrupted QSResultItemStorage buffer; result count {resultCount} x {itemSize}b does not fit in {results.Length} x {elemSize}b storage elements");
-        }
+							case Normalizer.Sigmoid:
+								{
+									score = 1 / (1 + math.exp(-score));
+								}
+								break;
 
-        private static NativeArray<TItem> GetResultSubArray<TItem>(DynamicBuffer<QSResultItemStorage> results, int resultCount)
-            where TItem : unmanaged
-        {
-            var raw = results.AsNativeArray();
-            
-            NativeArray<TItem> typedResults;
-            unsafe
-            {
-                QSResultItemStorage* ptr = 1 + (QSResultItemStorage*)raw.GetUnsafePtr();
-                typedResults = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<TItem>(ptr, resultCount, Allocator.None);
-            }
+							case Normalizer.Saturate:
+								{
+									score = math.saturate(score);
+								}
+								break;
+						}
+
+						//UnityEngine.Debug.Log($"{raw} {normalizer} -> {score}");
+						scores.UnsafeElementAt(i).score += score;
+					}
+					break;
+
+				default:
+					throw new NotImplementedException();
+			}
+		}
+	}
+
+	[InternalBufferCapacity(8)]
+	public struct QSResultItemStorage : IBufferElementData
+	{
+		public long storage;
+	}
+
+	public struct PendingQuery : IComponentData, IEnableableComponent
+	{
+		public UnityObjectRef<QueryGraphAsset> query;
+		public ExpressionBlackboardLayout.Slice results;
+		public bool complete;
+		public int resultCount;
+	}
+
+	public static class QSResultExt
+	{
+		/// <summary>
+		/// Allocate space for <paramref name="resultCount"/> results and return an array view for the results with uninitialized memory
+		/// </summary>
+		/// <param name="results"></param>
+		/// <param name="resultCount"></param>
+		/// <typeparam name="TItem"></typeparam>
+		/// <returns></returns>
+		public static NativeArray<TItem> AllocateResultArray<TItem>(ref this DynamicBuffer<QSResultItemStorage> results, int resultCount) where TItem : unmanaged
+		{
+			int itemSize = UnsafeUtility.SizeOf<TItem>();
+			int elemSize = UnsafeUtility.SizeOf<QSResultItemStorage>();
+			int storageElemCount = 1 + (resultCount * itemSize + elemSize - 1) / elemSize;
+			results.ResizeUninitialized(storageElemCount);
+			results.ElementAt(0).storage = resultCount;
+			return GetResultSubArray<TItem>(results, resultCount);
+		}
+
+		/// <summary>
+		/// Get an array view of results of the given type
+		/// </summary>
+		/// <param name="results"></param>
+		/// <typeparam name="TItem"></typeparam>
+		/// <returns></returns>
+		public static NativeArray<TItem> AsResultArray<TItem>(this DynamicBuffer<QSResultItemStorage> results) where TItem : unmanaged
+		{
+			if(results.Length == 0)
+			{
+				return results.AsNativeArray().Reinterpret<TItem>(UnsafeUtility.SizeOf<QSResultItemStorage>());
+			}
+
+			int resultCount = (int)results.ElementAt(0).storage;
+			CheckResultRange<TItem>(results, resultCount);
+			return GetResultSubArray<TItem>(results, resultCount);
+		}
+
+		[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+		private static void CheckResultRange<TItem>(DynamicBuffer<QSResultItemStorage> results, int resultCount) where TItem : unmanaged
+		{
+			int itemSize = UnsafeUtility.SizeOf<TItem>();
+			int elemSize = UnsafeUtility.SizeOf<QSResultItemStorage>();
+			int storageElemCount = 1 + (resultCount * itemSize + elemSize - 1) / elemSize;
+			if(results.Length < storageElemCount)
+				throw new InvalidOperationException($"corrupted QSResultItemStorage buffer; result count {resultCount} x {itemSize}b does not fit in {results.Length} x {elemSize}b storage elements");
+		}
+
+		private static NativeArray<TItem> GetResultSubArray<TItem>(DynamicBuffer<QSResultItemStorage> results, int resultCount)
+			where TItem : unmanaged
+		{
+			var raw = results.AsNativeArray();
+
+			NativeArray<TItem> typedResults;
+			unsafe
+			{
+				QSResultItemStorage* ptr = 1 + (QSResultItemStorage*)raw.GetUnsafePtr();
+				typedResults = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<TItem>(ptr, resultCount, Allocator.None);
+			}
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref typedResults, NativeArrayUnsafeUtility.GetAtomicSafetyHandle(raw));
+			NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref typedResults, NativeArrayUnsafeUtility.GetAtomicSafetyHandle(raw));
 #endif
-            return typedResults;
-        }
-    }
+			return typedResults;
+		}
+	}
 }

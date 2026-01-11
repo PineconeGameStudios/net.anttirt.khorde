@@ -173,11 +173,24 @@ namespace Mpr.Behavior
 
 	public struct Query
 	{
+		/// <summary>
+		/// Query index to use, the same index as what gets baked into <see cref="BehaviorTreeAsset.Queries"/>
+		/// </summary>
 		public int queryIndex;
+
+		/// <summary>
+		/// Blackboard variable storing the result items (currently scalar, same as query result item type)
+		/// </summary>
+		public int variableIndex;
+
+		/// <summary>
+		/// Int blackboard variable storing the result count (currently 0 or 1)
+		/// </summary>
+		public int resultCountVariableIndex;
 
 		public string DumpString()
 		{
-			return $"{{ query(TODO) }}";
+			return $"{{ query={queryIndex} var={variableIndex} nRes={resultCountVariableIndex} }}";
 		}
 	}
 }

@@ -1,7 +1,6 @@
-using System.Runtime.CompilerServices;
-using Unity.Collections;
-using Unity.Entities;
 using Mpr.Expr;
+using System.Runtime.CompilerServices;
+using Unity.Entities;
 using Unity.NetCode;
 
 namespace Mpr.Behavior
@@ -82,7 +81,7 @@ namespace Mpr.Behavior
 	public struct BTData
 	{
 		public const int SchemaVersion = 1;
-		
+
 		public BlobExpressionData exprData;
 		public BlobArray<BTExec> execs;
 		public BlobArray<UnityEngine.Hash128> execNodeIds;

@@ -76,7 +76,9 @@ namespace Mpr.Behavior
 						stacks[entityIndex],
 						blackboards[entityIndex],
 						ref layout,
-						queries, pendingQueryEnabled, ref (pendingQueries.IsCreated ? ref pendingQueries.UnsafeElementAt(entityIndex) : ref defaultValue),
+						queries,
+						pendingQueryEnabled,
+						ref (pendingQueries.IsCreated ? ref pendingQueries.UnsafeElementAt(entityIndex) : ref defaultValue),
 						typeHandles.GetComponents(entityIndex),
 						lookups,
 						now,
@@ -182,7 +184,6 @@ namespace Mpr.Behavior
 					if(btData.hasQueries)
 					{
 						instanceComponents.Add(ComponentType.ReadOnly<QueryAssetRegistration>());
-						instanceComponents.Add(ComponentType.ReadWrite<PendingQuery>());
 					}
 
 					var typeHandles = state.EntityManager.GetBuffer<ExprSystemTypeHandleHolder>(queryHolder);
@@ -196,6 +197,11 @@ namespace Mpr.Behavior
 					}
 
 					builder.WithAll(ref instanceComponents);
+
+					if(btData.hasQueries)
+					{
+						builder.WithPresentRW<PendingQuery>();
+					}
 
 					var btQuery = builder.Build(state.EntityManager);
 					btQuery.AddSharedComponentFilter(value);

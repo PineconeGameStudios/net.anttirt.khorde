@@ -1,7 +1,7 @@
-﻿using System;
-using Mpr.Blobs;
+﻿using Mpr.Blobs;
 using Mpr.Entities;
 using Mpr.Expr;
+using System;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -48,14 +48,14 @@ namespace Mpr.Query
 			var entityQueryJobHandles =
 				new NativeHashMap<UnityObjectRef<EntityQueryAsset>, JobHandle>(0, state.WorldUpdateAllocator);
 
-			foreach (var pair in assets.queryGraphs)
+			foreach(var pair in assets.queryGraphs)
 			{
 				var asset = pair.Key;
 				ref var metaData = ref pair.Value;
-				foreach (var entityQueryAsset in QueryGraphAsset.GetQueries(asset))
+				foreach(var entityQueryAsset in QueryGraphAsset.GetQueries(asset))
 				{
-					if (!entityQueryJobHandles.ContainsKey(entityQueryAsset) &&
-					    assets.entityQueries.TryGetValue(entityQueryAsset, out var entityQueryMetaData))
+					if(!entityQueryJobHandles.ContainsKey(entityQueryAsset) &&
+						assets.entityQueries.TryGetValue(entityQueryAsset, out var entityQueryMetaData))
 					{
 						var results = entityQueryMetaData.query.ToEntityListAsync(state.WorldUpdateAllocator,
 							state.Dependency, out var entityQueryJobHandle);
@@ -70,18 +70,18 @@ namespace Mpr.Query
 
 			var jobHandles = new NativeList<JobHandle>(state.WorldUpdateAllocator);
 
-			foreach (var pair in assets.queryGraphs)
+			foreach(var pair in assets.queryGraphs)
 			{
 				var asset = pair.Key;
 				ref var metaData = ref pair.Value;
 
-				if (asset.GetObjectId() == default)
+				if(asset.GetObjectId() == default)
 					throw new InvalidOperationException("query graph asset reference is null");
 
 				var data = asset.GetHandle<QSData, QueryGraphAsset>(QSData.SchemaVersion);
-				if (!data.IsCreated)
+				if(!data.IsCreated)
 					throw new InvalidOperationException("failed to get data handle from query graph asset");
-				
+
 				var job = new ExecuteQueryJob
 				{
 					query = asset,
@@ -102,10 +102,10 @@ namespace Mpr.Query
 				// and component lookups without the system's involvement, and use
 				// metaData.jobQuery.GetDependency() to get the proper dependency.
 
-				foreach (ref var holder in metaData.typeHandles.AsArray().AsSpan())
+				foreach(ref var holder in metaData.typeHandles.AsArray().AsSpan())
 					job.typeHandles.AddType(holder);
 
-				foreach (ref var holder in metaData.lookups.AsArray().AsSpan())
+				foreach(ref var holder in metaData.lookups.AsArray().AsSpan())
 					job.componentLookups.AddLookup(holder);
 
 				jobHandles.Add(job.ScheduleParallelByRef(metaData.jobQuery, entityQueriesJob));
@@ -144,7 +144,7 @@ namespace Mpr.Query
 				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
 				ref var layout = ref layouts.FindLayout(dataHash);
 
-				switch (data.ValueRO.itemType)
+				switch(data.ValueRO.itemType)
 				{
 					case ExpressionValueType.Unknown: break;
 					case ExpressionValueType.Entity:
@@ -205,21 +205,28 @@ namespace Mpr.Query
 				where TItem : unmanaged
 			{
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-				while (enumerator.NextEntityIndex(out var entityIndex))
+				while(enumerator.NextEntityIndex(out var entityIndex))
 				{
-					if (pendingEnabled.GetBit(entityIndex) && pendingQueries[entityIndex].query == query)
+					if(pendingEnabled.GetBit(entityIndex))
 					{
-						chunk.SetComponentEnabled(ref pendingQuery, entityIndex, false);
+						ref var pendingQuery = ref pendingQueries.UnsafeElementAt(entityIndex);
+						if(pendingQuery.query == query)
+						{
+							chunk.SetComponentEnabled(ref this.pendingQuery, entityIndex, false);
+							pendingQuery.complete = true;
 
-						var qctx = new QueryExecutionContext(
-							ref data.ValueRO,
-							typeHandles.GetComponents(entityIndex),
-							componentLookups.Lookups,
-							queryResultLookup);
+							var qctx = new QueryExecutionContext(
+								ref data.ValueRO,
+								typeHandles.GetComponents(entityIndex),
+								componentLookups.Lookups,
+								queryResultLookup);
 
-						var blackboard = blackboardBuffers[entityIndex];
-						var results = resultBuffers[entityIndex];
-						qctx.Execute<TItem>(blackboard, ref blackboardLayout, results);
+							var blackboard = blackboardBuffers[entityIndex];
+
+							var results = resultBuffers[entityIndex];
+							int resultCount = qctx.Execute<TItem>(blackboard, ref blackboardLayout, results, pendingQuery.results);
+							pendingQuery.resultCount = resultCount;
+						}
 					}
 				}
 			}

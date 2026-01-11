@@ -43,10 +43,12 @@ public struct ExpressionComponentTypeInfo
 
 public struct ExpressionBlackboardLayout
 {
+	// TODO: 12 bytes for this is terribly excessive, should fit in 4
 	public struct Slice
 	{
 		public int offset;
 		public int length;
+		public bool array;
 	}
 
 	public Hash128 asset;
@@ -178,6 +180,11 @@ public unsafe ref struct ExpressionEvalContext
 	{
 		var slice = layout.variables[index];
 		return blackboard.GetSubArray(slice.offset, slice.length);
+	}
+
+	public ExpressionBlackboardLayout.Slice GetBlackboardVariableSlice(int index)
+	{
+		return layout.variables[index];
 	}
 }
 
