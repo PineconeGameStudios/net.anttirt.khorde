@@ -74,7 +74,7 @@ namespace Mpr.Behavior
 						ref btData.Value,
 						ref states[entityIndex],
 						stacks[entityIndex],
-						blackboards[entityIndex],
+						blackboards[entityIndex].AsNativeArray(),
 						ref layout,
 						queries,
 						pendingQueryEnabled,

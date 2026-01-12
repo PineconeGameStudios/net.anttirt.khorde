@@ -18,8 +18,8 @@ namespace Mpr.Behavior.Test
 	public class BehaviorTreeTests : ExpressionTestBase
 	{
 		Entity testEntity;
-		DynamicBuffer<BTStackFrame> stack;
-		DynamicBuffer<BTExecTrace> trace;
+		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
+		DynamicBuffer<BTExecTrace> trace => em.GetBuffer<BTExecTrace>(testEntity);
 		Dictionary<Type, ulong> hashCache;
 		new BTTestBakingContext baker;
 		ref BTData data => ref baker.GetData();
@@ -62,8 +62,6 @@ namespace Mpr.Behavior.Test
 			testEntity = em.CreateEntity();
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
-			stack = em.GetBuffer<BTStackFrame>(testEntity);
-			trace = em.GetBuffer<BTExecTrace>(testEntity);
 			hashCache = new();
 		}
 
@@ -570,6 +568,65 @@ namespace Mpr.Behavior.Test
 					Trace(BTExecType.Wait, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Wait, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
+				);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_WriteVar()
+		{
+			baker.InitializeBake(0, 0);
+
+			var execs = baker.Builder.Allocate(ref data.execs, 100);
+
+			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
+			execs[2].type = BTExec.BTExecType.WriteVar;
+			execs[2].data.writeVar = new WriteVar
+			{
+				variableIndex = 0,
+				input = baker.Const(3.523f),
+			};
+
+			baker.AddBlackboardVariable<float>("TestVar", isGlobal: true);
+
+			world.EntityManager.AddBuffer<ExpressionBlackboardStorage>(testEntity);
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize();
+
+			var layout = ExprAuthoring.ComputeLayout(new() { (default, new Ptr<BlobExpressionData>(ref asset.Value.exprData)) });
+			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
+
+			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
+			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(default);
+
+			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+
+			Assert.GreaterOrEqual(blackboardBytes.Length, blackboardLayout.minByteLength);
+
+			blackboardBytes.ReinterpretStore(0, 1.23f);
+
+			BTState state = default;
+
+			try
+			{
+				Assert.AreEqual(1.23f, blackboardBytes.ReinterpretLoad<float>(0));
+
+				asset.Execute(ref state, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+				Assert.AreEqual(3.523f, blackboardBytes.ReinterpretLoad<float>(0));
+
+				AssertTrace(
+					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.WriteVar, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
 				);
 			}

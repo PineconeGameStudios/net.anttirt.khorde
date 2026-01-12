@@ -80,7 +80,7 @@ namespace Mpr.Behavior.Test
 				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
 				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -96,7 +96,7 @@ namespace Mpr.Behavior.Test
 
 				trace.Clear();
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -108,7 +108,7 @@ namespace Mpr.Behavior.Test
 
 				moveTarget.enabled = false;
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(

@@ -372,12 +372,12 @@ public unsafe class ExpressionTests : ExpressionTestBase
 
 			ref var blob = ref asset.GetValue(BlobExpressionData.SchemaVersion);
 
-			var layout = ExprAuthoring.ComputeLayout(new System.Collections.Generic.List<(BlobAssetBase, Ptr<BlobExpressionData>)>
+			var layout = ExprAuthoring.ComputeLayout(new ()
 			{
-				(asset, new Ptr<BlobExpressionData>(ref blob))
+				(asset.DataHash, new Ptr<BlobExpressionData>(ref blob))
 			});
 
-			bool found = layout.TryGetValue(asset, out var layoutVariables);
+			bool found = layout.TryGetValue(asset.DataHash, out var layoutVariables);
 			Assert.IsTrue(found);
 			Assert.NotNull(layoutVariables);
 			Assert.AreEqual(1, layoutVariables.Count);

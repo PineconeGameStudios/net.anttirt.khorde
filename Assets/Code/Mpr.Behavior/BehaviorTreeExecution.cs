@@ -15,7 +15,7 @@ namespace Mpr.Behavior
 			this BlobAssetReference<BTData> asset,
 			ref BTState state,
 			DynamicBuffer<BTStackFrame> stack,
-			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
+			NativeArray<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
 			NativeArray<UnityObjectRef<QueryGraphAsset>> queries,
 			EnabledRefRW<PendingQuery> pendingQueryEnabled,
@@ -30,7 +30,7 @@ namespace Mpr.Behavior
 			ref BTData data,
 			ref BTState state,
 			DynamicBuffer<BTStackFrame> stack,
-			DynamicBuffer<ExpressionBlackboardStorage> blackboard,
+			NativeArray<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
 			NativeArray<UnityObjectRef<QueryGraphAsset>> queries,
 			EnabledRefRW<PendingQuery> pendingQueryEnabled,
@@ -53,8 +53,7 @@ namespace Mpr.Behavior
 			NativeArray<byte> blackboardBytes = default;
 			if(blackboard.IsCreated)
 			{
-				blackboardBytes = blackboard.AsNativeArray()
-					.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+				blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
 			}
 
 			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, lookups, blackboardBytes,
