@@ -1,9 +1,7 @@
-using System;
+using Mpr.Behavior.Authoring;
 using System.IO;
 using System.Linq;
-using Mpr.Behavior.Authoring;
 using Unity.Collections;
-using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
@@ -27,31 +25,32 @@ namespace Mpr.Behavior
 
 			if(isSubgraph)
 			{
-				// not importing subgraphs
+				// not importing subgraphs, so just add a placeholder for the icon
 				var asset = ScriptableObject.CreateInstance<BehaviorTreeSubgraphAsset>();
 				ctx.AddObjectToAsset("BehaviorTreeSubgraph", asset);
 				ctx.SetMainObject(asset);
 			}
 			else
 			{
-				using (var context = new BTBakingContext(graph, Allocator.Temp))
+				using(var context = new BTBakingContext(graph, Allocator.Temp))
 				{
 					var builder = context.Build();
-					if (!builder.IsCreated)
+					if(!builder.IsCreated)
 					{
 						ctx.LogImportError("Build failed");
 						return;
 					}
 
-					if (context.Errors.Count > 0)
+					if(context.Errors.Count > 0)
 					{
-						foreach (var error in context.Errors)
+						foreach(var error in context.Errors)
 							ctx.LogImportError(error);
 
 						return;
 					}
-					
+
 					var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+					obj.Queries.AddRange(context.Queries);
 					var data = obj.SetAssetData(builder, BTData.SchemaVersion);
 					ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
 					ctx.AddObjectToAsset("data", data);

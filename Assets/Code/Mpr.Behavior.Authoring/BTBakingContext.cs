@@ -1,5 +1,6 @@
 ﻿using Mpr.Expr;
 using Mpr.Expr.Authoring;
+using Mpr.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,12 +18,15 @@ namespace Mpr.Behavior.Authoring
 		private NativeArray<BTExec> builderExecs;
 		private NativeArray<Hash128> builderExecNodeIds;
 		private NativeArray<BlobArray<Hash128>> builderExecNodeSubgraphStacks;
+		private List<QueryGraphAsset> queries = new();
 
 		public BTBakingContext(Graph rootGraph, Allocator allocator)
 			: base(rootGraph, allocator)
 		{
 			execNodeMap = new();
 		}
+
+		public List<QueryGraphAsset> Queries => queries;
 
 		public override void Dispose()
 		{
@@ -117,24 +121,18 @@ namespace Mpr.Behavior.Authoring
 			}
 		}
 
-		static readonly UnityEngine.Hash128 globalKey = new UnityEngine.Hash128(0xddddddddddddddddul, 0xddddddddddddddddul);
-		record struct VariableKey(UnityEngine.Hash128 subgraphStackKey, string name);
-		Dictionary<VariableKey, int> variables = new();
-
-		VariableKey GetVariableKey(IVariable variable)
+		public int GetQueryIndex(INodeOption queryOption)
 		{
-			bool isGlobal = IsGlobal(variable);
-			return new VariableKey(isGlobal ? globalKey : subgraphStack.GetKey(), variable.name);
-		}
+			queryOption.TryGetValue<QueryGraphAsset>(out var queryGraphAsset);
+			if(queryGraphAsset == null)
+				throw new InvalidOperationException("query graph not assigned");
 
-		public static bool IsGlobal(IVariable variable)
-		{
-			return !variable.name.StartsWith("_");
-		}
+			int index = queries.IndexOf(queryGraphAsset);
+			if(index != -1)
+				return index;
 
-		public int GetVariableIndex(IVariable variable)
-		{
-			return variables[GetVariableKey(variable)];
+			queries.Add(queryGraphAsset);
+			return queries.Count - 1;
 		}
 
 		void RegisterExecNodes(Graph graph)
@@ -261,7 +259,6 @@ namespace Mpr.Behavior.Authoring
 				}
 			}
 		}
-
 	}
 
 }
