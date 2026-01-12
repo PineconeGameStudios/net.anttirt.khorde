@@ -1,10 +1,9 @@
-﻿using Mpr.Expr.Authoring;
+﻿using Mpr.Expr;
+using Mpr.Expr.Authoring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Mpr.Expr;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Hash128 = UnityEngine.Hash128;
@@ -28,7 +27,7 @@ namespace Mpr.Behavior.Authoring
 		public override void Dispose()
 		{
 			base.Dispose();
-			
+
 			builderExecs = default;
 			builderExecNodeIds = default;
 			builderExecNodeSubgraphStacks = default;
@@ -37,7 +36,7 @@ namespace Mpr.Behavior.Authoring
 		protected override ref BlobExpressionData ConstructRoot()
 		{
 			ref var data = ref builder.ConstructRoot<BTData>();
-			fixed (BTData* dataPtr = &data)
+			fixed(BTData* dataPtr = &data)
 				this.data = dataPtr;
 			return ref data.exprData;
 		}
@@ -82,7 +81,7 @@ namespace Mpr.Behavior.Authoring
 		public override void InitializeBake(int expressionCount, int outputCount)
 		{
 			base.InitializeBake(expressionCount, outputCount);
-			
+
 			builderExecs = AsArray(builder.Allocate(ref data->execs, execNodeMap.Count));
 			builderExecNodeIds = AsArray(builder.Allocate(ref data->execNodeIds, execNodeMap.Count));
 			builderExecNodeSubgraphStacks = AsArray(builder.Allocate(ref data->execNodeSubgraphStacks, execNodeMap.Count));
@@ -118,8 +117,44 @@ namespace Mpr.Behavior.Authoring
 			}
 		}
 
+		static readonly UnityEngine.Hash128 globalKey = new UnityEngine.Hash128(0xddddddddddddddddul, 0xddddddddddddddddul);
+		record struct VariableKey(UnityEngine.Hash128 subgraphStackKey, string name);
+		Dictionary<VariableKey, int> variables = new();
+
+		VariableKey GetVariableKey(IVariable variable)
+		{
+			bool isGlobal = IsGlobal(variable);
+			return new VariableKey(isGlobal ? globalKey : subgraphStack.GetKey(), variable.name);
+		}
+
+		public static bool IsGlobal(IVariable variable)
+		{
+			return !variable.name.StartsWith("_");
+		}
+
+		public int GetVariableIndex(IVariable variable)
+		{
+			return variables[GetVariableKey(variable)];
+		}
+
 		void RegisterExecNodes(Graph graph)
 		{
+			foreach(var variable in graph.GetVariables())
+			{
+				if(variable.variableKind == VariableKind.Local)
+				{
+					var key = GetVariableKey(variable);
+					if(!variables.ContainsKey(key))
+					{
+						variables[key] = AddBlackboardVariable(
+							variable.name,
+							IsGlobal(variable),
+							variable.dataType
+						);
+					}
+				}
+			}
+
 			foreach(var node in graph.GetNodes())
 			{
 				if(node is ISubgraphNode subgraphNode)

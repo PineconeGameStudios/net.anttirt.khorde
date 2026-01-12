@@ -536,6 +536,29 @@ public static class ExpressionValueTypeExt
 		}
 	}
 
+	public static Type GetValueType(this ExpressionValueType valueType)
+	{
+		switch(valueType)
+		{
+			case ExpressionValueType.Unknown: return null;
+			case ExpressionValueType.Entity: return typeof(Entity);
+			case ExpressionValueType.Bool: return typeof(bool);
+			case ExpressionValueType.Bool2: return typeof(bool2);
+			case ExpressionValueType.Bool3: return typeof(bool3);
+			case ExpressionValueType.Bool4: return typeof(bool4);
+			case ExpressionValueType.Int: return typeof(int);
+			case ExpressionValueType.Int2: return typeof(int2);
+			case ExpressionValueType.Int3: return typeof(int3);
+			case ExpressionValueType.Int4: return typeof(int4);
+			case ExpressionValueType.Float: return typeof(float);
+			case ExpressionValueType.Float2: return typeof(float2);
+			case ExpressionValueType.Float3: return typeof(float3);
+			case ExpressionValueType.Float4: return typeof(float4);
+			case ExpressionValueType.Quaternion: return typeof(quaternion);
+			default: throw new ArgumentOutOfRangeException(nameof(valueType));
+		}
+	}
+
 	public static ExpressionValueType GetExpressionValueType(this Type type)
 	{
 		if(type == typeof(Entity)) return ExpressionValueType.Entity;

@@ -1,9 +1,11 @@
 using Mpr.Expr;
+using Mpr.Expr.Authoring;
 using Mpr.Query;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEditor;
@@ -128,6 +130,74 @@ namespace Mpr.Behavior.Test
 				if(data.IsCreated)
 					data.Dispose();
 			}
+		}
+
+		[Test]
+		public void Test_WriteVar()
+		{
+			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Assets/Prefabs/BT_Test_WriteVar.btg");
+			ref var data = ref asset.GetValue(BTData.SchemaVersion);
+			data.exprData.RuntimeInitialize();
+
+			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
+			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
+
+			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
+			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
+			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+
+			BTState state = default;
+			Game.MoveTarget moveTarget = default;
+			LocalTransform localTransform = LocalTransform.FromScale(1);
+			Game.NpcTargetEntity targetEntity = default;
+
+			var dump = new List<string>();
+			BehaviorTreeExecution.DumpNodes(ref data, dump);
+
+			//foreach(var line in dump)
+			//	UnityEngine.Debug.Log(line);
+
+			ref var localComponents = ref data.exprData.localComponents;
+
+			var comps = new NativeArray<UnsafeComponentReference>(localComponents.Length, Allocator.Temp);
+
+			for(int i = 0; i < localComponents.Length; ++i)
+			{
+				var type = localComponents[i].ResolveComponentType();
+				var typeIndex = type.TypeIndex;
+				if(typeIndex == TypeManager.GetTypeIndex<Game.MoveTarget>())
+					comps[i] = UnsafeComponentReference.Make(ref moveTarget);
+				else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
+					comps[i] = UnsafeComponentReference.Make(ref localTransform);
+				else if(typeIndex == TypeManager.GetTypeIndex<Game.NpcTargetEntity>())
+					comps[i] = UnsafeComponentReference.Make(ref targetEntity);
+				else
+					throw new Exception($"component {type.GetManagedType().FullName} not available in test");
+			}
+
+			var lookups = new NativeArray<UntypedComponentLookup>(data.exprData.lookupComponents.Length, Allocator.Temp);
+			for(int i = 0; i < lookups.Length; ++i)
+			{
+				var type = data.exprData.lookupComponents[i].ResolveComponentType();
+				var typeIndex = type.TypeIndex;
+				if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
+			}
+
+			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
+
+			BehaviorTreeExecution.Execute(ref data, ref state, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+
+			Assert.AreEqual(1.23f, blackboardBytes.ReinterpretLoad<float>(0));
+
+			AssertTrace(
+				Trace(BTExecType.Root, 1, 0, Event.Init),
+				Trace(BTExecType.Root, 1, 1, Event.Start),
+				Trace(BTExecType.Root, 1, 1, Event.Call),
+				Trace(BTExecType.WriteVar, 2, 2, Event.Return),
+				Trace(BTExecType.Root, 1, 1, Event.Yield)
+			);
+
 		}
 
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mpr.Expr;
+using System;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
@@ -227,6 +228,63 @@ namespace Mpr.Behavior.Authoring
 
 			context.AddInputPort<bool>("Until")
 				.WithDisplayName("Until")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	[NodeCategory("Execution")]
+	internal class WriteVar : ExecBase, IExecNode
+	{
+		private INodeOption valueTypeOption;
+		private IPort varPort;
+		private IPort valuePort;
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		{
+			int varIndex = context.GetVariableIndex(((IVariableNode)(varPort.firstConnectedPort.GetNode())).variable);
+			exec.type = BTExec.BTExecType.WriteVar;
+			exec.data.writeVar = new Behavior.WriteVar
+			{
+				variableIndex = varIndex,
+				input = context.GetExpressionRef(valuePort),
+			};
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			valueTypeOption = context.AddOption<ExpressionValueType>("ValueType")
+				.WithDisplayName(string.Empty)
+				.WithDefaultValue(ExpressionValueType.Int)
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			valueTypeOption.TryGetValue<ExpressionValueType>(out var valueType);
+			var type = valueType.GetValueType();
+
+			if(type == null)
+				return;
+
+			varPort = context.AddInputPort("Variable")
+				.WithDisplayName("Variable")
+				.WithDataType(type)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			valuePort = context.AddInputPort("Value")
+				.WithDisplayName("Value")
+				.WithDataType(type)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();

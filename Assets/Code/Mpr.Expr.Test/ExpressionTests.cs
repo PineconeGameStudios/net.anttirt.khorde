@@ -392,7 +392,6 @@ public unsafe class ExpressionTests : ExpressionTestBase
 
 			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
 			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
-
 			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
 
 			Assert.GreaterOrEqual(blackboardBytes.Length, blackboardLayout.minByteLength);

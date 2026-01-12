@@ -164,12 +164,14 @@ public unsafe class ExpressionBakingContext : IDisposable
 		}
 	}
 
-	public int AddBlackboardVariable<T>(string name, bool isGlobal) where T : unmanaged
+	public int AddBlackboardVariable<T>(string name, bool isGlobal) where T : unmanaged => AddBlackboardVariable(name, isGlobal, typeof(T));
+
+	public int AddBlackboardVariable(string name, bool isGlobal, Type type)
 	{
 		blackboardVariables.Add(new Variable
 		{
 			name = name,
-			type = typeof(T),
+			type = type,
 			isGlobal = isGlobal,
 		});
 
