@@ -1,6 +1,5 @@
 using System;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
 
@@ -17,15 +16,15 @@ namespace Mpr.Expr.Authoring
 
 		protected static (BaseType, int) Decompose(Type type)
 		{
-			if(type == typeof(int))     return (BaseType.Int   , 1);
-			if(type == typeof(int2))    return (BaseType.Int   , 2);
-			if(type == typeof(int3))    return (BaseType.Int   , 3);
-			if(type == typeof(int4))    return (BaseType.Int   , 4);
-			if(type == typeof(float))   return (BaseType.Float , 1);
-			if(type == typeof(float2))  return (BaseType.Float , 2);
-			if(type == typeof(float3))  return (BaseType.Float , 3);
-			if(type == typeof(float4))  return (BaseType.Float , 4);
-			if(type == typeof(double))  return (BaseType.Double, 1);
+			if(type == typeof(int)) return (BaseType.Int, 1);
+			if(type == typeof(int2)) return (BaseType.Int, 2);
+			if(type == typeof(int3)) return (BaseType.Int, 3);
+			if(type == typeof(int4)) return (BaseType.Int, 4);
+			if(type == typeof(float)) return (BaseType.Float, 1);
+			if(type == typeof(float2)) return (BaseType.Float, 2);
+			if(type == typeof(float3)) return (BaseType.Float, 3);
+			if(type == typeof(float4)) return (BaseType.Float, 4);
+			if(type == typeof(double)) return (BaseType.Double, 1);
 			if(type == typeof(double2)) return (BaseType.Double, 2);
 			if(type == typeof(double3)) return (BaseType.Double, 3);
 			if(type == typeof(double4)) return (BaseType.Double, 4);
@@ -78,59 +77,59 @@ namespace Mpr.Expr.Authoring
 			var (baseType, inputCount) = Decompose(typeof(T));
 			int elementSize;
 
-			switch (baseType)
+			switch(baseType)
 			{
 				case BaseType.Int: elementSize = UnsafeUtility.SizeOf<int>(); break;
 				case BaseType.Float: elementSize = UnsafeUtility.SizeOf<float>(); break;
 				default: throw new NotImplementedException();
 			}
-			
+
 			GetNodeOption(0).TryGetValue<string>(out var pattern);
-			
+
 			var op = SwizzleOp.Parse(pattern);
 
-			if (elementSize != 4)
+			if(elementSize != 4)
 				throw new NotImplementedException();
 
-			switch (inputCount)
+			switch(inputCount)
 			{
 				case 1:
-				{
-					ref var swizzle = ref context.CreateExpression<Swizzle32x1>(storage);
-					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
-					swizzle.@operator = op;
-					break;
-				}
-				
+					{
+						ref var swizzle = ref context.CreateExpression<Swizzle32x1>(storage);
+						swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
+						swizzle.@operator = op;
+						break;
+					}
+
 				case 2:
-				{
-					ref var swizzle = ref context.CreateExpression<Swizzle32x2>(storage);
-					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
-					swizzle.@operator = op;
-					break;
-				}
-				
+					{
+						ref var swizzle = ref context.CreateExpression<Swizzle32x2>(storage);
+						swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
+						swizzle.@operator = op;
+						break;
+					}
+
 				case 3:
-				{
-					ref var swizzle = ref context.CreateExpression<Swizzle32x3>(storage);
-					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
-					swizzle.@operator = op;
-					break;
-				}
-				
+					{
+						ref var swizzle = ref context.CreateExpression<Swizzle32x3>(storage);
+						swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
+						swizzle.@operator = op;
+						break;
+					}
+
 				case 4:
-				{
-					ref var swizzle = ref context.CreateExpression<Swizzle32x4>(storage);
-					swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
-					swizzle.@operator = op;
-					break;
-				}
-				
+					{
+						ref var swizzle = ref context.CreateExpression<Swizzle32x4>(storage);
+						swizzle.Input0 = context.GetExpressionRef(GetInputPort(0));
+						swizzle.@operator = op;
+						break;
+					}
+
 				default: throw new NotImplementedException();
 			}
 		}
 
-		public override string Title => $"Swizzle ({typeof(T).Name})";
+		public override string Title => $"Swizzle";
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
@@ -177,6 +176,7 @@ namespace Mpr.Expr.Authoring
 					case 'y': case 'g': minInputCount = math.max(minInputCount, 2); break;
 					case 'z': case 'b': minInputCount = math.max(minInputCount, 3); break;
 					case 'w': case 'a': minInputCount = math.max(minInputCount, 4); break;
+					case '0': break;
 					default: return;
 				}
 			}
@@ -196,17 +196,17 @@ namespace Mpr.Expr.Authoring
 		}
 	}
 
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt : SwizzleBase<int> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt2 : SwizzleBase<int2> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt3 : SwizzleBase<int3> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleInt4 : SwizzleBase<int4> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleFloat : SwizzleBase<float> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleFloat2 : SwizzleBase<float2> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleFloat3 : SwizzleBase<float3> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleFloat4 : SwizzleBase<float4> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleDouble : SwizzleBase<double> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleDouble2 : SwizzleBase<double2> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleDouble3 : SwizzleBase<double3> { }
-	[Serializable] [NodeCategory("Math/Swizzle")] internal class SwizzleDouble4 : SwizzleBase<double4> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt : SwizzleBase<int> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt2 : SwizzleBase<int2> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt3 : SwizzleBase<int3> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt4 : SwizzleBase<int4> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat : SwizzleBase<float> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat2 : SwizzleBase<float2> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat3 : SwizzleBase<float3> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat4 : SwizzleBase<float4> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble : SwizzleBase<double> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble2 : SwizzleBase<double2> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble3 : SwizzleBase<double3> { }
+	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble4 : SwizzleBase<double4> { }
 
 }

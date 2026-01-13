@@ -209,13 +209,42 @@ namespace Mpr.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Wait : ExecBase, IExecNode
 	{
+		enum WaitMode
+		{
+			Condition,
+			Duration,
+		}
+
+		INodeOption waitModeOption;
+		IPort untilInputPort;
+		IPort durationInputPort;
+
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
 			exec.type = BTExec.BTExecType.Wait;
-			exec.data.wait = new Behavior.Wait
+
+			waitModeOption.TryGetValue<WaitMode>(out var waitMode);
+
+			if(waitMode == WaitMode.Condition)
 			{
-				until = context.GetExpressionRef(GetInputPort(1)),
-			};
+				exec.data.wait = new Behavior.Wait
+				{
+					until = context.GetExpressionRef(untilInputPort),
+				};
+			}
+			else
+			{
+				exec.data.wait = new Behavior.Wait
+				{
+					duration = context.GetExpressionRef(durationInputPort),
+				};
+			}
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			waitModeOption = context.AddOption<WaitMode>("waitMode")
+				.Build();
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
@@ -226,11 +255,24 @@ namespace Mpr.Behavior.Authoring
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			context.AddInputPort<bool>("Until")
-				.WithDisplayName("Until")
-				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
-				.Build();
+			waitModeOption.TryGetValue<WaitMode>(out var waitMode);
+
+			if(waitMode == WaitMode.Condition)
+			{
+				untilInputPort = context.AddInputPort<bool>("Until")
+					.WithDisplayName("Until")
+					.WithConnectorUI(PortConnectorUI.Circle)
+					.WithPortCapacity(PortCapacity.Single)
+					.Build();
+			}
+			else
+			{
+				durationInputPort = context.AddInputPort<float>("Duration")
+					.WithDisplayName("Duration")
+					.WithConnectorUI(PortConnectorUI.Circle)
+					.WithPortCapacity(PortCapacity.Single)
+					.Build();
+			}
 		}
 	}
 

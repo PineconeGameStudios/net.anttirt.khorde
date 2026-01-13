@@ -48,6 +48,8 @@ namespace Mpr.Query
 			var entityQueryJobHandles =
 				new NativeHashMap<UnityObjectRef<EntityQueryAsset>, JobHandle>(0, state.WorldUpdateAllocator);
 
+			entityQueryJobHandles[default] = state.Dependency;
+
 			foreach(var pair in assets.queryGraphs)
 			{
 				var asset = pair.Key;
@@ -68,7 +70,12 @@ namespace Mpr.Query
 			var entityQueriesJob =
 				JobHandle.CombineDependencies(entityQueryJobHandles.GetValueArray(state.WorldUpdateAllocator));
 
-			var jobHandles = new NativeList<JobHandle>(state.WorldUpdateAllocator);
+			state.Dependency = entityQueriesJob;
+
+			//var jobHandles = new NativeList<JobHandle>(state.WorldUpdateAllocator)
+			//{
+			//	entityQueriesJob,
+			//};
 
 			foreach(var pair in assets.queryGraphs)
 			{
@@ -108,10 +115,12 @@ namespace Mpr.Query
 				foreach(ref var holder in metaData.lookups.AsArray().AsSpan())
 					job.componentLookups.AddLookup(holder);
 
-				jobHandles.Add(job.ScheduleParallelByRef(metaData.jobQuery, entityQueriesJob));
+				var queryJobHandle = job.ScheduleParallelByRef(metaData.jobQuery, state.Dependency);
+				//jobHandles.Add(queryJobHandle);
+				state.Dependency = queryJobHandle;
 			}
 
-			state.Dependency = JobHandle.CombineDependencies(jobHandles.AsArray());
+			//state.Dependency = JobHandle.CombineDependencies(jobHandles.AsArray());
 		}
 
 		[BurstCompile]

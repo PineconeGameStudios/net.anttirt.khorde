@@ -3,12 +3,13 @@ using System.IO;
 using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.Editor;
+using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 
 namespace Mpr.Behavior
 {
-	[ScriptedImporter(3, BehaviorTreeGraph.AssetExtension)]
+	[ScriptedImporter(4, BehaviorTreeGraph.AssetExtension, importQueueOffset: 3)]
 	internal class BehaviorTreeImporter : ScriptedImporter
 	{
 		public override void OnImportAsset(AssetImportContext ctx)
@@ -23,7 +24,14 @@ namespace Mpr.Behavior
 
 			bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.variable.variableKind == VariableKind.Input || v.variable.variableKind == VariableKind.Output);
 
-			if(isSubgraph)
+			if(graph.nodeCount == 0)
+			{
+				// create a blank placeholder so creating a fresh asset doesn't result in a user-visible error
+				var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+				ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+				ctx.SetMainObject(obj);
+			}
+			else if(isSubgraph)
 			{
 				// not importing subgraphs, so just add a placeholder for the icon
 				var asset = ScriptableObject.CreateInstance<BehaviorTreeSubgraphAsset>();
@@ -35,43 +43,29 @@ namespace Mpr.Behavior
 				using(var context = new BTBakingContext(graph, Allocator.Temp))
 				{
 					var builder = context.Build();
+
 					if(!builder.IsCreated)
 					{
-						ctx.LogImportError("Build failed");
-						return;
+						ctx.LogImportError($"importing asset '{ctx.assetPath}' failed");
 					}
 
 					if(context.Errors.Count > 0)
 					{
-						foreach(var error in context.Errors)
-							ctx.LogImportError(error);
+						foreach(var (obj_, msg) in context.Errors)
+							ctx.LogImportError(msg);
 
 						return;
 					}
 
 					var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
 					obj.Queries.AddRange(context.Queries);
+					foreach(var q in obj.Queries)
+						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(q));
 					var data = obj.SetAssetData(builder, BTData.SchemaVersion);
 					ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
 					ctx.AddObjectToAsset("data", data);
 					ctx.SetMainObject(obj);
 				}
-
-				//var writer = new MemoryBinaryWriter();
-				//graph.Bake(writer);
-				//ReadOnlySpan<byte> data;
-
-				//unsafe
-				//{
-				//	data = new ReadOnlySpan<byte>(writer.Data, writer.Length);
-				//}
-
-				//asset.bakedGraph = new TextAsset(data);
-				//asset.bakedGraph.name = "Data";
-
-				//ctx.AddObjectToAsset("Data", asset.bakedGraph);
-				//ctx.AddObjectToAsset("BehaviorTree", asset);
-				//ctx.SetMainObject(asset);
 			}
 		}
 	}

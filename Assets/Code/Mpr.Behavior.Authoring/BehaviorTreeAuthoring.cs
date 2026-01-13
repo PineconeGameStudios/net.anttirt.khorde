@@ -70,6 +70,14 @@ namespace Mpr.Behavior
 					foreach(var query in authoring.behaviorTree.Queries)
 						reg.Add(query);
 					AddSharedComponent(entity, reg);
+					AddComponent(entity, new PendingQuery());
+					SetComponentEnabled<PendingQuery>(entity, false);
+					AddBuffer<QSResultItemStorage>(entity);
+					Debug.Log($"added QueryAssetRegistration to {authoring}");
+				}
+				else
+				{
+					Debug.Log($"no queries, skipped QueryAssetRegistration from {authoring}");
 				}
 			}
 		}

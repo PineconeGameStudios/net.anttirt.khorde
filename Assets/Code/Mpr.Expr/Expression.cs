@@ -226,9 +226,25 @@ public struct ExpressionRef
 	private readonly ushort index;
 	private readonly ushort packedIndexOrLength;
 	private const ushort FlagConstant = (ushort)0x8000u;
-	private const ushort IndexMask = (ushort)0x7fffu;
+	private const ushort FlagNode = (ushort)0x4000u;
+	private const ushort IndexMask = (ushort)0x3fffu;
+
+	public bool IsCreated
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get
+		{
+			return !(index == 0 && packedIndexOrLength == 0);
+		}
+	}
 
 	private bool isConstant
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => (packedIndexOrLength & FlagConstant) != 0;
+	}
+
+	private bool isNode
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get => (packedIndexOrLength & FlagConstant) != 0;
@@ -243,7 +259,7 @@ public struct ExpressionRef
 	ExpressionRef(ushort index, ushort outputIndex, bool constant)
 	{
 		this.index = index;
-		this.packedIndexOrLength = (ushort)(outputIndex | (constant ? FlagConstant : 0u));
+		this.packedIndexOrLength = (ushort)(outputIndex | (constant ? FlagConstant : FlagNode));
 	}
 
 	public static ExpressionRef Node(ushort index, ushort outputIndex) => new ExpressionRef(index, outputIndex, false);
@@ -253,6 +269,8 @@ public struct ExpressionRef
 
 	public T Evaluate<T>(in ExpressionEvalContext ctx) where T : unmanaged
 	{
+		CheckCreated();
+
 		if(isConstant)
 		{
 			return ctx.data.GetConstant<T>(index);
@@ -277,6 +295,13 @@ public struct ExpressionRef
 
 			return result;
 		}
+	}
+
+	[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+	private void CheckCreated()
+	{
+		if(!IsCreated)
+			throw new InvalidOperationException($"expression ref not created");
 	}
 
 	[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
@@ -311,6 +336,8 @@ public struct ExpressionRef
 
 	public void Evaluate<T>(in ExpressionEvalContext ctx, out T result) where T : unmanaged
 	{
+		CheckCreated();
+
 		if(isConstant)
 		{
 			result = ctx.data.GetConstant<T>(index);
@@ -339,6 +366,8 @@ public struct ExpressionRef
 
 	public void Evaluate(in ExpressionEvalContext ctx, ref NativeArray<byte> result)
 	{
+		CheckCreated();
+
 		if(isConstant)
 		{
 			result.CopyFrom(
@@ -378,6 +407,23 @@ public interface IExpression<T0, T1> : IExpressionBase where T0 : unmanaged wher
 	ExpressionRef Input0 { get; set; }
 	ExpressionRef Input1 { get; set; }
 	void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, int outputIndex, ref NativeArray<byte> untypedResult);
+}
+
+public interface IExpression<T0, T1, T2> : IExpressionBase where T0 : unmanaged where T1 : unmanaged where T2 : unmanaged
+{
+	ExpressionRef Input0 { get; set; }
+	ExpressionRef Input1 { get; set; }
+	ExpressionRef Input2 { get; set; }
+	void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, in T2 input2, int outputIndex, ref NativeArray<byte> untypedResult);
+}
+
+public interface IExpression<T0, T1, T2, T3> : IExpressionBase where T0 : unmanaged where T1 : unmanaged where T2 : unmanaged where T3 : unmanaged
+{
+	ExpressionRef Input0 { get; set; }
+	ExpressionRef Input1 { get; set; }
+	ExpressionRef Input2 { get; set; }
+	ExpressionRef Input3 { get; set; }
+	void Evaluate(in ExpressionEvalContext ctx, in T0 input0, in T1 input1, in T2 input2, in T3 input3, int outputIndex, ref NativeArray<byte> untypedResult);
 }
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -425,6 +471,34 @@ public static unsafe class EvalHelper
 		expr->Input0.Evaluate(in ctx, out TInput0 input0);
 		expr->Input1.Evaluate(in ctx, out TInput1 input1);
 		expr->Evaluate(in ctx, in input0, in input1, outputIndex, ref untypedResult);
+	}
+
+	public static void Evaluate<TExpr, TInput0, TInput1, TInput2>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
+		where TExpr : unmanaged, IExpression<TInput0, TInput1, TInput2>
+		where TInput0 : unmanaged
+		where TInput1 : unmanaged
+		where TInput2 : unmanaged
+	{
+		TExpr* expr = self->GetUnsafePtr<TExpr>();
+		expr->Input0.Evaluate(in ctx, out TInput0 input0);
+		expr->Input1.Evaluate(in ctx, out TInput1 input1);
+		expr->Input2.Evaluate(in ctx, out TInput2 input2);
+		expr->Evaluate(in ctx, in input0, in input1, in input2, outputIndex, ref untypedResult);
+	}
+
+	public static void Evaluate<TExpr, TInput0, TInput1, TInput2, TInput3>(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex, ref NativeArray<byte> untypedResult)
+		where TExpr : unmanaged, IExpression<TInput0, TInput1, TInput2, TInput3>
+		where TInput0 : unmanaged
+		where TInput1 : unmanaged
+		where TInput2 : unmanaged
+		where TInput3 : unmanaged
+	{
+		TExpr* expr = self->GetUnsafePtr<TExpr>();
+		expr->Input0.Evaluate(in ctx, out TInput0 input0);
+		expr->Input1.Evaluate(in ctx, out TInput1 input1);
+		expr->Input2.Evaluate(in ctx, out TInput2 input2);
+		expr->Input3.Evaluate(in ctx, out TInput3 input3);
+		expr->Evaluate(in ctx, in input0, in input1, in input2, in input3, outputIndex, ref untypedResult);
 	}
 }
 

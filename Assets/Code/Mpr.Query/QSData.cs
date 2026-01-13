@@ -370,6 +370,7 @@ namespace Mpr.Query
 		public ScorerType type;
 		public Normalizer normalizer;
 		public bool negate;
+		public float noise;
 
 		public enum ScorerType
 		{
@@ -424,6 +425,9 @@ namespace Mpr.Query
 								}
 								break;
 						}
+
+						if(noise > 0)
+							score = math.lerp(score, RandomHelper.JobRandom.NextFloat(), noise);
 
 						//UnityEngine.Debug.Log($"{raw} {normalizer} -> {score}");
 						scores.UnsafeElementAt(i).score += score;

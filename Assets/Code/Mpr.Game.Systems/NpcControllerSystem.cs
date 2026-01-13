@@ -85,4 +85,15 @@ namespace Mpr.Game
 			}.ScheduleParallel(moveQuery, state.Dependency);
 		}
 	}
+
+	[UpdateInGroup(typeof(InitializationSystemGroup))]
+	partial struct NameNpcSystem : ISystem
+	{
+		[BurstCompile]
+		void ISystem.OnUpdate(ref SystemState state)
+		{
+			foreach(var (_, e) in SystemAPI.Query<NpcController>().WithEntityAccess())
+				state.EntityManager.SetName(e, "Npc");
+		}
+	}
 }

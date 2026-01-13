@@ -197,15 +197,38 @@ namespace Mpr.Behavior
 						break;
 
 					case BTExec.BTExecType.Wait:
-						if(node.data.wait.until.Evaluate<bool>(in exprContext))
+						if(node.data.wait.duration.IsCreated)
 						{
-							Return(ref data, ref node);
+							if(state.waitStartTime == 0)
+							{
+								state.waitStartTime = now;
+							}
+
+							float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
+							if(now - state.waitStartTime >= duration)
+							{
+								state.waitStartTime = 0;
+								Return(ref data, ref node);
+							}
+							else
+							{
+								// still waiting, can't execute any more nodes until more time elapses
+								Trace(ref node, BTExecTrace.Event.Wait);
+								return;
+							}
 						}
 						else
 						{
-							// still waiting, can't execute any more nodes until input data changes
-							Trace(ref node, BTExecTrace.Event.Wait);
-							return;
+							if(node.data.wait.until.Evaluate<bool>(in exprContext))
+							{
+								Return(ref data, ref node);
+							}
+							else
+							{
+								// still waiting, can't execute any more nodes until input data changes
+								Trace(ref node, BTExecTrace.Event.Wait);
+								return;
+							}
 						}
 
 						break;
@@ -272,10 +295,8 @@ namespace Mpr.Behavior
 							// on the bt execution stack, but a blackboard variable will do for now
 							exprContext.GetBlackboardVariable(node.data.query.resultCountVariableIndex).ReinterpretStore(0, pendingQuery.resultCount);
 							Return(ref data, ref node);
+							break;
 						}
-
-						Return(ref data, ref node);
-						break;
 
 					default:
 						throw new NotImplementedException($"BTExec node type {node.type} not implemented");

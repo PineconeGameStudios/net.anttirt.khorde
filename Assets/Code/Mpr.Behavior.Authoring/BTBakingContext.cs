@@ -50,13 +50,14 @@ namespace Mpr.Behavior.Authoring
 			var roots = rootGraph.GetNodes().OfType<Root>().ToList();
 			if(roots.Count == 0)
 			{
-				errors.Add($"no Root node found");
+				AddError(rootGraph, $"no Root node found");
 				return false;
 			}
 
 			if(roots.Count > 1)
 			{
-				errors.Add($"graph must have exactly one Root node, {roots.Count} found");
+				foreach(var root in roots)
+					AddError(root, $"graph must have exactly one Root node, {roots.Count} found");
 				return false;
 			}
 
@@ -119,6 +120,8 @@ namespace Mpr.Behavior.Authoring
 					execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index), this);
 				}
 			}
+
+			data->hasQueries = queries.Count > 0;
 		}
 
 		public int GetQueryIndex(INodeOption queryOption)
@@ -137,22 +140,6 @@ namespace Mpr.Behavior.Authoring
 
 		void RegisterExecNodes(Graph graph)
 		{
-			foreach(var variable in graph.GetVariables())
-			{
-				if(variable.variableKind == VariableKind.Local)
-				{
-					var key = GetVariableKey(variable);
-					if(!variables.ContainsKey(key))
-					{
-						variables[key] = AddBlackboardVariable(
-							variable.name,
-							IsGlobal(variable),
-							variable.dataType
-						);
-					}
-				}
-			}
-
 			foreach(var node in graph.GetNodes())
 			{
 				if(node is ISubgraphNode subgraphNode)
@@ -182,7 +169,7 @@ namespace Mpr.Behavior.Authoring
 				return default;
 
 			if(dstPorts.Count > 1)
-				errors.Add($"node {srcPort.GetNode()} port {srcPort} is connected to multiple exec ports");
+				AddError(srcPort.GetNode(), $"node {srcPort.GetNode()} port {srcPort} is connected to multiple exec ports");
 
 			var dstPort = dstPorts[0];
 			var dstNode = dstPort.GetNode();
@@ -199,35 +186,36 @@ namespace Mpr.Behavior.Authoring
 
 					if(dstVariableNodes.Count == 0)
 					{
-						warnings.Add($"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
+						AddWarning(subgraphNode, $"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
 						return default;
 					}
 
 					if(dstVariableNodes.Count > 1)
-						errors.Add($"subgraph {subgraph} exec variable {dstVariable} has multiple instances");
+						foreach(var dstVariableNode in dstVariableNodes)
+							AddError(dstVariableNode, $"subgraph {subgraph} exec variable {dstVariable} has multiple instances");
 
 					srcNode = dstVariableNodes[0];
 
 					if(srcNode.outputPortCount == 0)
 					{
-						warnings.Add($"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
+						AddWarning(subgraphNode, $"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
 						return default;
 					}
 
 					if(srcNode.outputPortCount > 1)
-						errors.Add($"subgraph {subgraph} node {srcNode} has multiple exec output ports");
+						AddError(srcNode, $"subgraph {subgraph} node {srcNode} has multiple exec output ports");
 
 					dstPorts.Clear();
 					srcNode.GetOutputPort(0).GetConnectedPorts(dstPorts);
 
 					if(dstPorts.Count == 0)
 					{
-						warnings.Add($"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
+						AddWarning(subgraphNode, $"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
 						return default;
 					}
 
 					if(dstPorts.Count > 1)
-						errors.Add($"subgraph {subgraph} node {srcNode} is connected to multiple exec ports");
+						AddError(srcNode, $"subgraph {subgraph} node {srcNode} is connected to multiple exec ports");
 
 					dstPort = dstPorts[0];
 					dstNode = dstPort.GetNode();
@@ -254,7 +242,7 @@ namespace Mpr.Behavior.Authoring
 
 				else
 				{
-					errors.Add($"unhandled exec node type {dstNode.GetType().Name}");
+					AddError(dstNode, $"unhandled exec node type {dstNode.GetType().Name}");
 					return default;
 				}
 			}

@@ -43,7 +43,7 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Graph1()
 		{
-			var btAsset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Assets/Prefabs/Npc_MoveAround.btg");
+			var btAsset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Assets/Prefabs/BT_Test_MoveAround.btg");
 			BlobAssetReference<BTData> data = default;
 			try
 			{

@@ -29,7 +29,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 8e4b57a7dd7193e637c74368ffaee2f1
         m_Version: 2
-        m_Position: {x: 933.49695, y: 37.603867}
+        m_Position: {x: 933.497, y: -18.66851}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:
@@ -154,7 +154,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: Pass #1
     - rid: 8055170663063224433
-      type: {class: PassEntity, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: QueryPassEntity, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
       data: 
     - rid: 8055170663063224434
       type: {class: UserBlockNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -769,7 +769,7 @@ MonoBehaviour:
           m_EnumType:
             m_Identification: Mpr.Query.QueryScoringDirection, Mpr.Query, Version=0.0.0.0,
               Culture=neutral, PublicKeyToken=null
-          m_Value: 1
+          m_Value: 0
         m_EnumType:
           m_Identification: Mpr.Query.QueryScoringDirection, Mpr.Query, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
@@ -787,7 +787,7 @@ MonoBehaviour:
     - rid: 8055170710518366271
       type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
-        m_Value: 1
+        m_Value: 0
     - rid: 8055170710518366273
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:

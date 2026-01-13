@@ -125,6 +125,13 @@ namespace Mpr.Behavior
 					job.componentLookups.AddLookup(holder);
 				}
 
+				// int entityCount = queryHolder.query.CalculateEntityCount();
+				// if(entityCount == 0)
+				// {
+				// 	var descs = queryHolder.query.GetEntityQueryDescs();
+				// 	Debug.Log($"no entities for query [{string.Join(", ", descs.Select(d => "[" + string.Join(", ", d.All.Select(c => c.GetManagedType().FullName)) + "]"))}]");
+				// }
+
 				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
 
 				++knownTrees;
@@ -203,7 +210,8 @@ namespace Mpr.Behavior
 						builder.WithPresentRW<PendingQuery>();
 					}
 
-					var btQuery = builder.Build(state.EntityManager);
+					var btQuery = state.GetEntityQuery(builder);
+					//var btQuery = builder.Build(state.EntityManager);
 					btQuery.AddSharedComponentFilter(value);
 
 					state.EntityManager.AddSharedComponent(queryHolder, value);

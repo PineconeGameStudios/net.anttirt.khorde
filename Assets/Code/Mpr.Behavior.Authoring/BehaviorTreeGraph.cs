@@ -12,6 +12,7 @@ namespace Mpr.Behavior
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs, typeof(BehaviorTreeGraphViewController))]
 	[UseNodes(typeof(Mpr.Expr.Authoring.IExprNode))]
 	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
+	[UseSubgraph(typeof(BehaviorTreeGraph))]
 	public class BehaviorTreeGraph : Graph
 	{
 		internal const string AssetExtension = "btg";
@@ -57,22 +58,14 @@ namespace Mpr.Behavior
 		/// which is the default reporting mechanism for a Graph Toolkit tool. </remarks>
 		void CheckGraphErrors(GraphLogger infos)
 		{
-			// List<StartNode> startNodes = GetNodes().OfType<StartNode>().ToList();
-
-			// switch (startNodes.Count)
-			// {
-			//     case 0:
-			//         infos.LogError("Add a StartNode in your Visual Novel graph.", this);
-			//         break;
-			//     case >= 1:
-			//         {
-			//             foreach (var startNode in startNodes.Skip(1))
-			//             {
-			//                 infos.LogWarning($"VisualNovelDirector only supports one StartNode per graph. Only the first created one will be used.", startNode);
-			//             }
-			//             break;
-			//         }
-			// }
+			using(var context = new BTBakingContext(this, Allocator.Temp))
+			{
+				var builder = context.Build();
+				foreach(var (obj, msg) in context.Errors)
+				{
+					infos.LogError(msg, obj);
+				}
+			}
 		}
 
 		public void Bake(BinaryWriter writer)

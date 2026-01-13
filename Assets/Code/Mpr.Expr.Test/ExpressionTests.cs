@@ -1,7 +1,7 @@
-﻿using Mpr.Blobs;
-using Mpr.Expr.Authoring;
+﻿using Mpr.Expr.Authoring;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -17,6 +17,7 @@ public unsafe class ExpressionTestBase
 	protected ExpressionTestSystem testSystem;
 	protected ExpressionBakingContext baker;
 	protected ushort exprIndex;
+	protected List<object> expressions;
 
 	[SetUp]
 	public virtual void SetUp()
@@ -28,6 +29,7 @@ public unsafe class ExpressionTestBase
 		em = world.EntityManager;
 		baker ??= new ExpressionBakingContext(Allocator.Temp);
 		exprIndex = 0;
+		expressions = new();
 	}
 
 	[TearDown]
@@ -39,6 +41,7 @@ public unsafe class ExpressionTestBase
 		world = null;
 		baker = null;
 		exprIndex = 0;
+		expressions.Clear();
 	}
 
 	protected ref TExpression Allocate<TExpression>(out ExpressionRef node)
@@ -55,6 +58,7 @@ public unsafe class ExpressionTestBase
 		where TExpression : unmanaged, IExpressionBase
 	{
 		Allocate<TExpression>(out var node) = expression;
+		expressions.Add(expression);
 		return node;
 	}
 }
@@ -165,21 +169,21 @@ public unsafe class ExpressionTests : ExpressionTestBase
 		{
 			Input0 = baker.Const(new float2(1, 2)),
 			Input1 = baker.Const(new float2(2, 1)),
-			@operator = BinaryMathOp.Sub,
+			@operator = BinaryMathOp.Subtract,
 		});
 
 		var n2 = AddExpression(new BinaryFloat2
 		{
 			Input0 = baker.Const(new float2(3, 3)),
 			Input1 = baker.Const(new float2(2, 5)),
-			@operator = BinaryMathOp.Mul,
+			@operator = BinaryMathOp.Multiply,
 		});
 
 		var n3 = AddExpression(new BinaryFloat2
 		{
 			Input0 = baker.Const(new float2(0, 6)),
 			Input1 = baker.Const(new float2(2, 2)),
-			@operator = BinaryMathOp.Div,
+			@operator = BinaryMathOp.Divide,
 		});
 
 		var n4 = AddExpression(new BinaryFloat2
@@ -295,7 +299,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
 	[Test]
 	public void Test_Swizzle()
 	{
-		baker.InitializeBake(18, 0);
+		baker.InitializeBake(20, 0);
 
 		var n11 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("x") });
 		var n12 = AddExpression(new Swizzle32x1 { Input0 = baker.Const(1.0f), @operator = SwizzleOp.Parse("xx") });
@@ -319,6 +323,9 @@ public unsafe class ExpressionTests : ExpressionTestBase
 
 		var n5 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("xyzw") });
 		var n6 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("xxyy") });
+
+		var n7 = AddExpression(new Swizzle32x4 { Input0 = baker.Const(new float4(1, 2, 3, 4)), @operator = SwizzleOp.Parse("x00w") });
+		var n8 = AddExpression(new Swizzle32x2 { Input0 = baker.Const(new float2(5, 6)), @operator = SwizzleOp.Parse("x0y") });
 
 		var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
@@ -350,6 +357,12 @@ public unsafe class ExpressionTests : ExpressionTestBase
 
 		Assert.AreEqual(new float4(1, 2, 3, 4), n5.Evaluate<float4>(in ctx));
 		Assert.AreEqual(new float4(1, 1, 2, 2), n6.Evaluate<float4>(in ctx));
+
+		Assert.AreEqual(new float4(1, 2, 3, 4), n5.Evaluate<float4>(in ctx));
+		Assert.AreEqual(new float4(1, 1, 2, 2), n6.Evaluate<float4>(in ctx));
+
+		Assert.AreEqual(new float4(1, 0, 0, 4), n7.Evaluate<float4>(in ctx));
+		Assert.AreEqual(new float3(5, 0, 6), n8.Evaluate<float3>(in ctx));
 	}
 
 	[Test]
@@ -372,7 +385,7 @@ public unsafe class ExpressionTests : ExpressionTestBase
 
 			ref var blob = ref asset.GetValue(BlobExpressionData.SchemaVersion);
 
-			var layout = ExprAuthoring.ComputeLayout(new ()
+			var layout = ExprAuthoring.ComputeLayout(new()
 			{
 				(asset.DataHash, new Ptr<BlobExpressionData>(ref blob))
 			});

@@ -28,4 +28,7 @@ namespace Mpr.Game
 
 	[Serializable] class ReadNpcTargetEntity : ComponentReaderNode<NpcTargetEntity> { }
 	[Serializable] class WriteNpcTargetEntity : ComponentWriterNode<NpcTargetEntity> { }
+
+	[Serializable] class ReadNpcController : ComponentReaderNode<NpcController> { }
+	[Serializable] class WriteNpcController : ComponentWriterNode<NpcController> { }
 }

@@ -88,10 +88,15 @@ public unsafe ref struct QueryExecutionContext
 
 			var unfilteredItems = items.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 
-			//foreach (var unfilteredItem in unfilteredItems)
-			//{
-			//    Debug.Log($"generated {unfilteredItem}");
-			//}
+			foreach(var unfilteredItem in unfilteredItems)
+			{
+				UnityEngine.Debug.Log($"generated {unfilteredItem}");
+			}
+
+			if(unfilteredItems.Length == 0)
+			{
+				UnityEngine.Debug.Log($"no items generated");
+			}
 
 			int newItemCount = unfilteredItems.Length;
 			passBits.Resize(newItemCount, NativeArrayOptions.UninitializedMemory);
@@ -100,11 +105,11 @@ public unsafe ref struct QueryExecutionContext
 			foreach(ref var filter in pass.filters.AsSpan())
 				filter.Pass(in this, in exprContext, ref tempState, unfilteredItems, passBits);
 
-			//for (int i = passItemStartIndex; i < passItemStartIndex + newItemCount; ++i)
-			//{
-			//    int passItemIndex = i - passItemStartIndex;
-			//    Debug.Log($"{unfilteredItems[i]}: pass: {passBits.IsSet(passItemIndex)}");
-			//}
+			for(int i = passItemStartIndex; i < passItemStartIndex + newItemCount; ++i)
+			{
+				int passItemIndex = i - passItemStartIndex;
+				UnityEngine.Debug.Log($"{unfilteredItems[i]}: pass: {passBits.IsSet(passItemIndex)}");
+			}
 
 			// remove filtered items
 			for(int i = passItemStartIndex; i < items.Length;)
@@ -130,8 +135,8 @@ public unsafe ref struct QueryExecutionContext
 			var filteredItems = items.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 			var passScores = scores.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 
-			//foreach (var filteredItem in filteredItems)
-			//    Debug.Log($"generated {filteredItem}");
+			foreach(var filteredItem in filteredItems)
+				UnityEngine.Debug.Log($"generated {filteredItem}");
 
 			foreach(ref var scorer in pass.scorers.AsSpan())
 				scorer.Score(in this, in exprContext, ref tempState, filteredItems, passScores);
@@ -151,12 +156,12 @@ public unsafe ref struct QueryExecutionContext
 		else
 			scores.Sort(default(QSItem.ScoreComparerLess));
 
-		//int scoreIndex = 0;
-		//foreach (var score in scores)
-		//{
-		//    Debug.Log($"#{scoreIndex+1}: [{score.itemIndex}] {items[score.itemIndex]} (@{score.score})");
-		//    scoreIndex++;
-		//}
+		int scoreIndex = 0;
+		foreach(var score in scores)
+		{
+			UnityEngine.Debug.Log($"#{scoreIndex + 1}: [{score.itemIndex}] {items[score.itemIndex]} (@{score.score})");
+			scoreIndex++;
+		}
 
 		resultCount = math.min(resultCount, items.Length);
 

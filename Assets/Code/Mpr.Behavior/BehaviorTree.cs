@@ -12,6 +12,7 @@ namespace Mpr.Behavior
 
 	public struct BTState : IComponentData
 	{
+		public float waitStartTime;
 	}
 
 	[InternalBufferCapacity(8)]

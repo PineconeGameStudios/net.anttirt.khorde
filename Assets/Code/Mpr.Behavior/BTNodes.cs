@@ -124,10 +124,11 @@ namespace Mpr.Behavior
 	public struct Wait
 	{
 		public ExpressionRef until;
+		public ExpressionRef duration;
 
 		public string DumpString()
 		{
-			return $"{{ until={until} }}";
+			return $"{{ until={until} for={duration} }}";
 		}
 	}
 

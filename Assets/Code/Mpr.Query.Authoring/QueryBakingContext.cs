@@ -1,11 +1,10 @@
+using Mpr.Blobs;
+using Mpr.Expr;
 using Mpr.Expr.Authoring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Mpr.Blobs;
-using Mpr.Expr;
 using Unity.Collections;
-using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
 namespace Mpr.Query.Authoring
@@ -30,7 +29,7 @@ namespace Mpr.Query.Authoring
 		protected override ref BlobExpressionData ConstructRoot()
 		{
 			ref var qsData = ref builder.ConstructRoot<QSData>();
-			fixed (QSData* dataPtr = &qsData)
+			fixed(QSData* dataPtr = &qsData)
 				this.data = dataPtr;
 			return ref qsData.exprData;
 		}
@@ -45,18 +44,20 @@ namespace Mpr.Query.Authoring
 			var queries = rootGraph.GetNodes().OfType<IQuery>().ToList();
 			if(queries.Count == 0)
 			{
-				errors.Add("no Query node found");
+				AddError(rootGraph, "no Query node found");
 				return false;
 			}
 
 			if(queries.Count > 1)
 			{
-				errors.Add($"graph must have exactly one Query node, {queries.Count} found");
+				foreach(var query in queries)
+					AddError(query, $"graph must have exactly one Query node, {queries.Count} found");
+
 				return false;
 			}
 
 			query = queries[0];
-			
+
 			return base.RegisterGraphNodes();
 		}
 
@@ -137,7 +138,7 @@ namespace Mpr.Query.Authoring
 				else
 				{
 					if(portsTemp.Count > 1)
-						errors.Add($"unhandled multiple connections on {dstPort.GetNode()}");
+						AddError(dstPort.GetNode(), $"unhandled multiple connections on {dstPort.GetNode()}");
 
 					var srcPort = portsTemp[0];
 					var srcNode = srcPort.GetNode();
@@ -148,13 +149,14 @@ namespace Mpr.Query.Authoring
 						var varNodes = subgraphNode.GetSubgraph().GetNodes().Where(n => n is IVariableNode varNode && varNode.variable == variable).ToList();
 						if(varNodes.Count == 0)
 						{
-							warnings.Add($"wire is cut, pass not added");
+							AddWarning(dstPort, $"wire is cut, pass not added");
 							return null;
 						}
 						else
 						{
 							if(varNodes.Count > 1)
-								errors.Add($"unhandled multiple variable nodes on {variable}");
+								foreach(var varNode_ in varNodes)
+									AddError(varNode_, $"unhandled multiple variable nodes on {variable}");
 
 							var varNode = varNodes[0];
 							portsTemp.Clear();
@@ -170,7 +172,7 @@ namespace Mpr.Query.Authoring
 						}
 						else
 						{
-							errors.Add($"unhandled var kind {varNode.variable.variableKind} for {varNode}");
+							AddError(varNode, $"unhandled var kind {varNode.variable.variableKind} for {varNode}");
 							return null;
 						}
 					}
@@ -180,7 +182,7 @@ namespace Mpr.Query.Authoring
 					}
 					else
 					{
-						errors.Add($"unhandled node type {srcNode.GetType().FullName}");
+						AddError(srcNode, $"unhandled node type {srcNode.GetType().FullName}");
 						return null;
 					}
 				}

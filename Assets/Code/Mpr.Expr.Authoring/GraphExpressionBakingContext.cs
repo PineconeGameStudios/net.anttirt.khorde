@@ -18,17 +18,22 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 	protected static readonly UnityEngine.Hash128 globalKey = new UnityEngine.Hash128(0xddddddddddddddddul, 0xddddddddddddddddul);
 	protected record struct VariableKey(UnityEngine.Hash128 subgraphStackKey, string name);
 	protected Dictionary<VariableKey, int> variables = new();
-	protected List<string> errors = new();
-	protected List<string> warnings = new();
+	protected List<(object context, string message)> errors = new();
+	protected List<(object context, string message)> warnings = new();
 
-	public List<string> Warnings => warnings;
-	public List<string> Errors => errors;
+	public void AddError(object context, string message) => errors.Add((context, message));
+	public void AddWarning(object context, string message) => errors.Add((context, message));
+
+	public List<(object context, string message)> Warnings => warnings;
+	public List<(object context, string message)> Errors => errors;
 
 	public GraphExpressionBakingContext(Graph rootGraph, Allocator allocator)
 		: base(allocator)
 	{
 		this.rootGraph = rootGraph;
 	}
+
+	List<IPort> portsTemp = new();
 
 	protected VariableKey GetVariableKey(IVariable variable)
 	{
@@ -48,7 +53,22 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 
 	public int GetVariableIndex(IPort resultVarPort)
 	{
-		return GetVariableIndex(((IVariableNode)(resultVarPort.firstConnectedPort.GetNode())).variable);
+		portsTemp.Clear();
+		resultVarPort.GetConnectedPorts(portsTemp);
+		if(portsTemp.Count != 1)
+		{
+			AddError(resultVarPort.GetNode(), $"port {resultVarPort.name} must be connected to a single variable");
+			return -1;
+		}
+
+		var varNode = portsTemp[0].GetNode() as IVariableNode;
+		if(varNode == null)
+		{
+			AddError(resultVarPort.GetNode(), $"port {resultVarPort.name} must be connected to a blackboard variable");
+			return -1;
+		}
+
+		return GetVariableIndex(varNode.variable);
 	}
 
 	public ExpressionRef GetExpressionRef(IPort dstPort)
@@ -62,7 +82,7 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 		dstPort.GetConnectedPorts(srcPorts);
 
 		if(srcPorts.Count > 1)
-			errors.Add($"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
+			AddError(dstPort.GetNode(), $"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
 
 		var srcPort = srcPorts[0];
 		var srcNode = srcPort.GetNode();
@@ -79,7 +99,7 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 				{
 					if(subgraphStack.Depth == 0)
 					{
-						errors.Add($"node {varNode} but the subgraph stack is empty; the root graph appears to be a subgraph");
+						AddError(varNode, $"node {varNode} but the subgraph stack is empty; the root graph appears to be a subgraph");
 						return default;
 					}
 
@@ -93,7 +113,7 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 					dstPort.GetConnectedPorts(srcPorts);
 
 					if(srcPorts.Count > 1)
-						errors.Add($"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
+						AddError(dstPort.GetNode(), $"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
 
 					srcPort = srcPorts[0];
 					srcNode = srcPort.GetNode();
@@ -124,13 +144,13 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 				}
 
 				if(!found)
-					errors.Add($"couldn't find src port index");
+					AddError(exprNode, $"couldn't find src port index");
 
 				return ExpressionRef.Node(exprNodeMap[GetNodeKey(exprNode)], outputIndex);
 			}
 			else
 			{
-				errors.Add($"unhandled expr source node type {srcNode.GetType().Name}");
+				AddError(srcNode, $"unhandled expr source node type {srcNode.GetType().Name}");
 				return default;
 			}
 		}
@@ -143,7 +163,7 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 			}
 			else
 			{
-				errors.Add($"port {dstPort} is not conneted to a source and couldn't get inlined value");
+				AddError(dstPort.GetNode(), $"port {dstPort} is not conneted to a source and couldn't get inlined value");
 				return default;
 			}
 		}
@@ -164,6 +184,22 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 
 	void RegisterExprNodes(Graph graph)
 	{
+		foreach(var variable in graph.GetVariables())
+		{
+			if(variable.variableKind == VariableKind.Local)
+			{
+				var key = GetVariableKey(variable);
+				if(!variables.ContainsKey(key))
+				{
+					variables[key] = AddBlackboardVariable(
+						variable.name,
+						IsGlobal(variable),
+						variable.dataType
+					);
+				}
+			}
+		}
+
 		foreach(var node in graph.GetNodes())
 		{
 			if(node is ISubgraphNode subgraphNode)

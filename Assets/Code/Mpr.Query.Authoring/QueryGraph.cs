@@ -5,7 +5,6 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
-using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -61,36 +60,33 @@ namespace Mpr.Query.Authoring
 		void CheckGraphErrors(GraphLogger infos)
 		{
 			List<IQuery> queryNodes = new();
-			
-			foreach (var node in GetNodes())
+
+			foreach(var node in GetNodes())
 			{
-				if (node is IQuery query)
+				if(node is IQuery query)
 				{
 					queryNodes.Add(query);
 				}
 			}
 
-			if (queryNodes.Count == 0)
+			if(queryNodes.Count == 0)
 			{
-				infos.LogError("The graph needs to have a Query node");
-				return;
+				infos.LogError("The graph needs to have a Query node", this);
 			}
 
-			if (queryNodes.Count > 1)
+			if(queryNodes.Count > 1)
 			{
 				foreach(var node in queryNodes)
 					infos.LogError("More than one Query node found", node);
-				
-				return;
 			}
 
 			Type itemType = queryNodes[0].ItemType;
 
-			foreach (var node in GetNodes())
+			foreach(var node in GetNodes())
 			{
-				if (node is IQueryCurrentItemNode currentItemNode)
+				if(node is IQueryCurrentItemNode currentItemNode)
 				{
-					if (itemType != currentItemNode.ItemType)
+					if(itemType != currentItemNode.ItemType)
 					{
 						infos.LogError(
 							$"Wrong item type. Expected '{itemType.FullName}'",
@@ -98,17 +94,17 @@ namespace Mpr.Query.Authoring
 					}
 				}
 
-				if (node is QueryGraphContextBase context)
+				if(node is QueryGraphContextBase context)
 				{
-					foreach (var blockNode in context.blockNodes)
+					foreach(var blockNode in context.blockNodes)
 					{
-						if (blockNode is IQueryGraphNode iqn)
+						if(blockNode is IQueryGraphNode iqn)
 						{
 							try
 							{
 								iqn.Validate(infos);
 							}
-							catch (Exception e)
+							catch(Exception e)
 							{
 								infos.LogError(e.Message, blockNode);
 								Debug.LogException(e);
@@ -118,19 +114,30 @@ namespace Mpr.Query.Authoring
 				}
 
 				{
-					if (node is IQueryGraphNode iqn)
+					if(node is IQueryGraphNode iqn)
 					{
 						try
 						{
 							iqn.Validate(infos);
 						}
-						catch (Exception e)
+						catch(Exception e)
 						{
 							infos.LogError(e.Message, node);
 							Debug.LogException(e);
 						}
 					}
 				}
+			}
+
+			using(var context = new QueryBakingContext(this, Allocator.Temp))
+			{
+				var builder = context.Build();
+
+				foreach(var (obj, msg) in context.Errors)
+					infos.LogError(msg, obj);
+
+				foreach(var (obj, msg) in context.Warnings)
+					infos.LogWarning(msg, obj);
 			}
 		}
 

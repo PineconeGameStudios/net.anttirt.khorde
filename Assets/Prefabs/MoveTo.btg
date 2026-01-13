@@ -19,6 +19,17 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
+    - rid: 8055170928982098266
+      type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value:
+          m_EnumType:
+            m_Identification: Mpr.Behavior.Authoring.Wait+WaitMode, Mpr.Behavior.Authoring,
+              Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_Value: 0
+        m_EnumType:
+          m_Identification: Mpr.Behavior.Authoring.Wait+WaitMode, Mpr.Behavior.Authoring,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     - rid: 8259216277413823363
       type: {class: GraphModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:
@@ -405,9 +416,11 @@ MonoBehaviour:
           m_KeyList:
           - Until
           - Execution
+          - __option_waitMode
           m_ValueList:
           - rid: 8259216277413823399
           - rid: 8259216277413823400
+          - rid: 8055170928982098266
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []

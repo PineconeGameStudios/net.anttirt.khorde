@@ -230,7 +230,7 @@ namespace Mpr.Expr.Authoring
 			var globals = new Dictionary<string, Type>();
 
 			// all variables with a unique storage location
-			var allVars = new Dictionary<(int assetIndex, string name), (int alignment, Type type, int varIndex)>();
+			var allVars = new Dictionary<(int assetIndex, string name), (int size, int alignment, Type type, int varIndex)>();
 
 			for(int assetIndex = 0; assetIndex < variableSets.Count; ++assetIndex)
 			{
@@ -249,12 +249,12 @@ namespace Mpr.Expr.Authoring
 						else
 						{
 							globals.Add(variable.name, variable.type);
-							allVars[(-1, variable.name)] = (AlignOf(variable.type), variable.type, varIndex);
+							allVars[(-1, variable.name)] = (UnsafeUtility.SizeOf(variable.type), AlignOf(variable.type), variable.type, varIndex);
 						}
 					}
 					else
 					{
-						allVars[(assetIndex, variable.name)] = (AlignOf(variable.type), variable.type, varIndex);
+						allVars[(assetIndex, variable.name)] = (UnsafeUtility.SizeOf(variable.type), AlignOf(variable.type), variable.type, varIndex);
 					}
 				}
 			}
@@ -263,7 +263,7 @@ namespace Mpr.Expr.Authoring
 				.OrderByDescending(kv => kv.Value.alignment)
 				.ThenBy(kv => kv.Key.assetIndex)
 				.ThenBy(kv => kv.Value.varIndex)
-				.Select(kv => (kv.Key.assetIndex, kv.Key.name, kv.Value.alignment))
+				.Select(kv => (kv.Key.assetIndex, kv.Key.name, kv.Value.size, kv.Value.alignment))
 				.ToList();
 
 			var layout = new Dictionary<(int assetIndex, string name), (int offset, int length)>();
@@ -275,11 +275,11 @@ namespace Mpr.Expr.Authoring
 				if(rem != 0)
 					currentOffset += p.alignment - rem;
 
-				layout[(p.assetIndex, p.name)] = (currentOffset, p.alignment);
+				layout[(p.assetIndex, p.name)] = (currentOffset, p.size);
 
-				Debug.Log($"asset {p.assetIndex} var {p.name}: offset {currentOffset} len {p.alignment}");
+				Debug.Log($"asset {p.assetIndex} var {p.name}: offset {currentOffset} len {p.size} align {p.alignment}");
 
-				currentOffset += p.alignment;
+				currentOffset += p.size;
 			}
 
 			var assetLayouts = new Dictionary<Hash128, List<LayoutVariable>>();

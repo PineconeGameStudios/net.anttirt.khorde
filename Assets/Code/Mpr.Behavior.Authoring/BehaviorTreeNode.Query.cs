@@ -16,6 +16,12 @@ internal class Query : ExecBase, IExecNode
 
 	public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 	{
+		if(resultVarPort == null)
+		{
+			context.AddError(this, "query must be selected");
+			return;
+		}
+
 		exec.type = BTExec.BTExecType.Query;
 		exec.data.query = new Behavior.Query
 		{
