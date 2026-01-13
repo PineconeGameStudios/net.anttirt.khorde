@@ -1368,13 +1368,13 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          - 152ea57da943560b8e717c6ed3449cee
           - 3f09272e9b9f9ed5a0e2b694eed9d299
+          - 152ea57da943560b8e717c6ed3449cee
+          - 4a4ba80eaa7dcba5736c8eccd59bbf08
           m_ValueList:
-          - rid: 8055170928982098496
-          - rid: 8055170928982098497
-          - rid: 8055170928982098498
+          - rid: 8055170928982098575
+          - rid: 8055170928982098576
+          - rid: 8055170928982098577
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -2816,13 +2816,13 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          - 152ea57da943560b8e717c6ed3449cee
           - 3f09272e9b9f9ed5a0e2b694eed9d299
+          - 152ea57da943560b8e717c6ed3449cee
+          - 4a4ba80eaa7dcba5736c8eccd59bbf08
           m_ValueList:
-          - rid: 8055170928982098499
-          - rid: 8055170928982098500
-          - rid: 8055170928982098501
+          - rid: 8055170928982098578
+          - rid: 8055170928982098579
+          - rid: 8055170928982098580
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -2985,34 +2985,6 @@ MonoBehaviour:
       type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value: 1
-    - rid: 8055170928982098496
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
-    - rid: 8055170928982098497
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8055170928982098498
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8055170928982098499
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
-    - rid: 8055170928982098500
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8055170928982098501
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
     - rid: 8055170928982098520
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:
@@ -3357,3 +3329,31 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: Y
+    - rid: 8055170928982098575
+      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data: {}
+    - rid: 8055170928982098576
+      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value:
+          x: 0
+          y: 0
+          z: 0
+    - rid: 8055170928982098577
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 8055170928982098578
+      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data: {}
+    - rid: 8055170928982098579
+      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value:
+          x: 0
+          y: 0
+          z: 0
+    - rid: 8055170928982098580
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0

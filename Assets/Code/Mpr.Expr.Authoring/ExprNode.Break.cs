@@ -90,7 +90,7 @@ abstract class BreakBase : ExprBase
 				.WithDisplayName(new string(names[i], 1))
 				.WithDataType(inputType.ScalarType())
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithPortCapacity(PortCapacity.Multi)
 				.Build()
 				).ToList();
 	}
@@ -139,7 +139,7 @@ abstract class MakeBase : ExprBase
 			.WithDisplayName(new string(names[i], 1))
 			.WithDataType(outputType.ScalarType())
 			.WithConnectorUI(PortConnectorUI.Circle)
-			.WithPortCapacity(PortCapacity.Single)
+			.WithPortCapacity(PortCapacity.Multi)
 			.Build()
 			).ToList();
 	}

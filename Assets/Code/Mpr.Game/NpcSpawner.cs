@@ -11,6 +11,7 @@ namespace Mpr.Game
 		public int2 gridSize;
 		public float gridSpacing;
 		public float3 origin;
+		public bool planar;
 		[NonSerialized]
 		public Entity prefab;
 	}

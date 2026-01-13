@@ -29,11 +29,18 @@ namespace Mpr.Game
 				{
 					var entity = entities[y * config.gridSize.x + x];
 					ref var transform = ref SystemAPI.GetComponentRW<LocalTransform>(entity).ValueRW;
-					transform.Position = config.origin + new float3(
-						(x - (config.gridSize.x / 2)) * config.gridSpacing,
-						(y - (config.gridSize.y / 2)) * config.gridSpacing,
-						0
-						);
+					if(config.planar)
+						transform.Position = config.origin + new float3(
+							(x - (config.gridSize.x / 2)) * config.gridSpacing,
+							0,
+							(y - (config.gridSize.y / 2)) * config.gridSpacing
+							);
+					else
+						transform.Position = config.origin + new float3(
+							(x - (config.gridSize.x / 2)) * config.gridSpacing,
+							(y - (config.gridSize.y / 2)) * config.gridSpacing,
+							0
+							);
 				}
 			}
 

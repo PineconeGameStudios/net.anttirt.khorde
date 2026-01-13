@@ -1,10 +1,10 @@
 ﻿using Mpr.Blobs;
 using Mpr.Expr;
-using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 using Hash128 = Unity.Entities.Hash128;
 
 namespace Mpr.Query;
@@ -88,28 +88,30 @@ public unsafe ref struct QueryExecutionContext
 
 			var unfilteredItems = items.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 
-			foreach(var unfilteredItem in unfilteredItems)
-			{
-				UnityEngine.Debug.Log($"generated {unfilteredItem}");
-			}
+			// foreach(var unfilteredItem in unfilteredItems)
+			// {
+			// 	UnityEngine.Debug.Log($"generated {unfilteredItem}");
+			// }
 
-			if(unfilteredItems.Length == 0)
-			{
-				UnityEngine.Debug.Log($"no items generated");
-			}
+			// if(unfilteredItems.Length == 0)
+			// {
+			// 	UnityEngine.Debug.Log($"no items generated");
+			// }
 
 			int newItemCount = unfilteredItems.Length;
 			passBits.Resize(newItemCount, NativeArrayOptions.UninitializedMemory);
+			for(int i = passItemStartIndex; i < passItemStartIndex + newItemCount; ++i)
+				passBits.Set(i, true);
 
 			// compute filters
 			foreach(ref var filter in pass.filters.AsSpan())
 				filter.Pass(in this, in exprContext, ref tempState, unfilteredItems, passBits);
 
-			for(int i = passItemStartIndex; i < passItemStartIndex + newItemCount; ++i)
-			{
-				int passItemIndex = i - passItemStartIndex;
-				UnityEngine.Debug.Log($"{unfilteredItems[i]}: pass: {passBits.IsSet(passItemIndex)}");
-			}
+			// for(int i = passItemStartIndex; i < passItemStartIndex + newItemCount; ++i)
+			// {
+			// 	int passItemIndex = i - passItemStartIndex;
+			// 	UnityEngine.Debug.Log($"{unfilteredItems[i]}: pass: {passBits.IsSet(passItemIndex)}");
+			// }
 
 			// remove filtered items
 			for(int i = passItemStartIndex; i < items.Length;)
@@ -135,8 +137,8 @@ public unsafe ref struct QueryExecutionContext
 			var filteredItems = items.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 			var passScores = scores.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
 
-			foreach(var filteredItem in filteredItems)
-				UnityEngine.Debug.Log($"generated {filteredItem}");
+			// foreach(var filteredItem in filteredItems)
+			// 	UnityEngine.Debug.Log($"generated {filteredItem}");
 
 			foreach(ref var scorer in pass.scorers.AsSpan())
 				scorer.Score(in this, in exprContext, ref tempState, filteredItems, passScores);
@@ -156,12 +158,17 @@ public unsafe ref struct QueryExecutionContext
 		else
 			scores.Sort(default(QSItem.ScoreComparerLess));
 
-		int scoreIndex = 0;
-		foreach(var score in scores)
-		{
-			UnityEngine.Debug.Log($"#{scoreIndex + 1}: [{score.itemIndex}] {items[score.itemIndex]} (@{score.score})");
-			scoreIndex++;
-		}
+		//int scoreIndex = 0;
+		//foreach(var score in scores)
+		//{
+		//	UnityEngine.Debug.Log($"#{scoreIndex + 1}: [{score.itemIndex}] {items[score.itemIndex]} (@{score.score})");
+		//	scoreIndex++;
+		//}
+
+		//if(typeof(TItem) == typeof(float2))
+		//{
+		//	DebugDrawItems(ref items, ref scores);
+		//}
 
 		resultCount = math.min(resultCount, items.Length);
 
@@ -173,7 +180,7 @@ public unsafe ref struct QueryExecutionContext
 			{
 				// length-prefixed array result
 				// TODO
-				throw new NotImplementedException();
+				throw new System.NotImplementedException();
 			}
 			else
 			{
@@ -199,5 +206,34 @@ public unsafe ref struct QueryExecutionContext
 		scores.Dispose();
 
 		return resultCount;
+	}
+
+	private static void DebugDrawItems<TItem>(ref NativeList<TItem> items, ref NativeList<QSItem> scores) where TItem : unmanaged
+	{
+		var fitems = items.AsArray().Reinterpret<float2>();
+		float minScore = float.PositiveInfinity;
+		float maxScore = float.NegativeInfinity;
+		foreach(var score in scores)
+		{
+			minScore = math.min(score.score, minScore);
+			maxScore = math.max(score.score, maxScore);
+		}
+
+		float norm = 1.0f / math.max(1, scores.Length);
+
+		for(int i = 0; i < scores.Length; ++i)
+		{
+			var score = scores[i];
+			var fitem = fitems[score.itemIndex];
+			var pos = new Vector3(fitem.x, 0.1f, fitem.y);
+			//var t = math.unlerp(minScore, maxScore, score.score);
+			var t = i * norm;
+			var color = Color.Lerp(Color.blue, Color.red, t);
+			if(i == 0)
+				color = Color.green;
+			Debug.DrawLine(pos - new Vector3(0.25f, 0, 0), pos + new Vector3(0.25f, 0, 0), color, 1.5f);
+			Debug.DrawLine(pos - new Vector3(0, 0, 0.25f), pos + new Vector3(0, 0, 0.25f), color, 1.5f);
+			//UnityEditor.Handles.Label(pos, "", )
+		}
 	}
 }

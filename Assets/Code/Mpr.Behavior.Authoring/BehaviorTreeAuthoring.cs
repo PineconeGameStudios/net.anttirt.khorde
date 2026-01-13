@@ -50,10 +50,10 @@ namespace Mpr.Behavior
 
 					var layout = ExprAuthoring.ComputeLayout(exprDatas);
 
-					foreach(var (asset, layoutVariables) in layout)
-					{
-						Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
-					}
+					// foreach(var (asset, layoutVariables) in layout)
+					// {
+					// 	Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
+					// }
 
 					var baked = ExprAuthoring.BakeLayout(layout, Allocator.Persistent);
 					AddBlobAsset(ref baked, out var _);
@@ -73,11 +73,6 @@ namespace Mpr.Behavior
 					AddComponent(entity, new PendingQuery());
 					SetComponentEnabled<PendingQuery>(entity, false);
 					AddBuffer<QSResultItemStorage>(entity);
-					Debug.Log($"added QueryAssetRegistration to {authoring}");
-				}
-				else
-				{
-					Debug.Log($"no queries, skipped QueryAssetRegistration from {authoring}");
 				}
 			}
 		}

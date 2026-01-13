@@ -277,7 +277,7 @@ namespace Mpr.Expr.Authoring
 
 				layout[(p.assetIndex, p.name)] = (currentOffset, p.size);
 
-				Debug.Log($"asset {p.assetIndex} var {p.name}: offset {currentOffset} len {p.size} align {p.alignment}");
+				//Debug.Log($"asset {p.assetIndex} var {p.name}: offset {currentOffset} len {p.size} align {p.alignment}");
 
 				currentOffset += p.size;
 			}

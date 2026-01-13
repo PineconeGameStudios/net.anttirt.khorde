@@ -11,6 +11,8 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 
+using Debug = UnityEngine.Debug;
+
 /*
  * TODO: v2 with entity-level batching and parallelism
  *
@@ -243,7 +245,8 @@ namespace Mpr.Query
 				float spacing = this.spacing.Evaluate<float>(in ctx);
 
 				math.sincos(orientation, out var s, out var c);
-				var basis = spacing * new float2(c - s, s + c);
+				var basis = spacing * new float2(s, c);
+				var obasis = new float2(-basis.y, basis.x);
 
 				var extent = 0.5f * size;
 
@@ -268,10 +271,10 @@ namespace Mpr.Query
 					xi = 1;
 					for(float x = spacing; x <= extent.x; x += spacing, xi++)
 					{
-						items.Add(center + new float2(basis.x * xi, basis.y * yi));
-						items.Add(center + new float2(basis.x * xi, -basis.y * yi));
-						items.Add(center + new float2(-basis.x * xi, basis.y * yi));
-						items.Add(center + new float2(-basis.x * xi, -basis.y * yi));
+						items.Add(center + basis * xi + obasis * yi);
+						items.Add(center - obasis * xi + basis * yi);
+						items.Add(center - basis * xi - obasis * yi);
+						items.Add(center + obasis * xi - basis * yi);
 					}
 				}
 			}
@@ -352,7 +355,8 @@ namespace Mpr.Query
 						foreach(var item in items)
 						{
 							tempState.GetCurrentItem<TItem>() = item;
-							passBits.Set(i++, expr.Evaluate<bool>(in ctx));
+							if(passBits.IsSet(i))
+								passBits.Set(i++, expr.Evaluate<bool>(in ctx));
 						}
 
 						break;
@@ -395,10 +399,11 @@ namespace Mpr.Query
 					{
 						tempState.GetCurrentItem<TItem>() = items[i];
 						float raw = expr.Evaluate<float>(in ctx);
-						float score = raw;
 
 						if(negate)
-							score = -score;
+							raw = -raw;
+
+						float score = raw;
 
 						switch(normalizer)
 						{
@@ -409,7 +414,7 @@ namespace Mpr.Query
 								{
 									float s = math.sign(score);
 									float a = math.abs(score);
-									score = 2 * (1 + s * (a / (1 + a)));
+									score = 0.5f * (1 + s * (a / (1 + a)));
 								}
 								break;
 
@@ -429,7 +434,7 @@ namespace Mpr.Query
 						if(noise > 0)
 							score = math.lerp(score, RandomHelper.JobRandom.NextFloat(), noise);
 
-						//UnityEngine.Debug.Log($"{raw} {normalizer} -> {score}");
+						//UnityEngine.Debug.Log($"{raw} {normalizer} -> {scores.UnsafeElementAt(i).score} + {score}");
 						scores.UnsafeElementAt(i).score += score;
 					}
 					break;
