@@ -218,6 +218,7 @@ namespace Mpr.Query
 				where TItem : unmanaged
 			{
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+				var selectedEntity = SelectedEntity.Value;
 				while(enumerator.NextEntityIndex(out var entityIndex))
 				{
 					if(pendingEnabled.GetBit(entityIndex))
@@ -228,7 +229,7 @@ namespace Mpr.Query
 							chunk.SetComponentEnabled(ref this.pendingQuery, entityIndex, false);
 							pendingQuery.complete = true;
 
-							bool currentEntity = CurrentEntity.Value == entities[entityIndex];
+							bool isSelectedEntity = selectedEntity == entities[entityIndex];
 
 							var qctx = new QueryExecutionContext(
 								ref data.ValueRO,
@@ -239,7 +240,7 @@ namespace Mpr.Query
 							var blackboard = blackboardBuffers[entityIndex];
 
 							var results = resultBuffers[entityIndex];
-							int resultCount = qctx.Execute<TItem>(blackboard, ref blackboardLayout, results, pendingQuery.results, Allocator.Temp, currentEntity);
+							int resultCount = qctx.Execute<TItem>(blackboard, ref blackboardLayout, results, pendingQuery.results, Allocator.Temp, isSelectedEntity);
 							pendingQuery.resultCount = resultCount;
 						}
 					}

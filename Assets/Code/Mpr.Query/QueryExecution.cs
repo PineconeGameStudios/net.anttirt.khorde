@@ -51,7 +51,7 @@ public unsafe ref struct QueryExecutionContext
 		DynamicBuffer<QSResultItemStorage> results,
 		ExpressionBlackboardLayout.Slice resultSlice,
 		Allocator tempAlloc = Allocator.Temp,
-		bool currentEntity = false) where TItem : unmanaged
+		bool isSelectedEntity = false) where TItem : unmanaged
 	{
 		data.exprData.CheckExpressionComponents(componentPtrs, lookups);
 
@@ -166,7 +166,7 @@ public unsafe ref struct QueryExecutionContext
 		//	scoreIndex++;
 		//}
 
-		if(currentEntity && typeof(TItem) == typeof(float2))
+		if(isSelectedEntity && typeof(TItem) == typeof(float2))
 		{
 			DebugDrawItems(ref items, ref scores);
 		}

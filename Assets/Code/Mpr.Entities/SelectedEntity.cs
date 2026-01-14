@@ -8,7 +8,7 @@ using Unity.Entities;
 
 namespace Mpr.Entities
 {
-	public static class CurrentEntity
+	public static class SelectedEntity
 	{
 		struct SingleEntityCtx { }
 		private static readonly SharedStatic<Entity> Holder = SharedStatic<Entity>.GetOrCreate<SingleEntityCtx>();
