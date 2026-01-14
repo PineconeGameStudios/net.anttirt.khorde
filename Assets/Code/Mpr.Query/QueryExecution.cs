@@ -50,7 +50,8 @@ public unsafe ref struct QueryExecutionContext
 		ref ExpressionBlackboardLayout blackboardLayout,
 		DynamicBuffer<QSResultItemStorage> results,
 		ExpressionBlackboardLayout.Slice resultSlice,
-		Allocator tempAlloc = Allocator.Temp) where TItem : unmanaged
+		Allocator tempAlloc = Allocator.Temp,
+		bool currentEntity = false) where TItem : unmanaged
 	{
 		data.exprData.CheckExpressionComponents(componentPtrs, lookups);
 
@@ -165,10 +166,10 @@ public unsafe ref struct QueryExecutionContext
 		//	scoreIndex++;
 		//}
 
-		//if(typeof(TItem) == typeof(float2))
-		//{
-		//	DebugDrawItems(ref items, ref scores);
-		//}
+		if(currentEntity && typeof(TItem) == typeof(float2))
+		{
+			DebugDrawItems(ref items, ref scores);
+		}
 
 		resultCount = math.min(resultCount, items.Length);
 

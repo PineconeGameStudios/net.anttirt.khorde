@@ -95,6 +95,7 @@ namespace Mpr.Query
 					data = data,
 					pendingQuery = SystemAPI.GetComponentTypeHandle<PendingQuery>(),
 					resultItemStorage = SystemAPI.GetBufferTypeHandle<QSResultItemStorage>(),
+					entities = SystemAPI.GetEntityTypeHandle(),
 					queryResultLookup = entityQueryResultLookup,
 					blackboards = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
@@ -133,6 +134,7 @@ namespace Mpr.Query
 			public ComponentTypeHandle<PendingQuery> pendingQuery;
 			public BufferTypeHandle<ExpressionBlackboardStorage> blackboards;
 			public BufferTypeHandle<QSResultItemStorage> resultItemStorage;
+			public EntityTypeHandle entities;
 			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
 			public Hash128 dataHash;
 
@@ -151,6 +153,7 @@ namespace Mpr.Query
 				var blackboardBuffers = chunk.GetBufferAccessor(ref blackboards);
 				var resultBuffers = chunk.GetBufferAccessor(ref resultItemStorage);
 				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
+				var entitiesArray = chunk.GetNativeArray(entities);
 				ref var layout = ref layouts.FindLayout(dataHash);
 
 				switch(data.ValueRO.itemType)
@@ -158,46 +161,46 @@ namespace Mpr.Query
 					case ExpressionValueType.Unknown: break;
 					case ExpressionValueType.Entity:
 						ExecuteImpl<Entity>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Bool:
 						ExecuteImpl<bool>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Bool2:
 						ExecuteImpl<bool2>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Bool3:
 						ExecuteImpl<bool3>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Bool4:
 						ExecuteImpl<bool4>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Int:
 						ExecuteImpl<int>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Int2:
 						ExecuteImpl<int2>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Int3:
 						ExecuteImpl<int3>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Int4:
 						ExecuteImpl<int4>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Float:
 						ExecuteImpl<float>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Float2:
 						ExecuteImpl<float2>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Float3:
 						ExecuteImpl<float3>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Float4:
 						ExecuteImpl<float4>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					case ExpressionValueType.Quaternion:
 						ExecuteImpl<quaternion>(chunk, useEnabledMask, chunkEnabledMask, pendingEnabled, pendingQueries,
-							blackboardBuffers, ref layout, resultBuffers); break;
+							blackboardBuffers, ref layout, resultBuffers, entitiesArray); break;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
@@ -210,7 +213,8 @@ namespace Mpr.Query
 				NativeArray<PendingQuery> pendingQueries,
 				BufferAccessor<ExpressionBlackboardStorage> blackboardBuffers,
 				ref ExpressionBlackboardLayout blackboardLayout,
-				BufferAccessor<QSResultItemStorage> resultBuffers)
+				BufferAccessor<QSResultItemStorage> resultBuffers,
+				NativeArray<Entity> entities)
 				where TItem : unmanaged
 			{
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
@@ -224,6 +228,8 @@ namespace Mpr.Query
 							chunk.SetComponentEnabled(ref this.pendingQuery, entityIndex, false);
 							pendingQuery.complete = true;
 
+							bool currentEntity = CurrentEntity.Value == entities[entityIndex];
+
 							var qctx = new QueryExecutionContext(
 								ref data.ValueRO,
 								typeHandles.GetComponents(entityIndex),
@@ -233,7 +239,7 @@ namespace Mpr.Query
 							var blackboard = blackboardBuffers[entityIndex];
 
 							var results = resultBuffers[entityIndex];
-							int resultCount = qctx.Execute<TItem>(blackboard, ref blackboardLayout, results, pendingQuery.results);
+							int resultCount = qctx.Execute<TItem>(blackboard, ref blackboardLayout, results, pendingQuery.results, Allocator.Temp, currentEntity);
 							pendingQuery.resultCount = resultCount;
 						}
 					}
