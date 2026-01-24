@@ -25,8 +25,6 @@ namespace Mpr.Entities
 			// TODO: this could possibly be optimized with a shared component
 			// storing the current world sequence
 
-			// TODO: can multiple active worlds reference the same blob asset simultaneously?
-
 			foreach(var (data, entities, objRefs, entity) in SystemAPI.Query<
 				PatchableRichBlob,
 				DynamicBuffer<RichBlobEntityHolder>,
