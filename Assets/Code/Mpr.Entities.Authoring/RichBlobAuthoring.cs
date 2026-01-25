@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.LowLevel.Unsafe;
 using Unity.Entities.Serialization;
+using UnityEditor;
 using UnityEngine;
 
 namespace Mpr.Entities.Authoring
@@ -48,6 +49,7 @@ namespace Mpr.Entities.Authoring
 		public static void Write<TObject, TBlob>(ref this BlobWeakObjectReference<TObject> self, TObject obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
 			where TObject : UnityEngine.Object
 		{
+			// the value is stable from editor to build, so it doesn't need to be patched
 			context.Baker.DependsOn(obj);
 			var objRef = new WeakObjectReference<TObject>(obj);
 			self.Id = new(objRef.Id);
@@ -63,9 +65,42 @@ namespace Mpr.Entities.Authoring
 		/// <param name="context"></param>
 		public static void Write<TBlob>(ref this BlobEntityPrefabReference self, GameObject obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
 		{
+			// the value is stable from editor to build, so it doesn't need to be patched
 			context.Baker.DependsOn(obj);
 			var objRef = new EntityPrefabReference(obj);
 			self = UnsafeUtility.As<EntityPrefabReference, BlobEntityPrefabReference>(ref objRef);
+			context.WeakObjRefSet.Add(self.Id);
+		}
+
+		/// <summary>
+		/// Write a loadable entity scene reference
+		/// </summary>
+		/// <typeparam name="TBlob"></typeparam>
+		/// <param name="self"></param>
+		/// <param name="obj"></param>
+		/// <param name="context"></param>
+		public static void Write<TBlob>(ref this BlobEntitySceneReference self, SceneAsset obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
+		{
+			// the value is stable from editor to build, so it doesn't need to be patched
+			context.Baker.DependsOn(obj);
+			var objRef = new EntitySceneReference(obj);
+			self = UnsafeUtility.As<EntitySceneReference, BlobEntitySceneReference>(ref objRef);
+			context.WeakObjRefSet.Add(self.Id);
+		}
+
+		/// <summary>
+		/// Write a loadable gameobject scene reference
+		/// </summary>
+		/// <typeparam name="TBlob"></typeparam>
+		/// <param name="self"></param>
+		/// <param name="obj"></param>
+		/// <param name="context"></param>
+		public static void Write<TBlob>(ref this BlobObjectSceneReference self, SceneAsset obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
+		{
+			// the value is stable from editor to build, so it doesn't need to be patched
+			context.Baker.DependsOn(obj);
+			var uwr = UntypedWeakReferenceId.CreateFromObjectInstance(obj);
+			self.Id = new(uwr);
 			context.WeakObjRefSet.Add(self.Id);
 		}
 

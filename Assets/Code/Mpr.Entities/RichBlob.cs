@@ -73,6 +73,28 @@ namespace Mpr.Entities
 	}
 
 	/// <summary>
+	/// Store a weak reference to a gameobject scene inside a blob.
+	/// </summary>
+	[MayOnlyLiveInBlobStorage]
+	public struct BlobObjectSceneReference
+	{
+		internal UnsafeUntypedWeakReferenceId Id;
+
+		public WeakObjectSceneReference AsWeakObjectSceneReference => UnsafeUtility.As<BlobObjectSceneReference, WeakObjectSceneReference>(ref this);
+	}
+
+	/// <summary>
+	/// Store a weak reference to a gameobject scene inside a blob.
+	/// </summary>
+	[MayOnlyLiveInBlobStorage]
+	public struct BlobEntitySceneReference
+	{
+		internal UnsafeUntypedWeakReferenceId Id;
+
+		public EntitySceneReference AsWeakEntitySceneReference => UnsafeUtility.As<BlobEntitySceneReference, EntitySceneReference>(ref this);
+	}
+
+	/// <summary>
 	/// Store a reference to an entity inside a blob. Must be patched at runtime by calling <see cref="RichBlob{TBlob}.Patch"/>.
 	/// </summary>
 	[MayOnlyLiveInBlobStorage]
