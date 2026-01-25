@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.LowLevel.Unsafe;
 using Unity.Entities.Serialization;
+using UnityEngine;
 
 namespace Mpr.Entities.Authoring
 {
@@ -51,6 +52,21 @@ namespace Mpr.Entities.Authoring
 			var objRef = new WeakObjectReference<TObject>(obj);
 			self.Id = new(objRef.Id);
 			context.WeakObjRefSet.Add(objRef.Id);
+		}
+
+		/// <summary>
+		/// Write a loadable entity prefab reference
+		/// </summary>
+		/// <typeparam name="TBlob"></typeparam>
+		/// <param name="self"></param>
+		/// <param name="obj"></param>
+		/// <param name="context"></param>
+		public static void Write<TBlob>(ref this BlobEntityPrefabReference self, GameObject obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
+		{
+			context.Baker.DependsOn(obj);
+			var objRef = new EntityPrefabReference(obj);
+			self = UnsafeUtility.As<EntityPrefabReference, BlobEntityPrefabReference>(ref objRef);
+			context.WeakObjRefSet.Add(self.Id);
 		}
 
 		/// <summary>

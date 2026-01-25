@@ -25,6 +25,11 @@ namespace Mpr.Entities
 		}
 		public RuntimeGlobalObjectId GlobalId;
 		public WeakReferenceGenerationType GenerationType;
+
+		public static implicit operator UntypedWeakReferenceId(UnsafeUntypedWeakReferenceId weakAssetRef)
+		{
+			return new UntypedWeakReferenceId(weakAssetRef.GlobalId, weakAssetRef.GenerationType);
+		}
 	}
 
 	internal struct UntypedObjectRef : IEquatable<UntypedObjectRef>
@@ -54,6 +59,17 @@ namespace Mpr.Entities
 		public void LoadAsync() => AsWeakObjectReference.LoadAsync();
 
 		public void Release() => AsWeakObjectReference.Release();
+	}
+
+	/// <summary>
+	/// Store a weak reference to an entity prefab inside a blob.
+	/// </summary>
+	[MayOnlyLiveInBlobStorage]
+	public struct BlobEntityPrefabReference
+	{
+		internal UnsafeUntypedWeakReferenceId Id;
+
+		public EntityPrefabReference AsEntityPrefabReference => UnsafeUtility.As<BlobEntityPrefabReference, EntityPrefabReference>(ref this);
 	}
 
 	/// <summary>
