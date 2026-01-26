@@ -150,6 +150,11 @@ namespace Mpr.Entities.Authoring
 		}
 	}
 
+	/// <summary>
+	/// Wrapper for <see cref="BlobBuilder"/> used for creating blobs that can
+	/// contain asset and entity references.
+	/// </summary>
+	/// <typeparam name="TBlob"></typeparam>
 	public unsafe ref struct RichBlobBuilder<TBlob> where TBlob : unmanaged
 	{
 		internal IBaker Baker;
@@ -168,7 +173,7 @@ namespace Mpr.Entities.Authoring
 		{
 			Baker = baker;
 
-			// this currently creates a duplicate if the same blob asset is baked multiple times
+			// TODO: add a baking system to deduplicate these entities
 			Entity = baker.CreateAdditionalEntity(TransformUsageFlags.None);
 			Entities = baker.AddBuffer<RichBlobEntityHolder>(Entity);
 			ObjRefs = baker.AddBuffer<RichBlobReferenceHolder>(Entity);
