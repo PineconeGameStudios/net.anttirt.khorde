@@ -52,6 +52,9 @@ namespace Mpr.Game
 			if(camera == null)
 				camera = Object.FindFirstObjectByType<CinemachineCamera>();
 
+			if(camera == null)
+				return;
+
 			foreach(var (pc, lt) in SystemAPI.Query<RefRW<PlayerController>, RefRO<LocalTransform>>())
 			{
 				Transform target = pc.ValueRW.cameraTarget;
