@@ -301,6 +301,14 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
+    "net.anttirt.khord": {
+      "version": "file:net.anttirt.khord",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.graphtoolkit": "0.4.0-exp.2"
+      }
+    },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
       "depth": 0,

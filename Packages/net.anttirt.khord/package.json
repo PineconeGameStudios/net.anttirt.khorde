@@ -1,0 +1,10 @@
+{
+  "name": "net.anttirt.khord",
+  "displayName": "Khord",
+  "version": "0.0.1",
+  "unity": "6000.3",
+  "description": "Khord expression, query and BT graphs",
+  "dependencies": {
+    "com.unity.graphtoolkit": "0.4.0-exp.2"
+  }
+}
