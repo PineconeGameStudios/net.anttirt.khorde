@@ -1,9 +1,10 @@
 ﻿using Unity.Mathematics;
 
-namespace Mpr.Expr.Test;
-
-public struct BlobTestContent
+namespace Mpr.Expr.Test
 {
-    public float3 position;
-    public quaternion rotation;
+	public struct BlobTestContent
+	{
+	    public float3 position;
+	    public quaternion rotation;
+	}
 }

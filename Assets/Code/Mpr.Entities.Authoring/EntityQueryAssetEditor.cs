@@ -2,35 +2,36 @@
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Mpr.Blobs.Authoring;
-
-[CustomEditor(typeof(EntityQueryAsset))]
-public class EntityQueryAssetEditor : Editor
+namespace Mpr.Blobs.Authoring
 {
-    private string oldValue;
+	[CustomEditor(typeof(EntityQueryAsset))]
+	public class EntityQueryAssetEditor : Editor
+	{
+	    private string oldValue;
     
-    public override VisualElement CreateInspectorGUI()
-    {
-        var path = AssetDatabase.GetAssetPath(this.target);
-        var value = File.ReadAllText((path));
+	    public override VisualElement CreateInspectorGUI()
+	    {
+	        var path = AssetDatabase.GetAssetPath(this.target);
+	        var value = File.ReadAllText((path));
         
-        var text = new TextField();
-        text.multiline = true;
-        text.isDelayed = true;
-        text.value = value;
-        oldValue = value;
-        text.RegisterValueChangedCallback(OnTextChanged);
-        return text;
-    }
+	        var text = new TextField();
+	        text.multiline = true;
+	        text.isDelayed = true;
+	        text.value = value;
+	        oldValue = value;
+	        text.RegisterValueChangedCallback(OnTextChanged);
+	        return text;
+	    }
 
-    private void OnTextChanged(ChangeEvent<string> evt)
-    {
-        if (evt.newValue != oldValue)
-        {
-            var path = AssetDatabase.GetAssetPath(this.target);
-            File.WriteAllText(path, evt.newValue);
-            oldValue = evt.newValue;
-            AssetDatabase.ImportAsset(path);
-        }
-    }
+	    private void OnTextChanged(ChangeEvent<string> evt)
+	    {
+	        if (evt.newValue != oldValue)
+	        {
+	            var path = AssetDatabase.GetAssetPath(this.target);
+	            File.WriteAllText(path, evt.newValue);
+	            oldValue = evt.newValue;
+	            AssetDatabase.ImportAsset(path);
+	        }
+	    }
+	}
 }

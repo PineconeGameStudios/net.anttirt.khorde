@@ -8,30 +8,31 @@ using UnityObjectRefId = UnityEngine.EntityId;
 using UnityObjectRefId = System.Int32;
 #endif
 
-namespace Mpr.Entities;
-
-public static class UnityObjectRefExt
+namespace Mpr.Entities
 {
-    /// <summary>
-    /// Safely convert a <see cref="UnityObjectRef{T}"/> to a reference to a base class
-    /// </summary>
-    /// <param name="reference"></param>
-    /// <typeparam name="TDerived"></typeparam>
-    /// <typeparam name="TBase"></typeparam>
-    /// <returns></returns>
-    public static UnityObjectRef<TBase> UpCast<TDerived, TBase>(this UnityObjectRef<TDerived> reference) where TDerived : TBase where TBase : UnityEngine.Object
-    {
-        return UnsafeUtility.As<UnityObjectRef<TDerived>, UnityObjectRef<TBase>>(ref reference);
-    }
+	public static class UnityObjectRefExt
+	{
+	    /// <summary>
+	    /// Safely convert a <see cref="UnityObjectRef{T}"/> to a reference to a base class
+	    /// </summary>
+	    /// <param name="reference"></param>
+	    /// <typeparam name="TDerived"></typeparam>
+	    /// <typeparam name="TBase"></typeparam>
+	    /// <returns></returns>
+	    public static UnityObjectRef<TBase> UpCast<TDerived, TBase>(this UnityObjectRef<TDerived> reference) where TDerived : TBase where TBase : UnityEngine.Object
+	    {
+	        return UnsafeUtility.As<UnityObjectRef<TDerived>, UnityObjectRef<TBase>>(ref reference);
+	    }
 
-    /// <summary>
-    /// Get the underlying object instance id
-    /// </summary>
-    /// <param name="reference"></param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    public static UnityObjectRefId GetObjectId<T>(this UnityObjectRef<T> reference) where T : UnityEngine.Object
-    {
-        return UnsafeUtility.As<UnityObjectRef<T>, UnityObjectRefId>(ref reference);
-    }
+	    /// <summary>
+	    /// Get the underlying object instance id
+	    /// </summary>
+	    /// <param name="reference"></param>
+	    /// <typeparam name="T"></typeparam>
+	    /// <returns></returns>
+	    public static UnityObjectRefId GetObjectId<T>(this UnityObjectRef<T> reference) where T : UnityEngine.Object
+	    {
+	        return UnsafeUtility.As<UnityObjectRef<T>, UnityObjectRefId>(ref reference);
+	    }
+	}
 }

@@ -4,70 +4,71 @@ using System;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
-namespace Mpr.Behavior.Authoring;
-
-[Serializable]
-[NodeCategory("Execution")]
-internal class Query : ExecBase, IExecNode
+namespace Mpr.Behavior.Authoring
 {
-	private IPort resultVarPort;
-	private IPort resultCountVarPort;
-	private INodeOption queryOption;
-
-	public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+	[Serializable]
+	[NodeCategory("Execution")]
+	internal class Query : ExecBase, IExecNode
 	{
-		if(resultVarPort == null)
+		private IPort resultVarPort;
+		private IPort resultCountVarPort;
+		private INodeOption queryOption;
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
 		{
-			context.AddError(this, "query must be selected");
-			return;
+			if(resultVarPort == null)
+			{
+				context.AddError(this, "query must be selected");
+				return;
+			}
+
+			exec.type = BTExec.BTExecType.Query;
+			exec.data.query = new Behavior.Query
+			{
+				variableIndex = context.GetVariableIndex(resultVarPort),
+				resultCountVariableIndex = context.GetVariableIndex(resultCountVarPort),
+				queryIndex = context.GetQueryIndex(queryOption),
+			};
 		}
 
-		exec.type = BTExec.BTExecType.Query;
-		exec.data.query = new Behavior.Query
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
-			variableIndex = context.GetVariableIndex(resultVarPort),
-			resultCountVariableIndex = context.GetVariableIndex(resultCountVarPort),
-			queryIndex = context.GetQueryIndex(queryOption),
-		};
-	}
+			queryOption = context.AddOption<QueryGraphAsset>("Query")
+				.WithDisplayName("Query")
+				.Build();
+		}
 
-	protected override void OnDefineOptions(IOptionDefinitionContext context)
-	{
-		queryOption = context.AddOption<QueryGraphAsset>("Query")
-			.WithDisplayName("Query")
-			.Build();
-	}
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
 
-	protected override void OnDefinePorts(IPortDefinitionContext context)
-	{
-		context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
-			.WithDisplayName(string.Empty)
-			.WithConnectorUI(PortConnectorUI.Arrowhead)
-			.WithPortCapacity(PortCapacity.Single)
-			.Build();
+			queryOption.TryGetValue<QueryGraphAsset>(out var queryGraphAsset);
+			if(queryGraphAsset == null)
+				return;
 
-		queryOption.TryGetValue<QueryGraphAsset>(out var queryGraphAsset);
-		if(queryGraphAsset == null)
-			return;
+			var valueType = queryGraphAsset.GetValue(QSData.SchemaVersion).itemType;
 
-		var valueType = queryGraphAsset.GetValue(QSData.SchemaVersion).itemType;
+			var type = valueType.GetValueType();
 
-		var type = valueType.GetValueType();
+			if(type == null)
+				return;
 
-		if(type == null)
-			return;
+			resultVarPort = context.AddInputPort("ResultVariable")
+				.WithDisplayName(queryGraphAsset.name + "_Result")
+				.WithDataType(type)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
 
-		resultVarPort = context.AddInputPort("ResultVariable")
-			.WithDisplayName(queryGraphAsset.name + "_Result")
-			.WithDataType(type)
-			.WithConnectorUI(PortConnectorUI.Arrowhead)
-			.WithPortCapacity(PortCapacity.Single)
-			.Build();
-
-		resultCountVarPort = context.AddInputPort<int>("ResultCountVariable")
-			.WithDisplayName(queryGraphAsset.name + "_Result_Count")
-			.WithConnectorUI(PortConnectorUI.Arrowhead)
-			.WithPortCapacity(PortCapacity.Single)
-			.Build();
+			resultCountVarPort = context.AddInputPort<int>("ResultCountVariable")
+				.WithDisplayName(queryGraphAsset.name + "_Result_Count")
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+		}
 	}
 }

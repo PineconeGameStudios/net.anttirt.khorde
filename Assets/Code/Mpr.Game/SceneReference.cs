@@ -1,9 +1,10 @@
 using Unity.Entities;
 using Unity.Entities.Content;
 
-namespace Mpr.Game;
-
-public struct SceneReference : IBufferElementData
+namespace Mpr.Game
 {
-	public WeakObjectSceneReference reference;
+	public struct SceneReference : IBufferElementData
+	{
+		public WeakObjectSceneReference reference;
+	}
 }
