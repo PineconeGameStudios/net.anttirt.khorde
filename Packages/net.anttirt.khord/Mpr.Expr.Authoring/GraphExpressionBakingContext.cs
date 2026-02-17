@@ -71,6 +71,9 @@ namespace Mpr.Expr.Authoring
 		public GraphExpressionBakingContext(Graph rootGraph, Allocator allocator)
 			: base(allocator)
 		{
+			if(rootGraph == null)
+				throw new ArgumentNullException(nameof(rootGraph));
+
 			this.rootGraph = rootGraph;
 		}
 

@@ -1,5 +1,4 @@
 using Mpr.Expr;
-using Mpr.Game;
 using Mpr.Query.Authoring;
 using NUnit.Framework;
 using Unity.Collections;
@@ -27,7 +26,7 @@ namespace Mpr.Query.Test
 		{
 			world = new World("Test");
 			entityManager = world.EntityManager;
-			var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Assets/Prefabs/TestQuery.queryg");
+			var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Packages/net.anttirt.khord/Mpr.Query.Test/TestAssets/TestQuery.queryg");
 			baker = new QueryBakingContext(graph, Allocator.Temp);
 			resultsHolder = entityManager.CreateEntity(typeof(QSResultItemStorage), typeof(ExpressionBlackboardStorage));
 			testSystem = world.GetOrCreateSystemManaged<TestSystem>();
@@ -47,10 +46,10 @@ namespace Mpr.Query.Test
 			var asset = baker.Build().CreateBlobAssetReference<QSData>(Allocator.Temp);
 			asset.Value.exprData.RuntimeInitialize();
 
-			var player0 = entityManager.CreateEntity(typeof(LocalTransform), typeof(PlayerController));
+			var player0 = entityManager.CreateEntity(typeof(LocalTransform), typeof(TestPlayerController));
 			entityManager.SetComponentData(player0, LocalTransform.FromPosition(new float3(30, 30, 0)));
 
-			var player1 = entityManager.CreateEntity(typeof(LocalTransform), typeof(PlayerController));
+			var player1 = entityManager.CreateEntity(typeof(LocalTransform), typeof(TestPlayerController));
 			entityManager.SetComponentData(player1, LocalTransform.FromPosition(new float3(-30, -30, 0)));
 
 			var queryResultLookup = new NativeHashMap<Hash128, NativeList<Entity>>(0, Allocator.Temp);

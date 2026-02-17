@@ -1,6 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Mpr.Expr;
-using Mpr.Game;
 using Mpr.Query.Authoring;
 using Mpr.Tests;
 using NUnit.Framework;
@@ -20,7 +20,7 @@ namespace Mpr.Query.Test
 	    {
 	        ExpressionTypeManager.Initialize();
 
-	        var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Assets/Prefabs/TestQuery.queryg");
+	        var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Packages/net.anttirt.khord/Mpr.Query.Test/TestAssets/TestQuery.queryg");
 	        var baker = new QueryBakingContext(graph, Allocator.Temp);
 	        var entityManager = World.EntityManager;
         
@@ -59,10 +59,10 @@ namespace Mpr.Query.Test
 	        entityManager.SetComponentData(querier, new PendingQuery { query = asset });
 	        entityManager.SetComponentEnabled<PendingQuery>(querier, true);
         
-	        var player0 = entityManager.CreateEntity(typeof(LocalTransform), typeof(PlayerController));
+	        var player0 = entityManager.CreateEntity(typeof(LocalTransform), typeof(TestPlayerController));
 	        entityManager.SetComponentData(player0, LocalTransform.FromPosition(new float3(30, 30, 0)));
         
-	        var player1 = entityManager.CreateEntity(typeof(LocalTransform), typeof(PlayerController));
+	        var player1 = entityManager.CreateEntity(typeof(LocalTransform), typeof(TestPlayerController));
 	        entityManager.SetComponentData(player1, LocalTransform.FromPosition(new float3(-30, -30, 0)));
         
 	        World.Update();
@@ -82,5 +82,14 @@ namespace Mpr.Query.Test
 	        results = entityManager.GetBuffer<QSResultItemStorage>(querier).AsResultArray<Entity>();
 	        Assert.That(results.Length, Is.EqualTo(0));
 	    }
+	}
+
+	[Serializable]
+	public struct TestPlayerController : IComponentData
+	{
+		public float speed;
+		public enum UpAxis { X, Y, Z, }
+		public UpAxis up;
+		public UnityObjectRef<Transform> cameraTarget;
 	}
 }
