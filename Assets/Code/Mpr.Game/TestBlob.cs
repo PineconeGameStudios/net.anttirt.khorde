@@ -1,22 +1,23 @@
+using TMPro;
 using Unity.Entities;
 using UnityEngine;
 
 namespace Mpr.Entities.Test
 {
-	struct TestItem
+	public struct TestItem
 	{
 		public BlobEntity prefab;
 		public float weight;
 	}
 
-	struct TestBlob
+	public struct TestBlob
 	{
 		public BlobArray<TestItem> items;
 		public BlobWeakObjectReference<Material> weakTexture;
 		public BlobObjectRef<Material> strongTexture;
 	}
 
-	struct TestComponent : IComponentData, IEnableableComponent
+	public struct TestComponent : IComponentData, IEnableableComponent
 	{
 		public BlobAssetReference<RichBlob<TestBlob>> data;
 		public bool itemsSpawned;
@@ -29,6 +30,10 @@ namespace Mpr.Entities.Test
 	{
 		void ISystem.OnUpdate(ref SystemState state)
 		{
+			var text = GameObject.FindFirstObjectByType<TMPro.TMP_Text>(FindObjectsInactive.Exclude);
+			if(text == null)
+				return;
+
 			var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
 			foreach(var (tcRef, entity) in SystemAPI.Query<RefRW<TestComponent>>().WithEntityAccess())
@@ -40,10 +45,12 @@ namespace Mpr.Entities.Test
 					if(!tc.data.Value.IsPatched(state.WorldUnmanaged))
 					{
 						Debug.LogError($"patched for the wrong world: expected {state.WorldUnmanaged.SequenceNumber} but got {tc.data.Value.PatchedWorldSequenceNumber}");
+						text.text += ($"patched for the wrong world: expected {state.WorldUnmanaged.SequenceNumber} but got {tc.data.Value.PatchedWorldSequenceNumber}\n");
 					}
 					else
 					{
 						Debug.Log($"patched for the world with sequence {state.WorldUnmanaged.SequenceNumber}");
+						text.text += ($"patched for the world with sequence {state.WorldUnmanaged.SequenceNumber}\n");
 					}
 
 					tc.patchWorldChecked = true;
@@ -59,10 +66,12 @@ namespace Mpr.Entities.Test
 						{
 							ecb.Instantiate(blob.items[i].prefab.AsEntity);
 							Debug.Log("entity prefab instantiated");
+							text.text += ("entity prefab instantiated\n");
 						}
 						else
 						{
 							Debug.Log("entity prefab was null");
+							text.text += ("entity prefab was null\n");
 						}
 					}
 
@@ -72,12 +81,14 @@ namespace Mpr.Entities.Test
 				if(!tc.strongTextureLogged)
 				{
 					Debug.Log($"strong texture ref: {blob.strongTexture.Value}");
+					text.text += ($"strong texture ref: {blob.strongTexture.Value}\n");
 					tc.strongTextureLogged = true;
 				}
 
 				if(blob.weakTexture.LoadingStatus == Unity.Entities.Content.ObjectLoadingStatus.None && !tc.weakTextureLoadStarted)
 				{
 					Debug.Log($"weak texture load started");
+					text.text += ($"weak texture load started\n");
 					blob.weakTexture.LoadAsync();
 
 					tc.weakTextureLoadStarted = true;
@@ -88,6 +99,7 @@ namespace Mpr.Entities.Test
 				{
 					case Unity.Entities.Content.ObjectLoadingStatus.None:
 						Debug.Log($"weak texture load not started");
+						text.text += ($"weak texture load not started\n");
 						state.EntityManager.SetComponentEnabled<TestComponent>(entity, false);
 						break;
 
@@ -97,12 +109,14 @@ namespace Mpr.Entities.Test
 
 					case Unity.Entities.Content.ObjectLoadingStatus.Completed:
 						Debug.Log($"weak texture loaded: {blob.weakTexture.Result}");
+						text.text += ($"weak texture loaded: {blob.weakTexture.Result}\n");
 						blob.weakTexture.Release();
 						state.EntityManager.SetComponentEnabled<TestComponent>(entity, false);
 						break;
 
 					case Unity.Entities.Content.ObjectLoadingStatus.Error:
 						Debug.Log($"weak texture load failed");
+						text.text += ($"weak texture load failed\n");
 						state.EntityManager.SetComponentEnabled<TestComponent>(entity, false);
 						break;
 
