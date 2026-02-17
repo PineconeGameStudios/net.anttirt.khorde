@@ -853,19 +853,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 757e8b9594238614cb0ff4a813b76e9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Mpr.Game::Mpr.Game.UI.SceneButton
-  scene:
-    Id:
-      GlobalId:
-        SceneObjectIdentifier0: 102900000
-        SceneObjectIdentifier1: 0
-        AssetGUID:
-          Value:
-            x: 3773069486
-            y: 1129223820
-            z: 581790626
-            w: 3533006532
-        IdentifierType: 1
-      GenerationType: 3
+  sceneName: RichBlobTestScene
 --- !u!1 &1242596362
 GameObject:
   m_ObjectHideFlags: 0
@@ -1214,19 +1202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 757e8b9594238614cb0ff4a813b76e9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Mpr.Game::Mpr.Game.UI.SceneButton
-  scene:
-    Id:
-      GlobalId:
-        SceneObjectIdentifier0: 102900000
-        SceneObjectIdentifier1: 0
-        AssetGUID:
-          Value:
-            x: 1382010295
-            y: 1335573385
-            z: 3227164851
-            w: 3592209013
-        IdentifierType: 1
-      GenerationType: 3
+  sceneName: GameplayTestScene
 --- !u!1 &1706616001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1373,19 +1349,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 757e8b9594238614cb0ff4a813b76e9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Mpr.Game::Mpr.Game.UI.SceneButton
-  scene:
-    Id:
-      GlobalId:
-        SceneObjectIdentifier0: 102900000
-        SceneObjectIdentifier1: 0
-        AssetGUID:
-          Value:
-            x: 2686950553
-            y: 1175086395
-            z: 2930866082
-            w: 1353279793
-        IdentifierType: 1
-      GenerationType: 3
+  sceneName: SampleScene
 --- !u!1 &1756166962
 GameObject:
   m_ObjectHideFlags: 0
