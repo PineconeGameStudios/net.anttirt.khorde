@@ -81,9 +81,9 @@ namespace Mpr.Entities
             {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
-#endif
                 var s = AtomicSafetyHandle.Create();
                 AtomicSafetyHandle.UseSecondaryVersion(ref s);
+#endif
                 return ref m_Asset.Value;
             }
         }
