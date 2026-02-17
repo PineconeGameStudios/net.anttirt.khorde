@@ -2,7 +2,6 @@
     "name": "Mpr.Query",
     "rootNamespace": "Mpr.Query",
     "references": [
-        "GUID:a849e87fab625674291d81fb42f47cae",
         "GUID:2665a8d13d1b3f18800f46e256720795",
         "GUID:d8b63aba1907145bea998dd612889d6b",
         "GUID:e0cd26848372d4e5c891c569017e11f1",
@@ -10,7 +9,6 @@
         "GUID:953adc2a6b8b4e3c8df5b728bcd546e9",
         "GUID:f978e00eb6af5064c95d4d1823b104c3",
         "GUID:07f90efd59ad1d84798b1949d158ad9a",
-        "GUID:7025072c73caf8f409b3d846f7f268f0",
         "GUID:60834f263f01c6840929b5c72115ccfd"
     ],
     "includePlatforms": [],
