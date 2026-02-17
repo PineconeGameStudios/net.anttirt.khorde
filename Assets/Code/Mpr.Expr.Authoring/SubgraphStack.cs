@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.GraphToolkit.Editor;
+using UnityEngine;
 
 namespace Mpr.Expr.Authoring;
 
@@ -12,7 +13,46 @@ namespace Mpr.Expr.Authoring;
 /// </summary>
 /// <param name="subgraphStackKey"></param>
 /// <param name="node"></param>
-public readonly record struct NodeKey<TNode>(UnityEngine.Hash128 subgraphStackKey, TNode node);
+public readonly struct NodeKey<TNode> : IEquatable<NodeKey<TNode>>
+{
+	public readonly UnityEngine.Hash128 subgraphStackKey;
+	public readonly TNode node;
+
+	public NodeKey(Hash128 subgraphStackKey, TNode node)
+	{
+		this.subgraphStackKey = subgraphStackKey;
+		this.node = node;
+	}
+
+	public override bool Equals(object obj)
+	{
+		return obj is NodeKey<TNode> key && Equals(key);
+	}
+
+	public bool Equals(NodeKey<TNode> other)
+	{
+		return subgraphStackKey.Equals(other.subgraphStackKey) &&
+			   EqualityComparer<TNode>.Default.Equals(node, other.node);
+	}
+
+	public override int GetHashCode()
+	{
+		int hash = 23;
+		hash = hash * 17 + subgraphStackKey.GetHashCode();
+		hash = hash * 17 + node.GetHashCode();
+		return hash;
+	}
+
+	public static bool operator ==(NodeKey<TNode> left, NodeKey<TNode> right)
+	{
+		return left.Equals(right);
+	}
+
+	public static bool operator !=(NodeKey<TNode> left, NodeKey<TNode> right)
+	{
+		return !(left == right);
+	}
+}
 
 /// <summary>
 /// Every execution path through unique subgraph nodes produces a copy of

@@ -16,7 +16,48 @@ public class GraphExpressionBakingContext : ExpressionBakingContext
 	private Dictionary<NodeKey<IVariableNode>, ushort> outputNodeMap = new();
 	private ushort exprNodeCounter;
 	protected static readonly UnityEngine.Hash128 globalKey = new UnityEngine.Hash128(0xddddddddddddddddul, 0xddddddddddddddddul);
-	protected record struct VariableKey(UnityEngine.Hash128 subgraphStackKey, string name);
+
+	protected readonly struct VariableKey : IEquatable<VariableKey>
+	{
+		public readonly UnityEngine.Hash128 subgraphStackKey;
+		public readonly string name;
+
+		public VariableKey(Hash128 subgraphStackKey, string name)
+		{
+			this.subgraphStackKey = subgraphStackKey;
+			this.name = name;
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is VariableKey key && Equals(key);
+		}
+
+		public bool Equals(VariableKey other)
+		{
+			return subgraphStackKey.Equals(other.subgraphStackKey) &&
+				EqualityComparer<string>.Default.Equals(name, other.name);
+		}
+
+		public override int GetHashCode()
+		{
+			int hash = 23;
+			hash = hash * 17 + subgraphStackKey.GetHashCode();
+			hash = hash * 17 + name.GetHashCode();
+			return hash;
+		}
+
+		public static bool operator ==(VariableKey left, VariableKey right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(VariableKey left, VariableKey right)
+		{
+			return !(left == right);
+		}
+	}
+
 	protected Dictionary<VariableKey, int> variables = new();
 	protected List<(object context, string message)> errors = new();
 	protected List<(object context, string message)> warnings = new();
