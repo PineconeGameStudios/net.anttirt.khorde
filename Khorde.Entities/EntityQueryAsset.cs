@@ -22,6 +22,12 @@ namespace Khorde.Blobs
             if(icon != null)
                 UnityEditor.EditorGUIUtility.SetIconForObject(this, icon);
         }
+
+        [UnityEditor.MenuItem("Assets/Create/Entity Query")]
+        private static void CreateAsset()
+        {
+            UnityEditor.ProjectWindowUtil.CreateAssetWithContent("New Entity Query.entityquery", "all: LocalTransform");
+        }
 #endif
     }
     
