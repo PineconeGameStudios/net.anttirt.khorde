@@ -821,7 +821,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: Accept Item
     - rid: 8055170789968183356
-      type: {class: 'Constant`1[[Khorde.Blobs.EntityQueryAsset, Mpr.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Blobs.EntityQueryAsset, Khorde.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value: {fileID: -295462882486227724, guid: 3a3ca0e8ad4c039419bb32f94ce755d9, type: 3}
     - rid: 8259216464963436637

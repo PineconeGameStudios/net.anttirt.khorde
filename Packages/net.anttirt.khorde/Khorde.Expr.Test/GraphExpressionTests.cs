@@ -19,7 +19,6 @@ namespace Khorde.Expr.Test
 	    ExpressionTestSystem testSystem;
 	    Entity bakedExpressionEntity;
 	    GraphExpressionBakingContext baker;
-	    ushort exprIndex;
 
 	    [SetUp]
 	    public void SetUp()
@@ -31,10 +30,9 @@ namespace Khorde.Expr.Test
 	        em = world.EntityManager;
 	        bakedExpressionEntity = em.CreateEntity();
 
-	        var graph = GraphDatabase.LoadGraphForImporter<ExprSubgraph>("Assets/Prefabs/TestExpr.exprg");
+	        var graph = GraphDatabase.LoadGraphForImporter<ExprSubgraph>("Packages/net.anttirt.khorde/Khorde.Expr.Test/TestAssets/TestExpr.exprg");
         
 	        baker = new GraphExpressionBakingContext(graph, Allocator.Temp);
-	        exprIndex = 0;
 	    }
 
 	    [TearDown]
@@ -45,7 +43,6 @@ namespace Khorde.Expr.Test
 	        world.Dispose();
 	        world = null;
 	        baker = null;
-	        exprIndex = 0;
 	    }
 
 	    [Test]
