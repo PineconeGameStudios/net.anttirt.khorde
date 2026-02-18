@@ -1,10 +1,5 @@
-﻿using System;
-using Unity.Burst;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Entities.Content;
-using Unity.Entities.Serialization;
 
 namespace Mpr.Blobs
 {
@@ -19,6 +14,15 @@ namespace Mpr.Blobs
         {
             return GetValue(BlobEntityQueryDesc.SchemaVersion).CreateQuery(entityManager);
         }
+
+#if UNITY_EDITOR
+        private void OnEnable()
+        {
+            var icon = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>("Packages/net.anttirt.khord/Icons/EntityQuery.psd");
+            if(icon != null)
+                UnityEditor.EditorGUIUtility.SetIconForObject(this, icon);
+        }
+#endif
     }
     
     public static class EntityQueryAssetExt
