@@ -48,10 +48,19 @@ namespace Mpr.Behavior.Authoring
 		protected override bool RegisterGraphNodes()
 		{
 			var roots = rootGraph.GetNodes().OfType<Root>().ToList();
+			bool isSubgraph = rootGraph.GetVariables().Any(v => v.variableKind == VariableKind.Input && v.dataType == typeof(Exec));
+
 			if(roots.Count == 0)
 			{
-				AddError(rootGraph, $"no Root node found");
+				if(!isSubgraph)
+					AddError(rootGraph, $"no Root node found");
+
 				return false;
+			}
+
+			if(isSubgraph)
+			{
+				AddError(rootGraph, "Cannot have both a Root node and Exec input variables on the same graph");
 			}
 
 			if(roots.Count > 1)

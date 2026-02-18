@@ -23,6 +23,6 @@ namespace Mpr.Query.Test
 		}
 	}
 
-	[Serializable] class ReadPlayerController : ComponentReaderNode<TestPlayerController> { }
+	[Serializable] class ReadTestPlayerController : ComponentReaderNode<TestPlayerController> { }
 	//[Serializable] class WritePlayerController : ComponentWriterNode<TestPlayerController> { }
 }

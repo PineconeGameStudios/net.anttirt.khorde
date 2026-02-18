@@ -1,3 +1,4 @@
+using Mpr.Behavior.Authoring;
 using Mpr.Expr;
 using Mpr.Expr.Authoring;
 using Mpr.Query;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEditor;
 using static Mpr.Behavior.BTExec;
@@ -14,6 +16,25 @@ using static Mpr.Behavior.BTExecTrace;
 
 namespace Mpr.Behavior.Test
 {
+	[Serializable]
+	public struct TestMoveTarget : IComponentData
+	{
+		public float3 position;
+		public float tolerance;
+		public bool enabled;
+	}
+
+	public struct TestNpcTargetEntity : IComponentData
+	{
+		public Entity target;
+	}
+
+	[Serializable] class ReadTestMoveTarget : ComponentReaderNode<TestMoveTarget> { }
+	[Serializable] class WriteTestMoveTarget : ComponentWriterNode<TestMoveTarget> { }
+
+	[Serializable] class ReadTestNpcTargetEntity : ComponentReaderNode<TestNpcTargetEntity> { }
+	[Serializable] class WriteTestNpcTargetEntity : ComponentWriterNode<TestNpcTargetEntity> { }
+
 	[TestFixture]
 	public class BehaviorTreeGraphTests
 	{
@@ -43,16 +64,16 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_Graph1()
 		{
-			var btAsset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Assets/Prefabs/BT_Test_MoveAround.btg");
+			var btAsset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khord/Mpr.Behavior.Test/TestAssets/BT_Test_MoveAround.btg");
 			BlobAssetReference<BTData> data = default;
 			try
 			{
 				data = btAsset.LoadPersistent(BTData.SchemaVersion).Reference;
 				data.Value.exprData.RuntimeInitialize();
 				BTState state = default;
-				Game.MoveTarget moveTarget = default;
+				TestMoveTarget moveTarget = default;
 				LocalTransform localTransform = LocalTransform.FromScale(1);
-				Game.NpcTargetEntity targetEntity = default;
+				TestNpcTargetEntity targetEntity = default;
 
 				var dump = new List<string>();
 				BehaviorTreeExecution.DumpNodes(ref data.Value, dump);
@@ -69,11 +90,11 @@ namespace Mpr.Behavior.Test
 				{
 					var type = localComponents[i].ResolveComponentType();
 					var typeIndex = type.TypeIndex;
-					if(typeIndex == TypeManager.GetTypeIndex<Game.MoveTarget>())
+					if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
 						comps[i] = UnsafeComponentReference.Make(ref moveTarget);
 					else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
 						comps[i] = UnsafeComponentReference.Make(ref localTransform);
-					else if(typeIndex == TypeManager.GetTypeIndex<Game.NpcTargetEntity>())
+					else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
 						comps[i] = UnsafeComponentReference.Make(ref targetEntity);
 					else
 						throw new Exception($"component {type.GetManagedType().FullName} not available in test");
@@ -90,10 +111,10 @@ namespace Mpr.Behavior.Test
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
-					Trace(BTExecType.Sequence, 5, 3, Event.Call),
-					Trace(BTExecType.WriteField, 3, 4, Event.Return),
-					Trace(BTExecType.Sequence, 5, 3, Event.Call),
-					Trace(BTExecType.Wait, 4, 4, Event.Wait)
+					Trace(BTExecType.Sequence, 4, 3, Event.Call),
+					Trace(BTExecType.WriteField, 5, 4, Event.Return),
+					Trace(BTExecType.Sequence, 4, 3, Event.Call),
+					Trace(BTExecType.Wait, 3, 4, Event.Wait)
 				);
 
 				trace.Clear();
@@ -102,8 +123,8 @@ namespace Mpr.Behavior.Test
 
 				AssertTrace
 				(
-					Trace(BTExecType.Wait, 4, 4, Event.Start),
-					Trace(BTExecType.Wait, 4, 4, Event.Wait)
+					Trace(BTExecType.Wait, 3, 4, Event.Start),
+					Trace(BTExecType.Wait, 3, 4, Event.Wait)
 				);
 
 				trace.Clear();
@@ -114,14 +135,14 @@ namespace Mpr.Behavior.Test
 
 				AssertTrace
 				(
-					Trace(BTExecType.Wait, 4, 4, Event.Start),
-					Trace(BTExecType.Wait, 4, 4, Event.Return),
-					Trace(BTExecType.Sequence, 5, 3, Event.Return),
+					Trace(BTExecType.Wait, 3, 4, Event.Start),
+					Trace(BTExecType.Wait, 3, 4, Event.Return),
+					Trace(BTExecType.Sequence, 4, 3, Event.Return),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
-					Trace(BTExecType.Sequence, 8, 3, Event.Call),
-					Trace(BTExecType.WriteField, 6, 4, Event.Return),
-					Trace(BTExecType.Sequence, 8, 3, Event.Call),
-					Trace(BTExecType.Wait, 7, 4, Event.Wait)
+					Trace(BTExecType.Sequence, 7, 3, Event.Call),
+					Trace(BTExecType.WriteField, 8, 4, Event.Return),
+					Trace(BTExecType.Sequence, 7, 3, Event.Call),
+					Trace(BTExecType.Wait, 6, 4, Event.Wait)
 				);
 
 			}
@@ -135,7 +156,7 @@ namespace Mpr.Behavior.Test
 		[Test]
 		public void Test_WriteVar()
 		{
-			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Assets/Prefabs/BT_Test_WriteVar.btg");
+			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khord/Mpr.Behavior.Test/TestAssets/BT_Test_WriteVar.btg");
 			ref var data = ref asset.GetValue(BTData.SchemaVersion);
 			data.exprData.RuntimeInitialize();
 
@@ -147,9 +168,9 @@ namespace Mpr.Behavior.Test
 			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
 
 			BTState state = default;
-			Game.MoveTarget moveTarget = default;
+			TestMoveTarget moveTarget = default;
 			LocalTransform localTransform = LocalTransform.FromScale(1);
-			Game.NpcTargetEntity targetEntity = default;
+			TestNpcTargetEntity targetEntity = default;
 
 			var dump = new List<string>();
 			BehaviorTreeExecution.DumpNodes(ref data, dump);
@@ -165,11 +186,11 @@ namespace Mpr.Behavior.Test
 			{
 				var type = localComponents[i].ResolveComponentType();
 				var typeIndex = type.TypeIndex;
-				if(typeIndex == TypeManager.GetTypeIndex<Game.MoveTarget>())
+				if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
 					comps[i] = UnsafeComponentReference.Make(ref moveTarget);
 				else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
 					comps[i] = UnsafeComponentReference.Make(ref localTransform);
-				else if(typeIndex == TypeManager.GetTypeIndex<Game.NpcTargetEntity>())
+				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
 					comps[i] = UnsafeComponentReference.Make(ref targetEntity);
 				else
 					throw new Exception($"component {type.GetManagedType().FullName} not available in test");

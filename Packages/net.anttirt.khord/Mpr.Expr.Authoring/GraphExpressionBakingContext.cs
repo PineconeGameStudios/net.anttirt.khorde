@@ -43,7 +43,8 @@ namespace Mpr.Expr.Authoring
 			{
 				int hash = 23;
 				hash = hash * 17 + subgraphStackKey.GetHashCode();
-				hash = hash * 17 + name.GetHashCode();
+				if(name != null)
+					hash = hash * 17 + name.GetHashCode();
 				return hash;
 			}
 
