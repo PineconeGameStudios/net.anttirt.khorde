@@ -64,7 +64,7 @@ namespace Khorde.Behavior.Test
 		[Test]
 		public void Test_Graph1()
 		{
-			var btAsset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khord/Khorde.Behavior.Test/TestAssets/BT_Test_MoveAround.btg");
+			var btAsset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_MoveAround.btg");
 			BlobAssetReference<BTData> data = default;
 			try
 			{
@@ -156,7 +156,7 @@ namespace Khorde.Behavior.Test
 		[Test]
 		public void Test_WriteVar()
 		{
-			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khord/Khorde.Behavior.Test/TestAssets/BT_Test_WriteVar.btg");
+			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_WriteVar.btg");
 			ref var data = ref asset.GetValue(BTData.SchemaVersion);
 			data.exprData.RuntimeInitialize();
 

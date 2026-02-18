@@ -17,7 +17,7 @@ namespace Khorde.Query
 #if UNITY_EDITOR
 		private void OnEnable()
 		{
-			var icon = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/net.anttirt.khord/Icons/QueryGraph.psd");
+			var icon = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/net.anttirt.khorde/Icons/QueryGraph.psd");
 			if(icon != null)
 				UnityEditor.EditorGUIUtility.SetIconForObject(this, icon);
 		}

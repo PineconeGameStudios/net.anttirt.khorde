@@ -26,7 +26,7 @@ namespace Khorde.Query.Test
 		{
 			world = new World("Test");
 			entityManager = world.EntityManager;
-			var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Packages/net.anttirt.khord/Khorde.Query.Test/TestAssets/TestQuery.queryg");
+			var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Packages/net.anttirt.khorde/Khorde.Query.Test/TestAssets/TestQuery.queryg");
 			baker = new QueryBakingContext(graph, Allocator.Temp);
 			resultsHolder = entityManager.CreateEntity(typeof(QSResultItemStorage), typeof(ExpressionBlackboardStorage));
 			testSystem = world.GetOrCreateSystemManaged<TestSystem>();

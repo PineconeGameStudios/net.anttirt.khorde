@@ -7,7 +7,7 @@ namespace Khorde.Expr.Authoring
 	{
 		private void OnEnable()
 		{
-			var icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/net.anttirt.khord/Icons/ExprSubgraph.psd");
+			var icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/net.anttirt.khorde/Icons/ExprSubgraph.psd");
 			if(icon != null)
 				EditorGUIUtility.SetIconForObject(this, icon);
 		}

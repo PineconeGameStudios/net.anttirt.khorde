@@ -18,7 +18,7 @@ namespace Khorde.Blobs
 #if UNITY_EDITOR
         private void OnEnable()
         {
-            var icon = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>("Packages/net.anttirt.khord/Icons/EntityQuery.psd");
+            var icon = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>("Packages/net.anttirt.khorde/Icons/EntityQuery.psd");
             if(icon != null)
                 UnityEditor.EditorGUIUtility.SetIconForObject(this, icon);
         }

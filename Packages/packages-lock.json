@@ -301,8 +301,8 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
-    "net.anttirt.khord": {
-      "version": "file:net.anttirt.khord",
+    "net.anttirt.khorde": {
+      "version": "file:net.anttirt.khorde",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
