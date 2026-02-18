@@ -64,10 +64,10 @@ namespace Mpr.Expr.Authoring
 		protected List<(object context, string message)> warnings = new();
 
 		public void AddError(object context, string message) => errors.Add((context, message));
-		public void AddWarning(object context, string message) => errors.Add((context, message));
+		public void AddWarning(object context, string message) => warnings.Add((context, message));
 
-		public List<(object context, string message)> Warnings => warnings;
 		public List<(object context, string message)> Errors => errors;
+		public List<(object context, string message)> Warnings => warnings;
 
 		public GraphExpressionBakingContext(Graph rootGraph, Allocator allocator)
 			: base(allocator)
