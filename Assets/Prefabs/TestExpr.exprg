@@ -54,7 +54,7 @@ MonoBehaviour:
         m_Node:
           rid: 3309755023688466517
     - rid: 3309755023688466517
-      type: {class: ReadLocalTransform, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: ReadLocalTransform, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 3309755023688466518
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -138,7 +138,7 @@ MonoBehaviour:
           y: 0
           z: 0
     - rid: 3309755023688466522
-      type: {class: SwizzleFloat3, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: SwizzleFloat3, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 3309755023688466526
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -190,7 +190,7 @@ MonoBehaviour:
           y: 0
           z: 0
     - rid: 3309755023688466529
-      type: {class: SwizzleFloat3, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: SwizzleFloat3, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 3309755023688466530
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -506,7 +506,7 @@ MonoBehaviour:
         - rid: 8259216464963436609
         m_Title: 
     - rid: 8259216464963436606
-      type: {class: ExprSubgraph, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: ExprSubgraph, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8259216464963436609
       type: {class: VariableDeclarationModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -582,5 +582,5 @@ MonoBehaviour:
       data:
         m_Value: 5
     - rid: 8259216464963436618
-      type: {class: AddFloat, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: AddFloat, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 

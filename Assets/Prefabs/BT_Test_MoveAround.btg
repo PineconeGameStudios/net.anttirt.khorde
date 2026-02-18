@@ -59,7 +59,7 @@ MonoBehaviour:
       type: {class: 'Constant`1[[Unity.Entities.Entity, Unity.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: 
     - rid: 4607918639681896524
-      type: {class: LookupLocalTransform, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: LookupLocalTransform, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 4607918639681896525
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -187,10 +187,10 @@ MonoBehaviour:
       data:
         m_Value: 1
     - rid: 4607918639681896533
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 4607918639681896534
-      type: {class: WriteLocalTransform, ns: Mpr.Behavior.Authoring, asm: Mpr.Behavior.Authoring}
+      type: {class: WriteLocalTransform, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 4607918639681896535
       type: {class: 'Constant`1[[Unity.Mathematics.quaternion, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -304,14 +304,14 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: 
     - rid: 4607918639681896539
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 4607918639681896540
       type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value: 0
     - rid: 4607918639681896541
-      type: {class: Optional, ns: Mpr.Behavior.Authoring, asm: Mpr.Behavior.Authoring}
+      type: {class: Optional, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 4607918639681896542
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -378,7 +378,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: 
     - rid: 8055170928982098563
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8055170928982098564
       type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -392,7 +392,7 @@ MonoBehaviour:
       data:
         m_Value: 0
     - rid: 8055170928982098566
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8055170928982098567
       type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -406,7 +406,7 @@ MonoBehaviour:
       data:
         m_Value: 0
     - rid: 8055170928982098569
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8055170928982098570
       type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -420,7 +420,7 @@ MonoBehaviour:
       data:
         m_Value: 0
     - rid: 8055170928982098572
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8055170928982098573
       type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -783,7 +783,7 @@ MonoBehaviour:
         - rid: 8259216432681975895
         m_Title: 
     - rid: 8259216277413823440
-      type: {class: BehaviorTreeGraph, ns: Mpr.Behavior, asm: Mpr.Behavior.Authoring}
+      type: {class: BehaviorTreeGraph, ns: Khorde.Behavior, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 8259216277413823441
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -820,7 +820,7 @@ MonoBehaviour:
         m_Node:
           rid: 8259216277413823442
     - rid: 8259216277413823442
-      type: {class: Root, ns: Mpr.Behavior.Authoring, asm: Mpr.Behavior.Authoring}
+      type: {class: Root, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 8259216277413823443
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -865,10 +865,10 @@ MonoBehaviour:
       data:
         m_Value: 5
     - rid: 8259216277413823445
-      type: {class: 'Constant`1[[Mpr.Behavior.Authoring.Exec, Mpr.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823446
-      type: {class: Sequence, ns: Mpr.Behavior.Authoring, asm: Mpr.Behavior.Authoring}
+      type: {class: Sequence, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 8259216277413823447
       type: {class: SubgraphNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -1153,7 +1153,7 @@ MonoBehaviour:
         m_Node:
           rid: 8259216277413823464
     - rid: 8259216277413823464
-      type: {class: ReadLocalTransform, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: ReadLocalTransform, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8259216277413823465
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -1240,7 +1240,7 @@ MonoBehaviour:
           y: 0
           z: 0
     - rid: 8259216277413823469
-      type: {class: AddFloat3, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: AddFloat3, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8259216277413823473
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -1295,7 +1295,7 @@ MonoBehaviour:
           y: 1
           z: 0
     - rid: 8259216277413823476
-      type: {class: AddFloat3, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: AddFloat3, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8259216277413823480
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -1350,7 +1350,7 @@ MonoBehaviour:
           y: 0
           z: 0
     - rid: 8259216277413823483
-      type: {class: AddFloat3, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: AddFloat3, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8259216277413823487
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -1405,7 +1405,7 @@ MonoBehaviour:
           y: -1
           z: 0
     - rid: 8259216303520743426
-      type: {class: AddFloat3, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: AddFloat3, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8259216303520743427
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}

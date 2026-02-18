@@ -70,10 +70,10 @@ MonoBehaviour:
       data:
         m_Value: 1
     - rid: 8055170663063224429
-      type: {class: 'Constant`1[[Mpr.Query.Authoring.PassRef`1[[Unity.Entities.Entity, Unity.Entities]], Mpr.Query.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Query.Authoring.PassRef`1[[Unity.Entities.Entity, Unity.Entities]], Khorde.Query.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: 
     - rid: 8055170663063224430
-      type: {class: QueryEntity, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: QueryEntity, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 
     - rid: 8055170663063224431
       type: {class: UserContextNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -154,7 +154,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: Pass #1
     - rid: 8055170663063224433
-      type: {class: QueryPassEntity, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: QueryPassEntity, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 
     - rid: 8055170663063224434
       type: {class: UserBlockNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -195,7 +195,7 @@ MonoBehaviour:
         m_Node:
           rid: 8055170663063224436
     - rid: 8055170663063224436
-      type: {class: GeneratorEntityQuery, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: GeneratorEntityQuery, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 
     - rid: 8055170663063224437
       type: {class: UserBlockNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -240,7 +240,7 @@ MonoBehaviour:
       data:
         m_Value: 1
     - rid: 8055170663063224439
-      type: {class: ExpressionFilter, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: ExpressionFilter, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 
     - rid: 8055170663063224442
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -277,7 +277,7 @@ MonoBehaviour:
         m_Node:
           rid: 8055170663063224443
     - rid: 8055170663063224443
-      type: {class: CurrentItemEntity, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: CurrentItemEntity, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 
     - rid: 8055170663063224444
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -351,7 +351,7 @@ MonoBehaviour:
       type: {class: 'Constant`1[[Unity.Entities.Entity, Unity.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: 
     - rid: 8055170663063224447
-      type: {class: LookupLocalTransform, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: LookupLocalTransform, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8055170663063224448
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -388,7 +388,7 @@ MonoBehaviour:
         m_Node:
           rid: 8055170663063224449
     - rid: 8055170663063224449
-      type: {class: ReadLocalTransform, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: ReadLocalTransform, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8055170663063224450
       type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -475,7 +475,7 @@ MonoBehaviour:
           y: 0
           z: 0
     - rid: 8055170663063224454
-      type: {class: SubFloat3, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: SubFloat3, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8055170663063224455
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -553,7 +553,7 @@ MonoBehaviour:
           y: 0
           z: 0
     - rid: 8055170663063224458
-      type: {class: LengthFloat3Node, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: LengthFloat3Node, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8055170663063224459
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -664,11 +664,11 @@ MonoBehaviour:
       data:
         m_Value:
           m_EnumType:
-            m_Identification: Mpr.Expr.BinaryCompareOp, Mpr.Expr, Version=0.0.0.0,
+            m_Identification: Khorde.Expr.BinaryCompareOp, Khorde.Expr, Version=0.0.0.0,
               Culture=neutral, PublicKeyToken=null
           m_Value: 0
         m_EnumType:
-          m_Identification: Mpr.Expr.BinaryCompareOp, Mpr.Expr, Version=0.0.0.0,
+          m_Identification: Khorde.Expr.BinaryCompareOp, Khorde.Expr, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
     - rid: 8055170663063224463
       type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -679,7 +679,7 @@ MonoBehaviour:
       data:
         m_Value: 5
     - rid: 8055170663063224465
-      type: {class: CompareFloatNode, ns: Mpr.Expr.Authoring, asm: Mpr.Expr.Authoring}
+      type: {class: CompareFloatNode, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8055170663063224467
       type: {class: UserBlockNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
@@ -728,7 +728,7 @@ MonoBehaviour:
       data:
         m_Value: 0
     - rid: 8055170663063224469
-      type: {class: ExpressionScorer, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: ExpressionScorer, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 
     - rid: 8055170663063224470
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -767,22 +767,22 @@ MonoBehaviour:
       data:
         m_Value:
           m_EnumType:
-            m_Identification: Mpr.Query.QueryScoringDirection, Mpr.Query, Version=0.0.0.0,
+            m_Identification: Khorde.Query.QueryScoringDirection, Khorde.Query, Version=0.0.0.0,
               Culture=neutral, PublicKeyToken=null
           m_Value: 0
         m_EnumType:
-          m_Identification: Mpr.Query.QueryScoringDirection, Mpr.Query, Version=0.0.0.0,
+          m_Identification: Khorde.Query.QueryScoringDirection, Khorde.Query, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
     - rid: 8055170710518366268
       type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value:
           m_EnumType:
-            m_Identification: Mpr.Query.QSScorer+Normalizer, Mpr.Query, Version=0.0.0.0,
+            m_Identification: Khorde.Query.QSScorer+Normalizer, Khorde.Query, Version=0.0.0.0,
               Culture=neutral, PublicKeyToken=null
           m_Value: 0
         m_EnumType:
-          m_Identification: Mpr.Query.QSScorer+Normalizer, Mpr.Query, Version=0.0.0.0,
+          m_Identification: Khorde.Query.QSScorer+Normalizer, Khorde.Query, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
     - rid: 8055170710518366271
       type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
@@ -821,7 +821,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: Accept Item
     - rid: 8055170789968183356
-      type: {class: 'Constant`1[[Mpr.Blobs.EntityQueryAsset, Mpr.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Blobs.EntityQueryAsset, Mpr.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value: {fileID: -295462882486227724, guid: 3a3ca0e8ad4c039419bb32f94ce755d9, type: 3}
     - rid: 8259216464963436637
@@ -1027,5 +1027,5 @@ MonoBehaviour:
         m_Items: []
         m_Title: 
     - rid: 8259216464963436639
-      type: {class: QueryGraph, ns: Mpr.Query.Authoring, asm: Mpr.Query.Authoring}
+      type: {class: QueryGraph, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 

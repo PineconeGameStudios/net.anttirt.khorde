@@ -1,0 +1,261 @@
+﻿using Khorde.Expr;
+using Khorde.Expr.Authoring;
+using Khorde.Query;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.GraphToolkit.Editor;
+using Hash128 = UnityEngine.Hash128;
+
+namespace Khorde.Behavior.Authoring
+{
+	public unsafe class BTBakingContext : GraphExpressionBakingContext
+	{
+		public Dictionary<NodeKey<IExecNode>, BTExecNodeId> execNodeMap;
+		private BTData* data;
+		private NativeArray<BTExec> builderExecs;
+		private NativeArray<Hash128> builderExecNodeIds;
+		private NativeArray<BlobArray<Hash128>> builderExecNodeSubgraphStacks;
+		private List<QueryGraphAsset> queries = new();
+
+		public BTBakingContext(Graph rootGraph, Allocator allocator)
+			: base(rootGraph, allocator)
+		{
+			execNodeMap = new();
+		}
+
+		public List<QueryGraphAsset> Queries => queries;
+
+		public override void Dispose()
+		{
+			base.Dispose();
+
+			builderExecs = default;
+			builderExecNodeIds = default;
+			builderExecNodeSubgraphStacks = default;
+		}
+
+		protected override ref BlobExpressionData ConstructRoot()
+		{
+			ref var data = ref builder.ConstructRoot<BTData>();
+			fixed(BTData* dataPtr = &data)
+				this.data = dataPtr;
+			return ref data.exprData;
+		}
+
+		protected override bool RegisterGraphNodes()
+		{
+			var roots = rootGraph.GetNodes().OfType<Root>().ToList();
+			bool isSubgraph = rootGraph.GetVariables().Any(v => v.variableKind == VariableKind.Input && v.dataType == typeof(Exec));
+
+			if(roots.Count == 0)
+			{
+				if(!isSubgraph)
+					AddError(rootGraph, $"no Root node found");
+
+				return false;
+			}
+
+			if(isSubgraph)
+			{
+				AddError(rootGraph, "Cannot have both a Root node and Exec input variables on the same graph");
+			}
+
+			if(roots.Count > 1)
+			{
+				foreach(var root in roots)
+					AddError(root, $"graph must have exactly one Root node, {roots.Count} found");
+				return false;
+			}
+
+			RegisterExecNode(null); // 0: NOP node for default exec stubs
+			RegisterExecNode(roots[0]); // 1: Root
+			RegisterExecNodes(rootGraph);
+
+			return true;
+		}
+
+		public NodeKey<IExecNode> GetNodeKey(IExecNode execNode) => new(subgraphStack.GetKey(), execNode);
+		public void RegisterExecNode(IExecNode execNode)
+		{
+			var index = execNodeMap.Count;
+			if(index > ushort.MaxValue)
+				throw new Exception("max exec node capacity exceeded");
+			if(!execNodeMap.TryAdd(GetNodeKey(execNode), new BTExecNodeId((ushort)index)))
+				throw new Exception("duplicate node key");
+		}
+
+		public BTExecNodeId GetNodeId(IExecNode execNode)
+		{
+			return execNodeMap[GetNodeKey(execNode)];
+		}
+
+		public override void InitializeBake(int expressionCount, int outputCount)
+		{
+			base.InitializeBake(expressionCount, outputCount);
+
+			builderExecs = AsArray(builder.Allocate(ref data->execs, execNodeMap.Count));
+			builderExecNodeIds = AsArray(builder.Allocate(ref data->execNodeIds, execNodeMap.Count));
+			builderExecNodeSubgraphStacks = AsArray(builder.Allocate(ref data->execNodeSubgraphStacks, execNodeMap.Count));
+		}
+
+		protected override bool BakeGraphNodes()
+		{
+			BakeExecNodes(rootGraph);
+			return true;
+		}
+
+		void BakeExecNodes(Graph graph)
+		{
+			foreach(var node in graph.GetNodes())
+			{
+				if(node is ISubgraphNode subgraphNode)
+				{
+					PushSubgraph(subgraphNode);
+					BakeExecNodes(subgraphNode.GetSubgraph());
+					PopSubgraph();
+				}
+				else if(node is IExecNode execNode)
+				{
+					var index = GetNodeId(execNode).index;
+					builderExecNodeIds[index] = execNode.Guid;
+					var subgraphStackIds = builder.Allocate(ref builderExecNodeSubgraphStacks.UnsafeElementAt(index), subgraphStack.Depth);
+					int i = 0;
+					foreach(var hash in subgraphStack.Hashes)
+						subgraphStackIds[i++] = hash;
+
+					execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index), this);
+				}
+			}
+
+			data->hasQueries = queries.Count > 0;
+		}
+
+		public int GetQueryIndex(INodeOption queryOption)
+		{
+			queryOption.TryGetValue<QueryGraphAsset>(out var queryGraphAsset);
+			if(queryGraphAsset == null)
+				throw new InvalidOperationException("query graph not assigned");
+
+			int index = queries.IndexOf(queryGraphAsset);
+			if(index != -1)
+				return index;
+
+			queries.Add(queryGraphAsset);
+			return queries.Count - 1;
+		}
+
+		void RegisterExecNodes(Graph graph)
+		{
+			foreach(var node in graph.GetNodes())
+			{
+				if(node is ISubgraphNode subgraphNode)
+				{
+					PushSubgraph(subgraphNode);
+					RegisterExecNodes(subgraphNode.GetSubgraph());
+					PopSubgraph();
+				}
+				else if(node is IExecNode execNode)
+				{
+					if(node is not Root) // Root is registered separately
+						RegisterExecNode(execNode);
+				}
+			}
+		}
+
+		public BTExecNodeId GetTargetNodeId(IPort srcPort)
+		{
+			var dstPorts = new List<IPort>();
+
+			using var _ = SaveSubgraph();
+
+			INode srcNode = srcPort.GetNode();
+			srcPort.GetConnectedPorts(dstPorts);
+
+			if(dstPorts.Count == 0)
+				return default;
+
+			if(dstPorts.Count > 1)
+				AddError(srcPort.GetNode(), $"node {srcPort.GetNode()} port {srcPort} is connected to multiple exec ports");
+
+			var dstPort = dstPorts[0];
+			var dstNode = dstPort.GetNode();
+
+			while(true)
+			{
+				if(dstNode is ISubgraphNode subgraphNode)
+				{
+					subgraphStack.Push(subgraphNode);
+
+					var dstVariable = subgraphNode.GetVariableForInputPort(dstPort);
+					var subgraph = subgraphNode.GetSubgraph();
+					var dstVariableNodes = subgraph.GetNodes().OfType<IVariableNode>().Where(vn => vn.variable == dstVariable).ToList();
+
+					if(dstVariableNodes.Count == 0)
+					{
+						AddWarning(subgraphNode, $"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
+						return default;
+					}
+
+					if(dstVariableNodes.Count > 1)
+						foreach(var dstVariableNode in dstVariableNodes)
+							AddError(dstVariableNode, $"subgraph {subgraph} exec variable {dstVariable} has multiple instances");
+
+					srcNode = dstVariableNodes[0];
+
+					if(srcNode.outputPortCount == 0)
+					{
+						AddWarning(subgraphNode, $"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
+						return default;
+					}
+
+					if(srcNode.outputPortCount > 1)
+						AddError(srcNode, $"subgraph {subgraph} node {srcNode} has multiple exec output ports");
+
+					dstPorts.Clear();
+					srcNode.GetOutputPort(0).GetConnectedPorts(dstPorts);
+
+					if(dstPorts.Count == 0)
+					{
+						AddWarning(subgraphNode, $"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
+						return default;
+					}
+
+					if(dstPorts.Count > 1)
+						AddError(srcNode, $"subgraph {subgraph} node {srcNode} is connected to multiple exec ports");
+
+					dstPort = dstPorts[0];
+					dstNode = dstPort.GetNode();
+				}
+
+				// else if(dstNode is IVariableNode varNode)
+				// {
+				// 	errors.Add($"subgraph exec outputs not implemented");
+
+				// 	var currentSubgraph = subgraphStack.Current;
+
+				// 	subgraphStack.Pop();
+
+				// 	// TODO: exit subgraph and follow in parent subgraph
+				// 	// var srcPort = currentSubgraph.GetOutputPortForVariable(varNode);
+
+				// 	return default;
+				// }
+
+				else if(dstNode is IExecNode execNode)
+				{
+					return GetNodeId(execNode);
+				}
+
+				else
+				{
+					AddError(dstNode, $"unhandled exec node type {dstNode.GetType().Name}");
+					return default;
+				}
+			}
+		}
+	}
+
+}

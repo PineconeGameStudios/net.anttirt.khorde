@@ -1,5 +1,5 @@
-using Mpr.Behavior.Authoring;
-using Mpr.Expr.Authoring;
+using Khorde.Behavior.Authoring;
+using Khorde.Expr.Authoring;
 using System;
 using Unity.Entities;
 using UnityEngine;

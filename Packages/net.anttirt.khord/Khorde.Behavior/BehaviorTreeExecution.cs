@@ -1,0 +1,329 @@
+using Khorde.Blobs;
+using Khorde.Expr;
+using Khorde.Query;
+using System;
+using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
+
+namespace Khorde.Behavior
+{
+	public static class BehaviorTreeExecution
+	{
+		public static void Execute(
+			this BlobAssetReference<BTData> asset,
+			ref BTState state,
+			DynamicBuffer<BTStackFrame> stack,
+			NativeArray<ExpressionBlackboardStorage> blackboard,
+			ref ExpressionBlackboardLayout blackboardLayout,
+			NativeArray<UnityObjectRef<QueryGraphAsset>> queries,
+			EnabledRefRW<PendingQuery> pendingQueryEnabled,
+			ref PendingQuery pendingQuery,
+			NativeArray<UnsafeComponentReference> componentPtrs,
+			NativeArray<UntypedComponentLookup> lookups,
+			float now,
+			DynamicBuffer<BTExecTrace> trace)
+			=> Execute(ref asset.Value, ref state, stack, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, trace);
+
+		public static void Execute(
+			ref BTData data,
+			ref BTState state,
+			DynamicBuffer<BTStackFrame> stack,
+			NativeArray<ExpressionBlackboardStorage> blackboard,
+			ref ExpressionBlackboardLayout blackboardLayout,
+			NativeArray<UnityObjectRef<QueryGraphAsset>> queries,
+			EnabledRefRW<PendingQuery> pendingQueryEnabled,
+			ref PendingQuery pendingQuery,
+			NativeArray<UnsafeComponentReference> componentPtrs,
+			NativeArray<UntypedComponentLookup> lookups,
+			float now,
+			DynamicBuffer<BTExecTrace> trace)
+		{
+			data.exprData.CheckExpressionComponents(componentPtrs, lookups);
+
+			if(stack.Length == 0)
+			{
+				if(trace.IsCreated)
+					trace.Add(new(data.Root, BTExec.BTExecType.Root, BTExecTrace.Event.Init, stack.Length, -1));
+
+				stack.Add(data.Root);
+			}
+
+			NativeArray<byte> blackboardBytes = default;
+			if(blackboard.IsCreated)
+			{
+				blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			}
+
+			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, lookups, blackboardBytes,
+				ref blackboardLayout);
+
+			bool rootVisited = false;
+
+			for(int cycle = 0; ; ++cycle)
+			{
+				if(cycle > 10000)
+					throw new Exception("max cycle count exceeded; almost certainly a bug in the implementation");
+
+				var nodeId = stack[^1].nodeId;
+
+				ref BTExec node = ref data.GetNode(nodeId);
+
+				if(trace.IsCreated && cycle == 0)
+					trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, stack.Length, cycle));
+
+				if(cycle == 0 && node.type != BTExec.BTExecType.Root && node.type != BTExec.BTExecType.Wait && node.type != BTExec.BTExecType.Query)
+					throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
+
+				void Trace(ref BTExec node, BTExecTrace.Event @event)
+				{
+					if(trace.IsCreated)
+						trace.Add(new(nodeId, node.type, @event, stack.Length, cycle));
+				}
+
+				void Trace1(ref BTData data, BTExecTrace.Event @event)
+				{
+					if(trace.IsCreated)
+						trace.Add(new(nodeId, data.GetNode(nodeId).type, @event, stack.Length, cycle));
+				}
+
+				void Trace2(ref BTData data, int stackIndex, BTExecTrace.Event @event)
+				{
+					if(trace.IsCreated)
+						trace.Add(new(stack[stackIndex].nodeId, data.GetNode(stack[stackIndex].nodeId).type, @event, stackIndex + 1, cycle));
+				}
+
+				void Fail(ref BTData data, ref BTExec node)
+				{
+					Trace(ref node, BTExecTrace.Event.Fail);
+
+					for(int i = stack.Length - 1; i > 0; --i)
+					{
+						ref var stackNode = ref data.GetNode(stack[i].nodeId);
+						if(stackNode.type == BTExec.BTExecType.Catch)
+						{
+							Trace2(ref data, i, BTExecTrace.Event.Catch);
+							stack.RemoveRange(i, stack.Length - i);
+							return;
+						}
+					}
+
+					stack.Clear();
+					stack.Add(data.Root);
+				}
+
+				void Return(ref BTData data, ref BTExec node)
+				{
+					Trace(ref node, BTExecTrace.Event.Return);
+
+					stack.RemoveAt(stack.Length - 1);
+				}
+
+				void Call(ref BTData data, BTExecNodeId node)
+				{
+					Trace1(ref data, BTExecTrace.Event.Call);
+
+					stack.ElementAt(stack.Length - 1).childIndex++;
+					stack.Add(node);
+				}
+
+				switch(node.type)
+				{
+					case BTExec.BTExecType.Nop:
+						Return(ref data, ref node);
+						break;
+
+					case BTExec.BTExecType.Root:
+						if(stack.Length != 1)
+							throw new Exception($"Root should always be the first stack frame, found at {stack.Length}");
+
+						if(rootVisited)
+						{
+							// visit the root node at most once per frame to avoid getting stuck here
+							Trace(ref node, BTExecTrace.Event.Yield);
+							return;
+						}
+
+						rootVisited = true;
+
+						Call(ref data, node.data.root.child);
+						break;
+
+					case BTExec.BTExecType.Sequence:
+						if(stack[^1].childIndex < node.data.sequence.children.Length)
+						{
+							Call(ref data, node.data.sequence.children[stack[^1].childIndex]);
+						}
+						else
+						{
+							Return(ref data, ref node);
+						}
+
+						break;
+
+					case BTExec.BTExecType.Selector:
+						if(stack[^1].childIndex == 0)
+						{
+							bool any = false;
+
+							for(int childIndex = 0; childIndex < node.data.selector.children.Length; ++childIndex)
+							{
+								ref var child = ref node.data.selector.children[childIndex];
+								if(child.condition.Evaluate<bool>(in exprContext))
+								{
+									any = true;
+									Call(ref data, child.nodeId);
+									break;
+								}
+							}
+
+							if(!any)
+							{
+								// none of the options worked
+								Fail(ref data, ref node);
+							}
+						}
+						else
+						{
+							// already executed one of our children, go back to parent
+							Return(ref data, ref node);
+						}
+						break;
+
+					case BTExec.BTExecType.WriteField:
+						node.data.writeField.Evaluate(in exprContext);
+						Return(ref data, ref node);
+						break;
+
+					case BTExec.BTExecType.Wait:
+						if(node.data.wait.duration.IsCreated)
+						{
+							if(state.waitStartTime == 0)
+							{
+								state.waitStartTime = now;
+							}
+
+							float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
+							if(now - state.waitStartTime >= duration)
+							{
+								state.waitStartTime = 0;
+								Return(ref data, ref node);
+							}
+							else
+							{
+								// still waiting, can't execute any more nodes until more time elapses
+								Trace(ref node, BTExecTrace.Event.Wait);
+								return;
+							}
+						}
+						else
+						{
+							if(node.data.wait.until.Evaluate<bool>(in exprContext))
+							{
+								Return(ref data, ref node);
+							}
+							else
+							{
+								// still waiting, can't execute any more nodes until input data changes
+								Trace(ref node, BTExecTrace.Event.Wait);
+								return;
+							}
+						}
+
+						break;
+
+					case BTExec.BTExecType.Fail:
+						Fail(ref data, ref node);
+						break;
+
+					case BTExec.BTExecType.Optional:
+						if(stack[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(in exprContext))
+						{
+							Call(ref data, node.data.optional.child);
+						}
+						else
+						{
+							Return(ref data, ref node);
+						}
+						break;
+
+					case BTExec.BTExecType.Catch:
+						if(stack[^1].childIndex == 0)
+						{
+							Call(ref data, node.data.@catch.child);
+						}
+						else
+						{
+							Return(ref data, ref node);
+						}
+						break;
+
+					case BTExec.BTExecType.WriteVar:
+						{
+							var varBytes = exprContext.GetBlackboardVariable(node.data.writeVar.variableIndex);
+							node.data.writeVar.input.Evaluate(exprContext, ref varBytes);
+						}
+
+						Return(ref data, ref node);
+						break;
+
+					case BTExec.BTExecType.Query:
+						if(!pendingQuery.complete && !pendingQueryEnabled.ValueRO)
+						{
+							// start query now
+							pendingQueryEnabled.ValueRW = true;
+							pendingQuery.query = queries[node.data.query.queryIndex];
+							pendingQuery.results = exprContext.GetBlackboardVariableSlice(node.data.query.variableIndex);
+							Trace(ref node, BTExecTrace.Event.Wait);
+							return;
+						}
+						else if(pendingQueryEnabled.ValueRO)
+						{
+							// query still running, can't execute any more nodes until input data changes
+							Trace(ref node, BTExecTrace.Event.Wait);
+							return;
+						}
+						else
+						{
+							// query finished running
+
+							// allow a new query to start the next time a Query node is reached
+							pendingQuery.complete = false;
+
+							// TODO: this would be an excellent moment to write the result count somewhere
+							// on the bt execution stack, but a blackboard variable will do for now
+							exprContext.GetBlackboardVariable(node.data.query.resultCountVariableIndex).ReinterpretStore(0, pendingQuery.resultCount);
+							Return(ref data, ref node);
+							break;
+						}
+
+					default:
+						throw new NotImplementedException($"BTExec node type {node.type} not implemented");
+				}
+			}
+		}
+
+		public static void DumpNodes(ref BTData data, List<string> output)
+		{
+			output.Add($"const data: {data.exprData.constants.Length} bytes");
+
+			output.Add("");
+
+			int j = 0;
+			foreach(ref var exec in data.execs.AsSpan())
+			{
+				output.Add("Exec " + j.ToString() + ": " + exec.DumpString());
+				j++;
+			}
+
+			output.Add("");
+
+			j = 0;
+			foreach(ref var expr in data.exprData.expressions.AsSpan())
+			{
+				output.Add("Expr " + j.ToString() + ": (TODO)");// + expr.DumpString());
+			}
+		}
+	}
+}

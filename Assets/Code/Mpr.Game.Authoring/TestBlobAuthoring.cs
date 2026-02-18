@@ -1,4 +1,4 @@
-using Mpr.Entities.Authoring;
+using Khorde.Entities.Authoring;
 using System;
 using Unity.Entities;
 using UnityEngine;

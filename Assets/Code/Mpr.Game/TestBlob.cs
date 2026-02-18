@@ -1,3 +1,4 @@
+using Khorde.Entities;
 using TMPro;
 using Unity.Entities;
 using UnityEngine;
