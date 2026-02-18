@@ -2,11 +2,11 @@ using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
-namespace Khorde.Editor
+namespace Mpr.Editor
 {
 	public class EditorTestAutoRunner
 	{
-		const string kAutorunOnCompile = "Khorde/Autorun Tests on Compile";
+		const string kAutorunOnCompile = "Mpr/Autorun Tests on Compile";
 
 		[MenuItem(kAutorunOnCompile)]
 		public static void ToggleAutorunOnCompile()

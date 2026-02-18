@@ -1,10 +1,10 @@
 using UnityEditor;
 
-namespace Khorde.Editor
+namespace Mpr.Editor
 {
 	static class ReloadDomainMenuItem
 	{
-		const string kReloadDomain = "Khorde/Reload Domain";
+		const string kReloadDomain = "Mpr/Reload Domain";
 
 		[MenuItem(kReloadDomain)]
 		public static void ReloadDomain()
