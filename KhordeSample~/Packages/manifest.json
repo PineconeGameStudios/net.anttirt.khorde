@@ -43,6 +43,10 @@
     "com.unity.modules.unitywebrequestwww": "1.0.0",
     "com.unity.modules.vectorgraphics": "1.0.0",
     "com.unity.modules.video": "1.0.0",
-    "com.unity.modules.wind": "1.0.0"
-  }
+    "com.unity.modules.wind": "1.0.0",
+    "net.anttirt.khorde": "file:../.."
+  },
+  "testables": [
+    "net.anttirt.khorde"
+  ]
 }

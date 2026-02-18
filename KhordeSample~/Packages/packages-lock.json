@@ -302,9 +302,9 @@
       }
     },
     "net.anttirt.khorde": {
-      "version": "file:net.anttirt.khorde",
+      "version": "file:../..",
       "depth": 0,
-      "source": "embedded",
+      "source": "local",
       "dependencies": {
         "com.unity.graphtoolkit": "0.4.0-exp.2"
       }
