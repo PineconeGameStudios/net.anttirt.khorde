@@ -89,12 +89,13 @@
       "dependencies": {}
     },
     "com.unity.graphtoolkit": {
-      "version": "file:com.unity.graphtoolkit",
+      "version": "https://github.com/PineconeGameStudios/com.unity.graphtoolkit.git",
       "depth": 0,
-      "source": "embedded",
+      "source": "git",
       "dependencies": {
         "com.unity.modules.uielements": "1.0.0"
-      }
+      },
+      "hash": "a4640f5b12e5574eaaf5a0b9f182844244d3b8ec"
     },
     "com.unity.ide.rider": {
       "version": "3.0.38",
