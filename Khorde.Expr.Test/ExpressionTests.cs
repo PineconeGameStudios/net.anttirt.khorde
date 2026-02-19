@@ -139,9 +139,9 @@ namespace Khorde.Expr.Test
 
 			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-			blob.Value.RuntimeInitialize();
+			blob.Value.RuntimeInitialize(world.Unmanaged);
 
-			Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+			Assert.IsTrue(blob.Value.IsRuntimeInitialized(world.Unmanaged));
 
 			var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
 
@@ -202,9 +202,9 @@ namespace Khorde.Expr.Test
 
 			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-			blob.Value.RuntimeInitialize();
+			blob.Value.RuntimeInitialize(world.Unmanaged);
 
-			Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+			Assert.IsTrue(blob.Value.IsRuntimeInitialized(world.Unmanaged));
 
 			var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
 
@@ -227,14 +227,14 @@ namespace Khorde.Expr.Test
 
 			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-			blob.Value.RuntimeInitialize();
+			blob.Value.RuntimeInitialize(world.Unmanaged);
 
 			Assert.Greater(
 				blob.Value.expressions[0].storage.GetUnsafePtr<ReadComponentField>()->typeInfo.fields[0].length,
 				0
 				);
 
-			Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+			Assert.IsTrue(blob.Value.IsRuntimeInitialized(world.Unmanaged));
 
 			TestComponent1 tc1 = new TestComponent1
 			{
@@ -273,14 +273,14 @@ namespace Khorde.Expr.Test
 
 			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-			blob.Value.RuntimeInitialize();
+			blob.Value.RuntimeInitialize(world.Unmanaged);
 
 			Assert.Greater(
 				blob.Value.expressions[0].storage.GetUnsafePtr<LookupComponentField>()->typeInfo.fields[0].length,
 				0
 			);
 
-			Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+			Assert.IsTrue(blob.Value.IsRuntimeInitialized(world.Unmanaged));
 
 			NativeArray<UntypedComponentLookup> componentLookups = new NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
 			componentLookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestComponent1>(true);
@@ -329,9 +329,9 @@ namespace Khorde.Expr.Test
 
 			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
-			blob.Value.RuntimeInitialize();
+			blob.Value.RuntimeInitialize(world.Unmanaged);
 
-			Assert.IsTrue(blob.Value.IsRuntimeInitialized);
+			Assert.IsTrue(blob.Value.IsRuntimeInitialized(world.Unmanaged));
 
 			var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
 
@@ -401,7 +401,7 @@ namespace Khorde.Expr.Test
 
 				var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
 
-				asset.GetValue(1).RuntimeInitialize();
+				asset.GetValue(1).RuntimeInitialize(world.Unmanaged);
 
 				var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
 				ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);

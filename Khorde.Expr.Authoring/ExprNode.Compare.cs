@@ -20,21 +20,34 @@ namespace Khorde.Expr.Authoring
 
 	    public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 	    {
-	        if (typeof(TArg) == typeof(float))
-	        {
-	            ref var data = ref context.CreateExpression<BinaryCompareFloat>(storage);
-	            @operator.TryGetValue(out data.@operator);
-	            data.Input0 = context.GetExpressionRef(GetInputPort(0));
-	            data.Input1 = context.GetExpressionRef(GetInputPort(1));
-	        }
-        
-	        if (typeof(TArg) == typeof(int))
-	        {
-	            ref var data = ref context.CreateExpression<BinaryCompareInt>(storage);
-	            @operator.TryGetValue(out data.@operator);
-	            data.Input0 = context.GetExpressionRef(GetInputPort(0));
-	            data.Input1 = context.GetExpressionRef(GetInputPort(1));
-	        }
+			if(typeof(TArg) == typeof(float))
+			{
+				ref var data = ref context.CreateExpression<BinaryCompareFloat>(storage);
+				@operator.TryGetValue(out data.@operator);
+				data.Input0 = context.GetExpressionRef(GetInputPort(0));
+				data.Input1 = context.GetExpressionRef(GetInputPort(1));
+			}
+
+			else if(typeof(TArg) == typeof(int))
+			{
+				ref var data = ref context.CreateExpression<BinaryCompareInt>(storage);
+				@operator.TryGetValue(out data.@operator);
+				data.Input0 = context.GetExpressionRef(GetInputPort(0));
+				data.Input1 = context.GetExpressionRef(GetInputPort(1));
+			}
+
+			else if(typeof(TArg).IsEnum && typeof(TArg).GetEnumUnderlyingType() == typeof(int))
+			{
+				ref var data = ref context.CreateExpression<BinaryCompareInt>(storage);
+				@operator.TryGetValue(out data.@operator);
+				data.Input0 = context.GetExpressionRef(GetInputPort(0));
+				data.Input1 = context.GetExpressionRef(GetInputPort(1));
+			}
+
+			else
+			{
+				throw new NotImplementedException($"compare operator with type {typeof(TArg).Name} not supported");
+			}
 	    }
 
 	    protected override void OnDefineOptions(IOptionDefinitionContext context)

@@ -133,13 +133,32 @@ namespace Khorde.Expr
 			return ref *(TConstant*)(byteOffset + (byte*)constants.GetUnsafePtr());
 		}
 
-		private bool isRuntimeInitialized;
+		private struct DomainCounterCtx0 { }
+		private static readonly SharedStatic<ulong> DomainCounter
+			= SharedStatic<ulong>.GetOrCreate<DomainCounterCtx0>();
+
+#if UNITY_EDITOR
+		const string kDomainCounterKey = "BlobExpressionData_DomainCounter";
+
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+		[UnityEditor.InitializeOnLoadMethod]
+		static void IncrementDomainCounter()
+		{
+			var dc = UnityEditor.EditorPrefs.GetInt(kDomainCounterKey, 100);
+			++dc;
+			UnityEditor.EditorPrefs.SetInt(kDomainCounterKey, dc);
+			DomainCounter.Data = (ulong)dc;
+		}
+#endif
+
+		private ulong PatchedWorldSequenceNumber;
+		private ulong PatchedDomainCounter;
 		private ObjectLoadingStatus loadingStatus;
 
 		/// <summary>
 		/// Whether <see cref="RuntimeInitialize"/> has been called on this instance.
 		/// </summary>
-		public bool IsRuntimeInitialized => isRuntimeInitialized;
+		public bool IsRuntimeInitialized(WorldUnmanaged world) => world.SequenceNumber == PatchedWorldSequenceNumber && PatchedDomainCounter == DomainCounter.Data;
 
 		public static FieldInfo[] GetComponentFields<T>() where T : unmanaged, IComponentData
 			=> GetComponentFields(typeof(T));
@@ -202,12 +221,15 @@ namespace Khorde.Expr
 		/// <summary>
 		/// Initialize expression function pointers, patch strong object refs, start loading weak object refs, etc.
 		/// </summary>
-		public void RuntimeInitialize()
+		public void RuntimeInitialize(WorldUnmanaged world)
 		{
-			if(isRuntimeInitialized)
+			if(IsRuntimeInitialized(world))
+			{
+				//Debug.Log($"BlobExpressionData.RuntimeInitialize(world: {world.SequenceNumber}, domain: {DomainCounter.Data}) already done");
 				return;
+			}
 
-			isRuntimeInitialized = true;
+			//Debug.Log($"BlobExpressionData.RuntimeInitialize(world: {world.SequenceNumber}, domain: {DomainCounter.Data})");
 
 			if(expressions.Length != expressionTypeHashes.Length)
 			{
@@ -218,7 +240,10 @@ namespace Khorde.Expr
 			{
 				var expressionTypeHash = expressionTypeHashes[i];
 				if(expressionTypeHash == 0)
+				{
+					Debug.LogError($"empty expression type hash at index {i}");
 					continue;
+				}
 
 				if(ExpressionTypeManager.TryGetEvaluateFunction(expressionTypeHash, out var function))
 				{
@@ -245,6 +270,9 @@ namespace Khorde.Expr
 				for(int j = 0; j < fields.Length; ++j)
 					patchedFields[j] = fields[j];
 			}
+
+			PatchedWorldSequenceNumber = world.SequenceNumber;
+			PatchedDomainCounter = DomainCounter.Data;
 		}
 
 		public void CheckExpressionComponents(NativeArray<UnsafeComponentReference> componentPtrs, NativeArray<UntypedComponentLookup> lookups)

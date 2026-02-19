@@ -41,7 +41,7 @@ namespace Khorde.Query.Test
 	        var asset = ScriptableObject.CreateInstance<QueryGraphAsset>();
 	        asset.SetAssetData(builder, QSData.SchemaVersion);
 	        asset.entityQueries = baker.EntityQueries.ToList();
-	        asset.GetValue(QSData.SchemaVersion).exprData.RuntimeInitialize();
+	        asset.GetValue(QSData.SchemaVersion).exprData.RuntimeInitialize(World.Unmanaged);
         
 	        var querier = entityManager.CreateEntity(
 	            typeof(QSResultItemStorage),

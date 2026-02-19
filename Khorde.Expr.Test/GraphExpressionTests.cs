@@ -49,9 +49,9 @@ namespace Khorde.Expr.Test
 	    public void Test_Graph()
 	    {
 	        var asset = baker.Build().CreateBlobAssetReference<BlobExpressionData>(Allocator.Temp);
-	        Assert.IsFalse(asset.Value.IsRuntimeInitialized);
-	        asset.Value.RuntimeInitialize();
-	        Assert.IsTrue(asset.Value.IsRuntimeInitialized);
+	        Assert.IsFalse(asset.Value.IsRuntimeInitialized(world.Unmanaged));
+	        asset.Value.RuntimeInitialize(world.Unmanaged);
+	        Assert.IsTrue(asset.Value.IsRuntimeInitialized(world.Unmanaged));
         
 	        var lt = LocalTransform.FromPositionRotationScale(new float3(1, 2, 4), quaternion.identity, 1);
         

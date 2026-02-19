@@ -57,6 +57,9 @@ namespace Khorde.Behavior
 						return;
 					}
 
+					foreach(var log in context.Warnings)
+						ctx.LogImportWarning(log.message);
+
 					var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
 					obj.Queries.AddRange(context.Queries);
 					foreach(var q in obj.Queries)

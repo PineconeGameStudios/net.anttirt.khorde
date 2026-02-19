@@ -89,7 +89,7 @@ namespace Khorde.Behavior.Test
 
 			var execs = baker.Builder.Allocate(ref data.execs, 1);
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 			Assert.IsTrue(asset.IsCreated);
 			Assert.IsTrue(asset.Value.execs.Length == 1);
 			Assert.IsTrue(asset.Value.exprData.expressions.Length == 1);
@@ -106,7 +106,7 @@ namespace Khorde.Behavior.Test
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			BTState state = default;
 
@@ -143,7 +143,7 @@ namespace Khorde.Behavior.Test
 			execs[2].data.fail = new Fail { };
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			BTState state = default;
 
@@ -183,7 +183,7 @@ namespace Khorde.Behavior.Test
 			execs[3].data.fail = new Fail { };
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			BTState state = default;
 
@@ -228,7 +228,7 @@ namespace Khorde.Behavior.Test
 			execs[4].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			BTState state = default;
 
@@ -280,7 +280,7 @@ namespace Khorde.Behavior.Test
 			execs[5].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			BTState state = default;
 
@@ -325,7 +325,7 @@ namespace Khorde.Behavior.Test
 			execs[4].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			BTState state = default;
 
@@ -363,7 +363,7 @@ namespace Khorde.Behavior.Test
 			execs[5].type = BTExecType.Fail;
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			BTState state = default;
 
@@ -425,7 +425,7 @@ namespace Khorde.Behavior.Test
 			execs[6].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
@@ -473,7 +473,7 @@ namespace Khorde.Behavior.Test
 			execs[2].SetWriteField(ref builder, 0, WriteField(baker.Const(true), typeof(TestComponent1).GetField(nameof(TestComponent1.field1))));
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
@@ -526,7 +526,7 @@ namespace Khorde.Behavior.Test
 			execs[2].SetData(new Wait { until = TestComponent1_field1 });
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
 
@@ -598,7 +598,7 @@ namespace Khorde.Behavior.Test
 			world.EntityManager.AddBuffer<ExpressionBlackboardStorage>(testEntity);
 
 			var asset = baker.Bake();
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			var layout = ExprAuthoring.ComputeLayout(new() { (default, new Ptr<BlobExpressionData>(ref asset.Value.exprData)) });
 			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);

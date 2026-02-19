@@ -44,7 +44,7 @@ namespace Khorde.Query.Test
 			ExpressionTypeManager.Initialize();
 
 			var asset = baker.Build().CreateBlobAssetReference<QSData>(Allocator.Temp);
-			asset.Value.exprData.RuntimeInitialize();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
 			var player0 = entityManager.CreateEntity(typeof(LocalTransform), typeof(TestPlayerController));
 			entityManager.SetComponentData(player0, LocalTransform.FromPosition(new float3(30, 30, 0)));

@@ -69,7 +69,7 @@ namespace Khorde.Behavior.Test
 			try
 			{
 				data = btAsset.LoadPersistent(BTData.SchemaVersion).Reference;
-				data.Value.exprData.RuntimeInitialize();
+				data.Value.exprData.RuntimeInitialize(world.Unmanaged);
 				BTState state = default;
 				TestMoveTarget moveTarget = default;
 				LocalTransform localTransform = LocalTransform.FromScale(1);
@@ -158,7 +158,7 @@ namespace Khorde.Behavior.Test
 		{
 			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_WriteVar.btg");
 			ref var data = ref asset.GetValue(BTData.SchemaVersion);
-			data.exprData.RuntimeInitialize();
+			data.exprData.RuntimeInitialize(world.Unmanaged);
 
 			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
 			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
