@@ -11,6 +11,7 @@ using Hash128 = Unity.Entities.Hash128;
 
 namespace Khorde.Behavior
 {
+	[Icon("Packages/net.anttirt.khorde/Icons/BehaviorGraph.psd")]
 	public class BehaviorTreeAuthoring : MonoBehaviour
 	{
 		public BehaviorTreeAsset behaviorTree;

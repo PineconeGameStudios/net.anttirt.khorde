@@ -132,6 +132,8 @@ namespace Khorde.Behavior
 				// 	Debug.Log($"no entities for query [{string.Join(", ", descs.Select(d => "[" + string.Join(", ", d.All.Select(c => c.GetManagedType().FullName)) + "]"))}]");
 				// }
 
+				queryHolder.query.SetSharedComponentFilter(tree);
+
 				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
 			}
 		}
@@ -209,13 +211,12 @@ namespace Khorde.Behavior
 					}
 
 					var btQuery = state.GetEntityQuery(builder);
-					//var btQuery = builder.Build(state.EntityManager);
-					btQuery.AddSharedComponentFilter(value);
 
 					builder.Reset();
 					builder.WithAll<BehaviorTree>();
+					builder.WithNone<BTQueryHolder>();
+
 					var debugQuery = state.GetEntityQuery(builder);
-					debugQuery.SetSharedComponentFilter(value);
 
 					state.EntityManager.AddSharedComponent(queryHolder, value);
 					state.EntityManager.SetComponentData(queryHolder, new BTQueryHolder
@@ -254,11 +255,18 @@ namespace Khorde.Behavior
 			foreach(var (queryHolder, typeHandleHolder, lookupHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<ExprSystemTypeHandleHolder>, DynamicBuffer<ExprSystemComponentLookupHolder>, BehaviorTree>())
 			{
 				EntityQueryDesc[] descs = null;
+
+				queryHolder.query.SetSharedComponentFilter(tree);
+				queryHolder.debugQuery.SetSharedComponentFilter(tree);
+
 				if(queryHolder.query.CalculateEntityCount() != queryHolder.debugQuery.CalculateEntityCount())
 				{
-					foreach(var entity in queryHolder.query.ToEntityArray(Allocator.Temp))
+					foreach(var entity in queryHolder.debugQuery.ToEntityArray(Allocator.Temp))
 					{
 						if(!warnedEntities.Add(entity))
+							continue;
+
+						if(queryHolder.query.Matches(entity))
 							continue;
 
 						descs ??= queryHolder.query.GetEntityQueryDescs();
@@ -270,12 +278,17 @@ namespace Khorde.Behavior
 
 						foreach(var type in descs[0].All)
 						{
-							sb.Append(intr);
-							sb.Append(type.GetManagedType().FullName);
-							intr = ", ";
+							if(!EntityManager.HasComponent(entity, type))
+							{
+								sb.Append(intr);
+								sb.Append(type.GetManagedType().FullName);
+								intr = ", ";
+							}
 						}
 
 						sb.Append("]");
+
+						UnityEngine.Debug.LogWarning(sb.ToString());
 					}
 
 				}
