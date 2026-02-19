@@ -208,7 +208,7 @@ namespace Khorde.Expr.Authoring
 				}
 				else
 				{
-					AddError(dstPort.GetNode(), $"port {dstPort} is not conneted to a source and couldn't get inlined value");
+					AddError(dstPort.GetNode(), $"port {dstPort} is not connected to a source and couldn't get inlined value");
 					return default;
 				}
 			}

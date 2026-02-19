@@ -3,7 +3,7 @@ using Unity.GraphToolkit.Editor;
 
 namespace Khorde.Expr.Authoring
 {
-	abstract internal class CompareBase<TArg> : ExprBase where TArg : unmanaged
+	abstract public class CompareBase<TArg> : ExprBase where TArg : unmanaged
 	{
 	    private INodeOption @operator;
 
