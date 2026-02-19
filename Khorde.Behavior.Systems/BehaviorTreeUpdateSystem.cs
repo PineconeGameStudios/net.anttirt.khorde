@@ -3,6 +3,8 @@ using Khorde.Entities;
 using Khorde.Expr;
 using Khorde.Query;
 using System;
+using System.Linq;
+using System.Text;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -96,8 +98,6 @@ namespace Khorde.Behavior
 				return;
 			}
 
-			int knownTrees = 0;
-
 			foreach(var (queryHolder, typeHandleHolder, lookupHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<ExprSystemTypeHandleHolder>, DynamicBuffer<ExprSystemComponentLookupHolder>, BehaviorTree>())
 			{
 				var job = new UpdateJob
@@ -133,8 +133,6 @@ namespace Khorde.Behavior
 				// }
 
 				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
-
-				++knownTrees;
 			}
 		}
 
@@ -214,10 +212,16 @@ namespace Khorde.Behavior
 					//var btQuery = builder.Build(state.EntityManager);
 					btQuery.AddSharedComponentFilter(value);
 
+					builder.Reset();
+					builder.WithAll<BehaviorTree>();
+					var debugQuery = state.GetEntityQuery(builder);
+					debugQuery.SetSharedComponentFilter(value);
+
 					state.EntityManager.AddSharedComponent(queryHolder, value);
 					state.EntityManager.SetComponentData(queryHolder, new BTQueryHolder
 					{
 						query = btQuery,
+						debugQuery = debugQuery,
 					});
 				}
 
@@ -227,6 +231,58 @@ namespace Khorde.Behavior
 			return true;
 		}
 	}
+
+#if UNITY_EDITOR
+	partial class BehaviorTreeDebugSystem : SystemBase
+	{
+		NativeHashSet<Entity> warnedEntities;
+		StringBuilder sb;
+
+		protected override void OnCreate()
+		{
+			warnedEntities = new(0, Allocator.Persistent);
+			sb = new();
+		}
+
+		protected override void OnDestroy()
+		{
+			warnedEntities.Dispose();
+		}
+
+		protected override void OnUpdate()
+		{
+			foreach(var (queryHolder, typeHandleHolder, lookupHolder, tree) in SystemAPI.Query<BTQueryHolder, DynamicBuffer<ExprSystemTypeHandleHolder>, DynamicBuffer<ExprSystemComponentLookupHolder>, BehaviorTree>())
+			{
+				EntityQueryDesc[] descs = null;
+				if(queryHolder.query.CalculateEntityCount() != queryHolder.debugQuery.CalculateEntityCount())
+				{
+					foreach(var entity in queryHolder.query.ToEntityArray(Allocator.Temp))
+					{
+						if(!warnedEntities.Add(entity))
+							continue;
+
+						descs ??= queryHolder.query.GetEntityQueryDescs();
+
+						sb.Clear();
+						
+						sb.Append($"entity {entity} has BehaviorTree{{{tree.tree.Value.name}}} but is missing the required components [");
+						string intr = "";
+
+						foreach(var type in descs[0].All)
+						{
+							sb.Append(intr);
+							sb.Append(type.GetManagedType().FullName);
+							intr = ", ";
+						}
+
+						sb.Append("]");
+					}
+
+				}
+			}
+		}
+	}
+#endif
 
 	public struct BTQueryHolder : IComponentData
 	{
@@ -238,5 +294,13 @@ namespace Khorde.Behavior
 		/// with an IJobChunk.
 		/// </summary>
 		public EntityQuery query;
+
+		/// <summary>
+		/// Query matching all entities with a <see cref="BehaviorTree"/>
+		/// component with a particular value. This query does not contain any
+		/// other components required by the tree, and can be used to detect
+		/// missing required components from entities with a behavior tree.
+		/// </summary>
+		public EntityQuery debugQuery;
 	}
 }
