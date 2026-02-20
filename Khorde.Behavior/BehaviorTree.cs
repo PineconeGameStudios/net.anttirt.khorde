@@ -12,19 +12,52 @@ namespace Khorde.Behavior
 
 	public struct BTState : IComponentData
 	{
+		// only one stack at a time can execute a query; others must wait
+		int queryExecutorStackIndexPlusOne;
+
+		public int QueryExecutorThreadIndex
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => queryExecutorStackIndexPlusOne - 1;
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			set => queryExecutorStackIndexPlusOne = value + 1;
+		}
+	}
+
+	[InternalBufferCapacity(2)]
+	public struct BTThread : IBufferElementData
+	{
+		/// <summary>
+		/// Offset into the <see cref="BTStackFrame"/> buffer where this thread's stack starts
+		/// </summary>
+		public int frameOffset;
+
+		/// <summary>
+		/// Number of frames currently in this thread's stack
+		/// </summary>
+		public int frameCount;
+
+		public int ownerThreadIndex;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public int GetEndOffset() => frameOffset + frameCount;
+
+		// below: misc. per-stack state
+
+		/// <summary>
+		/// Start time for the current Wait operation, if there is one on this thread
+		/// </summary>
 		public float waitStartTime;
 	}
 
 	[InternalBufferCapacity(8)]
 	public struct BTStackFrame : IBufferElementData
 	{
-		[GhostField]
-		public BTExecNodeId nodeId;
-		[GhostField]
-		public byte childIndex;
+		[GhostField] public BTExecNodeId nodeId;
+		[GhostField] public byte childIndex;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static implicit operator BTStackFrame(BTExecNodeId nodeId) => new BTStackFrame { nodeId = nodeId };
+		public static implicit operator BTStackFrame(BTExecNodeId nodeId) => new() { nodeId = nodeId };
 	}
 
 	public struct BTExecTrace : IBufferElementData

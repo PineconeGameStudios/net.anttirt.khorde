@@ -25,6 +25,11 @@ namespace Khorde.Behavior
 			Catch,
 			WriteVar,
 			Query,
+
+			Parallel,
+
+			// root of a thread's stack for parallel execution
+			ThreadRoot,
 		}
 
 		[StructLayout(LayoutKind.Explicit, Pack = 8)]
@@ -40,6 +45,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public Catch @catch;
 			[FieldOffset(0)] public WriteVar writeVar;
 			[FieldOffset(0)] public Query query;
+			[FieldOffset(0)] public Parallel parallel;
 		}
 
 		public string DumpString()
@@ -59,6 +65,7 @@ namespace Khorde.Behavior
 				case BTExecType.Catch: result += data.@catch.DumpString(); break;
 				case BTExecType.WriteVar: result += data.writeVar.DumpString(); break;
 				case BTExecType.Query: result += data.query.DumpString(); break;
+				case BTExecType.Parallel: result += data.parallel.DumpString(); break;
 				default: break;
 			}
 

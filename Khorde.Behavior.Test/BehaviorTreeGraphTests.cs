@@ -41,6 +41,7 @@ namespace Khorde.Behavior.Test
 		World world;
 		EntityManager em;
 		Entity testEntity;
+		DynamicBuffer<BTThread> threads => em.GetBuffer<BTThread>(testEntity);
 		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
 		DynamicBuffer<BTExecTrace> trace => em.GetBuffer<BTExecTrace>(testEntity);
 		DynamicBuffer<ExpressionBlackboardStorage> blackboard => em.GetBuffer<ExpressionBlackboardStorage>(testEntity);
@@ -103,7 +104,7 @@ namespace Khorde.Behavior.Test
 				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
 				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -119,7 +120,7 @@ namespace Khorde.Behavior.Test
 
 				trace.Clear();
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -131,7 +132,7 @@ namespace Khorde.Behavior.Test
 
 				moveTarget.enabled = false;
 
-				BehaviorTreeExecution.Execute(data, ref state, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -207,7 +208,7 @@ namespace Khorde.Behavior.Test
 
 			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
 
-			BehaviorTreeExecution.Execute(ref data, ref state, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			Assert.AreEqual(1.23f, blackboardBytes.ReinterpretLoad<float>(0));
 

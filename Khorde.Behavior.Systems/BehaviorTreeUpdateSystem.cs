@@ -3,7 +3,6 @@ using Khorde.Entities;
 using Khorde.Expr;
 using Khorde.Query;
 using System;
-using System.Linq;
 using System.Text;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
@@ -33,6 +32,7 @@ namespace Khorde.Behavior
 			public ExprJobComponentLookups componentLookups;
 			public BlobAssetReference<BTData> btData;
 			public ComponentTypeHandle<BTState> stateTypeHandle;
+			public BufferTypeHandle<BTThread> threadTypeHandle;
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
 			public BufferTypeHandle<ExpressionBlackboardStorage> blackboardTypeHandle;
 			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
@@ -46,6 +46,7 @@ namespace Khorde.Behavior
 				typeHandles.Initialize(chunk);
 
 				var states = chunk.GetNativeArray(ref stateTypeHandle).AsSpan();
+				var threads = chunk.GetBufferAccessor(ref threadTypeHandle);
 				var stacks = chunk.GetBufferAccessor(ref stackTypeHandle);
 				var blackboards = chunk.GetBufferAccessor(ref blackboardTypeHandle);
 				var lookups = componentLookups.Lookups;
@@ -75,6 +76,7 @@ namespace Khorde.Behavior
 					BehaviorTreeExecution.Execute(
 						ref btData.Value,
 						ref states[entityIndex],
+						threads[entityIndex],
 						stacks[entityIndex],
 						blackboards[entityIndex].AsNativeArray(),
 						ref layout,
@@ -105,6 +107,7 @@ namespace Khorde.Behavior
 					btData = tree.tree.GetHandle<BTData, BehaviorTreeAsset>(BTData.SchemaVersion).Reference,
 					now = (float)SystemAPI.Time.ElapsedTime,
 					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BTState>(),
+					threadTypeHandle = SystemAPI.GetBufferTypeHandle<BTThread>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
 					blackboardTypeHandle = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
