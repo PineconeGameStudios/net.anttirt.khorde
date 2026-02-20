@@ -22,6 +22,8 @@ namespace Khorde.Behavior
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set => queryExecutorStackIndexPlusOne = value + 1;
 		}
+
+		public int threadIdCounter;
 	}
 
 	[InternalBufferCapacity(2)]
@@ -37,12 +39,20 @@ namespace Khorde.Behavior
 		/// </summary>
 		public int frameCount;
 
+		/// <summary>
+		/// Thread id, currently just used for tracing and debugging.
+		/// </summary>
+		public int threadId;
+
+		/// <summary>
+		/// Index of the owning thread.
+		/// </summary>
 		public int ownerThreadIndex;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int GetEndOffset() => frameOffset + frameCount;
 
-		// below: misc. per-stack state
+		// below: misc. per-thread state
 
 		/// <summary>
 		/// Start time for the current Wait operation, if there is one on this thread
@@ -65,21 +75,23 @@ namespace Khorde.Behavior
 		public BTExecNodeId nodeId;
 		public BTExec.BTExecType type;
 		public Event @event;
+		public int threadId;
 		public int depth;
 		public int cycle;
 
-		public BTExecTrace(BTExecNodeId nodeId, BTExec.BTExecType type, Event @event, int depth, int cycle)
+		public BTExecTrace(BTExecNodeId nodeId, BTExec.BTExecType type, Event @event, int threadId, int depth, int cycle)
 		{
 			this.nodeId = nodeId;
 			this.type = type;
 			this.@event = @event;
+			this.threadId = threadId;
 			this.depth = depth;
 			this.cycle = cycle;
 		}
 
 		public enum Event : byte
 		{
-			Init,
+			Spawn,
 			Start,
 			Call,
 			Return,
@@ -87,9 +99,10 @@ namespace Khorde.Behavior
 			Catch,
 			Yield,
 			Wait,
+			Abort,
 		}
 
-		public override string ToString() => $"[{type}.{nodeId.index}] {depth}> {@event} @{cycle}";
+		public override string ToString() => $"{{{threadId}}} [{type}.{nodeId.index}] {depth}> {@event} @{cycle}";
 
 		#region Equality
 		public bool Equals(in BTExecTrace other) =>

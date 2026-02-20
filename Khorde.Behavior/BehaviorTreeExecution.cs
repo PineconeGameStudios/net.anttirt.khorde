@@ -28,137 +28,6 @@ namespace Khorde.Behavior
 			DynamicBuffer<BTExecTrace> trace)
 			=> Execute(ref asset.Value, ref state, threads, frames, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, trace);
 
-		/// <summary>
-		/// Spawn a new thread of execution. Returns the index of the stack.
-		/// </summary>
-		/// <param name="threads"></param>
-		/// <param name="frames"></param>
-		/// <returns></returns>
-		public static void Spawn(DynamicBuffer<BTThread> threads, DynamicBuffer<BTStackFrame> frames, BTExecNodeId root, int ownerThreadIndex)
-		{
-			UnityEngine.Debug.Log($"Spawn(node: {root.index}) -> thread #{threads.Length}");
-
-			var stack = new BTThread
-			{
-				frameCount = 0,
-				frameOffset = 0,
-				ownerThreadIndex = ownerThreadIndex,
-				waitStartTime = float.NegativeInfinity,
-			};
-
-			if(threads.Length > 0)
-			{
-				ref var last = ref threads.ElementAt(threads.Length - 1);
-				stack.frameOffset = threads[^1].GetEndOffset();
-			}
-
-			threads.Add(stack);
-			var stackIndex = threads.Length - 1;
-			Push(threads, frames, stackIndex, root);
-		}
-
-		/// <summary>
-		/// Abort a thread of execution and any descendant threads
-		/// </summary>
-		/// <param name="threads"></param>
-		/// <param name="frames"></param>
-		/// <param name="threadIndex"></param>
-		public static void Abort(ref BTState btState, DynamicBuffer<BTThread> threads, DynamicBuffer<BTStackFrame> frames, int threadIndex)
-		{
-			UnityEngine.Debug.Log($"Abort(thread: {threadIndex})");
-
-			// remove stack, shifting later threads down
-			threads.RemoveAt(threadIndex);
-
-			// fix up and clean up locks
-			if(btState.QueryExecutorThreadIndex == threadIndex)
-			{
-				btState.QueryExecutorThreadIndex = -1;
-			}
-			else if(btState.QueryExecutorThreadIndex > threadIndex)
-			{
-				--btState.QueryExecutorThreadIndex;
-			}
-
-			// discover a descendant thread if there is one
-			int recursiveFinalizeIndex = -1;
-
-			for(int i = 0; i < threads.Length; ++i)
-			{
-				ref var stack = ref threads.ElementAt(i);
-
-				if(stack.ownerThreadIndex == threadIndex)
-				{
-					// descendant of current, needs to also be finalized immediately
-					recursiveFinalizeIndex = i;
-				}
-				else if(stack.ownerThreadIndex > threadIndex)
-				{
-					// the owner was shifted down
-					stack.ownerThreadIndex--;
-				}
-			}
-
-			if(recursiveFinalizeIndex != -1)
-			{
-				// finalize descendant thread
-				Abort(ref btState, threads, frames, recursiveFinalizeIndex);
-			}
-		}
-
-		/// <summary>
-		/// Push a new stack frame onto the stack of a given thread. Returns the index of the pushed stack frame.
-		/// </summary>
-		/// <param name="threads"></param>
-		/// <param name="frames"></param>
-		/// <param name="stackIndex"></param>
-		/// <returns></returns>
-		public static void Push(DynamicBuffer<BTThread> threads, DynamicBuffer<BTStackFrame> frames, int stackIndex, BTExecNodeId node)
-		{
-			ref var stack = ref threads.ElementAt(stackIndex);
-
-			if(Hint.Likely(stackIndex == threads.Length - 1))
-			{
-				if(stack.GetEndOffset() >= frames.Length)
-					frames.Add(default);
-			}
-			else
-			{
-				ref var nextStack = ref threads.ElementAt(stackIndex + 1);
-				if(Hint.Likely(stack.GetEndOffset() < nextStack.frameOffset))
-				{
-					frames[stack.frameCount] = default;
-				}
-				else
-				{
-					const int ShiftCount = 4;
-					int moveCount = frames.Length - nextStack.frameOffset;
-					int elemSize = UnsafeUtility.SizeOf<BTStackFrame>();
-					frames.ResizeUninitialized(frames.Length + ShiftCount);
-
-					unsafe
-					{
-						BTStackFrame* src = (BTStackFrame*)frames.GetUnsafePtr();
-						BTStackFrame* dst = src + ShiftCount;
-						UnsafeUtility.MemMove(dst, src, moveCount * elemSize);
-						UnsafeUtility.MemClear(src, ShiftCount * elemSize);
-					}
-
-					for(int nextStackIndex = stackIndex + 1; nextStackIndex < threads.Length; ++nextStackIndex)
-						threads.ElementAt(nextStackIndex).frameOffset += ShiftCount;
-				}
-			}
-
-			frames.ElementAt(stack.frameOffset + stack.frameCount++) = node;
-		}
-
-		public static int Pop(DynamicBuffer<BTThread> threads, DynamicBuffer<BTStackFrame> frames, int threadIndex)
-		{
-			ref var stack = ref threads.ElementAt(threadIndex);
-			stack.frameCount--;
-			return stack.GetEndOffset() - 1;
-		}
-
 		enum FailResult
 		{
 			Fail,
@@ -184,10 +53,7 @@ namespace Khorde.Behavior
 
 			if(Hint.Unlikely(threads.Length == 0))
 			{
-				if(trace.IsCreated)
-					trace.Add(new(data.Root, BTExec.BTExecType.Root, BTExecTrace.Event.Init, allFrames.Length, -1));
-
-				Spawn(threads, allFrames, data.Root, 0);
+				Spawn(ref state, ref data, data.Root, -1, default, 0, -1);
 			}
 
 			NativeArray<byte> blackboardBytes = default;
@@ -209,6 +75,7 @@ namespace Khorde.Behavior
 						throw new Exception("max cycle count exceeded; almost certainly a bug in the implementation");
 
 					ref var thread = ref threads.ElementAt(threadIndex);
+					var threadId = thread.threadId;
 
 					var frames = allFrames.AsNativeArray().GetSubArray(thread.frameOffset, thread.frameCount);
 
@@ -217,7 +84,7 @@ namespace Khorde.Behavior
 					ref BTExec node = ref data.GetNode(nodeId);
 
 					if(trace.IsCreated && cycle == 0)
-						trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, frames.Length, cycle));
+						trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, threadId, frames.Length, cycle));
 
 					if(cycle == 0 && node.type != BTExec.BTExecType.Root && node.type != BTExec.BTExecType.Wait && node.type != BTExec.BTExecType.Query)
 						throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
@@ -225,22 +92,22 @@ namespace Khorde.Behavior
 					void Trace(ref BTExec node, BTExecTrace.Event @event)
 					{
 						if(trace.IsCreated)
-							trace.Add(new(nodeId, node.type, @event, frames.Length, cycle));
+							trace.Add(new(nodeId, node.type, @event, threadId, frames.Length, cycle));
 					}
 
 					void Trace1(ref BTData data, BTExecTrace.Event @event)
 					{
 						if(trace.IsCreated)
-							trace.Add(new(nodeId, data.GetNode(nodeId).type, @event, frames.Length, cycle));
+							trace.Add(new(nodeId, data.GetNode(nodeId).type, @event, threadId, frames.Length, cycle));
 					}
 
 					void Trace2(ref BTData data, int stackIndex, BTExecTrace.Event @event)
 					{
 						if(trace.IsCreated)
-							trace.Add(new(frames[stackIndex].nodeId, data.GetNode(frames[stackIndex].nodeId).type, @event, stackIndex + 1, cycle));
+							trace.Add(new(frames[stackIndex].nodeId, data.GetNode(frames[stackIndex].nodeId).type, @event, threadId, stackIndex + 1, cycle));
 					}
 
-					FailResult Fail(ref BTData data, ref BTExec node, ref BTThread thread)
+					FailResult Fail(ref BTState state, ref BTData data, ref BTExec node, ref BTThread thread)
 					{
 						Trace(ref node, BTExecTrace.Event.Fail);
 
@@ -257,13 +124,15 @@ namespace Khorde.Behavior
 							}
 						}
 
+						int depth = frames.Length;
+
 						//frames.Clear();
 						//frames.Add(data.Root);
 
 						// if nothing catches us, immediately abort all threads and start from scratch
 						threads.Clear();
 						allFrames.Clear();
-						Spawn(threads, allFrames, data.Root, 0);
+						Spawn(ref state, ref data, data.Root, -1, nodeId, depth, cycle);
 						return FailResult.Fail;
 					}
 
@@ -272,7 +141,7 @@ namespace Khorde.Behavior
 						Trace(ref node, BTExecTrace.Event.Return);
 
 						//frames.RemoveAt(frames.Length - 1);
-						Pop(threads, allFrames, threadIndex);
+						Pop(threadIndex);
 					}
 
 					void Call(ref BTData data, BTExecNodeId node)
@@ -281,7 +150,7 @@ namespace Khorde.Behavior
 
 						frames.ElementAt(frames.Length - 1).childIndex++;
 						//frames.Add(node);
-						Push(threads, allFrames, threadIndex, node);
+						Push(threadIndex, node);
 					}
 
 					switch(node.type)
@@ -321,7 +190,7 @@ namespace Khorde.Behavior
 						else
 						{
 							// thread end
-							Abort(ref state, threads, allFrames, threadIndex);
+							Abort(ref state, ref data, threadIndex, nodeId, frames.Length, cycle);
 
 							// this index was removed, so loop it again
 							--threadIndex;
@@ -362,7 +231,7 @@ namespace Khorde.Behavior
 							if(!any)
 							{
 								// none of the options worked
-								if(Fail(ref data, ref node, ref thread) == FailResult.Fail)
+								if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
 								{
 									threadIndex = 0;
 								}
@@ -418,7 +287,7 @@ namespace Khorde.Behavior
 						break;
 
 					case BTExec.BTExecType.Fail:
-						if(Fail(ref data, ref node, ref thread) == FailResult.Fail)
+						if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
 						{
 							threadIndex = 0;
 						}
@@ -505,7 +374,7 @@ namespace Khorde.Behavior
 							Call(ref data, node.data.parallel.main);
 
 							// start a second thread of execution
-							Spawn(threads, allFrames, node.data.parallel.parallel, threadIndex);
+							Spawn(ref state, ref data, node.data.parallel.parallel, threadIndex, nodeId, frames.Length, cycle);
 						}
 						else
 						{
@@ -515,7 +384,7 @@ namespace Khorde.Behavior
 							{
 								if(otherThreadIndex != threadIndex && threads[otherThreadIndex].ownerThreadIndex == threadIndex)
 								{
-									Abort(ref state, threads, allFrames, otherThreadIndex);
+									Abort(ref state, ref data, otherThreadIndex, nodeId, frames.Length, cycle);
 								}
 							}
 
@@ -532,6 +401,134 @@ namespace Khorde.Behavior
 				nextThread:
 				;
 			}
+
+			/// <summary>
+			/// Spawn a new thread of execution. Returns the index of the stack.
+			/// </summary>
+			/// <param name="threads"></param>
+			/// <param name="frames"></param>
+			/// <returns></returns>
+			void Spawn(ref BTState state, ref BTData data, BTExecNodeId root, int ownerThreadIndex, BTExecNodeId caller, int depth, int cycle)
+			{
+				if(trace.IsCreated)
+					trace.Add(new(caller, data.GetNode(caller).type, BTExecTrace.Event.Spawn, ownerThreadIndex == -1 ? 0 : threads[ownerThreadIndex].threadId, depth, cycle));
+
+				var stack = new BTThread
+				{
+					frameCount = 0,
+					frameOffset = 0,
+					ownerThreadIndex = ownerThreadIndex,
+					waitStartTime = float.NegativeInfinity,
+					threadId = state.threadIdCounter++,
+				};
+
+				if(threads.Length > 0)
+				{
+					ref var last = ref threads.ElementAt(threads.Length - 1);
+					stack.frameOffset = threads[^1].GetEndOffset();
+				}
+
+				threads.Add(stack);
+				var threadIndex = threads.Length - 1;
+				Push(threadIndex, root);
+			}
+
+			/// <summary>
+			/// Abort a thread of execution and any descendant threads
+			/// </summary>
+			/// <param name="threads"></param>
+			/// <param name="frames"></param>
+			/// <param name="threadIndex"></param>
+			void Abort(ref BTState btState, ref BTData data, int threadIndex, BTExecNodeId caller, int depth, int cycle)
+			{
+				if(trace.IsCreated)
+					trace.Add(new(caller, data.GetNode(caller).type, BTExecTrace.Event.Abort, threads[threadIndex].threadId, depth, cycle));
+
+				// remove stack, shifting later threads down
+				threads.RemoveAt(threadIndex);
+
+				// fix up and clean up locks
+				if(btState.QueryExecutorThreadIndex == threadIndex)
+				{
+					btState.QueryExecutorThreadIndex = -1;
+				}
+				else if(btState.QueryExecutorThreadIndex > threadIndex)
+				{
+					--btState.QueryExecutorThreadIndex;
+				}
+
+				// discover a descendant thread if there is one
+				int recursiveFinalizeIndex = -1;
+
+				for(int i = 0; i < threads.Length; ++i)
+				{
+					ref var stack = ref threads.ElementAt(i);
+
+					if(stack.ownerThreadIndex == threadIndex)
+					{
+						// descendant of current, needs to also be finalized immediately
+						recursiveFinalizeIndex = i;
+					}
+					else if(stack.ownerThreadIndex > threadIndex)
+					{
+						// the owner was shifted down
+						stack.ownerThreadIndex--;
+					}
+				}
+
+				if(recursiveFinalizeIndex != -1)
+				{
+					// finalize descendant thread
+					Abort(ref btState, ref data, recursiveFinalizeIndex, caller, depth, cycle);
+				}
+			}
+
+			void Push(int threadIndex, BTExecNodeId node)
+			{
+				ref var stack = ref threads.ElementAt(threadIndex);
+
+				if(Hint.Likely(threadIndex == threads.Length - 1))
+				{
+					if(stack.GetEndOffset() >= allFrames.Length)
+						allFrames.Add(default);
+				}
+				else
+				{
+					ref var nextStack = ref threads.ElementAt(threadIndex + 1);
+					if(Hint.Likely(stack.GetEndOffset() < nextStack.frameOffset))
+					{
+						allFrames[stack.frameCount] = default;
+					}
+					else
+					{
+						const int ShiftCount = 4;
+						int moveCount = allFrames.Length - nextStack.frameOffset;
+						int elemSize = UnsafeUtility.SizeOf<BTStackFrame>();
+						allFrames.ResizeUninitialized(allFrames.Length + ShiftCount);
+
+						unsafe
+						{
+							BTStackFrame* src = (BTStackFrame*)allFrames.GetUnsafePtr();
+							BTStackFrame* dst = src + ShiftCount;
+							UnsafeUtility.MemMove(dst, src, moveCount * elemSize);
+							UnsafeUtility.MemClear(src, ShiftCount * elemSize);
+						}
+
+						for(int nextStackIndex = threadIndex + 1; nextStackIndex < threads.Length; ++nextStackIndex)
+							threads.ElementAt(nextStackIndex).frameOffset += ShiftCount;
+					}
+				}
+
+				allFrames.ElementAt(stack.frameOffset + stack.frameCount++) = node;
+			}
+
+			int Pop(int threadIndex)
+			{
+				ref var stack = ref threads.ElementAt(threadIndex);
+				stack.frameCount--;
+				return stack.GetEndOffset() - 1;
+			}
+
 		}
 
 		public static void DumpNodes(ref BTData data, List<string> output)

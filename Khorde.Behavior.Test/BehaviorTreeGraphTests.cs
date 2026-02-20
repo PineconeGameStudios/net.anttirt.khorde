@@ -109,7 +109,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace
 				(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
@@ -214,7 +214,7 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(1.23f, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
-				Trace(BTExecType.Root, 1, 0, Event.Init),
+				Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 				Trace(BTExecType.Root, 1, 1, Event.Start),
 				Trace(BTExecType.Root, 1, 1, Event.Call),
 				Trace(BTExecType.WriteVar, 2, 2, Event.Return),
@@ -226,7 +226,10 @@ namespace Khorde.Behavior.Test
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());
 
 		static BTExecTrace Trace(BTExecType type, ushort nodeId, int depth, Event @event)
-			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, depth, 0);
+			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, 0, depth, 0);
+
+		static BTExecTrace Trace(int threadId, BTExecType type, ushort nodeId, int depth, Event @event)
+			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, threadId, depth, 0);
 
 		[TearDown]
 		public void TearDown()

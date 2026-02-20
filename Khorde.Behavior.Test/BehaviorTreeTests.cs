@@ -70,7 +70,10 @@ namespace Khorde.Behavior.Test
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());
 
 		static BTExecTrace Trace(BTExecType type, ushort nodeId, int depth, Event @event)
-			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, depth, 0);
+			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, 0, depth, 0);
+
+		static BTExecTrace Trace(int threadId, BTExecType type, ushort nodeId, int depth, Event @event)
+			=> new BTExecTrace(new BTExecNodeId(nodeId), type, @event, threadId, depth, 0);
 
 		struct ManagedStruct
 		{
@@ -117,7 +120,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Nop, 2, 2, Event.Return),
@@ -154,10 +157,11 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Fail, 2, 2, Event.Fail),
+					Trace(BTExecType.Fail, 2, 2, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
@@ -194,7 +198,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Catch, 2, 2, Event.Call),
@@ -239,7 +243,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
@@ -291,7 +295,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Selector, 2, 2, Event.Call),
@@ -336,11 +340,12 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
 					Trace(BTExecType.Fail, 3, 3, Event.Fail),
+					Trace(BTExecType.Fail, 3, 3, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
 					);
 			}
@@ -374,7 +379,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
@@ -443,7 +448,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
@@ -494,7 +499,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.WriteField, 2, 2, Event.Return),
@@ -544,7 +549,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Wait, 2, 2, Event.Wait)
@@ -625,7 +630,7 @@ namespace Khorde.Behavior.Test
 				Assert.AreEqual(3.523f, blackboardBytes.ReinterpretLoad<float>(0));
 
 				AssertTrace(
-					Trace(BTExecType.Root, 1, 0, Event.Init),
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
 					Trace(BTExecType.Root, 1, 1, Event.Start),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.WriteVar, 2, 2, Event.Return),
