@@ -241,7 +241,7 @@ namespace Khorde.Expr
 				var expressionTypeHash = expressionTypeHashes[i];
 				if(expressionTypeHash == 0)
 				{
-					Debug.LogError($"empty expression type hash at index {i}");
+					Debug.LogWarning($"empty expression type hash at index {i}");
 					continue;
 				}
 

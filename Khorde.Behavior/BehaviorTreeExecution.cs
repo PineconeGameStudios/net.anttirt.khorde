@@ -159,6 +159,12 @@ namespace Khorde.Behavior
 			return stack.GetEndOffset() - 1;
 		}
 
+		enum FailResult
+		{
+			Fail,
+			Catch,
+		}
+
 		public static void Execute(
 			ref BTData data,
 			ref BTState state,
@@ -202,9 +208,9 @@ namespace Khorde.Behavior
 					if(cycle > 10000)
 						throw new Exception("max cycle count exceeded; almost certainly a bug in the implementation");
 
-					var stack = threads[threadIndex];
+					ref var thread = ref threads.ElementAt(threadIndex);
 
-					var frames = allFrames.AsNativeArray().GetSubArray(stack.frameOffset, stack.frameCount);
+					var frames = allFrames.AsNativeArray().GetSubArray(thread.frameOffset, thread.frameCount);
 
 					var nodeId = frames[^1].nodeId;
 
@@ -234,7 +240,7 @@ namespace Khorde.Behavior
 							trace.Add(new(frames[stackIndex].nodeId, data.GetNode(frames[stackIndex].nodeId).type, @event, stackIndex + 1, cycle));
 					}
 
-					void Fail(ref BTData data, ref BTExec node)
+					FailResult Fail(ref BTData data, ref BTExec node, ref BTThread thread)
 					{
 						Trace(ref node, BTExecTrace.Event.Fail);
 
@@ -246,8 +252,8 @@ namespace Khorde.Behavior
 								Trace2(ref data, i, BTExecTrace.Event.Catch);
 								var count = frames.Length - i;
 								//frames.RemoveRange(i, count);
-								stack.frameCount -= count;
-								return;
+								thread.frameCount -= count;
+								return FailResult.Catch;
 							}
 						}
 
@@ -257,6 +263,8 @@ namespace Khorde.Behavior
 						// if nothing catches us, immediately abort all threads and start from scratch
 						threads.Clear();
 						allFrames.Clear();
+						Spawn(threads, allFrames, data.Root, 0);
+						return FailResult.Fail;
 					}
 
 					void Return(ref BTData data, ref BTExec node)
@@ -354,7 +362,10 @@ namespace Khorde.Behavior
 							if(!any)
 							{
 								// none of the options worked
-								Fail(ref data, ref node);
+								if(Fail(ref data, ref node, ref thread) == FailResult.Fail)
+								{
+									threadIndex = 0;
+								}
 							}
 						}
 						else
@@ -372,15 +383,15 @@ namespace Khorde.Behavior
 					case BTExec.BTExecType.Wait:
 						if(node.data.wait.duration.IsCreated)
 						{
-							if(stack.waitStartTime == 0)
+							if(thread.waitStartTime == 0)
 							{
-								stack.waitStartTime = now;
+								thread.waitStartTime = now;
 							}
 
 							float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
-							if(now - stack.waitStartTime >= duration)
+							if(now - thread.waitStartTime >= duration)
 							{
-								stack.waitStartTime = 0;
+								thread.waitStartTime = 0;
 								Return(ref data, ref node);
 							}
 							else
@@ -407,7 +418,11 @@ namespace Khorde.Behavior
 						break;
 
 					case BTExec.BTExecType.Fail:
-						Fail(ref data, ref node);
+						if(Fail(ref data, ref node, ref thread) == FailResult.Fail)
+						{
+							threadIndex = 0;
+						}
+
 						break;
 
 					case BTExec.BTExecType.Optional:

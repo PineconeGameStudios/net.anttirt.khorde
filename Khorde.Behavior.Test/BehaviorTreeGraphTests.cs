@@ -57,6 +57,7 @@ namespace Khorde.Behavior.Test
 			testSystem = world.GetOrCreateSystemManaged<BehaviorTestSystem>();
 			em = world.EntityManager;
 			testEntity = em.CreateEntity();
+			em.AddBuffer<BTThread>(testEntity);
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
 			em.AddBuffer<ExpressionBlackboardStorage>(testEntity);
