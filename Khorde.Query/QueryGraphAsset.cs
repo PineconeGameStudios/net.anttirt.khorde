@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using AOT;
 using Khorde.Blobs;
 using Khorde.Entities;
@@ -23,22 +24,25 @@ namespace Khorde.Query
 		}
 #endif
 
-		[MonoPInvokeCallback(typeof(BurstTrampolineOut<UnityObjectRef<QueryGraphAsset>, NativeArray<UnityObjectRef<EntityQueryAsset>>>.Delegate))]
-		static void GetQueriesImpl(in UnityObjectRef<QueryGraphAsset> asset, out NativeArray<UnityObjectRef<EntityQueryAsset>> result)
+		public unsafe delegate void GetQueriesDelegate(UnityObjectRef<QueryGraphAsset>* passet, NativeArray<UnityObjectRef<EntityQueryAsset>>* presult);
+		static GetQueriesDelegate s_getQueriesGC;
+
+		[MonoPInvokeCallback(typeof(GetQueriesDelegate))]
+		static unsafe void GetQueriesImpl(UnityObjectRef<QueryGraphAsset>* asset, NativeArray<UnityObjectRef<EntityQueryAsset>>* result)
 		{
-			result = default;
+			*result = default;
 			
 			try
 			{
-				var graphAsset = asset.Value;
+				var graphAsset = asset->Value;
 
 				if(graphAsset == null || graphAsset.entityQueries == null)
 					return;
 
-				result = new NativeArray<UnityObjectRef<EntityQueryAsset>>(graphAsset.entityQueries.Count, Allocator.Temp);
+				*result = new NativeArray<UnityObjectRef<EntityQueryAsset>>(graphAsset.entityQueries.Count, Allocator.Temp);
 
 				for(int i = 0; i < graphAsset.entityQueries.Count; i++)
-					result[i] = graphAsset.entityQueries[i];
+					(*result)[i] = graphAsset.entityQueries[i];
 			}
 			catch (Exception e)
 			{
@@ -46,10 +50,10 @@ namespace Khorde.Query
 			}
 		}
 
-		struct Ctx0 {}
-		public static readonly SharedStatic<BurstTrampolineOut<UnityObjectRef<QueryGraphAsset>, NativeArray<UnityObjectRef<EntityQueryAsset>>>> GetQueriesFunc
-			= SharedStatic<BurstTrampolineOut<UnityObjectRef<QueryGraphAsset>, NativeArray<UnityObjectRef<EntityQueryAsset>>>>
-				.GetOrCreate<Ctx0>();
+		struct Ctx1 {}
+		public static readonly SharedStatic<FunctionPointer<GetQueriesDelegate>> GetQueriesFunc
+			= SharedStatic<FunctionPointer<GetQueriesDelegate>>
+				.GetOrCreate<Ctx1>();
 
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
 		#if UNITY_EDITOR
@@ -58,7 +62,11 @@ namespace Khorde.Query
 		#endif
 		static void StaticInit()
 		{
-			GetQueriesFunc.Data = new(GetQueriesImpl);
+			unsafe
+			{
+				s_getQueriesGC = GetQueriesImpl;
+				GetQueriesFunc.Data = new FunctionPointer<GetQueriesDelegate>(Marshal.GetFunctionPointerForDelegate(s_getQueriesGC));
+			}
 		}
 		
 		/// <summary>
@@ -69,8 +77,12 @@ namespace Khorde.Query
 		/// <remarks>Callable from Burst-compiled code</remarks>
 		public static NativeArray<UnityObjectRef<EntityQueryAsset>> GetQueries(UnityObjectRef<QueryGraphAsset> asset)
 		{
-			GetQueriesFunc.Data.Invoke(asset, out var result);
-			return result;
+			unsafe
+			{
+				NativeArray<UnityObjectRef<EntityQueryAsset>> result = default;
+				GetQueriesFunc.Data.Invoke(&asset, &result);
+				return result;
+			}
 		}
 	}
 }
