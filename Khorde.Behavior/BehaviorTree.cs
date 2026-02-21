@@ -109,6 +109,7 @@ namespace Khorde.Behavior
 			nodeId.index == other.nodeId.index &&
 			type == other.type &&
 			@event == other.@event &&
+			threadId == other.threadId &&
 			depth == other.depth;
 
 		public override int GetHashCode()
@@ -117,6 +118,7 @@ namespace Khorde.Behavior
 			hashCode = hashCode * 23 + nodeId.index.GetHashCode();
 			hashCode = hashCode * 23 + type.GetHashCode();
 			hashCode = hashCode * 23 + @event.GetHashCode();
+			hashCode = hashCode * 23 + threadId.GetHashCode();
 			hashCode = hashCode * 23 + depth.GetHashCode();
 			return hashCode;
 		}

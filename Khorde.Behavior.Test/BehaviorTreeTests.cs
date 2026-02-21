@@ -644,6 +644,48 @@ namespace Khorde.Behavior.Test
 			}
 		}
 
+		[Test]
+		public void Test_Fork()
+		{
+			baker.InitializeBake(0, 0);
+
+			var execs = baker.Builder.Allocate(ref data.execs, 100);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+			execs[2].type = BTExecType.Parallel;
+			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(4) };
+			execs[4].type = BTExecType.ThreadRoot;
+			execs[4].data.root = new Root { child = new BTExecNodeId(5) };
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop, 0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root, 1, 1, Event.Start),
+					Trace(0, BTExecType.Root, 1, 1, Event.Call),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Call),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Spawn),
+					Trace(0, BTExecType.Nop, 3, 3, Event.Return),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Abort),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Return),
+					Trace(0, BTExecType.Root, 1, 1, Event.Yield)
+				);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
 		static string GetShortName(System.Type type)
 		{
 			if(type == typeof(int)) return "int";

@@ -190,7 +190,7 @@ namespace Khorde.Behavior
 						else
 						{
 							// thread end
-							Abort(ref state, ref data, threadIndex, nodeId, frames.Length, cycle);
+							Abort(ref state, ref data, threadIndex, threadIndex, nodeId, frames.Length, cycle);
 
 							// this index was removed, so loop it again
 							--threadIndex;
@@ -384,7 +384,7 @@ namespace Khorde.Behavior
 							{
 								if(otherThreadIndex != threadIndex && threads[otherThreadIndex].ownerThreadIndex == threadIndex)
 								{
-									Abort(ref state, ref data, otherThreadIndex, nodeId, frames.Length, cycle);
+									Abort(ref state, ref data, otherThreadIndex, threadIndex, nodeId, frames.Length, cycle);
 								}
 							}
 
@@ -419,7 +419,7 @@ namespace Khorde.Behavior
 					frameOffset = 0,
 					ownerThreadIndex = ownerThreadIndex,
 					waitStartTime = float.NegativeInfinity,
-					threadId = state.threadIdCounter++,
+					threadId = ownerThreadIndex == -1 ? 0 : ++state.threadIdCounter,
 				};
 
 				if(threads.Length > 0)
@@ -439,10 +439,10 @@ namespace Khorde.Behavior
 			/// <param name="threads"></param>
 			/// <param name="frames"></param>
 			/// <param name="threadIndex"></param>
-			void Abort(ref BTState btState, ref BTData data, int threadIndex, BTExecNodeId caller, int depth, int cycle)
+			void Abort(ref BTState btState, ref BTData data, int threadIndex, int callerThreadIndex, BTExecNodeId caller, int depth, int cycle)
 			{
 				if(trace.IsCreated)
-					trace.Add(new(caller, data.GetNode(caller).type, BTExecTrace.Event.Abort, threads[threadIndex].threadId, depth, cycle));
+					trace.Add(new(caller, data.GetNode(caller).type, BTExecTrace.Event.Abort, threads[callerThreadIndex].threadId, depth, cycle));
 
 				// remove stack, shifting later threads down
 				threads.RemoveAt(threadIndex);
@@ -479,7 +479,7 @@ namespace Khorde.Behavior
 				if(recursiveFinalizeIndex != -1)
 				{
 					// finalize descendant thread
-					Abort(ref btState, ref data, recursiveFinalizeIndex, caller, depth, cycle);
+					Abort(ref btState, ref data, recursiveFinalizeIndex, callerThreadIndex, caller, depth, cycle);
 				}
 			}
 
