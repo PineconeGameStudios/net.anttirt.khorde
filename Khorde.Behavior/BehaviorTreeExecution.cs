@@ -161,7 +161,7 @@ namespace Khorde.Behavior
 					{
 						Trace1(ref data, BTExecTrace.Event.Call);
 
-						frames.ElementAt(frames.Length - 1).childIndex++;
+						frames.UnsafeElementAt(frames.Length - 1).childIndex++;
 						//frames.Add(node);
 						Push(threadIndex, node);
 					}
@@ -210,7 +210,7 @@ namespace Khorde.Behavior
 
 							if(loop)
 							{
-								frames.ElementAt(frames.Length - 2).childIndex--;
+								frames.UnsafeElementAt(frames.Length - 2).childIndex--;
 							}
 
 							// NOTE: run more cycles to continue executing this
@@ -403,7 +403,7 @@ namespace Khorde.Behavior
 							// Spawn invalidates local ref variables and
 							// buffers, so we leave the Parallel as the current
 							// frame, and run the Call in the second cycle
-							frames.ElementAt(frames.Length - 1).childIndex++;
+							frames.UnsafeElementAt(frames.Length - 1).childIndex++;
 							Spawn(ref state, ref data, node.data.parallel.parallel, threadIndex, nodeId, frames.Length, cycle);
 						}
 						else if(frames[^1].childIndex == 1)
