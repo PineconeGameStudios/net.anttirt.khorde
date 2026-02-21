@@ -25,10 +25,7 @@ namespace Khorde.Behavior
 			Catch,
 			WriteVar,
 			Query,
-
 			Parallel,
-
-			// root of a thread's stack for parallel execution
 			ThreadRoot,
 		}
 
