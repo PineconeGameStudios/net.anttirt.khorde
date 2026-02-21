@@ -46,6 +46,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public WriteVar writeVar;
 			[FieldOffset(0)] public Query query;
 			[FieldOffset(0)] public Parallel parallel;
+			[FieldOffset(0)] public ThreadRoot threadRoot;
 		}
 
 		public string DumpString()
@@ -66,6 +67,7 @@ namespace Khorde.Behavior
 				case BTExecType.WriteVar: result += data.writeVar.DumpString(); break;
 				case BTExecType.Query: result += data.query.DumpString(); break;
 				case BTExecType.Parallel: result += data.parallel.DumpString(); break;
+				case BTExecType.ThreadRoot: result += data.threadRoot.DumpString(); break;
 				default: break;
 			}
 

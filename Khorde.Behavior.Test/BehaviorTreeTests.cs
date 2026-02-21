@@ -656,7 +656,7 @@ namespace Khorde.Behavior.Test
 			execs[2].type = BTExecType.Parallel;
 			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(4) };
 			execs[4].type = BTExecType.ThreadRoot;
-			execs[4].data.root = new Root { child = new BTExecNodeId(5) };
+			execs[4].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(5), loop = false };
 
 			var asset = baker.Bake();
 			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
@@ -705,7 +705,7 @@ namespace Khorde.Behavior.Test
 			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(4) };
 			execs[3].SetData(new Wait { until = TestComponent1_field1 });
 			execs[4].type = BTExecType.ThreadRoot;
-			execs[4].data.root = new Root { child = new BTExecNodeId(5) };
+			execs[4].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(5), loop = false };
 
 			var asset = baker.Bake();
 			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);

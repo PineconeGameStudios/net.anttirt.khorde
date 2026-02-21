@@ -67,6 +67,17 @@ namespace Khorde.Behavior
 		}
 	}
 
+	public struct ThreadRoot
+	{
+		public BTExecNodeId child;
+		public bool loop;
+
+		public string DumpString()
+		{
+			return $"{{ child={child}, loop={loop} }}";
+		}
+	}
+
 	public struct Sequence
 	{
 		public BlobArray<BTExecNodeId> children;

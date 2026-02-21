@@ -69,6 +69,8 @@ namespace Khorde.Behavior
 
 			for(int threadIndex = 0; threadIndex < threads.Length; ++threadIndex)
 			{
+				bool threadRootVisited = false;
+
 				for(int cycle = 0; ; ++cycle)
 				{
 					if(cycle > 10000)
@@ -192,8 +194,24 @@ namespace Khorde.Behavior
 
 						if(frames[^1].childIndex == 0)
 						{
+							if(threadRootVisited)
+							{
+								// visit the thread root node at most once per frame to avoid getting stuck here
+								Trace(ref node, BTExecTrace.Event.Yield);
+								goto nextThread;
+							}
+
+							threadRootVisited = true;
+
 							// thread start
-							Call(ref data, node.data.root.child);
+							bool loop = node.data.threadRoot.loop;
+
+							Call(ref data, node.data.threadRoot.child);
+
+							if(loop)
+							{
+								frames.ElementAt(frames.Length - 2).childIndex--;
+							}
 
 							// NOTE: run more cycles to continue executing this
 							// thread as far as it goes
