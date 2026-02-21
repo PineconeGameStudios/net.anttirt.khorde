@@ -10,7 +10,9 @@ namespace Khorde.Behavior.Authoring
 	{
 		public const string EXEC_PORT_DEFAULT_NAME = "Execution";
 
-		public abstract void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context);
+		public abstract void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex);
+
+		public virtual int NodeCount => 1;
 	}
 
 	/// <summary>
@@ -21,7 +23,8 @@ namespace Khorde.Behavior.Authoring
 
 	public interface IExecNode : INode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context);
+		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex);
+		public int NodeCount { get; }
 	}
 
 }

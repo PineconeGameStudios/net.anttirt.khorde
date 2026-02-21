@@ -178,6 +178,7 @@ namespace Khorde.Behavior
 					{
 						ComponentType.ReadOnly<BehaviorTree>(),
 						ComponentType.ReadWrite<BTState>(),
+						ComponentType.ReadWrite<BTThread>(),
 						ComponentType.ReadWrite<BTStackFrame>(),
 						ComponentType.ReadWrite<ExpressionBlackboardStorage>(),
 						ComponentType.ReadWrite<ExpressionBlackboardLayouts>(),

@@ -32,6 +32,7 @@ namespace Khorde.Behavior
 					tree = authoring.behaviorTree,
 				});
 
+				AddBuffer<BTThread>(entity);
 				AddBuffer<BTStackFrame>(entity);
 				var blackboard = AddBuffer<ExpressionBlackboardStorage>(entity);
 

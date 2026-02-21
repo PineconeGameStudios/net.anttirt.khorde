@@ -16,7 +16,7 @@ namespace Khorde.Behavior.Authoring
 
 		public override string Title => $"Write {typeof(T).Name}";
 
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			var componentIndex = context.LocalComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
 			if(componentIndex == -1)

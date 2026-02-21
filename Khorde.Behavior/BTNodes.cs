@@ -1,5 +1,7 @@
 using Khorde.Expr;
 using System;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 
 namespace Khorde.Behavior
@@ -64,17 +66,6 @@ namespace Khorde.Behavior
 		public string DumpString()
 		{
 			return $"{{ child={child} }}";
-		}
-	}
-
-	public struct ThreadRoot
-	{
-		public BTExecNodeId child;
-		public bool loop;
-
-		public string DumpString()
-		{
-			return $"{{ child={child}, loop={loop} }}";
 		}
 	}
 
@@ -210,17 +201,21 @@ namespace Khorde.Behavior
 	{
 		public BTExecNodeId main;
 		public BTExecNodeId parallel;
-		// two branches executing in parallel
-		// the first one determines when the overall execution ends
-		// - this will require a second call stack
-		// - if we want nested parallels, that'll require an arbitrary amount of additional call stacks
-		// - each call stack requires a separate growable allocation
-		// - bt state must be aware of all call stacks?
-		// - or store the call stacks on the call stack?
 
 		public string DumpString()
 		{
-			return $"{{ parallel }}";
+			return $"{{ main={main} parallel={parallel} }}";
+		}
+	}
+
+	public struct ThreadRoot
+	{
+		public BTExecNodeId child;
+		public bool loop;
+
+		public string DumpString()
+		{
+			return $"{{ child={child}, loop={loop} }}";
 		}
 	}
 }

@@ -22,11 +22,13 @@ namespace Khorde.Behavior
 			Wait,
 			Fail,
 			Optional,
-			Catch,
+			Catch, // TODO: catch failures from child threads
 			WriteVar,
 			Query,
 			Parallel,
 			ThreadRoot,
+			// Repeat, // TODO: finite count, condition
+			// Invoke, // TODO: execute callback on main thread (option: execute directly in job)
 		}
 
 		[StructLayout(LayoutKind.Explicit, Pack = 8)]

@@ -14,6 +14,7 @@ namespace Khorde.Behavior.Authoring
 	public unsafe class BTBakingContext : GraphExpressionBakingContext
 	{
 		public Dictionary<NodeKey<IExecNode>, BTExecNodeId> execNodeMap;
+		private int execNodeIdCounter;
 		private BTData* data;
 		private NativeArray<BTExec> builderExecs;
 		private NativeArray<Hash128> builderExecNodeIds;
@@ -35,6 +36,7 @@ namespace Khorde.Behavior.Authoring
 			builderExecs = default;
 			builderExecNodeIds = default;
 			builderExecNodeSubgraphStacks = default;
+			execNodeIdCounter = 0;
 		}
 
 		protected override ref BlobExpressionData ConstructRoot()
@@ -80,11 +82,12 @@ namespace Khorde.Behavior.Authoring
 		public NodeKey<IExecNode> GetNodeKey(IExecNode execNode) => new(subgraphStack.GetKey(), execNode);
 		public void RegisterExecNode(IExecNode execNode)
 		{
-			var index = execNodeMap.Count;
+			var index = execNodeIdCounter;
 			if(index > ushort.MaxValue)
 				throw new Exception("max exec node capacity exceeded");
 			if(!execNodeMap.TryAdd(GetNodeKey(execNode), new BTExecNodeId((ushort)index)))
 				throw new Exception("duplicate node key");
+			execNodeIdCounter += execNode?.NodeCount ?? 1;
 		}
 
 		public BTExecNodeId GetNodeId(IExecNode execNode)
@@ -96,9 +99,11 @@ namespace Khorde.Behavior.Authoring
 		{
 			base.InitializeBake(expressionCount, outputCount);
 
-			builderExecs = AsArray(builder.Allocate(ref data->execs, execNodeMap.Count));
-			builderExecNodeIds = AsArray(builder.Allocate(ref data->execNodeIds, execNodeMap.Count));
-			builderExecNodeSubgraphStacks = AsArray(builder.Allocate(ref data->execNodeSubgraphStacks, execNodeMap.Count));
+			var execCount = execNodeMap.Sum(nk => nk.Key.node?.NodeCount ?? 1);
+
+			builderExecs = AsArray(builder.Allocate(ref data->execs, execCount));
+			builderExecNodeIds = AsArray(builder.Allocate(ref data->execNodeIds, execCount));
+			builderExecNodeSubgraphStacks = AsArray(builder.Allocate(ref data->execNodeSubgraphStacks, execCount));
 		}
 
 		protected override bool BakeGraphNodes()
@@ -126,7 +131,8 @@ namespace Khorde.Behavior.Authoring
 					foreach(var hash in subgraphStack.Hashes)
 						subgraphStackIds[i++] = hash;
 
-					execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index), this);
+					for(int j = 0; j < execNode.NodeCount; j++)
+						execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index + j), this, j);
 				}
 			}
 

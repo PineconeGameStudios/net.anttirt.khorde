@@ -9,7 +9,7 @@ namespace Khorde.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Root : ExecBase, IExecNode
 	{
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			exec.SetData(new Behavior.Root { child = context.GetTargetNodeId(GetOutputPort(0)) });
 		}
@@ -33,7 +33,7 @@ namespace Khorde.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Sequence : ExecBase, IExecNode
 	{
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			exec.type = BTExec.BTExecType.Sequence;
 			exec.data.sequence = new Behavior.Sequence { };
@@ -75,7 +75,9 @@ namespace Khorde.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Selector : ContextNode, IExecNode
 	{
-		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public int NodeCount => 1;
+
+		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			exec.type = BTExec.BTExecType.Selector;
 			exec.data.selector = new Behavior.Selector { };
@@ -124,7 +126,7 @@ namespace Khorde.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Optional : ExecBase, IExecNode
 	{
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			exec.type = BTExec.BTExecType.Optional;
 			exec.data.optional = new Behavior.Optional
@@ -160,7 +162,7 @@ namespace Khorde.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Fail : ExecBase, IExecNode
 	{
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			exec.type = BTExec.BTExecType.Fail;
 			exec.data.fail = new Behavior.Fail { };
@@ -180,7 +182,7 @@ namespace Khorde.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Catch : ExecBase, IExecNode
 	{
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			exec.type = BTExec.BTExecType.Catch;
 			exec.data.@catch = new Behavior.Catch
@@ -219,7 +221,7 @@ namespace Khorde.Behavior.Authoring
 		IPort untilInputPort;
 		IPort durationInputPort;
 
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			exec.type = BTExec.BTExecType.Wait;
 
@@ -284,7 +286,7 @@ namespace Khorde.Behavior.Authoring
 		private IPort varPort;
 		private IPort valuePort;
 
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
 		{
 			int varIndex = context.GetVariableIndex(((IVariableNode)(varPort.firstConnectedPort.GetNode())).variable);
 			exec.type = BTExec.BTExecType.WriteVar;
@@ -328,6 +330,78 @@ namespace Khorde.Behavior.Authoring
 				.WithDisplayName("Value")
 				.WithDataType(type)
 				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	[NodeCategory("Execution")]
+	internal class Parallel : ExecBase, IExecNode
+	{
+		private IPort main;
+		private IPort parallel;
+		private INodeOption loop;
+
+		public override int NodeCount => 2;
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
+		{
+			switch(nodeIndex)
+			{
+			case 0:
+				var mainNode = context.GetTargetNodeId(main);
+				var threadRootNode = mainNode;
+				// when a graph node generates multiple exec nodes, they have sequential ids
+				threadRootNode.index += 1;
+				exec.type = BTExec.BTExecType.Parallel;
+				exec.data.parallel = new Behavior.Parallel
+				{
+					main = mainNode,
+					parallel = threadRootNode,
+				};
+				break;
+
+			case 1:
+				this.loop.TryGetValue<bool>(out var loop);
+				exec.type = BTExec.BTExecType.ThreadRoot;
+				exec.data.threadRoot = new Behavior.ThreadRoot
+				{
+					child = context.GetTargetNodeId(parallel),
+					loop = loop,
+				};
+				break;
+
+			default:
+				break;
+			}
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			loop = context.AddOption<bool>("loop")
+				.WithDisplayName("Loop")
+				.WithTooltip("Loop the parallel branch until the main branch is complete")
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			main = context.AddOutputPort<Exec>("main")
+				.WithDisplayName("Main")
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			parallel = context.AddOutputPort<Exec>("parallel")
+				.WithDisplayName("Parallel")
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 		}
