@@ -74,13 +74,12 @@ namespace Khorde.Behavior
 					if(cycle > 10000)
 						throw new Exception("max cycle count exceeded; almost certainly a bug in the implementation");
 
+					// NOTE: need to get these here because they may be invalidated from cycle to cycle
 					ref var thread = ref threads.ElementAt(threadIndex);
 					var threadId = thread.threadId;
-
 					var frames = allFrames.AsNativeArray().GetSubArray(thread.frameOffset, thread.frameCount);
 
 					var nodeId = frames[^1].nodeId;
-
 					ref BTExec node = ref data.GetNode(nodeId);
 
 					if(trace.IsCreated && cycle == 0)
@@ -383,10 +382,15 @@ namespace Khorde.Behavior
 					case BTExec.BTExecType.Parallel:
 						if(frames[^1].childIndex == 0)
 						{
-							Call(ref data, node.data.parallel.main);
-
-							// start a second thread of execution
+							// Spawn invalidates local ref variables and
+							// buffers, so we leave the Parallel as the current
+							// frame, and run the Call in the second cycle
+							frames.ElementAt(frames.Length - 1).childIndex++;
 							Spawn(ref state, ref data, node.data.parallel.parallel, threadIndex, nodeId, frames.Length, cycle);
+						}
+						else if(frames[^1].childIndex == 1)
+						{
+							Call(ref data, node.data.parallel.main);
 						}
 						else
 						{
@@ -520,7 +524,8 @@ namespace Khorde.Behavior
 
 						unsafe
 						{
-							BTStackFrame* src = (BTStackFrame*)allFrames.GetUnsafePtr();
+							BTStackFrame* data = (BTStackFrame*)allFrames.GetUnsafePtr();
+							BTStackFrame* src = data + nextStack.frameOffset;
 							BTStackFrame* dst = src + ShiftCount;
 							UnsafeUtility.MemMove(dst, src, moveCount * elemSize);
 							UnsafeUtility.MemClear(src, ShiftCount * elemSize);

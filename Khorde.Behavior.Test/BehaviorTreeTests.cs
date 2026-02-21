@@ -668,15 +668,15 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, default, default, 0, trace);
 
 				AssertTrace(
-					Trace(0, BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(0, BTExecType.Root, 1, 1, Event.Start),
-					Trace(0, BTExecType.Root, 1, 1, Event.Call),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Call),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Spawn),
-					Trace(0, BTExecType.Nop, 3, 3, Event.Return),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Abort),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Return),
-					Trace(0, BTExecType.Root, 1, 1, Event.Yield)
+					Trace(0, BTExecType.Nop,      0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,     1,   1, Event.Start),
+					Trace(0, BTExecType.Root,     1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel, 2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel, 2,     2, Event.Call),
+					Trace(0, BTExecType.Nop,      3,       3, Event.Return),
+					Trace(0, BTExecType.Parallel, 2,     2, Event.Abort),
+					Trace(0, BTExecType.Parallel, 2,     2, Event.Return),
+					Trace(0, BTExecType.Root,     1,   1, Event.Yield)
 				);
 			}
 			finally
@@ -724,16 +724,17 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
-					Trace(0, BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(0, BTExecType.Root, 1, 1, Event.Start),
-					Trace(0, BTExecType.Root, 1, 1, Event.Call),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Call),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Spawn),
-					Trace(0, BTExecType.Wait, 3, 3, Event.Wait),
-					Trace(1, BTExecType.ThreadRoot, 4, 1, Event.Start),
-					Trace(1, BTExecType.ThreadRoot, 4, 1, Event.Call),
-					Trace(1, BTExecType.Nop, 5, 2, Event.Return),
-					Trace(1, BTExecType.ThreadRoot, 4, 1, Event.Abort)
+					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Start),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Wait,       3,       3, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 4,   1, Event.Start),
+					Trace(1, BTExecType.ThreadRoot, 4,   1, Event.Call),
+					Trace(1, BTExecType.Nop,        5,     2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 4,   1, Event.Abort)
 				);
 
 				trace.Clear();
@@ -741,8 +742,8 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
-					Trace(0, BTExecType.Wait, 3, 3, Event.Start),
-					Trace(0, BTExecType.Wait, 3, 3, Event.Wait)
+					Trace(0, BTExecType.Wait,       3,       3, Event.Start),
+					Trace(0, BTExecType.Wait,       3,       3, Event.Wait)
 				);
 
 				trace.Clear();
@@ -752,18 +753,18 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
 
 				AssertTrace(
-					Trace(0, BTExecType.Wait, 3, 3, Event.Start),
-					Trace(0, BTExecType.Wait, 3, 3, Event.Return),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Return),
+					Trace(0, BTExecType.Wait,       3,       3, Event.Start),
+					Trace(0, BTExecType.Wait,       3,       3, Event.Return),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
 
-					Trace(0, BTExecType.Root, 1, 1, Event.Call),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Call),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Spawn),
-					Trace(0, BTExecType.Wait, 3, 3, Event.Return),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Abort),
-					Trace(0, BTExecType.Parallel, 2, 2, Event.Return),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Wait,       3,       3, Event.Return),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Abort),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
 
-					Trace(0, BTExecType.Root, 1, 1, Event.Yield)
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
 				);
 			}
 			finally
