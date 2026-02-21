@@ -86,8 +86,20 @@ namespace Khorde.Behavior
 					if(trace.IsCreated && cycle == 0)
 						trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, threadId, frames.Length, cycle));
 
-					if(cycle == 0 && node.type != BTExec.BTExecType.Root && node.type != BTExec.BTExecType.Wait && node.type != BTExec.BTExecType.Query)
-						throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
+					if(cycle == 0)
+					{
+						switch(node.type)
+						{
+						case BTExec.BTExecType.Root:
+						case BTExec.BTExecType.Wait:
+						case BTExec.BTExecType.Query:
+						case BTExec.BTExecType.ThreadRoot:
+							break;
+
+						default:
+							throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
+						}
+					}
 
 					void Trace(ref BTExec node, BTExecTrace.Event @event)
 					{

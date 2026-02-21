@@ -686,6 +686,93 @@ namespace Khorde.Behavior.Test
 			}
 		}
 
+		[Test]
+		public void Test_Fork_Wait()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 100);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+			execs[2].type = BTExecType.Parallel;
+			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(4) };
+			execs[3].SetData(new Wait { until = TestComponent1_field1 });
+			execs[4].type = BTExecType.ThreadRoot;
+			execs[4].data.root = new Root { child = new BTExecNodeId(5) };
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop, 0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root, 1, 1, Event.Start),
+					Trace(0, BTExecType.Root, 1, 1, Event.Call),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Call),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Spawn),
+					Trace(0, BTExecType.Wait, 3, 3, Event.Wait),
+					Trace(1, BTExecType.ThreadRoot, 4, 1, Event.Start),
+					Trace(1, BTExecType.ThreadRoot, 4, 1, Event.Call),
+					Trace(1, BTExecType.Nop, 5, 2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 4, 1, Event.Abort)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait, 3, 3, Event.Start),
+					Trace(0, BTExecType.Wait, 3, 3, Event.Wait)
+				);
+
+				trace.Clear();
+
+				tc1.field1 = true;
+
+				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait, 3, 3, Event.Start),
+					Trace(0, BTExecType.Wait, 3, 3, Event.Return),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Return),
+
+					Trace(0, BTExecType.Root, 1, 1, Event.Call),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Call),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Spawn),
+					Trace(0, BTExecType.Wait, 3, 3, Event.Return),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Abort),
+					Trace(0, BTExecType.Parallel, 2, 2, Event.Return),
+
+					Trace(0, BTExecType.Root, 1, 1, Event.Yield)
+				);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
 		static string GetShortName(System.Type type)
 		{
 			if(type == typeof(int)) return "int";
