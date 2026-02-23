@@ -54,18 +54,24 @@ namespace Khorde.Behavior
 					var entity = entities[0];
 					var em = world.EntityManager;
 					if(em.HasComponent<BehaviorTree>(entity)
-						&& em.HasBuffer<BTStackFrame>(entity))
+						&& em.HasBuffer<BTStackFrame>(entity)
+						&& em.HasBuffer<BTThread>(entity)
+						)
 					{
 						ref var btData = ref em.GetSharedComponent<BehaviorTree>(entity).tree.GetValue<BTData, BehaviorTreeAsset>(BTData.SchemaVersion);
-						var stack = em.GetBuffer<BTStackFrame>(entity);
+						var threads = em.GetBuffer<BTThread>(entity);
+						var frames = em.GetBuffer<BTStackFrame>(entity);
 
-						foreach(var frame in stack)
+						foreach(var thread in threads)
 						{
-							var index = frame.nodeId.index;
-							highlights.Add(btData.execNodeIds[index]);
-							ref var sgstack = ref btData.execNodeSubgraphStacks[index];
-							for(int j = 0; j < sgstack.Length; ++j)
-								highlights.Add(sgstack[j]);
+							foreach(var frame in frames.AsNativeArray().GetSubArray(thread.frameOffset, thread.frameCount))
+							{
+								var index = frame.nodeId.index;
+								highlights.Add(btData.execNodeIds[index]);
+								ref var sgstack = ref btData.execNodeSubgraphStacks[index];
+								for(int j = 0; j < sgstack.Length; ++j)
+									highlights.Add(sgstack[j]);
+							}
 						}
 					}
 				}
