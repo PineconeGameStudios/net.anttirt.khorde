@@ -51,7 +51,8 @@ namespace Khorde.Query
 {
 	public struct QSData
 	{
-		public const int SchemaVersion = 1;
+		public const int SchemaVersion = 2
+			| (BlobExpressionData.SchemaVersion << 16);
 
 		/// <summary>
 		/// Baked data for all expressions in the query graph

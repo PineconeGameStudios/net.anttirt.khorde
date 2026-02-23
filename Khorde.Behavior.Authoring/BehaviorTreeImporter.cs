@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Khorde.Behavior
 {
-	[ScriptedImporter(4, BehaviorTreeGraph.AssetExtension, importQueueOffset: 3)]
+	[ScriptedImporter(BTData.SchemaVersion, BehaviorTreeGraph.AssetExtension, importQueueOffset: 3)]
 	internal class BehaviorTreeImporter : ScriptedImporter
 	{
 		public override void OnImportAsset(AssetImportContext ctx)

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Khorde.Query.Authoring
 {
-	[ScriptedImporter(1, QueryGraph.AssetExtension, importQueueOffset: 2)]
+	[ScriptedImporter(QSData.SchemaVersion, QueryGraph.AssetExtension, importQueueOffset: 2)]
 	internal class QueryGraphImporter : ScriptedImporter
 	{
 		public override void OnImportAsset(AssetImportContext ctx)

@@ -129,7 +129,8 @@ namespace Khorde.Behavior
 
 	public struct BTData
 	{
-		public const int SchemaVersion = 1;
+		public const int SchemaVersion = 5
+			| (BlobExpressionData.SchemaVersion << 16);
 
 		public BlobExpressionData exprData;
 		public BlobArray<BTExec> execs;
