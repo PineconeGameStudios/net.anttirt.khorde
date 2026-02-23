@@ -135,7 +135,8 @@ namespace Khorde.Behavior.Authoring
 					for(int j = 0; j < execNode.NodeCount; j++)
 					{
 						execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index + j), this, j, nodeId);
-						UnityEngine.Debug.Log($"baked {execNode} into {builderExecs.UnsafeElementAt(index + j).DumpString()} at node {nodeId} (pass {j})");
+
+						//UnityEngine.Debug.Log($"baked {execNode} into {builderExecs.UnsafeElementAt(index + j).DumpString()} at node {nodeId} (pass {j})");
 						
 						nodeId.index++;
 					}
