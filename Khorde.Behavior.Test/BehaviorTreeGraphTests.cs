@@ -83,27 +83,7 @@ namespace Khorde.Behavior.Test
 				//foreach(var line in dump)
 				//	UnityEngine.Debug.Log(line);
 
-				ref var localComponents = ref data.Value.exprData.localComponents;
-
-				NativeArray<UnsafeComponentReference> comps =
-					new NativeArray<UnsafeComponentReference>(localComponents.Length, Allocator.Temp);
-
-				for(int i = 0; i < localComponents.Length; ++i)
-				{
-					var type = localComponents[i].ResolveComponentType();
-					var typeIndex = type.TypeIndex;
-					if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
-						comps[i] = UnsafeComponentReference.Make(ref moveTarget);
-					else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
-						comps[i] = UnsafeComponentReference.Make(ref localTransform);
-					else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
-						comps[i] = UnsafeComponentReference.Make(ref targetEntity);
-					else
-						throw new Exception($"component {type.GetManagedType().FullName} not available in test");
-				}
-
-				NativeArray<UntypedComponentLookup> lookups = new NativeArray<UntypedComponentLookup>(1, Allocator.Temp);
-				lookups[0] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
+				RegisterTestComponents(ref data.Value, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
 
 				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
@@ -180,32 +160,7 @@ namespace Khorde.Behavior.Test
 			//foreach(var line in dump)
 			//	UnityEngine.Debug.Log(line);
 
-			ref var localComponents = ref data.exprData.localComponents;
-
-			var comps = new NativeArray<UnsafeComponentReference>(localComponents.Length, Allocator.Temp);
-
-			for(int i = 0; i < localComponents.Length; ++i)
-			{
-				var type = localComponents[i].ResolveComponentType();
-				var typeIndex = type.TypeIndex;
-				if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
-					comps[i] = UnsafeComponentReference.Make(ref moveTarget);
-				else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
-					comps[i] = UnsafeComponentReference.Make(ref localTransform);
-				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
-					comps[i] = UnsafeComponentReference.Make(ref targetEntity);
-				else
-					throw new Exception($"component {type.GetManagedType().FullName} not available in test");
-			}
-
-			var lookups = new NativeArray<UntypedComponentLookup>(data.exprData.lookupComponents.Length, Allocator.Temp);
-			for(int i = 0; i < lookups.Length; ++i)
-			{
-				var type = data.exprData.lookupComponents[i].ResolveComponentType();
-				var typeIndex = type.TypeIndex;
-				if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
-					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
-			}
+			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
 
 			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
 
@@ -223,6 +178,162 @@ namespace Khorde.Behavior.Test
 
 		}
 
+		[Test]
+		public void Test_Parallel_Wait()
+		{
+			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Parallel_Wait.btg");
+			ref var data = ref asset.GetValue(BTData.SchemaVersion);
+			data.exprData.RuntimeInitialize(world.Unmanaged);
+
+			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
+			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
+
+			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
+			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
+			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+
+			BTState state = default;
+			TestMoveTarget moveTarget = default;
+			LocalTransform localTransform = LocalTransform.FromScale(1);
+			TestNpcTargetEntity targetEntity = default;
+
+			var dump = new List<string>();
+			BehaviorTreeExecution.DumpNodes(ref data, dump);
+
+			//foreach(var line in dump)
+			//	UnityEngine.Debug.Log(line);
+
+			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+
+			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
+
+			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			Assert.AreEqual(1, blackboardBytes.ReinterpretLoad<float>(0));
+
+			AssertTrace(
+				Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+				Trace(0, BTExecType.Root,       1,   1, Event.Start),
+				Trace(0, BTExecType.Root,       1,   1, Event.Call),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+				Trace(0, BTExecType.Wait,       4,       3, Event.Wait),
+
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Start),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Call),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.WriteVar,   6,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.Optional,   7,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.Nop,        0,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Return),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Yield)
+			);
+
+			trace.Clear();
+
+			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			Assert.AreEqual(2, blackboardBytes.ReinterpretLoad<float>(0));
+
+			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
+
+			AssertTrace(
+				Trace(0, BTExecType.Wait,       4,       3, Event.Start),
+				Trace(0, BTExecType.Wait,       4,       3, Event.Wait),
+
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Start),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Call),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.WriteVar,   6,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.Optional,   7,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.Nop,        0,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Return),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Yield),
+
+				Trace(0, BTExecType.Wait,       4,       3, Event.Start),
+				Trace(0, BTExecType.Wait,       4,       3, Event.Wait),
+
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Start),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Call),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.WriteVar,   6,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.Optional,   7,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
+				Trace(1, BTExecType.Nop,        0,       3, Event.Return),
+				Trace(1, BTExecType.Sequence,   5,     2, Event.Return),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Yield)
+
+			);
+
+			moveTarget.enabled = true;
+
+			trace.Clear();
+
+			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
+
+			AssertTrace(
+				Trace(0, BTExecType.Wait,       4,       3, Event.Start),
+				Trace(0, BTExecType.Wait,       4,       3, Event.Return),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Abort),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
+
+				// start another cycle of the BT
+				Trace(0, BTExecType.Root,       1,   1, Event.Call),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+
+				// the wait condition completes immediately so the parallel
+				// gets aborted before it has a chance to run
+				Trace(0, BTExecType.Wait,       4,       3, Event.Return),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Abort),
+				Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
+				Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+			);
+		}
+
+		private void RegisterTestComponents(
+			ref BTData data,
+			ref TestMoveTarget moveTarget,
+			ref LocalTransform localTransform,
+			ref TestNpcTargetEntity targetEntity,
+			out NativeArray<UnsafeComponentReference> comps,
+			out NativeArray<UntypedComponentLookup> lookups)
+		{
+			ref var localComponents = ref data.exprData.localComponents;
+			comps = new NativeArray<UnsafeComponentReference>(localComponents.Length, Allocator.Temp);
+			lookups = new NativeArray<UntypedComponentLookup>(data.exprData.lookupComponents.Length, Allocator.Temp);
+			for(int i = 0; i < localComponents.Length; ++i)
+			{
+				var type = localComponents[i].ResolveComponentType();
+				var typeIndex = type.TypeIndex;
+				if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
+					comps[i] = UnsafeComponentReference.Make(ref moveTarget);
+				else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
+					comps[i] = UnsafeComponentReference.Make(ref localTransform);
+				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
+					comps[i] = UnsafeComponentReference.Make(ref targetEntity);
+				else
+					throw new Exception($"component {type.GetManagedType().FullName} not available in test");
+			}
+
+			for(int i = 0; i < lookups.Length; ++i)
+			{
+				var type = data.exprData.lookupComponents[i].ResolveComponentType();
+				var typeIndex = type.TypeIndex;
+				if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestMoveTarget>(isReadOnly: true);
+				if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
+				if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestNpcTargetEntity>(isReadOnly: true);
+			}
+		}
+
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());
 
 		static BTExecTrace Trace(BTExecType type, ushort nodeId, int depth, Event @event)
@@ -234,6 +345,8 @@ namespace Khorde.Behavior.Test
 		[TearDown]
 		public void TearDown()
 		{
+			TestContext.Out.WriteLine(string.Join("\n", trace.AsNativeArray().AsSpan().ToArray()));
+
 			world.Dispose();
 		}
 	}

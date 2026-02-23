@@ -124,7 +124,8 @@ namespace Khorde.Behavior.Authoring
 				}
 				else if(node is IExecNode execNode)
 				{
-					var index = GetNodeId(execNode).index;
+					var nodeId = GetNodeId(execNode);
+					var index = nodeId.index;
 					builderExecNodeIds[index] = execNode.Guid;
 					var subgraphStackIds = builder.Allocate(ref builderExecNodeSubgraphStacks.UnsafeElementAt(index), subgraphStack.Depth);
 					int i = 0;
@@ -132,7 +133,12 @@ namespace Khorde.Behavior.Authoring
 						subgraphStackIds[i++] = hash;
 
 					for(int j = 0; j < execNode.NodeCount; j++)
-						execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index + j), this, j);
+					{
+						execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index + j), this, j, nodeId);
+						UnityEngine.Debug.Log($"baked {execNode} into {builderExecs.UnsafeElementAt(index + j).DumpString()} at node {nodeId} (pass {j})");
+						
+						nodeId.index++;
+					}
 				}
 			}
 

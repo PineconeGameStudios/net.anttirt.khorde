@@ -89,13 +89,13 @@
       "dependencies": {}
     },
     "com.unity.graphtoolkit": {
-      "version": "https://github.com/PineconeGameStudios/com.unity.graphtoolkit.git",
+      "version": "https://github.com/PineconeGameStudios/com.unity.graphtoolkit.git#0.4.0-exp.2-khorde.2",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.modules.uielements": "1.0.0"
       },
-      "hash": "a4640f5b12e5574eaaf5a0b9f182844244d3b8ec"
+      "hash": "6266d67891b269690f5c869886cf32d871dd8262"
     },
     "com.unity.ide.rider": {
       "version": "3.0.38",

@@ -15,6 +15,8 @@ namespace Khorde.Behavior
 			this.index = index;
 		}
 
+		public override string ToString() => $"Node({index})";
+
 		public bool Equals(BTExecNodeId other)
 		{
 			return index == other.index;

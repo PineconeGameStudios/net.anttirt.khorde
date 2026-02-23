@@ -14,7 +14,7 @@ namespace Khorde.Behavior.Authoring
 		private IPort resultCountVarPort;
 		private INodeOption queryOption;
 
-		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex)
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
 			if(resultVarPort == null)
 			{

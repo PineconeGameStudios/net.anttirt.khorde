@@ -98,7 +98,7 @@ namespace Khorde.Behavior
 							break;
 
 						default:
-							throw new InvalidOperationException($"BUG: Execute() started with node type {node.type}");
+							throw new InvalidOperationException($"BUG: Execute() on thread {{{threadId}}} started with node type {node.type}");
 						}
 					}
 
@@ -157,11 +157,13 @@ namespace Khorde.Behavior
 						Pop(threadIndex);
 					}
 
-					void Call(ref BTData data, BTExecNodeId node)
+					void Call(ref BTData data, BTExecNodeId node, bool incrementChildIndex = true)
 					{
 						Trace1(ref data, BTExecTrace.Event.Call);
 
-						frames.UnsafeElementAt(frames.Length - 1).childIndex++;
+						if(incrementChildIndex)
+							frames.UnsafeElementAt(frames.Length - 1).childIndex++;
+
 						//frames.Add(node);
 						Push(threadIndex, node);
 					}
@@ -204,14 +206,7 @@ namespace Khorde.Behavior
 							threadRootVisited = true;
 
 							// thread start
-							bool loop = node.data.threadRoot.loop;
-
-							Call(ref data, node.data.threadRoot.child);
-
-							if(loop)
-							{
-								frames.UnsafeElementAt(frames.Length - 2).childIndex--;
-							}
+							Call(ref data, node.data.threadRoot.child, incrementChildIndex: !node.data.threadRoot.loop);
 
 							// NOTE: run more cycles to continue executing this
 							// thread as far as it goes
