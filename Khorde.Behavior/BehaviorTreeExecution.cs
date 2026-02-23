@@ -34,6 +34,8 @@ namespace Khorde.Behavior
 			Catch,
 		}
 
+		const float ThreadWaitStartTime_Invalid = -1;
+
 		public static void Execute(
 			ref BTData data,
 			ref BTState state,
@@ -276,7 +278,7 @@ namespace Khorde.Behavior
 					case BTExec.BTExecType.Wait:
 						if(node.data.wait.duration.IsCreated)
 						{
-							if(thread.waitStartTime == 0)
+							if(thread.waitStartTime == ThreadWaitStartTime_Invalid)
 							{
 								thread.waitStartTime = now;
 							}
@@ -284,7 +286,7 @@ namespace Khorde.Behavior
 							float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
 							if(now - thread.waitStartTime >= duration)
 							{
-								thread.waitStartTime = 0;
+								thread.waitStartTime = ThreadWaitStartTime_Invalid;
 								Return(ref data, ref node);
 							}
 							else
@@ -447,7 +449,7 @@ namespace Khorde.Behavior
 					frameCount = 0,
 					frameOffset = 0,
 					ownerThreadIndex = ownerThreadIndex,
-					waitStartTime = float.NegativeInfinity,
+					waitStartTime = ThreadWaitStartTime_Invalid,
 					threadId = ownerThreadIndex == -1 ? 0 : ++state.threadIdCounter,
 				};
 
