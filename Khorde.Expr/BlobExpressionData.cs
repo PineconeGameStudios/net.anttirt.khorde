@@ -221,9 +221,9 @@ namespace Khorde.Expr
 		/// <summary>
 		/// Initialize expression function pointers, patch strong object refs, start loading weak object refs, etc.
 		/// </summary>
-		public void RuntimeInitialize(WorldUnmanaged world)
+		public void RuntimeInitialize(WorldUnmanaged world, bool forced = false)
 		{
-			if(IsRuntimeInitialized(world))
+			if(!forced && IsRuntimeInitialized(world))
 			{
 				//Debug.Log($"BlobExpressionData.RuntimeInitialize(world: {world.SequenceNumber}, domain: {DomainCounter.Data}) already done");
 				return;

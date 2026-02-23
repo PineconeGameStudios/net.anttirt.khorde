@@ -116,6 +116,8 @@ namespace Khorde.Behavior
 					dataHash = tree.tree.GetDataHash(),
 				};
 
+				tree.tree.GetHandle<BTData, BehaviorTreeAsset>(BTData.SchemaVersion).ValueRW.exprData.RuntimeInitialize(state.WorldUnmanaged, forced: true);
+
 				foreach(ref var holder in typeHandleHolder.AsNativeArray().AsSpan())
 				{
 					holder.typeHandle.Update(ref state);

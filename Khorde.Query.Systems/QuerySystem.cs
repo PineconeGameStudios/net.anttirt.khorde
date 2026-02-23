@@ -89,6 +89,8 @@ namespace Khorde.Query
 				if(!data.IsCreated)
 					throw new InvalidOperationException("failed to get data handle from query graph asset");
 
+				data.ValueRW.exprData.RuntimeInitialize(state.WorldUnmanaged, forced: true);
+
 				var job = new ExecuteQueryJob
 				{
 					query = asset,
