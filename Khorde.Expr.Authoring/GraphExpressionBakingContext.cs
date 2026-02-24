@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
+using Debug = UnityEngine.Debug;
 
 namespace Khorde.Expr.Authoring
 {
@@ -14,6 +17,7 @@ namespace Khorde.Expr.Authoring
 		private Dictionary<NodeKey<IExprNode>, ushort> exprNodeMap = new();
 		private Dictionary<NodeKey<IVariable>, ushort> varNodeMap = new();
 		private Dictionary<NodeKey<IVariableNode>, ushort> outputNodeMap = new();
+		private Dictionary<NodeKey<IVariableNode>, ushort> inputNodeMap = new();
 		private ushort exprNodeCounter;
 		protected static readonly UnityEngine.Hash128 globalKey = new UnityEngine.Hash128(0xddddddddddddddddul, 0xddddddddddddddddul);
 
@@ -118,6 +122,8 @@ namespace Khorde.Expr.Authoring
 
 		public ExpressionRef GetExpressionRef(IPort dstPort)
 		{
+			using var _l = TraceScope(dstPort.name);
+
 			if(!dstPort.isConnected)
 				return HandleDisconnectedPort(dstPort);
 
@@ -134,25 +140,31 @@ namespace Khorde.Expr.Authoring
 
 			while(true)
 			{
+				Trace($"srcNode={NodeName(srcNode)} port={srcPort.name}");
+
 				if(srcNode is IVariableNode varNode)
 				{
 					if(varNode.variable.variableKind == VariableKind.Local)
 					{
 						return ExpressionRef.Node(varNodeMap[GetNodeKey(varNode.variable)], 0);
 					}
-					else
+					else if(varNode.variable.variableKind == VariableKind.Input)
 					{
+						// exit subgraph
 						if(subgraphStack.Depth == 0)
 						{
-							AddError(varNode, $"node {varNode} but the subgraph stack is empty; the root graph appears to be a subgraph");
+							// TODO: Define a call interface and bake input
+							// variables for standalone expression graphs.
+							AddError(varNode, $"top level input variables not supported");
 							return default;
 						}
 
 						dstPort = subgraphStack.Current.GetInputPortForVariable(varNode.variable);
+
 						if(!dstPort.isConnected)
 							return HandleDisconnectedPort(dstPort);
 
-						subgraphStack.Pop();
+						PopSubgraph();
 
 						srcPorts.Clear();
 						dstPort.GetConnectedPorts(srcPorts);
@@ -163,13 +175,44 @@ namespace Khorde.Expr.Authoring
 						srcPort = srcPorts[0];
 						srcNode = srcPort.GetNode();
 					}
+					else if(varNode.variable.variableKind == VariableKind.Output)
+					{
+						// output variable node within a subgraph; just follow normally
+						dstPort = varNode.GetInputPort(0);
+
+						srcPorts.Clear();
+						dstPort.GetConnectedPorts(srcPorts);
+
+						if(srcPorts.Count > 1)
+							AddError(dstPort.GetNode(), $"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
+
+						srcPort = srcPorts[0];
+						srcNode = srcPort.GetNode();
+					}
+					else
+					{
+						AddError(srcNode, $"unsupported variable kind {varNode.variable.variableKind}");
+					}
 				}
-				// else if(srcNode is ISubgraphNode subgraphNode)
-				// {
-				// 	errors.Add("subgraph expr sources not implemented");
-				// 	// TODO: descend into subgraph
-				// 	return default;
-				// }
+				else if(srcNode is ISubgraphNode subgraphNode)
+				{
+					PushSubgraph(subgraphNode);
+
+					var subgraphVariable = subgraphNode.GetVariableForOutputPort(srcPort);
+					var nodes = subgraphNode.GetSubgraph().GetNodes().OfType<IVariableNode>().Where(v => v.variable == subgraphVariable).ToArray();
+					if(nodes.Length != 1)
+					{
+						if(nodes.Length > 1)
+							AddError(subgraphNode, "output variable within subgraph has multiple connections");
+						else
+							AddError(subgraphNode, "output variable within subgraph has no connections");
+
+						return default;
+					}
+
+					srcNode = nodes[0];
+					srcPort = srcNode.GetInputPort(0);
+				}
 				else if(srcNode is IExprNode exprNode)
 				{
 					ushort outputIndex = 0;
@@ -192,6 +235,16 @@ namespace Khorde.Expr.Authoring
 						AddError(exprNode, $"couldn't find src port index");
 
 					return ExpressionRef.Node(exprNodeMap[GetNodeKey(exprNode)], outputIndex);
+				}
+				else if(srcNode is IConstantNode constNode)
+				{
+					if(!constNode.TryGetValue(out var value))
+					{
+						AddError(constNode, $"couldn't retrieve constant value from constant node");
+						return default;
+					}
+
+					return Const(value);
 				}
 				else
 				{
@@ -229,6 +282,8 @@ namespace Khorde.Expr.Authoring
 
 		void RegisterExprNodes(Graph graph)
 		{
+			using var _ = TraceScope(graph.name);
+
 			foreach(var variable in graph.GetVariables())
 			{
 				if(variable.variableKind == VariableKind.Local)
@@ -266,6 +321,14 @@ namespace Khorde.Expr.Authoring
 					else if(varNode.variable.variableKind == VariableKind.Local)
 					{
 						RegisterVariableRead(varNode.variable);
+					}
+					else if(varNode.variable.variableKind == VariableKind.Input)
+					{
+						RegisterInput(varNode);
+					}
+					else
+					{
+						AddError(this, $"unsupported variable kind {varNode.variable.variableKind}");
 					}
 				}
 
@@ -319,8 +382,17 @@ namespace Khorde.Expr.Authoring
 				throw new InvalidOperationException("duplicate node key");
 		}
 
+		private void RegisterInput(IVariableNode outputNode)
+		{
+			var index = inputNodeMap.Count;
+			if(!inputNodeMap.TryAdd(GetNodeKey(outputNode), (ushort)index))
+				throw new InvalidOperationException("duplicate node key");
+		}
+
 		void BakeExprNodes(Graph graph)
 		{
+			using var _ = TraceScope(graph.name);
+
 			foreach(var node in graph.GetNodes())
 			{
 				if(node is ISubgraphNode subgraphNode)
@@ -339,14 +411,20 @@ namespace Khorde.Expr.Authoring
 				{
 					if(varNode.variable.variableKind == VariableKind.Output)
 					{
-						var outputIndex = outputNodeMap[GetNodeKey(varNode)];
-						var input = varNode.GetInputPort(0);
-						builderOutputs[outputIndex] = new ExpressionOutput
+						// NOTE: Baking these is only relevant for standalone
+						// expressions, not for subgraphs.
+
+						if(graph == rootGraph)
 						{
-							expression = GetExpressionRef(input),
-							valueType = input.dataType.GetExpressionValueType(),
-							valueSize = (ushort)UnsafeUtility.SizeOf(input.dataType),
-						};
+							var outputIndex = outputNodeMap[GetNodeKey(varNode)];
+							var input = varNode.GetInputPort(0);
+							builderOutputs[outputIndex] = new ExpressionOutput
+							{
+								expression = GetExpressionRef(input),
+								valueType = input.dataType.GetExpressionValueType(),
+								valueSize = (ushort)UnsafeUtility.SizeOf(input.dataType),
+							};
+						}
 					}
 					else if(varNode.variable.variableKind == VariableKind.Local)
 					{
@@ -357,6 +435,22 @@ namespace Khorde.Expr.Authoring
 						{
 							index = GetVariableIndex(varNode.variable),
 						});
+					}
+					else if(varNode.variable.variableKind == VariableKind.Input)
+					{
+						// NOTE: Baking these is only relevant for standalone
+						// expressions, not for subgraphs.
+
+						if(graph == rootGraph)
+						{
+							// TODO: Define a call interface and bake input
+							// variables for standalone expression graphs.
+							AddError(varNode, "top-level input variables not supported");
+						}
+					}
+					else
+					{
+						AddError(varNode, $"unsupported var kind {varNode.variable.variableKind}");
 					}
 				}
 			}
@@ -385,11 +479,68 @@ namespace Khorde.Expr.Authoring
 			public void Dispose()
 			{
 				context.subgraphStack = saved;
+				context.Trace($"restore subgr; stack = [{string.Join(", ", context.subgraphStack.Hashes.Select(h => h.ToString().Substring(0, 8)))}]");
 			}
 		}
 
 		public SubgraphStackStackSave SaveSubgraph() { return new SubgraphStackStackSave(this); }
-		public void PushSubgraph(ISubgraphNode subgraphNode) => subgraphStack.Push(subgraphNode);
-		public void PopSubgraph() => subgraphStack.Pop();
+
+		public void PushSubgraph(ISubgraphNode subgraphNode)
+		{
+			subgraphStack.Push(subgraphNode);
+			Trace($"push subgraph {subgraphNode.Guid}; stack = [{string.Join(", ", subgraphStack.Hashes.Select(h => h.ToString().Substring(0, 8)))}]");
+		}
+		public void PopSubgraph()
+		{
+			var cur = subgraphStack.Current;
+			subgraphStack.Pop();
+			Trace($"pop subgraph  {cur.Guid}; stack = [{string.Join(", ", subgraphStack.Hashes.Select(h => h.ToString().Substring(0, 8)))}]");
+		}
+
+		protected bool traceBaking = false;
+		protected int logDepth;
+		protected string logPad => new string(' ', 4 * logDepth);
+
+		protected struct TracingScope : IDisposable
+		{
+			public GraphExpressionBakingContext parent;
+			public string name;
+			public string msg;
+
+			public TracingScope(GraphExpressionBakingContext parent, string name, string msg)
+			{
+				this.parent = parent;
+				this.name = name;
+				this.msg = msg;
+
+				if(parent.traceBaking)
+					Debug.Log($"{parent.logPad}{name}({msg}) {{");
+
+				++parent.logDepth;
+			}
+
+			public void Dispose()
+			{
+				--parent.logDepth;
+
+				if(parent.traceBaking)
+					Debug.Log($"{parent.logPad}}}");
+			}
+		}
+
+		protected TracingScope TraceScope(string msg, [CallerMemberName] string name = "") => new TracingScope(this, name, msg);
+		protected void Trace(string msg)
+		{
+			if(traceBaking)
+				Debug.Log(logPad + msg);
+		}
+
+		static string NodeName(INode node) => node switch
+		{
+			IVariableNode varNode => varNode.variable.name,
+			ISubgraphNode subgraphNode => subgraphNode.GetSubgraph().name,
+			IConstantNode constNode => $"({constNode.dataType.Name}) {(constNode.TryGetValue(out var value) ? value.ToString() : "")}",
+			_ => $"{node.GetType().Name}({node.Guid.ToString().Substring(0, 8)})",
+		};
 	}
 }

@@ -288,7 +288,13 @@ namespace Khorde.Behavior.Authoring
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
-			int varIndex = context.GetVariableIndex(((IVariableNode)(varPort.firstConnectedPort.GetNode())).variable);
+			if(varPort.firstConnectedPort?.GetNode() is not IVariableNode varNode)
+			{
+				context.AddError(this, "variable port must be connected directly to a variable");
+				return;
+			}
+
+			int varIndex = context.GetVariableIndex(varNode.variable);
 			exec.type = BTExec.BTExecType.WriteVar;
 			exec.data.writeVar = new Behavior.WriteVar
 			{

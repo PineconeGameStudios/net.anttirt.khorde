@@ -296,6 +296,57 @@ namespace Khorde.Behavior.Test
 			);
 		}
 
+		[Test]
+		public void Test_Subgraph()
+		{
+			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_ExprSubgraph.btg");
+			ref var data = ref asset.GetValue(BTData.SchemaVersion);
+			data.exprData.RuntimeInitialize(world.Unmanaged);
+
+			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
+			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
+
+			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
+			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
+			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+
+			BTState state = default;
+			TestMoveTarget moveTarget = default;
+			LocalTransform localTransform = LocalTransform.FromScale(1);
+			TestNpcTargetEntity targetEntity = default;
+
+			var dump = new List<string>();
+			BehaviorTreeExecution.DumpNodes(ref data, dump);
+
+			//foreach(var line in dump)
+			//	UnityEngine.Debug.Log(line);
+
+			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+
+			var blackboardVars = blackboardBytes.Reinterpret<int>(1);
+
+			Assert.AreEqual(0, blackboardVars[0]);
+			Assert.AreEqual(0, blackboardVars[1]);
+
+			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+
+			Assert.AreEqual(7, blackboardVars[0]);
+			Assert.AreEqual(14, blackboardVars[1]);
+
+			AssertTrace(
+				Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+				Trace(0, BTExecType.Root,       1,   1, Event.Start),
+				Trace(0, BTExecType.Root,       1,   1, Event.Call),
+				Trace(0, BTExecType.Sequence,   3,     2, Event.Call),
+				Trace(0, BTExecType.WriteVar,   2,       3, Event.Return),
+				Trace(0, BTExecType.Sequence,   3,     2, Event.Call),
+				Trace(0, BTExecType.WriteVar,   4,       3, Event.Return),
+				Trace(0, BTExecType.Sequence,   3,     2, Event.Return),
+				Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+			);
+
+		}
+
 		private void RegisterTestComponents(
 			ref BTData data,
 			ref TestMoveTarget moveTarget,

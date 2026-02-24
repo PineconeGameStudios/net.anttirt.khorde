@@ -114,6 +114,8 @@ namespace Khorde.Behavior.Authoring
 
 		void BakeExecNodes(Graph graph)
 		{
+			using var _ = TraceScope(graph.name);
+
 			foreach(var node in graph.GetNodes())
 			{
 				if(node is ISubgraphNode subgraphNode)
@@ -162,6 +164,8 @@ namespace Khorde.Behavior.Authoring
 
 		void RegisterExecNodes(Graph graph)
 		{
+			using var _ = TraceScope(graph.name);
+
 			foreach(var node in graph.GetNodes())
 			{
 				if(node is ISubgraphNode subgraphNode)
