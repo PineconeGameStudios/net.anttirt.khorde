@@ -140,26 +140,39 @@ namespace Khorde.Expr.Authoring
 	[Serializable][NodeCategory("Math/Mul")] internal class MulFloat4 : OpBase<float4, BTBinaryOp_Mul> { }
 	[Serializable][NodeCategory("Math/Div")] internal class DivFloat4 : OpBase<float4, BTBinaryOp_Div> { }
 
-	internal abstract class LengthBase<TExpr, TArg> : ExprBase where TExpr : unmanaged, IExpression<TArg> where TArg : unmanaged
+	internal abstract class UnaryBase<TExpr, TIn, TOut> : ExprBase
+		where TExpr : unmanaged, IExpression<TIn>
+		where TIn : unmanaged
+		where TOut : unmanaged
 	{
-		public override string Title => "Length";
+		private IPort input;
+		private IPort output;
+
+		public override string Title
+		{
+			get
+			{
+				var name = typeof(TExpr).Name;
+				return name.Substring(0, name.Length - 1);
+			}
+		}
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			TExpr expr = default;
-			expr.Input0 = context.GetExpressionRef(GetInputPort(0));
+			expr.Input0 = context.GetExpressionRef(input);
 			context.CreateExpression(storage, expr);
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<TArg>("input")
+			input = context.AddInputPort<TIn>("input")
 				.WithDisplayName("")
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			context.AddOutputPort<float>("output")
+			output = context.AddOutputPort<TOut>("output")
 				.WithDisplayName("")
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.WithPortCapacity(PortCapacity.Multi)
@@ -167,7 +180,72 @@ namespace Khorde.Expr.Authoring
 		}
 	}
 
-	[Serializable][NodeCategory("Math/Length")] internal class LengthFloat2Node : LengthBase<LengthFloat2, float2> { }
-	[Serializable][NodeCategory("Math/Length")] internal class LengthFloat3Node : LengthBase<LengthFloat3, float3> { }
-	[Serializable][NodeCategory("Math/Length")] internal class LengthFloat4Node : LengthBase<LengthFloat4, float4> { }
+	[Serializable][NodeCategory("Math/Length")] internal class LengthFloat2Node : UnaryBase<LengthFloat2, float2, float> { }
+	[Serializable][NodeCategory("Math/Length")] internal class LengthFloat3Node : UnaryBase<LengthFloat3, float3, float> { }
+	[Serializable][NodeCategory("Math/Length")] internal class LengthFloat4Node : UnaryBase<LengthFloat4, float4, float> { }
+	[Serializable][NodeCategory("Math/Normalize")] internal class Normalize2Node : UnaryBase<Normalize2, float2, float2> { }
+	[Serializable][NodeCategory("Math/Normalize")] internal class Normalize3Node : UnaryBase<Normalize3, float3, float3> { }
+	[Serializable][NodeCategory("Math/Normalize")] internal class Normalize4Node : UnaryBase<Normalize4, float4, float4> { }
+	[Serializable][NodeCategory("Math/Floor")] internal class Floor2Node : UnaryBase<Floor2, float2, int2> { }
+	[Serializable][NodeCategory("Math/Floor")] internal class Floor3Node : UnaryBase<Floor3, float3, int3> { }
+	[Serializable][NodeCategory("Math/Floor")] internal class Floor4Node : UnaryBase<Floor4, float4, int4> { }
+	[Serializable][NodeCategory("Math/Ceiling")] internal class Ceiling2Node : UnaryBase<Ceiling2, float2, int2> { }
+	[Serializable][NodeCategory("Math/Ceiling")] internal class Ceiling3Node : UnaryBase<Ceiling3, float3, int3> { }
+	[Serializable][NodeCategory("Math/Ceiling")] internal class Ceiling4Node : UnaryBase<Ceiling4, float4, int4> { }
+	[Serializable][NodeCategory("Math/ToFloat")] internal class ToFloat2Node : UnaryBase<ToFloat2, int2, float2> { }
+	[Serializable][NodeCategory("Math/ToFloat")] internal class ToFloat3Node : UnaryBase<ToFloat3, int3, float3> { }
+	[Serializable][NodeCategory("Math/ToFloat")] internal class ToFloat4Node : UnaryBase<ToFloat4, int4, float4> { }
+
+	internal abstract class BinaryBase<TExpr, TIn0, TIn1, TOut> : ExprBase
+		where TExpr : unmanaged, IExpression<TIn0, TIn1>
+		where TIn0 : unmanaged
+		where TIn1 : unmanaged
+		where TOut : unmanaged
+	{
+		private IPort input0;
+		private IPort input1;
+		private IPort output;
+
+		public override string Title
+		{
+			get
+			{
+				var name = typeof(TExpr).Name;
+				return name.Substring(0, name.Length - 1);
+			}
+		}
+
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
+		{
+			TExpr expr = default;
+			expr.Input0 = context.GetExpressionRef(input0);
+			expr.Input1 = context.GetExpressionRef(input1);
+			context.CreateExpression(storage, expr);
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			input0 = context.AddInputPort<TIn0>("input0")
+				.WithDisplayName("")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			input1 = context.AddInputPort<TIn1>("input1")
+				.WithDisplayName("")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			output = context.AddOutputPort<TOut>("output")
+				.WithDisplayName("")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Multi)
+				.Build();
+		}
+	}
+
+	[Serializable][NodeCategory("Math/Rescale")] internal class Rescale2Node : BinaryBase<Rescale2, float2, float, float2> { }
+	[Serializable][NodeCategory("Math/Rescale")] internal class Rescale3Node : BinaryBase<Rescale3, float3, float, float3> { }
+	[Serializable][NodeCategory("Math/Rescale")] internal class Rescale4Node : BinaryBase<Rescale4, float4, float, float4> { }
 }

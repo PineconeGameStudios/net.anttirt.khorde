@@ -232,4 +232,172 @@ namespace Khorde.Expr
 			untypedResult.AsSingle<float>() = math.length(input0);
 		}
 	}
+
+	public partial struct Normalize2 : IExpression<float2>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float2 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float2>() = math.normalizesafe(input0);
+		}
+	}
+
+	public partial struct Normalize3 : IExpression<float3>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float3>() = math.normalizesafe(input0);
+		}
+	}
+
+	public partial struct Normalize4 : IExpression<float4>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float4>() = math.normalizesafe(input0);
+		}
+	}
+
+	public partial struct Floor2 : IExpression<float2>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float2 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int2>() = (int2)math.floor(input0);
+		}
+	}
+
+	public partial struct Floor3 : IExpression<float3>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int3>() = (int3)math.floor(input0);
+		}
+	}
+
+	public partial struct Floor4 : IExpression<float4>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int4>() = (int4)math.floor(input0);
+		}
+	}
+
+	public partial struct Ceiling2 : IExpression<float2>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float2 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int2>() = (int2)math.ceil(input0);
+		}
+	}
+
+	public partial struct Ceiling3 : IExpression<float3>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int3>() = (int3)math.ceil(input0);
+		}
+	}
+
+	public partial struct Ceiling4 : IExpression<float4>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int4>() = (int4)math.ceil(input0);
+		}
+	}
+
+	public partial struct ToFloat2 : IExpression<int2>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in int2 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float2>() = input0;
+		}
+	}
+
+	public partial struct ToFloat3 : IExpression<int3>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in int3 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float3>() = input0;
+		}
+	}
+
+	public partial struct ToFloat4 : IExpression<int4>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in int4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float4>() = input0;
+		}
+	}
+
+	public partial struct Rescale2 : IExpression<float2, float>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float2 input0, in float input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float2>() = math.normalizesafe(input0) * input1;
+		}
+	}
+
+	public partial struct Rescale3 : IExpression<float3, float>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, in float input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float3>() = math.normalizesafe(input0) * input1;
+		}
+	}
+
+	public partial struct Rescale4 : IExpression<float4, float>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, in float input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float4>() = math.normalizesafe(input0) * input1;
+		}
+	}
 }

@@ -347,6 +347,61 @@ namespace Khorde.Behavior.Test
 
 		}
 
+		[Test]
+		public void Test_Math()
+		{
+			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Math.btg");
+			ref var data = ref asset.GetValue(BTData.SchemaVersion);
+			data.exprData.RuntimeInitialize(world.Unmanaged);
+
+			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
+			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
+
+			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
+			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
+			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+
+			BTState state = default;
+			TestMoveTarget moveTarget = default;
+			LocalTransform localTransform = LocalTransform.FromScale(1);
+			TestNpcTargetEntity targetEntity = default;
+
+			var dump = new List<string>();
+			BehaviorTreeExecution.DumpNodes(ref data, dump);
+
+			//foreach(var line in dump)
+			//	UnityEngine.Debug.Log(line);
+
+			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+
+			Assert.AreEqual(0.0f, blackboardBytes.GetSubArray(0, 4).ReinterpretLoad<float>(0));
+			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(4, 8).ReinterpretLoad<float2>(0));
+			Assert.AreEqual(new int2(0), blackboardBytes.GetSubArray(12, 8).ReinterpretLoad<int2>(0));
+			Assert.AreEqual(new int2(0), blackboardBytes.GetSubArray(20, 8).ReinterpretLoad<int2>(0));
+			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(28, 8).ReinterpretLoad<float2>(0));
+			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(36, 8).ReinterpretLoad<float2>(0));
+
+			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+
+			// length(float2(3, 4)) == 5
+			Assert.AreEqual(5.0f, blackboardBytes.GetSubArray(0, 4).ReinterpretLoad<float>(0));
+
+			// normalize(float2(1, 1)) == float2(sqrt(2), sqrt(2))
+			Assert.AreEqual(math.normalize(math.float2(1, 1)), blackboardBytes.GetSubArray(4, 8).ReinterpretLoad<float2>(0));
+
+			// floor(float2(1.5, 1.5))
+			Assert.AreEqual(new int2(1, 1), blackboardBytes.GetSubArray(12, 8).ReinterpretLoad<int2>(0));
+
+			// ceil(float2(1.5, 1.5))
+			Assert.AreEqual(new int2(2, 2), blackboardBytes.GetSubArray(20, 8).ReinterpretLoad<int2>(0));
+
+			// tofloat(int2(1, 1))
+			Assert.AreEqual(new float2(1, 1), blackboardBytes.GetSubArray(28, 8).ReinterpretLoad<float2>(0));
+
+			// rescale(float2(3, 4), 10) == float2(6, 8)
+			Assert.AreEqual(new float2(6, 8), blackboardBytes.GetSubArray(36, 8).ReinterpretLoad<float2>(0));
+		}
+
 		private void RegisterTestComponents(
 			ref BTData data,
 			ref TestMoveTarget moveTarget,
