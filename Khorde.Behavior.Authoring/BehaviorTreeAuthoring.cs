@@ -39,29 +39,31 @@ namespace Khorde.Behavior
 				ref var exprData = ref authoring.behaviorTree.GetValue(BTData.SchemaVersion).exprData;
 
 				{
-					var exprDatas = new List<(Hash128, Ptr<BlobExpressionData>)>();
+					var exprDatas = new List<(Hash128, Ptr<BlobExpressionData>, string)>();
 					var assetLookup = new Dictionary<Hash128, BlobAssetBase>();
-					exprDatas.Add((authoring.behaviorTree.DataHash, new Ptr<BlobExpressionData>(ref exprData)));
+					exprDatas.Add((authoring.behaviorTree.DataHash, new Ptr<BlobExpressionData>(ref exprData), authoring.behaviorTree.name));
 					assetLookup[authoring.behaviorTree.DataHash] = authoring.behaviorTree;
 
 					foreach(var query in authoring.behaviorTree.Queries)
 					{
-						exprDatas.Add((query.DataHash, new Ptr<BlobExpressionData>(ref query.GetValue(QSData.SchemaVersion).exprData)));
+						exprDatas.Add((query.DataHash, new Ptr<BlobExpressionData>(ref query.GetValue(QSData.SchemaVersion).exprData), query.name));
 						assetLookup[query.DataHash] = query;
 					}
 
 					var layout = ExprAuthoring.ComputeLayout(exprDatas);
 
-					// foreach(var (asset, layoutVariables) in layout)
-					// {
-					// 	Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
-					// }
+					//foreach(var (asset, layoutVariables) in layout)
+					//{
+					//	Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
+					//}
 
 					var baked = ExprAuthoring.BakeLayout(layout, Allocator.Persistent);
 					AddBlobAsset(ref baked, out var _);
 					AddSharedComponent(entity, new ExpressionBlackboardLayouts() { asset = baked, });
 
 					blackboard.Resize(baked.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), NativeArrayOptions.ClearMemory);
+
+					ExprAuthoring.InitializeBlackboard(blackboard.AsNativeArray(), layout);
 				}
 
 				AddComponent(entity, new BTState { });

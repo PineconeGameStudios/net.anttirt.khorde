@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -189,24 +190,25 @@ namespace Khorde.Expr.Authoring
 			public int length;
 			public string name;
 			public bool isGlobal;
+			public byte[] defaultValue;
 		}
 
 		/// <summary>
 		/// Compute a combined blackboard variable layout for a set of expression graphs sharing the same blackboard.
 		/// </summary>
 		/// <param name="expressions"></param>
-		/// <returns></returns>
+		/// <returns>A set of computed offsets into the shared blackboard. Each graph asset gets its own subset for the variables it uses.</returns>
 		/// <exception cref="InvalidOperationException"></exception>
 		public static Dictionary<Hash128, List<LayoutVariable>>
-			ComputeLayout(List<(Hash128, Ptr<BlobExpressionData>)> expressions)
+			ComputeLayout(List<(Hash128 assetHash, Ptr<BlobExpressionData> assetData, string assetName)> expressions)
 		{
-			var variableSets = new List<List<(string name, Type type, bool isGlobal)>>();
+			var variableSets = new List<List<(string name, Type type, bool isGlobal, byte[] defaultValue)>>();
 
 			var assemblies = AppDomain.CurrentDomain.GetAssemblies().ToDictionary(asm => asm.FullName);
 
 			for(int assetIndex = 0; assetIndex < expressions.Count; ++assetIndex)
 			{
-				ref var data = ref expressions[assetIndex].Item2.ValueRW;
+				ref var data = ref expressions[assetIndex].assetData.ValueRW;
 				variableSets.Add(new());
 				var variableSet = variableSets[^1];
 
@@ -222,15 +224,20 @@ namespace Khorde.Expr.Authoring
 						throw new InvalidOperationException($"expression references unknown type '{variable.typeName.ToString()}' in assembly '{variable.typeAssembly.ToString()}'");
 
 					var name = variable.name.ToString();
+					byte[] defaultValue;
+					if(variable.defaultValue.Length > 0)
+						defaultValue = variable.defaultValue.ToArray();
+					else
+						defaultValue = Array.Empty<byte>();
 
-					variableSet.Add((name, type, variable.isGlobal));
+					variableSet.Add((name, type, variable.isGlobal, defaultValue));
 				}
 			}
 
-			var globals = new Dictionary<string, Type>();
+			var globals = new Dictionary<string, (Type type, byte[] defaultValue, int initialAssetIndex)>();
 
 			// all variables with a unique storage location
-			var allVars = new Dictionary<(int assetIndex, string name), (int size, int alignment, Type type, int varIndex)>();
+			var allVars = new Dictionary<(int assetIndex, string name), (int size, int alignment, Type type, int varIndex, byte[] defaultValue)>();
 
 			for(int assetIndex = 0; assetIndex < variableSets.Count; ++assetIndex)
 			{
@@ -241,20 +248,36 @@ namespace Khorde.Expr.Authoring
 					var variable = variableSet[varIndex];
 					if(variable.isGlobal)
 					{
-						if(globals.TryGetValue(variable.name, out var type))
+						if(globals.TryGetValue(variable.name, out var global))
 						{
-							if(type != variable.type)
-								throw new InvalidOperationException($"global variable '{variable.name}' has conflicting types '{type.FullName}' and '{variable.type.FullName}'");
+							if(global.type != variable.type)
+								throw new InvalidOperationException($"global variable '{variable.name}' has conflicting types '{global.type.FullName}' and '{variable.type.FullName}'");
+
+							if(!Enumerable.SequenceEqual(global.defaultValue, variable.defaultValue))
+							{
+								var obj0 = Activator.CreateInstance(global.type);
+								var obj1 = Activator.CreateInstance(global.type);
+								CopyBoxedValue(obj0, global.defaultValue);
+								CopyBoxedValue(obj1, variable.defaultValue);
+
+								var name0 = expressions[global.initialAssetIndex].assetName;
+								var name1 = expressions[assetIndex].assetName;
+
+								throw new InvalidOperationException(
+									$"global variable '{variable.name}' has conflicting default values " +
+									$"'{obj0}' (from '{name0}') and " +
+									$"'{obj1}' (from '{name1}')");
+							}
 						}
 						else
 						{
-							globals.Add(variable.name, variable.type);
-							allVars[(-1, variable.name)] = (UnsafeUtility.SizeOf(variable.type), AlignOf(variable.type), variable.type, varIndex);
+							globals.Add(variable.name, (variable.type, variable.defaultValue, assetIndex));
+							allVars[(-1, variable.name)] = (UnsafeUtility.SizeOf(variable.type), AlignOf(variable.type), variable.type, varIndex, variable.defaultValue);
 						}
 					}
 					else
 					{
-						allVars[(assetIndex, variable.name)] = (UnsafeUtility.SizeOf(variable.type), AlignOf(variable.type), variable.type, varIndex);
+						allVars[(assetIndex, variable.name)] = (UnsafeUtility.SizeOf(variable.type), AlignOf(variable.type), variable.type, varIndex, variable.defaultValue);
 					}
 				}
 			}
@@ -299,15 +322,37 @@ namespace Khorde.Expr.Authoring
 						slice = layout[(-1, variable.name)];
 					else
 						slice = layout[(assetIndex, variable.name)];
-					assetLayout.Add(new LayoutVariable { offset = slice.offset, length = slice.length, name = variable.name, isGlobal = variable.isGlobal });
+					assetLayout.Add(new LayoutVariable { offset = slice.offset, length = slice.length, name = variable.name, isGlobal = variable.isGlobal, defaultValue = variable.defaultValue });
 				}
 			}
 
 			return assetLayouts;
 		}
 
+		static void CopyBoxedValue(object dst, byte[] src)
+		{
+			if(dst == null)
+				throw new ArgumentNullException(nameof(dst));
+
+			if(dst.GetType().IsValueType != true)
+				throw new InvalidOperationException();
+
+			var handle = GCHandle.Alloc(dst, GCHandleType.Pinned);
+			try
+			{
+				unsafe
+				{
+					src.AsSpan().CopyTo(new Span<byte>((void*)handle.AddrOfPinnedObject(), UnsafeUtility.SizeOf(dst.GetType())));
+				}
+			}
+			finally
+			{
+				handle.Free();
+			}
+		}
+
 		/// <summary>
-		/// Bake a computed layout into a blob asset
+		/// Bake a computed shared blackboard variable layout into a blob asset
 		/// </summary>
 		/// <param name="layouts"></param>
 		/// <param name="allocator"></param>
@@ -332,11 +377,40 @@ namespace Khorde.Expr.Authoring
 					blobLayout[i].offset = layout[i].offset;
 					byteLength = math.max(byteLength, layout[i].length + layout[i].offset);
 				}
+
 				blobLayouts[index].minByteLength = byteLength;
+
+				container.byteLength = math.max(container.byteLength, byteLength);
+
 				++index;
 			}
 
 			return bb.CreateBlobAssetReference<ExpressionBlackboardLayouts.LayoutContainer>(allocator);
+		}
+
+		public static void InitializeBlackboard(NativeArray<ExpressionBlackboardStorage> blackboard,
+			Dictionary<Hash128, List<LayoutVariable>> layouts)
+		{
+			int byteLength = 0;
+
+			foreach(var (_, layout) in layouts)
+				for(int i = 0; i < layout.Count; ++i)
+					byteLength = math.max(byteLength, layout[i].length + layout[i].offset);
+
+			int elemSize = UnsafeUtility.SizeOf<ExpressionBlackboardStorage>();
+
+			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>()).AsSpan();
+
+			foreach(var (_, layout) in layouts)
+			{
+				foreach(var variable in layout)
+				{
+					if(variable.defaultValue != null)
+					{
+						variable.defaultValue.AsSpan().CopyTo(blackboardBytes.Slice(variable.offset, variable.length));
+					}
+				}
+			}
 		}
 
 		static int AlignOf(Type type)

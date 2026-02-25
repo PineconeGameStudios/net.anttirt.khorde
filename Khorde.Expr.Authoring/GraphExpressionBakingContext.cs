@@ -291,10 +291,12 @@ namespace Khorde.Expr.Authoring
 					var key = GetVariableKey(variable);
 					if(!variables.ContainsKey(key))
 					{
+						variable.TryGetDefaultValue(out object defaultValue);
 						variables[key] = AddBlackboardVariable(
 							variable.name,
 							IsGlobal(variable),
-							variable.dataType
+							variable.dataType,
+							defaultValue
 						);
 					}
 				}

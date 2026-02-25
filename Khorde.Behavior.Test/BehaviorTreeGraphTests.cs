@@ -13,6 +13,7 @@ using Unity.Transforms;
 using UnityEditor;
 using static Khorde.Behavior.BTExec;
 using static Khorde.Behavior.BTExecTrace;
+using Debug = UnityEngine.Debug;
 
 namespace Khorde.Behavior.Test
 {
@@ -73,17 +74,8 @@ namespace Khorde.Behavior.Test
 				data = btAsset.LoadPersistent(BTData.SchemaVersion).Reference;
 				data.Value.exprData.RuntimeInitialize(world.Unmanaged);
 				BTState state = default;
-				TestMoveTarget moveTarget = default;
-				LocalTransform localTransform = LocalTransform.FromScale(1);
-				TestNpcTargetEntity targetEntity = default;
-
-				var dump = new List<string>();
-				BehaviorTreeExecution.DumpNodes(ref data.Value, dump);
-
-				//foreach(var line in dump)
-				//	UnityEngine.Debug.Log(line);
-
-				RegisterTestComponents(ref data.Value, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+				var components = TestComponents.Make();
+				RegisterTestComponents(ref data.Value, ref components, out var comps, out var lookups);
 
 				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
@@ -111,7 +103,7 @@ namespace Khorde.Behavior.Test
 
 				trace.Clear();
 
-				moveTarget.enabled = false;
+				components.moveTarget.enabled = false;
 
 				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
@@ -138,33 +130,16 @@ namespace Khorde.Behavior.Test
 		[Test]
 		public void Test_WriteVar()
 		{
-			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_WriteVar.btg");
-			ref var data = ref asset.GetValue(BTData.SchemaVersion);
-			data.exprData.RuntimeInitialize(world.Unmanaged);
-
-			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
-			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
-
-			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
-			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
-			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_WriteVar.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
 
 			BTState state = default;
-			TestMoveTarget moveTarget = default;
-			LocalTransform localTransform = LocalTransform.FromScale(1);
-			TestNpcTargetEntity targetEntity = default;
-
-			var dump = new List<string>();
-			BehaviorTreeExecution.DumpNodes(ref data, dump);
-
-			//foreach(var line in dump)
-			//	UnityEngine.Debug.Log(line);
-
-			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
 
 			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
 
-			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			Assert.AreEqual(1.23f, blackboardBytes.ReinterpretLoad<float>(0));
 
@@ -175,39 +150,21 @@ namespace Khorde.Behavior.Test
 				Trace(BTExecType.WriteVar, 2, 2, Event.Return),
 				Trace(BTExecType.Root, 1, 1, Event.Yield)
 			);
-
 		}
 
 		[Test]
 		public void Test_Parallel_Wait()
 		{
-			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Parallel_Wait.btg");
-			ref var data = ref asset.GetValue(BTData.SchemaVersion);
-			data.exprData.RuntimeInitialize(world.Unmanaged);
-
-			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
-			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
-
-			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
-			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
-			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Parallel_Wait.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
 
 			BTState state = default;
-			TestMoveTarget moveTarget = default;
-			LocalTransform localTransform = LocalTransform.FromScale(1);
-			TestNpcTargetEntity targetEntity = default;
-
-			var dump = new List<string>();
-			BehaviorTreeExecution.DumpNodes(ref data, dump);
-
-			//foreach(var line in dump)
-			//	UnityEngine.Debug.Log(line);
-
-			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
 
 			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
 
-			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(1, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
@@ -232,10 +189,10 @@ namespace Khorde.Behavior.Test
 
 			trace.Clear();
 
-			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(2, blackboardBytes.ReinterpretLoad<float>(0));
 
-			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
@@ -269,11 +226,11 @@ namespace Khorde.Behavior.Test
 
 			);
 
-			moveTarget.enabled = true;
+			components.moveTarget.enabled = true;
 
 			trace.Clear();
 
-			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
@@ -299,50 +256,33 @@ namespace Khorde.Behavior.Test
 		[Test]
 		public void Test_Subgraph()
 		{
-			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_ExprSubgraph.btg");
-			ref var data = ref asset.GetValue(BTData.SchemaVersion);
-			data.exprData.RuntimeInitialize(world.Unmanaged);
-
-			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
-			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
-
-			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
-			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
-			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_ExprSubgraph.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
 
 			BTState state = default;
-			TestMoveTarget moveTarget = default;
-			LocalTransform localTransform = LocalTransform.FromScale(1);
-			TestNpcTargetEntity targetEntity = default;
-
-			var dump = new List<string>();
-			BehaviorTreeExecution.DumpNodes(ref data, dump);
-
-			//foreach(var line in dump)
-			//	UnityEngine.Debug.Log(line);
-
-			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
 
 			var blackboardVars = blackboardBytes.Reinterpret<int>(1);
 
 			Assert.AreEqual(0, blackboardVars[0]);
 			Assert.AreEqual(0, blackboardVars[1]);
 
-			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			Assert.AreEqual(7, blackboardVars[0]);
 			Assert.AreEqual(14, blackboardVars[1]);
 
 			AssertTrace(
-				Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
-				Trace(0, BTExecType.Root,       1,   1, Event.Start),
-				Trace(0, BTExecType.Root,       1,   1, Event.Call),
-				Trace(0, BTExecType.Sequence,   3,     2, Event.Call),
-				Trace(0, BTExecType.WriteVar,   2,       3, Event.Return),
-				Trace(0, BTExecType.Sequence,   3,     2, Event.Call),
-				Trace(0, BTExecType.WriteVar,   4,       3, Event.Return),
-				Trace(0, BTExecType.Sequence,   3,     2, Event.Return),
-				Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				Trace(0, BTExecType.Nop, 0, 0, Event.Spawn),
+				Trace(0, BTExecType.Root, 1, 1, Event.Start),
+				Trace(0, BTExecType.Root, 1, 1, Event.Call),
+				Trace(0, BTExecType.Sequence, 3, 2, Event.Call),
+				Trace(0, BTExecType.WriteVar, 2, 3, Event.Return),
+				Trace(0, BTExecType.Sequence, 3, 2, Event.Call),
+				Trace(0, BTExecType.WriteVar, 4, 3, Event.Return),
+				Trace(0, BTExecType.Sequence, 3, 2, Event.Return),
+				Trace(0, BTExecType.Root, 1, 1, Event.Yield)
 			);
 
 		}
@@ -350,29 +290,12 @@ namespace Khorde.Behavior.Test
 		[Test]
 		public void Test_Math()
 		{
-			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Math.btg");
-			ref var data = ref asset.GetValue(BTData.SchemaVersion);
-			data.exprData.RuntimeInitialize(world.Unmanaged);
-
-			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.exprData)) });
-			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
-
-			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
-			ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
-			var blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Math.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
 
 			BTState state = default;
-			TestMoveTarget moveTarget = default;
-			LocalTransform localTransform = LocalTransform.FromScale(1);
-			TestNpcTargetEntity targetEntity = default;
-
-			var dump = new List<string>();
-			BehaviorTreeExecution.DumpNodes(ref data, dump);
-
-			//foreach(var line in dump)
-			//	UnityEngine.Debug.Log(line);
-
-			RegisterTestComponents(ref data, ref moveTarget, ref localTransform, ref targetEntity, out var comps, out var lookups);
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
 
 			Assert.AreEqual(0.0f, blackboardBytes.GetSubArray(0, 4).ReinterpretLoad<float>(0));
 			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(4, 8).ReinterpretLoad<float2>(0));
@@ -381,7 +304,7 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(28, 8).ReinterpretLoad<float2>(0));
 			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(36, 8).ReinterpretLoad<float2>(0));
 
-			BehaviorTreeExecution.Execute(ref data, ref state, threads, stack, blackboard, ref blackboardLayout, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			// length(float2(3, 4)) == 5
 			Assert.AreEqual(5.0f, blackboardBytes.GetSubArray(0, 4).ReinterpretLoad<float>(0));
@@ -402,11 +325,60 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(new float2(6, 8), blackboardBytes.GetSubArray(36, 8).ReinterpretLoad<float2>(0));
 		}
 
+		[Test]
+		public void Test_DefaultValues()
+		{
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_DefaultVar.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
+
+			BTState state = default;
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
+
+			Assert.AreEqual(Hex(0), Hex(blackboardBytes.ReinterpretLoad<int>(0)));
+			Assert.AreEqual(Hex(42), Hex(blackboardBytes.ReinterpretLoad<int>(4)));
+
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+
+			Assert.AreEqual(Hex(42), Hex(blackboardBytes.ReinterpretLoad<int>(0)));
+			Assert.AreEqual(Hex(42), Hex(blackboardBytes.ReinterpretLoad<int>(4)));
+		}
+
+		static HexInt Hex(int value) => value;
+
+		struct HexInt
+		{
+			public int Value;
+
+			public static implicit operator HexInt(int value) => new HexInt { Value = value };
+			public static implicit operator int(HexInt value) => value.Value;
+
+			public override string ToString()
+			{
+				return Value.ToString("X");
+			}
+		}
+
+		struct TestComponents
+		{
+			public static TestComponents Make()
+			{
+				return new TestComponents
+				{
+					moveTarget = default,
+					localTransform = LocalTransform.FromScale(1),
+					targetEntity = default,
+				};
+			}
+
+			public TestMoveTarget moveTarget;
+			public LocalTransform localTransform;
+			public TestNpcTargetEntity targetEntity;
+		}
+
 		private void RegisterTestComponents(
 			ref BTData data,
-			ref TestMoveTarget moveTarget,
-			ref LocalTransform localTransform,
-			ref TestNpcTargetEntity targetEntity,
+			ref TestComponents testComponents,
 			out NativeArray<UnsafeComponentReference> comps,
 			out NativeArray<UntypedComponentLookup> lookups)
 		{
@@ -418,11 +390,11 @@ namespace Khorde.Behavior.Test
 				var type = localComponents[i].ResolveComponentType();
 				var typeIndex = type.TypeIndex;
 				if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
-					comps[i] = UnsafeComponentReference.Make(ref moveTarget);
+					comps[i] = UnsafeComponentReference.Make(ref testComponents.moveTarget);
 				else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
-					comps[i] = UnsafeComponentReference.Make(ref localTransform);
+					comps[i] = UnsafeComponentReference.Make(ref testComponents.localTransform);
 				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
-					comps[i] = UnsafeComponentReference.Make(ref targetEntity);
+					comps[i] = UnsafeComponentReference.Make(ref testComponents.targetEntity);
 				else
 					throw new Exception($"component {type.GetManagedType().FullName} not available in test");
 			}
@@ -438,6 +410,31 @@ namespace Khorde.Behavior.Test
 				if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
 					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestNpcTargetEntity>(isReadOnly: true);
 			}
+		}
+
+		private void LoadBehaviorTree(string path, out Ptr<BTData> data, out NativeArray<ExpressionBlackboardStorage> blackboard, out NativeArray<byte> blackboardBytes, out Ptr<ExpressionBlackboardLayout> blackboardLayout)
+		{
+			var asset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>(path);
+			data = Ptr.Make(ref asset.GetValue(BTData.SchemaVersion));
+			data.ValueRW.exprData.RuntimeInitialize(world.Unmanaged);
+
+			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.ValueRW.exprData), "test") });
+			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
+
+			blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
+			blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+
+			ExprAuthoring.InitializeBlackboard(blackboard, layout);
+
+			blackboardLayout = Ptr.Make(ref bakedLayout.Value.FindLayout(asset.DataHash));
+		}
+
+		private static void DumpNodes(ref BTData data)
+		{
+			var dump = new List<string>();
+			BehaviorTreeExecution.DumpNodes(ref data, dump);
+			foreach(var line in dump)
+				UnityEngine.Debug.Log(line);
 		}
 
 		void AssertTrace(params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());

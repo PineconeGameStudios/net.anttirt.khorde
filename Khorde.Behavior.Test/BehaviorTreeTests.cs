@@ -607,7 +607,7 @@ namespace Khorde.Behavior.Test
 			var asset = baker.Bake();
 			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
 
-			var layout = ExprAuthoring.ComputeLayout(new() { (default, new Ptr<BlobExpressionData>(ref asset.Value.exprData)) });
+			var layout = ExprAuthoring.ComputeLayout(new() { (default, new Ptr<BlobExpressionData>(ref asset.Value.exprData), "test") });
 			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
 
 			var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);

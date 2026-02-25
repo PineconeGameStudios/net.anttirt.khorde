@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using UnityEngine;
 
 namespace Khorde.Expr.Authoring
 {
@@ -55,6 +57,7 @@ namespace Khorde.Expr.Authoring
 			public string name;
 			public Type type;
 			public bool isGlobal;
+			public object defaultValue;
 		}
 
 		public ExpressionBakingContext(Allocator allocator)
@@ -164,15 +167,22 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		public int AddBlackboardVariable<T>(string name, bool isGlobal) where T : unmanaged => AddBlackboardVariable(name, isGlobal, typeof(T));
+		public int AddBlackboardVariable<T>(string name, bool isGlobal, T defaultValue = default) where T : unmanaged => AddBlackboardVariable(name, isGlobal, typeof(T), defaultValue);
 
-		public int AddBlackboardVariable(string name, bool isGlobal, Type type)
+		public int AddBlackboardVariable(string name, bool isGlobal, Type type, object defaultValue)
 		{
+			if(defaultValue != null)
+			{
+				if(defaultValue.GetType() != type)
+					throw new InvalidOperationException($"default value must have the same type as the variable; expected '{type.Name}' but found '{defaultValue.GetType().Name}'");
+			}
+
 			blackboardVariables.Add(new Variable
 			{
 				name = name,
 				type = type,
 				isGlobal = isGlobal,
+				defaultValue = defaultValue,
 			});
 
 			return blackboardVariables.Count - 1;
@@ -221,13 +231,54 @@ namespace Khorde.Expr.Authoring
 				typeHashes[i] = this.patchableTypeInfos[i].stableTypeHash;
 			}
 
-			var variables = builder.Allocate(ref data->blackboardVariables, this.blackboardVariables.Count);
-			for(int i = 0; i < this.blackboardVariables.Count; ++i)
+			var variables = builder.Allocate(ref data->blackboardVariables, blackboardVariables.Count);
+			for(int i = 0; i < blackboardVariables.Count; ++i)
 			{
-				builder.AllocateString(ref variables[i].name, this.blackboardVariables[i].name);
-				builder.AllocateString(ref variables[i].typeName, this.blackboardVariables[i].type.FullName);
-				builder.AllocateString(ref variables[i].typeAssembly, this.blackboardVariables[i].type.Assembly.FullName);
-				variables[i].isGlobal = this.blackboardVariables[i].isGlobal;
+				var src = blackboardVariables[i];
+				ref var dst = ref variables[i];
+
+				builder.AllocateString(ref dst.name, src.name);
+				builder.AllocateString(ref dst.typeName, src.type.FullName);
+				builder.AllocateString(ref dst.typeAssembly, src.type.Assembly.FullName);
+				variables[i].isGlobal = src.isGlobal;
+
+				dst.defaultValue = default;
+
+				if(src.defaultValue != null)
+				{
+					CopyValue(builder.Allocate(ref dst.defaultValue, UnsafeUtility.SizeOf(src.type)), src.defaultValue);
+				}
+			}
+		}
+
+		static unsafe void CopyValue(NativeArray<byte> destination, object source) => CopyValue(destination.GetUnsafePtr(), source, destination.Length);
+		static unsafe void CopyValue(BlobBuilderArray<byte> destination, object source) => CopyValue(destination.GetUnsafePtr(), source, destination.Length);
+
+		static unsafe void CopyValue(void* destination, object source, int destinationSize)
+		{
+			if(source == null)
+				throw new InvalidOperationException();
+
+			var type = source.GetType();
+			if(!type.IsValueType)
+				throw new InvalidOperationException();
+
+			var size = UnsafeUtility.SizeOf(type);
+			if(size != destinationSize)
+				throw new InvalidOperationException();
+
+			var handle = GCHandle.Alloc(source, GCHandleType.Pinned);
+
+			try
+			{
+				UnsafeUtility.MemCpy(
+					destination,
+					(void*)handle.AddrOfPinnedObject(),
+					size);
+			}
+			finally
+			{
+				handle.Free();
 			}
 		}
 

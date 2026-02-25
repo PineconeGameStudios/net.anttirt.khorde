@@ -56,5 +56,28 @@ namespace Khorde.Expr.Authoring
 	            return ref *m_Pointer;
 	        }
 	    }
+
+		public T* UnsafePointer
+		{
+			get
+			{
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+	            if(!AtomicSafetyHandle.IsDefaultValue(m_Safety))
+	                AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
+#endif
+
+				return m_Pointer;
+			}
+		}
+
+		public override string ToString()
+		{
+			return string.Format("Ptr<{0}>(0x{1:X8})", typeof(T).Name, (nint)m_Pointer);
+		}
+	}
+
+	public static unsafe class Ptr
+	{
+		public static Ptr<T> Make<T>(ref T value) where T : unmanaged => new Ptr<T>(ref value);
 	}
 }

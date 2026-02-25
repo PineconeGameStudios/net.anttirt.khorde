@@ -41,6 +41,9 @@ namespace Khorde.Expr
 		public BlobArray<Field> fields;
 	}
 
+	/// <summary>
+	/// List of variable offsets and sizes as used by a single expression graph asset. Variables shared between multiple assets will point to the same location on the blackboard.
+	/// </summary>
 	public struct ExpressionBlackboardLayout
 	{
 		// TODO: 12 bytes for this is terribly excessive, should fit in 4
@@ -54,9 +57,10 @@ namespace Khorde.Expr
 		public Hash128 asset;
 
 		/// <summary>
-		/// Minimum required size of blackboard storage in bytes
+		/// Minimum required size of blackboard storage in bytes required by this asset. The actual blackboard may be larger if it's shared by multiple assets.
 		/// </summary>
 		public int minByteLength;
+
 		public BlobArray<Slice> variables;
 
 		private static readonly SharedStatic<FixedList64Bytes<byte>> s_emptyStorage = SharedStatic<FixedList64Bytes<byte>>.GetOrCreate<ExpressionBlackboardLayout>();
@@ -67,24 +71,30 @@ namespace Khorde.Expr
 	{
 		public struct LayoutContainer
 		{
+			/// <summary>
+			/// Per-asset list of variable subsets indexing into the shared blackboard layout.
+			/// </summary>
 			public BlobArray<ExpressionBlackboardLayout> layouts;
 
 			/// <summary>
-			/// Compute the number of storage elements required for this blackboard layout
+			/// Total size of the layout in bytes.
+			/// </summary>
+			public int byteLength;
+
+			/// <summary>
+			/// Compute the number of storage elements required for this
+			/// blackboard layout.
+			/// <para/>
+			/// If the blackboard size is not evenly
+			/// divisble by the storage element size, there will be some
+			/// padding at the end.
 			/// </summary>
 			/// <typeparam name="TStorage"></typeparam>
-			/// <returns></returns>
+			/// <returns>The number (rounded up) of <typeparamref name="TStorage"/> elements required to contain <see cref="byteLength"/> bytes of data.</returns>
 			public int ComputeStorageLength<TStorage>() where TStorage : unmanaged
 			{
-				int maxLength = 0;
-				foreach(ref var layout in layouts.AsSpan())
-				{
-					var elemSize = UnsafeUtility.SizeOf<TStorage>();
-					int byteSize = layout.variables.Length > 0 ? (layout.variables[^1].offset + layout.variables[^1].length) : 0;
-					maxLength = math.max(maxLength, (byteSize + elemSize - 1) / elemSize);
-				}
-
-				return maxLength;
+				var elemSize = UnsafeUtility.SizeOf<TStorage>();
+				return (byteLength + elemSize - 1) / elemSize;
 			}
 
 			public ref ExpressionBlackboardLayout FindLayout(Hash128 assetHash)

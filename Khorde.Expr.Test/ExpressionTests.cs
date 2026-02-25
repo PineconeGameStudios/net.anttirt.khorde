@@ -387,7 +387,7 @@ namespace Khorde.Expr.Test
 
 				var layout = ExprAuthoring.ComputeLayout(new()
 				{
-					(asset.DataHash, new Ptr<BlobExpressionData>(ref blob))
+					(asset.DataHash, new Ptr<BlobExpressionData>(ref blob), asset.name)
 				});
 
 				bool found = layout.TryGetValue(asset.DataHash, out var layoutVariables);
@@ -401,7 +401,7 @@ namespace Khorde.Expr.Test
 
 				var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
 
-				asset.GetValue(1).RuntimeInitialize(world.Unmanaged);
+				asset.GetValue(BlobExpressionData.SchemaVersion).RuntimeInitialize(world.Unmanaged);
 
 				var blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
 				ref var blackboardLayout = ref bakedLayout.Value.FindLayout(asset.DataHash);
