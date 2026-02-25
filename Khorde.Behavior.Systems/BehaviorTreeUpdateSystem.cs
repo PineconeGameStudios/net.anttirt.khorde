@@ -23,6 +23,8 @@ namespace Khorde.Behavior
 		void ISystem.OnCreate(ref SystemState state)
 		{
 			traceHolder = state.EntityManager.CreateSingletonBuffer<BTExecTrace>();
+
+			state.IgnoreCreateQueryInOnUpdateWarning();
 		}
 
 		[BurstCompile]

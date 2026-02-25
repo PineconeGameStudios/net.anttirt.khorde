@@ -29,6 +29,8 @@ namespace Khorde.Query
 
 			// add as a component so this can be accessed as a singleton from other systems
 			state.EntityManager.AddComponentData(state.SystemHandle, assets);
+
+			state.IgnoreCreateQueryInOnUpdateWarning();
 		}
 
 		public void OnDestroy(ref SystemState state)
