@@ -55,7 +55,7 @@ namespace Khorde.Behavior
 				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
 				ref var layout = ref layouts.FindLayout(dataHash);
 
-				NativeArray<UnityObjectRef<QueryGraphAsset>> queries = default;
+				NativeArray<BlobAssetReference<QSData>> queries = default;
 				EnabledMask pendingQueryEnabledMask = default;
 				NativeArray<PendingQuery> pendingQueries = default;
 
@@ -106,7 +106,7 @@ namespace Khorde.Behavior
 			{
 				var job = new UpdateJob
 				{
-					btData = tree.tree.GetHandle<BTData, BehaviorTreeAsset>(BTData.SchemaVersion).Reference,
+					btData = tree.tree,
 					now = (float)SystemAPI.Time.ElapsedTime,
 					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BTState>(),
 					threadTypeHandle = SystemAPI.GetBufferTypeHandle<BTThread>(),
@@ -115,10 +115,8 @@ namespace Khorde.Behavior
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
 					queriesTypeHandle = SystemAPI.GetSharedComponentTypeHandle<QueryAssetRegistration>(),
 					pendingQueryHandle = SystemAPI.GetComponentTypeHandle<PendingQuery>(),
-					dataHash = tree.tree.GetDataHash(),
+					dataHash = tree.tree.GetHash(),
 				};
-
-				tree.tree.GetHandle<BTData, BehaviorTreeAsset>(BTData.SchemaVersion).ValueRW.exprData.RuntimeInitialize(state.WorldUnmanaged, forced: true);
 
 				foreach(ref var holder in typeHandleHolder.AsNativeArray().AsSpan())
 				{
@@ -160,7 +158,7 @@ namespace Khorde.Behavior
 
 			foreach(var value in values)
 			{
-				if(value.tree.GetObjectId() == default)
+				if(!value.tree.IsCreated)
 					continue;
 
 				holderQuery.AddSharedComponentFilter(value);
@@ -194,7 +192,7 @@ namespace Khorde.Behavior
 						instanceComponents.Add(ComponentType.ReadOnly<Simulate>());
 					}
 
-					ref var btData = ref value.tree.GetValue<BTData, BehaviorTreeAsset>(BTData.SchemaVersion);
+					ref var btData = ref value.tree.Value;
 
 					if(btData.hasQueries)
 					{
@@ -281,7 +279,7 @@ namespace Khorde.Behavior
 
 						sb.Clear();
 						
-						sb.Append($"entity {entity} has BehaviorTree{{{tree.tree.Value.name}}} but is missing the required components [");
+						sb.Append($"entity {entity} has BehaviorTree{{{tree.tree.Value.exprData.assetName}}} but is missing the required components [");
 						string intr = "";
 
 						foreach(var type in descs[0].All)

@@ -82,6 +82,14 @@ namespace Khorde.Expr.Authoring
 			this.rootGraph = rootGraph;
 		}
 
+		public override void InitializeBake(int expressionCount, int outputCount)
+		{
+			base.InitializeBake(expressionCount, outputCount);
+
+			ref var data = ref GetData();
+			builder.AllocateString(ref data.assetName, rootGraph.name);
+		}
+
 		List<IPort> portsTemp = new();
 
 		protected VariableKey GetVariableKey(IVariable variable)

@@ -454,7 +454,7 @@ namespace Khorde.Query
 
 	public struct PendingQuery : IComponentData, IEnableableComponent
 	{
-		public UnityObjectRef<QueryGraphAsset> query;
+		public BlobAssetReference<QSData> query;
 		public ExpressionBlackboardLayout.Slice results;
 		public bool complete;
 		public int resultCount;

@@ -20,7 +20,7 @@ namespace Khorde.Expr
 	/// </summary>
 	public struct BlobExpressionData
 	{
-		public const int SchemaVersion = 2;
+		public const int SchemaVersion = 3;
 
 		/// <summary>
 		/// Storage for constant-valued expression node references
@@ -92,6 +92,11 @@ namespace Khorde.Expr
 		/// Blackboard variable definitions for baking and debugging
 		/// </summary>
 		public BlobArray<BlackboardVariable> blackboardVariables;
+
+		/// <summary>
+		/// Name of the source graph asset that produced this blob.
+		/// </summary>
+		public BlobString assetName;
 
 		/// <summary>
 		/// Get constants buffer as a NativeArray

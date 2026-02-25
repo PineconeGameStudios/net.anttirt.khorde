@@ -58,7 +58,7 @@ namespace Khorde.Behavior
 						&& em.HasBuffer<BTThread>(entity)
 						)
 					{
-						ref var btData = ref em.GetSharedComponent<BehaviorTree>(entity).tree.GetValue<BTData, BehaviorTreeAsset>(BTData.SchemaVersion);
+						ref var btData = ref em.GetSharedComponent<BehaviorTree>(entity).tree.Value;
 						var threads = em.GetBuffer<BTThread>(entity);
 						var frames = em.GetBuffer<BTStackFrame>(entity);
 

@@ -12,8 +12,8 @@ namespace Khorde.Query
 	/// </summary>
 	public struct QuerySystemAssets : IComponentData, IDisposable
 	{
-		public NativeHashMap<UnityObjectRef<EntityQueryAsset>, EntityQueryMetaData> entityQueries;
-		public NativeHashMap<UnityObjectRef<QueryGraphAsset>, QueryMetaData> queryGraphs;
+		public NativeHashMap<BlobAssetReference<BlobEntityQueryDesc>, EntityQueryMetaData> entityQueries;
+		public NativeHashMap<BlobAssetReference<QSData>, QueryMetaData> queryGraphs;
 
 		public struct EntityQueryMetaData
 		{
@@ -41,14 +41,21 @@ namespace Khorde.Query
 		}
 
 		/// <summary>
-		/// Register a query graph asset. Also registers all entity query assets used by the graph.
+		/// Register a query graph asset.
 		/// </summary>
 		/// <param name="queryGraph"></param>
-		public void Register(UnityObjectRef<QueryGraphAsset> queryGraph)
+		public void Register(BlobAssetReference<QSData> queryGraph)
 		{
 			queryGraphs.TryAdd(queryGraph, default);
-			foreach(var entityQueryAsset in QueryGraphAsset.GetQueries(queryGraph))
-				entityQueries.TryAdd(entityQueryAsset, default);
+		}
+
+		/// <summary>
+		/// Register an entity query asset.
+		/// </summary>
+		/// <param name="queryGraph"></param>
+		public void Register(BlobAssetReference<BlobEntityQueryDesc> entityQuery)
+		{
+			entityQueries.TryAdd(entityQuery, default);
 		}
 
 		public void Update(ref SystemState state, NativeList<QueryAssetRegistration> regs)
@@ -62,18 +69,26 @@ namespace Khorde.Query
 						Register(asset);
 					}
 				}
+
+				foreach(var asset in queryAssetRegistration.EntityQueryAssets)
+				{
+					if(!entityQueries.ContainsKey(asset))
+					{
+						Register(asset);
+					}
+				}
 			}
 
 			foreach(var query in entityQueries)
 			{
 				if(query.Value.query == default)
 				{
-					query.Value.query = query.Key.GetValue().CreateQuery(state.EntityManager);
-					query.Value.hash = query.Key.GetDataHash();
+					query.Value.query = query.Key.Value.CreateQuery(state.EntityManager);
+					query.Value.hash = query.Key.GetHash();
 				}
 			}
 
-			NativeList<UnityObjectRef<QueryGraphAsset>> failures = default;
+			NativeList<BlobAssetReference<QSData>> failures = default;
 
 			foreach(var pair in queryGraphs)
 			{
@@ -91,7 +106,7 @@ namespace Khorde.Query
 				{
 					holder.typeHandles = new(Allocator.Persistent);
 					holder.lookups = new(Allocator.Persistent);
-					ref var data = ref pair.Key.GetValue<QSData, QueryGraphAsset>(QSData.SchemaVersion);
+					ref var data = ref pair.Key.Value;
 
 					var builder = new EntityQueryBuilder(Allocator.Temp);
 
@@ -143,28 +158,43 @@ namespace Khorde.Query
 	/// </summary>
 	public struct QueryAssetRegistration : ISharedComponentData
 	{
-		UnityObjectRef<QueryGraphAsset> asset0;
-		UnityObjectRef<QueryGraphAsset> asset1;
-		UnityObjectRef<QueryGraphAsset> asset2;
-		UnityObjectRef<QueryGraphAsset> asset3;
-		UnityObjectRef<QueryGraphAsset> asset4;
-		UnityObjectRef<QueryGraphAsset> asset5;
-		UnityObjectRef<QueryGraphAsset> asset6;
-		UnityObjectRef<QueryGraphAsset> asset7;
+		BlobAssetReference<QSData> asset0;
+		BlobAssetReference<QSData> asset1;
+		BlobAssetReference<QSData> asset2;
+		BlobAssetReference<QSData> asset3;
+		BlobAssetReference<QSData> asset4;
+		BlobAssetReference<QSData> asset5;
+		BlobAssetReference<QSData> asset6;
+		BlobAssetReference<QSData> asset7;
+
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset0;
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset1;
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset2;
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset3;
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset4;
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset5;
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset6;
+		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset7;
 
 		public const int Capacity = 8;
 
-		unsafe UnityObjectRef<QueryGraphAsset>* GetData()
+		unsafe BlobAssetReference<QSData>* GetQueryData()
 		{
-			fixed(UnityObjectRef<QueryGraphAsset>* ptr = &asset0)
+			fixed(BlobAssetReference<QSData>* ptr = &asset0)
 				return ptr;
 		}
 
-		public unsafe int Length
+		unsafe BlobAssetReference<BlobEntityQueryDesc>* GetEntityQueryData()
+		{
+			fixed(BlobAssetReference<BlobEntityQueryDesc>* ptr = &entityQueryAsset0)
+				return ptr;
+		}
+
+		public unsafe int QueryCount
 		{
 			get
 			{
-				var data = GetData();
+				var data = GetQueryData();
 
 				for(int i = 0; i < Capacity; ++i)
 					if(data[i] == default)
@@ -174,23 +204,61 @@ namespace Khorde.Query
 			}
 		}
 
-		public unsafe void Add(UnityObjectRef<QueryGraphAsset> asset)
+		public unsafe int EntityQueryCount
 		{
-			var data = GetData();
+			get
+			{
+				var data = GetEntityQueryData();
 
-			int length = Length;
+				for(int i = 0; i < Capacity; ++i)
+					if(data[i] == default)
+						return i;
+
+				return Capacity;
+			}
+		}
+
+		public unsafe void Add(BlobAssetReference<QSData> asset)
+		{
+			var data = GetQueryData();
+
+			int length = QueryCount;
 			if(length < Capacity)
 				data[length] = asset;
 			else
 				throw new InvalidOperationException("max supported queries reached");
 		}
 
-		public unsafe NativeArray<UnityObjectRef<QueryGraphAsset>> Assets
+		public unsafe void Add(BlobAssetReference<BlobEntityQueryDesc> asset)
+		{
+			var data = GetEntityQueryData();
+
+			int length = EntityQueryCount;
+			if(length < Capacity)
+				data[length] = asset;
+			else
+				throw new InvalidOperationException("max supported queries reached");
+		}
+
+		public unsafe NativeArray<BlobAssetReference<QSData>> Assets
 		{
 			get
 			{
-				var result = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<UnityObjectRef<QueryGraphAsset>>(
-					GetData(), Length, Allocator.None);
+				var result = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<BlobAssetReference<QSData>>(
+					GetQueryData(), QueryCount, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+				NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref result, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+				return result;
+			}
+		}
+
+		public unsafe NativeArray<BlobAssetReference<BlobEntityQueryDesc>> EntityQueryAssets
+		{
+			get
+			{
+				var result = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<BlobAssetReference<BlobEntityQueryDesc>>(
+					GetEntityQueryData(), EntityQueryCount, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 				NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref result, AtomicSafetyHandle.GetTempMemoryHandle());
 #endif

@@ -48,24 +48,21 @@ namespace Khorde.Query
 			assets.Update(ref state, regs);
 
 			var entityQueryJobHandles =
-				new NativeHashMap<UnityObjectRef<EntityQueryAsset>, JobHandle>(0, state.WorldUpdateAllocator);
+				new NativeHashMap<BlobAssetReference<BlobEntityQueryDesc>, JobHandle>(0, state.WorldUpdateAllocator);
 
 			entityQueryJobHandles[default] = state.Dependency;
 
-			foreach(var pair in assets.queryGraphs)
+			foreach(var pair in assets.entityQueries)
 			{
 				var asset = pair.Key;
 				ref var metaData = ref pair.Value;
-				foreach(var entityQueryAsset in QueryGraphAsset.GetQueries(asset))
+				if(!entityQueryJobHandles.ContainsKey(pair.Key) &&
+					assets.entityQueries.TryGetValue(pair.Key, out var entityQueryMetaData))
 				{
-					if(!entityQueryJobHandles.ContainsKey(entityQueryAsset) &&
-						assets.entityQueries.TryGetValue(entityQueryAsset, out var entityQueryMetaData))
-					{
-						var results = entityQueryMetaData.query.ToEntityListAsync(state.WorldUpdateAllocator,
-							state.Dependency, out var entityQueryJobHandle);
-						entityQueryJobHandles.Add(entityQueryAsset, entityQueryJobHandle);
-						entityQueryResultLookup[entityQueryMetaData.hash] = results;
-					}
+					var results = entityQueryMetaData.query.ToEntityListAsync(state.WorldUpdateAllocator,
+						state.Dependency, out var entityQueryJobHandle);
+					entityQueryJobHandles.Add(pair.Key, entityQueryJobHandle);
+					entityQueryResultLookup[entityQueryMetaData.hash] = results;
 				}
 			}
 
@@ -84,26 +81,19 @@ namespace Khorde.Query
 				var asset = pair.Key;
 				ref var metaData = ref pair.Value;
 
-				if(asset.GetObjectId() == default)
+				if(!asset.IsCreated)
 					throw new InvalidOperationException("query graph asset reference is null");
-
-				var data = asset.GetHandle<QSData, QueryGraphAsset>(QSData.SchemaVersion);
-				if(!data.IsCreated)
-					throw new InvalidOperationException("failed to get data handle from query graph asset");
-
-				data.ValueRW.exprData.RuntimeInitialize(state.WorldUnmanaged, forced: true);
 
 				var job = new ExecuteQueryJob
 				{
-					query = asset,
-					data = data,
+					data = asset,
 					pendingQuery = SystemAPI.GetComponentTypeHandle<PendingQuery>(),
 					resultItemStorage = SystemAPI.GetBufferTypeHandle<QSResultItemStorage>(),
 					entities = SystemAPI.GetEntityTypeHandle(),
 					queryResultLookup = entityQueryResultLookup,
 					blackboards = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
-					dataHash = asset.GetDataHash(),
+					dataHash = asset.GetHash(),
 				};
 
 				// TODO: optimize dependencies to enable different queries to run in parallel
@@ -131,8 +121,7 @@ namespace Khorde.Query
 		[BurstCompile]
 		struct ExecuteQueryJob : IJobChunk
 		{
-			public UnityObjectRef<QueryGraphAsset> query;
-			[ReadOnly] public BlobAssetHandle<QSData> data;
+			[ReadOnly] public BlobAssetReference<QSData> data;
 			public ExprJobComponentTypeHandles typeHandles;
 			public ExprJobComponentLookups componentLookups;
 			public ComponentTypeHandle<PendingQuery> pendingQuery;
@@ -160,7 +149,7 @@ namespace Khorde.Query
 				var entitiesArray = chunk.GetNativeArray(entities);
 				ref var layout = ref layouts.FindLayout(dataHash);
 
-				switch(data.ValueRO.itemType)
+				switch(data.Value.itemType)
 				{
 					case ExpressionValueType.Unknown: break;
 					case ExpressionValueType.Entity:
@@ -228,7 +217,7 @@ namespace Khorde.Query
 					if(pendingEnabled.GetBit(entityIndex))
 					{
 						ref var pendingQuery = ref pendingQueries.UnsafeElementAt(entityIndex);
-						if(pendingQuery.query == query)
+						if(pendingQuery.query == data)
 						{
 							chunk.SetComponentEnabled(ref this.pendingQuery, entityIndex, false);
 							pendingQuery.complete = true;
@@ -236,7 +225,7 @@ namespace Khorde.Query
 							bool isSelectedEntity = selectedEntity == entities[entityIndex];
 
 							var qctx = new QueryExecutionContext(
-								ref data.ValueRO,
+								ref data.Value,
 								typeHandles.GetComponents(entityIndex),
 								componentLookups.Lookups,
 								queryResultLookup);

@@ -41,7 +41,11 @@ namespace Khorde.Query.Test
 	        var asset = ScriptableObject.CreateInstance<QueryGraphAsset>();
 	        asset.SetAssetData(builder, QSData.SchemaVersion);
 	        asset.entityQueries = baker.EntityQueries.ToList();
-	        asset.GetValue(QSData.SchemaVersion).exprData.RuntimeInitialize(World.Unmanaged);
+
+			if(!asset.TryReadInPlace(QSData.SchemaVersion, out var queryRef))
+				throw new InvalidOperationException();
+
+	        queryRef.ValueRW.exprData.RuntimeInitialize(World.Unmanaged);
         
 	        var querier = entityManager.CreateEntity(
 	            typeof(QSResultItemStorage),
@@ -53,10 +57,17 @@ namespace Khorde.Query.Test
 	        );
 
 	        var reg = new QueryAssetRegistration();
-	        reg.Add(asset);
+	        reg.Add(queryRef.Reference);
+			foreach(var eq in asset.entityQueries)
+			{
+				if(!eq.TryReadInPlace(Blobs.BlobEntityQueryDesc.SchemaVersion, out var eqRef))
+					throw new InvalidOperationException();
+				reg.Add(eqRef.Reference);
+			}
+
 	        entityManager.SetSharedComponent(querier, reg);
 	        entityManager.SetComponentData(querier, LocalTransform.FromPosition(new float3(-29, -31, 0)));
-	        entityManager.SetComponentData(querier, new PendingQuery { query = asset });
+	        entityManager.SetComponentData(querier, new PendingQuery { query = queryRef.Reference });
 	        entityManager.SetComponentEnabled<PendingQuery>(querier, true);
         
 	        var player0 = entityManager.CreateEntity(typeof(LocalTransform), typeof(TestPlayerController));

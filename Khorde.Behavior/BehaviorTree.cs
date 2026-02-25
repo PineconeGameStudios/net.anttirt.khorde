@@ -7,7 +7,7 @@ namespace Khorde.Behavior
 {
 	public struct BehaviorTree : ISharedComponentData
 	{
-		public UnityObjectRef<BehaviorTreeAsset> tree;
+		public BlobAssetReference<BTData> tree;
 	}
 
 	public struct BTState : IComponentData

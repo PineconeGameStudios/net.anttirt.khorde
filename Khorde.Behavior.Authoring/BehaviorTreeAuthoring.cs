@@ -27,9 +27,12 @@ namespace Khorde.Behavior
 
 				var entity = GetEntity(authoring, TransformUsageFlags.None);
 
+				var dataReference = authoring.behaviorTree.LoadPersistent(BTData.SchemaVersion).Reference;
+				AddBlobAsset(ref dataReference, out _);
+
 				AddSharedComponent(entity, new BehaviorTree
 				{
-					tree = authoring.behaviorTree,
+					tree = dataReference,
 				});
 
 				AddBuffer<BTThread>(entity);
@@ -72,7 +75,18 @@ namespace Khorde.Behavior
 				{
 					var reg = new QueryAssetRegistration();
 					foreach(var query in authoring.behaviorTree.Queries)
-						reg.Add(query);
+					{
+						var queryDataReference = query.LoadPersistent(QSData.SchemaVersion).Reference;
+						AddBlobAsset(ref queryDataReference, out _);
+						reg.Add(queryDataReference);
+
+						foreach(var eq in query.entityQueries)
+						{
+							var eqDataReference = eq.LoadPersistent(BlobEntityQueryDesc.SchemaVersion).Reference;
+							AddBlobAsset(ref eqDataReference, out _);
+							reg.Add(eqDataReference);
+						}
+					}
 					AddSharedComponent(entity, reg);
 					AddComponent(entity, new PendingQuery());
 					SetComponentEnabled<PendingQuery>(entity, false);
