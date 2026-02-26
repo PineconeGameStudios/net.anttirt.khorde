@@ -333,6 +333,9 @@ namespace Khorde.Query
 			}
 
 			[UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+#if UNITY_EDITOR
+			[UnityEditor.InitializeOnLoadMethod]
+#endif
 			static void StaticInit()
 			{
 				s_logEntityMissingWarningsGC = LogEntityMissingWarnings;
