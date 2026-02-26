@@ -241,13 +241,6 @@ namespace Khorde.Behavior
 		}
 	}
 
-	/// <summary>
-	/// Create an entity with this tag component in the world to allow the <see
-	/// cref="BehaviorTreeDebugSystem"/> to run. The system creates the tag
-	/// automatically when running in the editor.
-	/// </summary>
-	public struct BehaviorTreeDebugEnable : IComponentData { }
-
 	public partial class BehaviorTreeDebugSystem : SystemBase
 	{
 		NativeHashSet<Entity> warnedEntities;

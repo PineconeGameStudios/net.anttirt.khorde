@@ -342,11 +342,4 @@ namespace Khorde.Query
 		}
 		#endregion
 	}
-
-	/// <summary>
-	/// Create an entity with this tag component in the world to allow the <see
-	/// cref="QueryDebugSystem"/> to run. The system creates the tag
-	/// automatically when running in the editor.
-	/// </summary>
-	public struct QueryDebugEnable : IComponentData { }
 }

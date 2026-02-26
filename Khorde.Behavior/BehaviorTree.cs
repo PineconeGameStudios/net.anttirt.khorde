@@ -151,4 +151,11 @@ namespace Khorde.Behavior
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ref BTExec GetNode(BTExecNodeId id) => ref execs[id.index];
 	}
+
+	/// <summary>
+	/// Create an entity with this tag component in the world to allow the <see
+	/// cref="BehaviorTreeDebugSystem"/> to run. The system creates the tag
+	/// automatically when running in the editor.
+	/// </summary>
+	public struct BehaviorTreeDebugEnable : IComponentData { }
 }
