@@ -204,7 +204,7 @@ namespace Khorde.Behavior
 
 					if(!ExpressionSystemUtility.TryAddQueriesAndComponents(ref state, ref btData.exprData, ref typeHandles, ref lookups, instanceComponents))
 					{
-						Debug.LogError("Failed to create queries / components");
+						Debug.LogError($"Failed to create queries / components for {value.tree.GetHash().ToStringBurst()}");
 						state.Enabled = false;
 						return false;
 					}
@@ -230,6 +230,8 @@ namespace Khorde.Behavior
 						query = btQuery,
 						debugQuery = debugQuery,
 					});
+
+					Debug.Log($"Created queries / components for Behavior Tree asset {value.tree.GetHash().ToStringBurst()}");
 				}
 
 				holderQuery.ResetFilter();
@@ -239,8 +241,14 @@ namespace Khorde.Behavior
 		}
 	}
 
-#if UNITY_EDITOR
-	partial class BehaviorTreeDebugSystem : SystemBase
+	/// <summary>
+	/// Create an entity with this tag component in the world to allow the <see
+	/// cref="BehaviorTreeDebugSystem"/> to run. The system creates the tag
+	/// automatically when running in the editor.
+	/// </summary>
+	public struct BehaviorTreeDebugEnable : IComponentData { }
+
+	public partial class BehaviorTreeDebugSystem : SystemBase
 	{
 		NativeHashSet<Entity> warnedEntities;
 		StringBuilder sb;
@@ -249,6 +257,13 @@ namespace Khorde.Behavior
 		{
 			warnedEntities = new(0, Allocator.Persistent);
 			sb = new();
+
+			if(Application.isEditor)
+			{
+				EntityManager.AddComponent<BehaviorTreeDebugEnable>(SystemHandle);
+			}
+
+			RequireForUpdate<BehaviorTreeDebugEnable>();
 		}
 
 		protected override void OnDestroy()
@@ -278,8 +293,10 @@ namespace Khorde.Behavior
 						descs ??= queryHolder.query.GetEntityQueryDescs();
 
 						sb.Clear();
-						
-						sb.Append($"entity {entity} has BehaviorTree{{{tree.tree.Value.exprData.assetName}}} but is missing the required components [");
+
+						FixedString128Bytes name = default;
+						tree.tree.Value.exprData.assetName.CopyTo(ref name);
+						sb.Append($"entity {entity} has BehaviorTree{{{name}}} but is missing the required components [");
 						string intr = "";
 
 						foreach(var type in descs[0].All)
@@ -294,14 +311,13 @@ namespace Khorde.Behavior
 
 						sb.Append("]");
 
-						UnityEngine.Debug.LogWarning(sb.ToString());
+						UnityEngine.Debug.LogError(sb.ToString());
 					}
 
 				}
 			}
 		}
 	}
-#endif
 
 	public struct BTQueryHolder : IComponentData
 	{

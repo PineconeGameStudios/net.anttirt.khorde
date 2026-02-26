@@ -1,4 +1,5 @@
 ﻿using Khorde.Blobs;
+using Khorde.Entities;
 using Khorde.Expr;
 using System;
 using Unity.Collections;
@@ -122,6 +123,7 @@ namespace Khorde.Query
 						if(!failures.IsCreated)
 							failures = new(1, Allocator.Temp);
 
+						UnityEngine.Debug.LogError($"Failed to register Query Graph asset {pair.Key.GetHash().ToStringBurst()}");
 						failures.Add(pair.Key);
 
 						continue;
@@ -131,13 +133,17 @@ namespace Khorde.Query
 
 					holder.jobQuery = state.GetEntityQuery(builder);
 					//holder.jobQuery = builder.Build(state.EntityManager);
+
+					UnityEngine.Debug.Log($"Created queries / components for Query Graph asset {pair.Key.GetHash().ToStringBurst()}");
 				}
 			}
 
 			if(failures.IsCreated)
 			{
 				foreach(var failure in failures)
+				{
 					queryGraphs.Remove(failure);
+				}
 			}
 		}
 
@@ -266,5 +272,4 @@ namespace Khorde.Query
 			}
 		}
 	}
-
 }

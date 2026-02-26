@@ -2,6 +2,8 @@
 using Khorde.Entities;
 using Khorde.Expr;
 using System;
+using System.Runtime.InteropServices;
+using System.Text;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -18,14 +20,27 @@ namespace Khorde.Query
 		/// Results for Entity generators
 		/// </summary>
 		private NativeHashMap<Hash128, NativeList<Entity>> entityQueryResultLookup;
-
+		private NativeHashSet<Entity> warnedEntities;
+		private NativeList<Entity> warnPendingEntities;
 		private QuerySystemAssets assets;
+		private EntityQuery debugEnableQuery;
 
 		public void OnCreate(ref SystemState state)
 		{
 			entityQueryResultLookup = new NativeHashMap<Hash128, NativeList<Entity>>(1, Allocator.Persistent);
 
 			assets = new QuerySystemAssets(Allocator.Persistent);
+
+			warnedEntities = new NativeHashSet<Entity>(0, Allocator.Persistent);
+
+			warnPendingEntities = default;
+
+			debugEnableQuery = SystemAPI.QueryBuilder().WithAll<QueryDebugEnable>().WithOptions(EntityQueryOptions.IncludeSystems).Build();
+
+			if(UnityEngine.Application.isEditor)
+			{
+				state.EntityManager.AddComponent<QueryDebugEnable>(state.SystemHandle);
+			}
 
 			// add as a component so this can be accessed as a singleton from other systems
 			state.EntityManager.AddComponentData(state.SystemHandle, assets);
@@ -37,6 +52,8 @@ namespace Khorde.Query
 		{
 			assets.Dispose();
 			entityQueryResultLookup.Dispose();
+			warnedEntities.Dispose();
+			warnPendingEntities.Dispose();
 		}
 
 		[BurstCompile]
@@ -46,6 +63,13 @@ namespace Khorde.Query
 				state.WorldUpdateAllocator);
 
 			assets.Update(ref state, regs);
+
+			if(warnPendingEntities.IsCreated)
+			{
+				state.EntityManager.CompleteAllTrackedJobs();
+				DebugLogging.LogEntityMissingWarningsPtr.Data.Invoke(ref this, ref state);
+				warnPendingEntities.Dispose();
+			}
 
 			var entityQueryJobHandles =
 				new NativeHashMap<BlobAssetReference<BlobEntityQueryDesc>, JobHandle>(0, state.WorldUpdateAllocator);
@@ -116,6 +140,20 @@ namespace Khorde.Query
 			}
 
 			//state.Dependency = JobHandle.CombineDependencies(jobHandles.AsArray());
+
+			if(!debugEnableQuery.IsEmpty)
+			{
+				// Once all jobs from this system are complete, there should be no
+				// more PendingQuery[Enabled=true]. Any such leftovers were missed
+				// by the query execution jobs due to entity query filtering and
+				// are probably data bugs.
+				warnPendingEntities = SystemAPI.QueryBuilder()
+					.WithAll<PendingQuery>()
+					.Build()
+					.ToEntityListAsync(Allocator.Persistent, state.Dependency, out var resultDep);
+
+				state.Dependency = resultDep;
+			}
 		}
 
 		[BurstCompile]
@@ -240,5 +278,75 @@ namespace Khorde.Query
 				}
 			}
 		}
+
+		#region Debug Logging
+		static class DebugLogging
+		{
+			public delegate void LogEntityMissingWarningsDelegate(ref QuerySystem system, ref SystemState state);
+			private static LogEntityMissingWarningsDelegate s_logEntityMissingWarningsGC;
+			public static readonly SharedStatic<FunctionPointer<LogEntityMissingWarningsDelegate>> LogEntityMissingWarningsPtr
+				= SharedStatic<FunctionPointer<LogEntityMissingWarningsDelegate>>.GetOrCreate<LogEntityMissingWarningsDelegate>();
+			private static StringBuilder s_logEntityMissingWarningsSB;
+
+			[AOT.MonoPInvokeCallback(typeof(LogEntityMissingWarningsDelegate))]
+			private static void LogEntityMissingWarnings(ref QuerySystem system, ref SystemState state)
+			{
+				var sb = s_logEntityMissingWarningsSB;
+
+				foreach(var entity in system.warnPendingEntities)
+				{
+					if(!system.warnedEntities.Add(entity))
+						continue;
+
+					if(!state.EntityManager.TryGetComponentData<PendingQuery>(entity, out var pendingQuery))
+						continue;
+
+					if(!system.assets.queryGraphs.TryGetValue(pendingQuery.query, out var metaData))
+					{
+						UnityEngine.Debug.LogError($"entity {entity} has PendingQuery{{query={pendingQuery.query.GetHash()}}} but the query was not registered and will not run");
+						continue;
+					}
+
+					var descs = metaData.jobQuery.GetEntityQueryDescs();
+
+					sb.Clear();
+
+					FixedString128Bytes name = default;
+					pendingQuery.query.Value.exprData.assetName.CopyTo(ref name);
+					sb.Append($"entity {entity} wants to run QueryGraph{{{name}}} but is missing the required components [");
+					string intr = "";
+
+					foreach(var type in descs[0].All)
+					{
+						if(!state.EntityManager.HasComponent(entity, type))
+						{
+							sb.Append(intr);
+							sb.Append(type.GetManagedType().FullName);
+							intr = ", ";
+						}
+					}
+
+					sb.Append("]");
+
+					UnityEngine.Debug.LogError(sb.ToString());
+				}
+			}
+
+			[UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+			static void StaticInit()
+			{
+				s_logEntityMissingWarningsGC = LogEntityMissingWarnings;
+				s_logEntityMissingWarningsSB = new();
+				LogEntityMissingWarningsPtr.Data = new(Marshal.GetFunctionPointerForDelegate(s_logEntityMissingWarningsGC));
+			}
+		}
+		#endregion
 	}
+
+	/// <summary>
+	/// Create an entity with this tag component in the world to allow the <see
+	/// cref="QueryDebugSystem"/> to run. The system creates the tag
+	/// automatically when running in the editor.
+	/// </summary>
+	public struct QueryDebugEnable : IComponentData { }
 }

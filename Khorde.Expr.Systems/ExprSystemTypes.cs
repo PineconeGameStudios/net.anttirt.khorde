@@ -210,7 +210,7 @@ namespace Khorde.Expr
             where TTypeHandles : INativeList<ExprSystemTypeHandleHolder>
             where TLookups : INativeList<ExprSystemComponentLookupHolder>
         {
-            exprData.RuntimeInitialize(state.WorldUnmanaged, forced: true);
+            exprData.RuntimeInitialize(state.WorldUnmanaged);
 
             ref var componentTypes = ref exprData.localComponents;
 

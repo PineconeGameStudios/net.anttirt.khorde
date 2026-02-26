@@ -227,16 +227,8 @@ namespace Khorde.Expr
 		/// <summary>
 		/// Initialize expression function pointers, patch strong object refs, start loading weak object refs, etc.
 		/// </summary>
-		public void RuntimeInitialize(WorldUnmanaged world, bool forced = false)
+		public void RuntimeInitialize(WorldUnmanaged world)
 		{
-			if(!forced && IsRuntimeInitialized(world))
-			{
-				//Debug.Log($"BlobExpressionData.RuntimeInitialize(world: {world.SequenceNumber}, domain: {DomainCounter.Data}) already done");
-				return;
-			}
-
-			//Debug.Log($"BlobExpressionData.RuntimeInitialize(world: {world.SequenceNumber}, domain: {DomainCounter.Data})");
-
 			if(expressions.Length != expressionTypeHashes.Length)
 			{
 				throw new InvalidOperationException("corrupted data: must have the same amount of expressions and expression type hashes");
