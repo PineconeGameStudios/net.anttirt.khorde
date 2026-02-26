@@ -296,8 +296,10 @@ namespace Khorde.Query
 					if(!system.warnedEntities.Add(entity))
 						continue;
 
-					if(!state.EntityManager.TryGetComponentData<PendingQuery>(entity, out var pendingQuery))
+					if(!state.EntityManager.HasComponent<PendingQuery>(entity))
 						continue;
+
+					var pendingQuery = state.EntityManager.GetComponentData<PendingQuery>(entity);
 
 					if(!system.assets.queryGraphs.TryGetValue(pendingQuery.query, out var metaData))
 					{
