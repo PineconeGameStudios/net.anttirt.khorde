@@ -15,6 +15,7 @@ namespace Khorde.Behavior
 	public class BehaviorTreeAuthoring : MonoBehaviour
 	{
 		public BehaviorTreeAsset behaviorTree;
+		public bool trace;
 
 		class Baker : Baker<BehaviorTreeAuthoring>
 		{
@@ -37,6 +38,10 @@ namespace Khorde.Behavior
 
 				AddBuffer<BTThread>(entity);
 				AddBuffer<BTStackFrame>(entity);
+
+				if(authoring.trace)
+					AddBuffer<BTExecTrace>(entity);
+
 				var blackboard = AddBuffer<ExpressionBlackboardStorage>(entity);
 
 				ref var exprData = ref authoring.behaviorTree.GetValue(BTData.SchemaVersion).exprData;

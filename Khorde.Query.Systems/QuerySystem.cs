@@ -24,18 +24,16 @@ namespace Khorde.Query
 		private NativeList<Entity> warnPendingEntities;
 		private QuerySystemAssets assets;
 		private EntityQuery debugEnableQuery;
+		private EntityQuery pendingEntitiesQuery;
 
 		public void OnCreate(ref SystemState state)
 		{
 			entityQueryResultLookup = new NativeHashMap<Hash128, NativeList<Entity>>(1, Allocator.Persistent);
-
 			assets = new QuerySystemAssets(Allocator.Persistent);
-
 			warnedEntities = new NativeHashSet<Entity>(0, Allocator.Persistent);
-
 			warnPendingEntities = default;
-
 			debugEnableQuery = SystemAPI.QueryBuilder().WithAll<QueryDebugEnable>().WithOptions(EntityQueryOptions.IncludeSystems).Build();
+			pendingEntitiesQuery = SystemAPI.QueryBuilder().WithAll<PendingQuery>().Build();
 
 			if(UnityEngine.Application.isEditor)
 			{
@@ -69,6 +67,8 @@ namespace Khorde.Query
 				state.EntityManager.CompleteAllTrackedJobs();
 				DebugLogging.LogEntityMissingWarningsPtr.Data.Invoke(ref this, ref state);
 				warnPendingEntities.Dispose();
+
+				assets.Update(ref state, regs);
 			}
 
 			var entityQueryJobHandles =
@@ -147,9 +147,7 @@ namespace Khorde.Query
 				// more PendingQuery[Enabled=true]. Any such leftovers were missed
 				// by the query execution jobs due to entity query filtering and
 				// are probably data bugs.
-				warnPendingEntities = SystemAPI.QueryBuilder()
-					.WithAll<PendingQuery>()
-					.Build()
+				warnPendingEntities = pendingEntitiesQuery
 					.ToEntityListAsync(Allocator.Persistent, state.Dependency, out var resultDep);
 
 				state.Dependency = resultDep;

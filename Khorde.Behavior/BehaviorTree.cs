@@ -1,5 +1,6 @@
 using Khorde.Expr;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 
@@ -103,6 +104,22 @@ namespace Khorde.Behavior
 		}
 
 		public override string ToString() => $"{{{threadId}}} [{type}.{nodeId.index}] {depth}> {@event} @{cycle}";
+
+		public void AppendTo(System.Text.StringBuilder sb)
+		{
+			sb.Append('{');
+			sb.Append(threadId);
+			sb.Append("} [");
+			sb.Append(type);
+			sb.Append('.');
+			sb.Append(nodeId.index);
+			sb.Append("] ");
+			sb.Append(depth);
+			sb.Append("> ");
+			sb.Append(@event);
+			sb.Append(" @");
+			sb.Append(cycle);
+		}
 
 		#region Equality
 		public bool Equals(in BTExecTrace other) =>

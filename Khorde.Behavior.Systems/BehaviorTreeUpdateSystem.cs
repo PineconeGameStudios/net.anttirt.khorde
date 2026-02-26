@@ -18,13 +18,10 @@ namespace Khorde.Behavior
 	[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 	public partial struct BehaviorTreeUpdateSystem : ISystem
 	{
-		Entity traceHolder;
-
 		void ISystem.OnCreate(ref SystemState state)
 		{
-			traceHolder = state.EntityManager.CreateSingletonBuffer<BTExecTrace>();
-
 			state.IgnoreCreateQueryInOnUpdateWarning();
+			state.AddDependency<BTExecTrace>();
 		}
 
 		[BurstCompile]
@@ -36,6 +33,7 @@ namespace Khorde.Behavior
 			public ComponentTypeHandle<BTState> stateTypeHandle;
 			public BufferTypeHandle<BTThread> threadTypeHandle;
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
+			public BufferTypeHandle<BTExecTrace> traceHandle;
 			public BufferTypeHandle<ExpressionBlackboardStorage> blackboardTypeHandle;
 			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
 			public SharedComponentTypeHandle<QueryAssetRegistration> queriesTypeHandle;
@@ -50,6 +48,7 @@ namespace Khorde.Behavior
 				var states = chunk.GetNativeArray(ref stateTypeHandle).AsSpan();
 				var threads = chunk.GetBufferAccessor(ref threadTypeHandle);
 				var stacks = chunk.GetBufferAccessor(ref stackTypeHandle);
+				var traces = chunk.GetBufferAccessor(ref traceHandle);
 				var blackboards = chunk.GetBufferAccessor(ref blackboardTypeHandle);
 				var lookups = componentLookups.Lookups;
 				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
@@ -75,6 +74,13 @@ namespace Khorde.Behavior
 					if(btData.Value.hasQueries)
 						pendingQueryEnabled = pendingQueryEnabledMask.GetEnabledRefRW<PendingQuery>(entityIndex);
 
+					DynamicBuffer<BTExecTrace> trace = default;
+					if(traces.Length > 0)
+					{
+						trace = traces[entityIndex];
+						trace.Clear();
+					}
+
 					BehaviorTreeExecution.Execute(
 						ref btData.Value,
 						ref states[entityIndex],
@@ -88,7 +94,7 @@ namespace Khorde.Behavior
 						typeHandles.GetComponents(entityIndex),
 						lookups,
 						now,
-						default
+						trace
 						);
 				}
 			}
@@ -111,6 +117,7 @@ namespace Khorde.Behavior
 					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BTState>(),
 					threadTypeHandle = SystemAPI.GetBufferTypeHandle<BTThread>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
+					traceHandle = SystemAPI.GetBufferTypeHandle<BTExecTrace>(),
 					blackboardTypeHandle = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
 					queriesTypeHandle = SystemAPI.GetSharedComponentTypeHandle<QueryAssetRegistration>(),
@@ -308,6 +315,24 @@ namespace Khorde.Behavior
 					}
 
 				}
+			}
+
+			foreach(var (trace, entity) in SystemAPI.Query<DynamicBuffer<BTExecTrace>>().WithEntityAccess())
+			{
+				sb.Clear();
+
+				foreach(var ev in trace)
+				{
+					sb.Append("Entity(");
+					sb.Append(entity.Index);
+					sb.Append(':');
+					sb.Append(entity.Version);
+					sb.Append(") ");
+					ev.AppendTo(sb);
+					sb.Append('\n');
+				}
+
+				UnityEngine.Debug.Log(sb.ToString());
 			}
 		}
 	}
