@@ -59,7 +59,8 @@ namespace Khorde.Query
 			QSTempState tempState = default;
 
 			NativeArray<UnsafeComponentReference> supComponentPtrs = new NativeArray<UnsafeComponentReference>(componentPtrs.Length + 1, Allocator.Temp);
-			componentPtrs.CopyTo(supComponentPtrs.GetSubArray(0, componentPtrs.Length));
+			if(componentPtrs.IsCreated)
+				componentPtrs.CopyTo(supComponentPtrs.GetSubArray(0, componentPtrs.Length));
 			supComponentPtrs[^1] = UnsafeComponentReference.Make(ref tempState);
 
 			NativeArray<byte> blackboardBytes = default;

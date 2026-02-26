@@ -193,9 +193,19 @@ namespace Khorde.Behavior
 		/// </summary>
 		public int resultCountVariableIndex;
 
+		/// <summary>
+		/// Branch to execute on query success (results found)
+		/// </summary>
+		public BTExecNodeId success;
+
+		/// <summary>
+		/// Branch to execute on query failure (no results)
+		/// </summary>
+		public BTExecNodeId failure;
+
 		public string DumpString()
 		{
-			return $"{{ query={queryIndex} var={variableIndex} nRes={resultCountVariableIndex} }}";
+			return $"{{ query={queryIndex} var={variableIndex} nRes={resultCountVariableIndex} success={success} failure={failure} }}";
 		}
 	}
 

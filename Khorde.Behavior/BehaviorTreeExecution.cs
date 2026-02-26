@@ -352,7 +352,12 @@ namespace Khorde.Behavior
 						break;
 
 					case BTExec.BTExecType.Query:
-						if(state.QueryExecutorThreadIndex == -1 || state.QueryExecutorThreadIndex == threadIndex)
+						if(frames[^1].childIndex == 1)
+						{
+							Return(ref data, ref node);
+							break;
+						}
+						else if(state.QueryExecutorThreadIndex == -1 || state.QueryExecutorThreadIndex == threadIndex)
 						{
 							if(!pendingQuery.complete && !pendingQueryEnabled.ValueRO)
 							{
@@ -380,10 +385,15 @@ namespace Khorde.Behavior
 								// TODO: this would be an excellent moment to write the result count somewhere
 								// on the bt execution stack, but a blackboard variable will do for now
 								exprContext.GetBlackboardVariable(node.data.query.resultCountVariableIndex).ReinterpretStore(0, pendingQuery.resultCount);
-								Return(ref data, ref node);
 
 								// allow other threads to run queries again
 								state.QueryExecutorThreadIndex = -1;
+
+								if(pendingQuery.resultCount > 0)
+									Call(ref data, node.data.query.success);
+								else
+									Call(ref data, node.data.query.failure);
+
 								break;
 							}
 						}

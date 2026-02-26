@@ -16,6 +16,7 @@ namespace Khorde.Expr.Authoring
 		protected SubgraphStack subgraphStack = new();
 		private Dictionary<NodeKey<IExprNode>, ushort> exprNodeMap = new();
 		private Dictionary<NodeKey<IVariable>, ushort> varNodeMap = new();
+		private Dictionary<NodeKey<(ICustomExprNode, int outputIndex)>, ushort> generatedVarNodeMap = new();
 		private Dictionary<NodeKey<IVariableNode>, ushort> outputNodeMap = new();
 		private Dictionary<NodeKey<IVariableNode>, ushort> inputNodeMap = new();
 		private ushort exprNodeCounter;
@@ -254,6 +255,10 @@ namespace Khorde.Expr.Authoring
 
 					return Const(value);
 				}
+				else if(srcNode is ICustomExprNode customNode)
+				{
+					return customNode.GetExpressionRef(this, srcPort);
+				}
 				else
 				{
 					AddError(srcNode, $"unhandled expr source node type {srcNode.GetType().Name}");
@@ -370,6 +375,20 @@ namespace Khorde.Expr.Authoring
 			exprNodeCounter++;
 		}
 
+		public int RegisterGeneratedVariable(ICustomExprNode node, int outputIndex, string name, Type type)
+		{
+			var nodeIndex = exprNodeCounter;
+			if(nodeIndex > ushort.MaxValue)
+				throw new InvalidOperationException("max expr node capacity exceeded");
+
+			if(!generatedVarNodeMap.TryAdd(GetNodeKey(node, outputIndex), nodeIndex))
+				throw new InvalidOperationException("generated variable already registered");
+
+			exprNodeCounter++;
+
+			return AddBlackboardVariable($"_{node.Guid}_{name}", isGlobal: false, type: type, defaultValue: null);
+		}
+
 		protected virtual bool RegisterGraphNodes()
 		{
 			return true;
@@ -466,12 +485,28 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
+		public void BakeGeneratedVariable(ICustomExprNode node, int outputIndex, int variableIndex)
+		{
+			var nodeIndex = generatedVarNodeMap[GetNodeKey(node, outputIndex)];
+			builderSourceGraphNodeIds[nodeIndex] = node.Guid;
+			CreateExpression(GetStorage(nodeIndex), new Variable
+			{
+				index = variableIndex,
+			});
+		}
+
+		public ExpressionRef GetGeneratedVariableNodeRef(ICustomExprNode node, int outputIndex)
+		{
+			return ExpressionRef.Node(generatedVarNodeMap[GetNodeKey(node, outputIndex)], 0);
+		}
+
 		protected virtual bool BakeGraphNodes()
 		{
 			return true;
 		}
 
 		public NodeKey<IVariable> GetNodeKey(IVariable variable) => new(subgraphStack.GetKey(), variable);
+		public NodeKey<(ICustomExprNode, int outputIndex)> GetNodeKey(ICustomExprNode node, int outputIndex) => new(subgraphStack.GetKey(), (node, outputIndex));
 		public NodeKey<IExprNode> GetNodeKey(IExprNode exprNode) => new(subgraphStack.GetKey(), exprNode);
 		public NodeKey<IVariableNode> GetNodeKey(IVariableNode varNode) => new(subgraphStack.GetKey(), varNode);
 

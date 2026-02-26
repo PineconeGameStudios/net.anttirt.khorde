@@ -88,6 +88,8 @@ namespace Khorde.Behavior.Authoring
 			if(!execNodeMap.TryAdd(GetNodeKey(execNode), new BTExecNodeId((ushort)index)))
 				throw new Exception("duplicate node key");
 			execNodeIdCounter += execNode?.NodeCount ?? 1;
+
+			execNode?.Register(this);
 		}
 
 		public BTExecNodeId GetNodeId(IExecNode execNode)

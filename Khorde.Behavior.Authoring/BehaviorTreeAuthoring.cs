@@ -43,36 +43,9 @@ namespace Khorde.Behavior
 					AddBuffer<BTExecTrace>(entity);
 
 				var blackboard = AddBuffer<ExpressionBlackboardStorage>(entity);
-
-				ref var exprData = ref authoring.behaviorTree.GetValue(BTData.SchemaVersion).exprData;
-
-				{
-					var exprDatas = new List<(Hash128, Ptr<BlobExpressionData>, string)>();
-					var assetLookup = new Dictionary<Hash128, BlobAssetBase>();
-					exprDatas.Add((authoring.behaviorTree.DataHash, new Ptr<BlobExpressionData>(ref exprData), authoring.behaviorTree.name));
-					assetLookup[authoring.behaviorTree.DataHash] = authoring.behaviorTree;
-
-					foreach(var query in authoring.behaviorTree.Queries)
-					{
-						exprDatas.Add((query.DataHash, new Ptr<BlobExpressionData>(ref query.GetValue(QSData.SchemaVersion).exprData), query.name));
-						assetLookup[query.DataHash] = query;
-					}
-
-					var layout = ExprAuthoring.ComputeLayout(exprDatas);
-
-					//foreach(var (asset, layoutVariables) in layout)
-					//{
-					//	Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
-					//}
-
-					var baked = ExprAuthoring.BakeLayout(layout, Allocator.Persistent);
-					AddBlobAsset(ref baked, out var _);
-					AddSharedComponent(entity, new ExpressionBlackboardLayouts() { asset = baked, });
-
-					blackboard.Resize(baked.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), NativeArrayOptions.ClearMemory);
-
-					ExprAuthoring.InitializeBlackboard(blackboard.AsNativeArray(), layout);
-				}
+				var bakedLayout = BakeLayout(authoring.behaviorTree, blackboard, Allocator.Persistent);
+				AddBlobAsset(ref bakedLayout, out var _);
+				AddSharedComponent(entity, new ExpressionBlackboardLayouts() { asset = bakedLayout, });
 
 				AddComponent(entity, new BTState { });
 
@@ -98,6 +71,36 @@ namespace Khorde.Behavior
 					AddBuffer<QSResultItemStorage>(entity);
 				}
 			}
+		}
+
+		public static BlobAssetReference<ExpressionBlackboardLayouts.LayoutContainer> BakeLayout(BehaviorTreeAsset behaviorTree, DynamicBuffer<ExpressionBlackboardStorage> blackboard, AllocatorManager.AllocatorHandle allocator, bool dumpLayout = false)
+		{
+			ref var exprData = ref behaviorTree.GetValue(BTData.SchemaVersion).exprData;
+			var exprDatas = new List<(Hash128, Ptr<BlobExpressionData>, string)>();
+			var assetLookup = new Dictionary<Hash128, BlobAssetBase>();
+			exprDatas.Add((behaviorTree.DataHash, new Ptr<BlobExpressionData>(ref exprData), behaviorTree.name));
+			assetLookup[behaviorTree.DataHash] = behaviorTree;
+
+			foreach(var query in behaviorTree.Queries)
+			{
+				exprDatas.Add((query.DataHash, new Ptr<BlobExpressionData>(ref query.GetValue(QSData.SchemaVersion).exprData), query.name));
+				assetLookup[query.DataHash] = query;
+			}
+
+			var layout = ExprAuthoring.ComputeLayout(exprDatas);
+
+			if(dumpLayout)
+			{
+				foreach(var (asset, layoutVariables) in layout)
+				{
+					Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
+				}
+			}
+
+			var baked = ExprAuthoring.BakeLayout(layout, allocator.ToAllocator);
+			blackboard.Resize(baked.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), NativeArrayOptions.ClearMemory);
+			ExprAuthoring.InitializeBlackboard(blackboard.AsNativeArray(), layout);
+			return baked;
 		}
 	}
 }

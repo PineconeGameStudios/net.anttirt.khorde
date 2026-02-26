@@ -72,6 +72,7 @@ namespace Khorde.Query.Authoring
 			if(queryNodes.Count == 0)
 			{
 				infos.LogError("The graph needs to have a Query node", this);
+				return;
 			}
 
 			if(queryNodes.Count > 1)

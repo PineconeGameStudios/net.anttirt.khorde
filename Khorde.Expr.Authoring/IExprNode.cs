@@ -8,4 +8,8 @@ namespace Khorde.Expr.Authoring
 		public void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage);
 	}
 
+	public interface ICustomExprNode : INode
+	{
+		public ExpressionRef GetExpressionRef(GraphExpressionBakingContext context, IPort port);
+	}
 }

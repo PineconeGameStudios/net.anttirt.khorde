@@ -23,6 +23,7 @@ namespace Khorde.Behavior.Authoring
 
 	public interface IExecNode : INode
 	{
+		public void Register(BTBakingContext context) { }
 		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId);
 		public int NodeCount { get; }
 	}

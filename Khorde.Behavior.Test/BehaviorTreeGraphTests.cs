@@ -65,7 +65,7 @@ namespace Khorde.Behavior.Test
 		}
 
 		[Test]
-		public void Test_Graph1()
+		public void Test_MoveAround()
 		{
 			var btAsset = AssetDatabase.LoadAssetAtPath<BehaviorTreeAsset>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_MoveAround.btg");
 			BlobAssetReference<BTData> data = default;
