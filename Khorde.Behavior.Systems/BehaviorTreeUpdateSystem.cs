@@ -248,6 +248,8 @@ namespace Khorde.Behavior
 		}
 	}
 
+	[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+	[UpdateBefore(typeof(BehaviorTreeUpdateSystem))]
 	public partial class BehaviorTreeDebugSystem : SystemBase
 	{
 		NativeHashSet<Entity> warnedEntities;

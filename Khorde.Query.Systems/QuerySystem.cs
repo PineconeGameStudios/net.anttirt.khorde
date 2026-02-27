@@ -22,6 +22,7 @@ namespace Khorde.Query
 		private NativeHashMap<Hash128, NativeList<Entity>> entityQueryResultLookup;
 		private NativeHashSet<Entity> warnedEntities;
 		private NativeList<Entity> warnPendingEntities;
+		private JobHandle warnPendingEntitiesHandle;
 		private QuerySystemAssets assets;
 		private EntityQuery debugEnableQuery;
 		private EntityQuery pendingEntitiesQuery;
@@ -52,6 +53,7 @@ namespace Khorde.Query
 			entityQueryResultLookup.Dispose();
 			warnedEntities.Dispose();
 			warnPendingEntities.Dispose();
+			warnPendingEntitiesHandle = default;
 		}
 
 		[BurstCompile]
@@ -64,8 +66,12 @@ namespace Khorde.Query
 
 			if(warnPendingEntities.IsCreated)
 			{
-				state.EntityManager.CompleteAllTrackedJobs();
-				DebugLogging.LogEntityMissingWarningsPtr.Data.Invoke(ref this, ref state);
+				warnPendingEntitiesHandle.Complete();
+				warnPendingEntitiesHandle = default;
+
+				if(warnPendingEntities.Length > 0)
+					DebugLogging.LogEntityMissingWarningsPtr.Data.Invoke(ref this, ref state);
+
 				warnPendingEntities.Dispose();
 
 				assets.Update(ref state, regs);
@@ -151,6 +157,7 @@ namespace Khorde.Query
 					.ToEntityListAsync(Allocator.Persistent, state.Dependency, out var resultDep);
 
 				state.Dependency = resultDep;
+				warnPendingEntitiesHandle = resultDep;
 			}
 		}
 
