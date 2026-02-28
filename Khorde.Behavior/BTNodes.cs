@@ -203,6 +203,11 @@ namespace Khorde.Behavior
 		/// </summary>
 		public BTExecNodeId failure;
 
+		/// <summary>
+		/// Blackboard inputs to the query graph
+		/// </summary>
+		public BlobArray<WriteVar> inputs;
+
 		public string DumpString()
 		{
 			return $"{{ query={queryIndex} var={variableIndex} nRes={resultCountVariableIndex} success={success} failure={failure} }}";

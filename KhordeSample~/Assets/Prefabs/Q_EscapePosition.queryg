@@ -95,7 +95,7 @@ MonoBehaviour:
           serializedVersion: 2
           x: -903
           y: 89
-          width: 1876
+          width: 1868
           height: 1456
         m_GraphElementMetaData:
         - m_Guid:
@@ -796,7 +796,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 6c8c27a2e0c35c3deb49993d1f7e39a6
         m_Version: 2
-        m_Position: {x: -903.0254, y: 576.4663}
+        m_Position: {x: -903.0254, y: 577.2225}
         m_Title: TargetPlayer
         m_Tooltip: 
         m_NodePreviewModel:

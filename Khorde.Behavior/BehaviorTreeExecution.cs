@@ -366,6 +366,14 @@ namespace Khorde.Behavior
 								pendingQuery.query = queries[node.data.query.queryIndex];
 								pendingQuery.results = exprContext.GetBlackboardVariableSlice(node.data.query.variableIndex);
 								state.QueryExecutorThreadIndex = threadIndex;
+
+								for(int i = 0; i < node.data.query.inputs.Length; ++i)
+								{
+									ref var writeVar = ref node.data.query.inputs[i];
+									var varBytes = exprContext.GetBlackboardVariable(writeVar.variableIndex);
+									writeVar.input.Evaluate(exprContext, ref varBytes);
+								}
+
 								Trace(ref node, BTExecTrace.Event.Wait);
 								goto nextThread;
 							}

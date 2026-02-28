@@ -169,6 +169,15 @@ namespace Khorde.Expr.Authoring
 
 		public int AddBlackboardVariable<T>(string name, bool isGlobal, T defaultValue = default) where T : unmanaged => AddBlackboardVariable(name, isGlobal, typeof(T), defaultValue);
 
+		/// <summary>
+		/// Register a blackboard variable and return its variable index
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="isGlobal"></param>
+		/// <param name="type"></param>
+		/// <param name="defaultValue"></param>
+		/// <returns></returns>
+		/// <exception cref="InvalidOperationException"></exception>
 		public int AddBlackboardVariable(string name, bool isGlobal, Type type, object defaultValue)
 		{
 			if(defaultValue != null)

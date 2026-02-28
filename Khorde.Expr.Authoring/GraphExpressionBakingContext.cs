@@ -306,7 +306,7 @@ namespace Khorde.Expr.Authoring
 					{
 						variable.TryGetDefaultValue(out object defaultValue);
 						variables[key] = AddBlackboardVariable(
-							variable.name,
+							GetVariableName(variable),
 							IsGlobal(variable),
 							variable.dataType,
 							defaultValue
@@ -365,6 +365,11 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
+		protected virtual string GetVariableName(IVariable variable)
+		{
+			return variable.name;
+		}
+
 		private void RegisterVariableRead(IVariable variable)
 		{
 			var index = exprNodeCounter;
@@ -375,6 +380,15 @@ namespace Khorde.Expr.Authoring
 			exprNodeCounter++;
 		}
 
+		/// <summary>
+		/// Register a generated variable (i.e. not from the current graph's explicit blackboard) and return the blackboard variable index
+		/// </summary>
+		/// <param name="node"></param>
+		/// <param name="outputIndex"></param>
+		/// <param name="name"></param>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		/// <exception cref="InvalidOperationException"></exception>
 		public int RegisterGeneratedVariable(ICustomExprNode node, int outputIndex, string name, Type type)
 		{
 			var nodeIndex = exprNodeCounter;

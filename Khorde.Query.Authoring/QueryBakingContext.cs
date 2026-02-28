@@ -61,6 +61,13 @@ namespace Khorde.Query.Authoring
 			return base.RegisterGraphNodes();
 		}
 
+		protected override string GetVariableName(IVariable variable)
+		{
+			// avoid mixing query graph variables with normal variables, as QG
+			// variables are passed in via input ports
+			return "_QUERYINPUT_" + base.GetVariableName(variable);
+		}
+
 		protected override bool BakeGraphNodes()
 		{
 			List<IPass> passNodes = new();
