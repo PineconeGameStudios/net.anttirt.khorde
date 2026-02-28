@@ -253,7 +253,14 @@ namespace Khorde.Expr.Authoring
 							if(global.type != variable.type)
 								throw new InvalidOperationException($"global variable '{variable.name}' has conflicting types '{global.type.FullName}' and '{variable.type.FullName}'");
 
-							if(!Enumerable.SequenceEqual(global.defaultValue, variable.defaultValue))
+							bool ok = true;
+
+							if((global.defaultValue?.Length == 0) != (variable.defaultValue?.Length == 0))
+								ok = IsAllZero(global.defaultValue?.Length > 0 ? global.defaultValue : variable.defaultValue);
+							else
+								ok = Enumerable.SequenceEqual(global.defaultValue, variable.defaultValue);
+
+							if(!ok)
 							{
 								var obj0 = Activator.CreateInstance(global.type);
 								var obj1 = Activator.CreateInstance(global.type);
@@ -263,10 +270,13 @@ namespace Khorde.Expr.Authoring
 								var name0 = expressions[global.initialAssetIndex].assetName;
 								var name1 = expressions[assetIndex].assetName;
 
+								var hex0 = BitConverter.ToString(global.defaultValue);
+								var hex1 = BitConverter.ToString(variable.defaultValue);
+
 								throw new InvalidOperationException(
 									$"global variable '{variable.name}' has conflicting default values " +
-									$"'{obj0}' (from '{name0}') and " +
-									$"'{obj1}' (from '{name1}')");
+									$"'{obj0}' ({hex0}) (from '{name0}') and " +
+									$"'{obj1}' ({hex1}) (from '{name1}')");
 							}
 						}
 						else
@@ -327,6 +337,15 @@ namespace Khorde.Expr.Authoring
 			}
 
 			return assetLayouts;
+		}
+
+		private static bool IsAllZero(byte[] bytes)
+		{
+			for(int i = 0; i < bytes.Length; ++i)
+				if(bytes[i] != 0)
+					return false;
+
+			return true;
 		}
 
 		static void CopyBoxedValue(object dst, byte[] src)

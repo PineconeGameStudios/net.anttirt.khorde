@@ -290,6 +290,34 @@ namespace Khorde.Expr.Authoring
 			if(!BakeGraphNodes())
 				return default;
 			FinalizeBake();
+
+			var varNodesByIndex = varNodeMap.ToDictionary(kv => kv.Value, kv => kv.Key);
+			var exprNodesByIndex = exprNodeMap.ToDictionary(kv => kv.Value, kv => kv.Key);
+			var genVarNodesByIndex = generatedVarNodeMap.ToDictionary(kv => kv.Value, kv => kv.Key);
+
+			for(ushort nodeIndex = 0; nodeIndex < exprNodeCounter; ++nodeIndex)
+			{
+				if(builderTypeHashes[nodeIndex] == 0)
+				{
+					if(varNodesByIndex.TryGetValue(nodeIndex, out var variableNode))
+					{
+						AddError(variableNode.node, $"variable {variableNode.node.name} at index {nodeIndex} failed to add an expression type hash");
+					}
+					else if(exprNodesByIndex.TryGetValue(nodeIndex, out var exprNode))
+					{
+						AddError(variableNode.node, $"expression {exprNode.node.GetType().FullName} at index {nodeIndex} failed to add an expression type hash");
+					}
+					else if(genVarNodesByIndex.TryGetValue(nodeIndex, out var genVar))
+					{
+						AddError(variableNode.node, $"genvar {genVar.node.Item1.GetType().FullName}/{genVar.node.outputIndex} at index {nodeIndex} failed to add an expression type hash");
+					}
+					else
+					{
+						AddError(this, $"node index {nodeIndex} could not be identified");
+					}
+				}
+			}
+
 			return builder;
 		}
 
@@ -335,7 +363,7 @@ namespace Khorde.Expr.Authoring
 					}
 					else if(varNode.variable.variableKind == VariableKind.Local)
 					{
-						RegisterVariableRead(varNode.variable);
+						RegisterVariableRead(varNode);
 					}
 					else if(varNode.variable.variableKind == VariableKind.Input)
 					{
@@ -370,12 +398,12 @@ namespace Khorde.Expr.Authoring
 			return variable.name;
 		}
 
-		private void RegisterVariableRead(IVariable variable)
+		private void RegisterVariableRead(IVariableNode varNode)
 		{
-			var index = exprNodeCounter;
-			if(index > ushort.MaxValue)
+			var nodeIndex = exprNodeCounter;
+			if(nodeIndex > ushort.MaxValue)
 				throw new InvalidOperationException("max expr node capacity exceeded");
-			if(!varNodeMap.TryAdd(GetNodeKey(variable), (ushort)index))
+			if(!varNodeMap.TryAdd(GetNodeKey(varNode.variable), nodeIndex))
 				return;
 			exprNodeCounter++;
 		}
@@ -389,7 +417,7 @@ namespace Khorde.Expr.Authoring
 		/// <param name="type"></param>
 		/// <returns></returns>
 		/// <exception cref="InvalidOperationException"></exception>
-		public int RegisterGeneratedVariable(ICustomExprNode node, int outputIndex, string name, Type type)
+		public int RegisterGeneratedVariable(ICustomExprNode node, int outputIndex, string name, bool isGlobal, Type type)
 		{
 			var nodeIndex = exprNodeCounter;
 			if(nodeIndex > ushort.MaxValue)
@@ -400,7 +428,7 @@ namespace Khorde.Expr.Authoring
 
 			exprNodeCounter++;
 
-			return AddBlackboardVariable($"_{node.Guid}_{name}", isGlobal: false, type: type, defaultValue: null);
+			return AddBlackboardVariable(name, isGlobal: isGlobal, type: type, defaultValue: null);
 		}
 
 		protected virtual bool RegisterGraphNodes()
@@ -410,10 +438,10 @@ namespace Khorde.Expr.Authoring
 
 		private void RegisterExprNode(IExprNode exprNode)
 		{
-			var index = exprNodeCounter;
-			if(index > ushort.MaxValue)
+			var nodeIndex = exprNodeCounter;
+			if(nodeIndex > ushort.MaxValue)
 				throw new InvalidOperationException("max expr node capacity exceeded");
-			if(!exprNodeMap.TryAdd(GetNodeKey(exprNode), (ushort)index))
+			if(!exprNodeMap.TryAdd(GetNodeKey(exprNode), nodeIndex))
 				throw new InvalidOperationException("duplicate node key");
 			exprNodeCounter++;
 		}

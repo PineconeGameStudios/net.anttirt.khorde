@@ -15,7 +15,12 @@ namespace Khorde.Behavior
 	public class BehaviorTreeAuthoring : MonoBehaviour
 	{
 		public BehaviorTreeAsset behaviorTree;
+
+		[Header("Debugging")]
+		[Tooltip("Log Behavior Tree execution traces")]
 		public bool trace;
+		[Tooltip("Dump blackboard variable layout when baking")]
+		public bool dumpBlackboardLayout;
 
 		class Baker : Baker<BehaviorTreeAuthoring>
 		{
@@ -43,7 +48,7 @@ namespace Khorde.Behavior
 					AddBuffer<BTExecTrace>(entity);
 
 				var blackboard = AddBuffer<ExpressionBlackboardStorage>(entity);
-				var bakedLayout = BakeLayout(authoring.behaviorTree, blackboard, Allocator.Persistent);
+				var bakedLayout = BakeLayout(authoring.behaviorTree, blackboard, Allocator.Persistent, dumpLayout: authoring.dumpBlackboardLayout);
 				AddBlobAsset(ref bakedLayout, out var _);
 				AddSharedComponent(entity, new ExpressionBlackboardLayouts() { asset = bakedLayout, });
 

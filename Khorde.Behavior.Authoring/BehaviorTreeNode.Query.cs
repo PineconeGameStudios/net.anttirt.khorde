@@ -44,14 +44,14 @@ namespace Khorde.Behavior.Authoring
 
 			int varIndex = 0;
 
-			resultVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, "result", type);
-			resultCountVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, "resultCount", typeof(int));
+			resultVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_{Guid}_{resultVariableIndex}_result", true, type);
+			resultCountVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_{Guid}_{resultCountVariableIndex}_count", true, typeof(int));
 
 			ref var variables = ref qsData.exprData.blackboardVariables;
 			for(int i = 0; i < variables.Length; i++)
 			{
 				var varType = GetVariableType(ref variables[i]);
-				queryVariableIndices.Add(context.RegisterGeneratedVariable(this, varIndex++, variables[i].name.ToString(), varType));
+				queryVariableIndices.Add(context.RegisterGeneratedVariable(this, varIndex++, variables[i].name.ToString(), true, varType));
 			}
 		}
 
@@ -89,13 +89,16 @@ namespace Khorde.Behavior.Authoring
 				failure = context.GetTargetNodeId(execFailure),
 			};
 
-			context.BakeGeneratedVariable(this, 0, resultVariableIndex);
-			context.BakeGeneratedVariable(this, 1, resultCountVariableIndex);
+			int varIndex = 0;
+			context.BakeGeneratedVariable(this, varIndex++, resultVariableIndex);
+			context.BakeGeneratedVariable(this, varIndex++, resultCountVariableIndex);
 
 			ref var variables = ref qsData.exprData.blackboardVariables;
 			var inputVariables = builder.Allocate(ref exec.data.query.inputs, variables.Length);
 			for(int i = 0; i < variables.Length; i++)
 			{
+				context.BakeGeneratedVariable(this, varIndex++, queryVariableIndices[i]);
+
 				inputVariables[i] = new Behavior.WriteVar
 				{
 					variableIndex = queryVariableIndices[i],
