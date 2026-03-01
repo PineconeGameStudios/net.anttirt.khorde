@@ -276,6 +276,11 @@ namespace Khorde.Behavior
 							Return(ref data, ref node);
 							break;
 
+						case BTExec.BTExecType.Append:
+							node.data.append.Evaluate(in exprContext);
+							Return(ref data, ref node);
+							break;
+
 						case BTExec.BTExecType.Wait:
 							if(node.data.wait.duration.IsCreated)
 							{

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Entities.LowLevel.Unsafe;
 
 namespace Khorde.Expr
 {
@@ -24,6 +25,8 @@ namespace Khorde.Expr
         /// Size in bytes of the component type
         /// </summary>
         public int typeSize;
+
+        public bool isBuffer;
     }
 
     public struct ExprSystemComponentLookupHolder : IBufferElementData
@@ -47,6 +50,8 @@ namespace Khorde.Expr
     [StructLayout(LayoutKind.Sequential)]
     public struct ExprJobComponentTypeHandles
     {
+        const int kMaxHandles = 10;
+
         DynamicComponentTypeHandle type0;
         DynamicComponentTypeHandle type1;
         DynamicComponentTypeHandle type2;
@@ -59,11 +64,58 @@ namespace Khorde.Expr
         DynamicComponentTypeHandle type9;
         FixedList512Bytes<UnsafeComponentReference> components;
         FixedList128Bytes<IntPtr> basePointers;
-        const int kMaxHandles = 10;
+
+        // these are initialized per chunk
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor0;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor1;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor2;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor3;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor4;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor5;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor6;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor7;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor8;
+        [NativeDisableContainerSafetyRestriction] UnsafeUntypedBufferAccessor bufferAccessor9;
+
+        // these are initialized per entity where relevant
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp0;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp1;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp2;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp3;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp4;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp5;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp6;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp7;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp8;
+        [NativeDisableContainerSafetyRestriction] UntypedDynamicBuffer bufferTemp9;
 
         public int Length => components.Length;
 
         public int GetTypeSize(int index) => components[index].typeSize;
+
+        Span<UntypedDynamicBuffer> BufferTemps
+        {
+            get
+            {
+                unsafe
+                {
+                    fixed(UntypedDynamicBuffer* ptr = &bufferTemp0)
+                        return new Span<UntypedDynamicBuffer>(ptr, kMaxHandles);
+                }
+            }
+        }
+
+        Span<UnsafeUntypedBufferAccessor> BufferAccessors
+        {
+            get
+            {
+                unsafe
+                {
+                    fixed(UnsafeUntypedBufferAccessor* ptr = &bufferAccessor0)
+                        return new Span<UnsafeUntypedBufferAccessor>(ptr, kMaxHandles);
+                }
+            }
+        }
 
         Span<DynamicComponentTypeHandle> Handles
         {
@@ -81,9 +133,24 @@ namespace Khorde.Expr
         {
             if (components.Length == 0)
                 return default;
-			
+            
             for(int i = 0; i < components.Length; ++i)
-                components.ElementAt(i).data = basePointers[i] + entityIndex * components[i].typeSize;
+            {
+                if(components.ElementAt(i).isBuffer)
+                {
+                    unsafe
+                    {
+                        BufferTemps[i] = BufferAccessors[i].GetUntypedDynamicBuffer(entityIndex);
+                        ref UntypedDynamicBuffer buf = ref BufferTemps[i];
+                        fixed(void* pbuf = &buf)
+                            components.ElementAt(i).data = (IntPtr)pbuf;
+                    }
+                }
+                else
+                {
+                    components.ElementAt(i).data = basePointers[i] + entityIndex * components[i].typeSize;
+                }
+            }
 
             unsafe
             {
@@ -107,11 +174,19 @@ namespace Khorde.Expr
             for(int i = 0; i < Length; ++i)
             {
                 ref var handle = ref Handles[i];
-                var data = chunk.GetDynamicComponentDataArrayReinterpret<byte>(ref handle, GetTypeSize(i));
 
-                unsafe
+                if(components[i].isBuffer)
                 {
-                    basePointers[i] = handle.IsReadOnly ? (IntPtr)data.GetUnsafeReadOnlyPtr() : (IntPtr)data.GetUnsafePtr();
+                    BufferAccessors[i] = chunk.GetUntypedBufferAccessor(ref handle);
+                }
+                else
+                {
+                    var data = chunk.GetDynamicComponentDataArrayReinterpret<byte>(ref handle, GetTypeSize(i));
+
+                    unsafe
+                    {
+                        basePointers[i] = handle.IsReadOnly ? (IntPtr)data.GetUnsafeReadOnlyPtr() : (IntPtr)data.GetUnsafePtr();
+                    }
                 }
             }
         }
@@ -128,6 +203,7 @@ namespace Khorde.Expr
                 typeSize = holder.typeSize,
                 stableTypeHash = holder.stableTypeHash,
                 typeIndex = holder.typeIndex,
+                isBuffer = holder.isBuffer,
             });
         }
     }
@@ -148,7 +224,7 @@ namespace Khorde.Expr
 
         FixedList64Bytes<int> componentTypeSizes;
         FixedList128Bytes<ulong> componentTypeHashes;
-		
+        
         public NativeArray<UntypedComponentLookup> Lookups
         {
             get
@@ -232,13 +308,16 @@ namespace Khorde.Expr
 
                 instanceComponents.Add(type);
 
+                ref readonly var typeInfo = ref TypeManager.GetTypeInfo(type.TypeIndex);
+
                 typeHandles.Length++;
                 typeHandles[^1] = new ExprSystemTypeHandleHolder
                 {
                     typeHandle = state.GetDynamicComponentTypeHandle(type),
                     typeIndex = type.TypeIndex,
                     stableTypeHash = componentTypes[i].stableTypeHash,
-                    typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
+                    typeSize = typeInfo.TypeSize,
+                    isBuffer = typeInfo.Category == TypeManager.TypeCategory.BufferData,
                 };
             }
 
@@ -270,6 +349,6 @@ namespace Khorde.Expr
 
             return true;
         }
-					
+                    
     }
 }

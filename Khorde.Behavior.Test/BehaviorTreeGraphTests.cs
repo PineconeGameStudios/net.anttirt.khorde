@@ -5,6 +5,7 @@ using Khorde.Query;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -46,6 +47,7 @@ namespace Khorde.Behavior.Test
 		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
 		DynamicBuffer<BTExecTrace> trace => em.GetBuffer<BTExecTrace>(testEntity);
 		DynamicBuffer<ExpressionBlackboardStorage> blackboard => em.GetBuffer<ExpressionBlackboardStorage>(testEntity);
+		DynamicBuffer<TestBuffer> testBuffer => em.GetBuffer<TestBuffer>(testEntity);
 		BehaviorTestSystem testSystem;
 		PendingQuery defaultPendingQuery;
 
@@ -62,6 +64,7 @@ namespace Khorde.Behavior.Test
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
 			em.AddBuffer<ExpressionBlackboardStorage>(testEntity);
+			em.AddBuffer<TestBuffer>(testEntity);
 		}
 
 		[Test]
@@ -344,6 +347,32 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(Hex(42), Hex(blackboardBytes.ReinterpretLoad<int>(4)));
 		}
 
+		[Test]
+		public void Test_Append()
+		{
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Append.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
+
+			BTState state = default;
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
+
+			Assert.AreEqual(0, testBuffer.Length);
+
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+
+			Assert.AreEqual(5, testBuffer.Length);
+
+			Assert.AreEqual(new TestBuffer[]
+			{
+				new TestBuffer{ field0 = true, field1 = 0 },
+				new TestBuffer{ field0 = true, field1 = 1 },
+				new TestBuffer{ field0 = true, field1 = 2 },
+				new TestBuffer{ field0 = true, field1 = 3 },
+				new TestBuffer{ field0 = true, field1 = 4 },
+			}, testBuffer.AsNativeArray().ToArray());
+		}
+
 		static HexInt Hex(int value) => value;
 
 		struct HexInt
@@ -374,6 +403,7 @@ namespace Khorde.Behavior.Test
 			public TestMoveTarget moveTarget;
 			public LocalTransform localTransform;
 			public TestNpcTargetEntity targetEntity;
+			public UntypedDynamicBuffer testBuffer;
 		}
 
 		private void RegisterTestComponents(
@@ -382,6 +412,8 @@ namespace Khorde.Behavior.Test
 			out NativeArray<UnsafeComponentReference> comps,
 			out NativeArray<UntypedComponentLookup> lookups)
 		{
+			testComponents.testBuffer = testBuffer.AsUntyped();
+
 			ref var localComponents = ref data.exprData.localComponents;
 			comps = new NativeArray<UnsafeComponentReference>(localComponents.Length, Allocator.Temp);
 			lookups = new NativeArray<UntypedComponentLookup>(data.exprData.lookupComponents.Length, Allocator.Temp);
@@ -395,6 +427,8 @@ namespace Khorde.Behavior.Test
 					comps[i] = UnsafeComponentReference.Make(ref testComponents.localTransform);
 				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
 					comps[i] = UnsafeComponentReference.Make(ref testComponents.targetEntity);
+				else if(typeIndex == TypeManager.GetTypeIndex<TestBuffer>())
+					comps[i] = UnsafeComponentReference.Make<TestBuffer>(ref testComponents.testBuffer);
 				else
 					throw new Exception($"component {type.GetManagedType().FullName} not available in test");
 			}
@@ -405,10 +439,12 @@ namespace Khorde.Behavior.Test
 				var typeIndex = type.TypeIndex;
 				if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
 					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestMoveTarget>(isReadOnly: true);
-				if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
+				else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
 					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
-				if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
+				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
 					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestNpcTargetEntity>(isReadOnly: true);
+				else
+					throw new Exception($"lookup {type.GetManagedType().FullName} not available in test");
 			}
 		}
 

@@ -21,6 +21,7 @@ namespace Khorde.Behavior.Test
 		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
 		DynamicBuffer<BTThread> threads => em.GetBuffer<BTThread>(testEntity);
 		DynamicBuffer<BTExecTrace> trace => em.GetBuffer<BTExecTrace>(testEntity);
+		DynamicBuffer<TestBuffer> testBuffer => em.GetBuffer<TestBuffer>(testEntity);
 		Dictionary<Type, ulong> hashCache;
 		new BTTestBakingContext baker;
 		ref BTData data => ref baker.GetData();
@@ -64,6 +65,7 @@ namespace Khorde.Behavior.Test
 			em.AddBuffer<BTThread>(testEntity);
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
+			em.AddBuffer<TestBuffer>(testEntity);
 			hashCache = new();
 		}
 
@@ -782,6 +784,59 @@ namespace Khorde.Behavior.Test
 		}
 
 		[Test]
+		public void Test_Append()
+		{
+			baker.RegisterBufferAccess<TestBuffer>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 100);
+
+			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
+			execs[2].SetAppend(ref builder, 0
+				, WriteField(baker.Const(true), typeof(TestBuffer).GetField(nameof(TestBuffer.field0)))
+				, WriteField(baker.Const(42), typeof(TestBuffer).GetField(nameof(TestBuffer.field1)))
+				);
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			UntypedDynamicBuffer buffer = testBuffer.AsUntyped();
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make<TestBuffer>(ref buffer);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				Assert.AreEqual(0, testBuffer.Length);
+				Assert.AreEqual(0, buffer.Length);
+
+				asset.Execute(ref state, threads, stack, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
+					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Append, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Yield)
+				);
+
+				Assert.AreEqual(1, buffer.Length);
+
+				Assert.AreEqual(true, testBuffer[0].field0);
+				Assert.AreEqual(42, testBuffer[0].field1);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
 		public void Test_Wait()
 		{
 			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
@@ -1065,4 +1120,43 @@ namespace Khorde.Behavior.Test
 		public float3 @float3;
 		public float4 @float4;
 	}
+
+	struct TestBuffer : IBufferElementData, IEquatable<TestBuffer>
+	{
+		public bool field0;
+		public int field1;
+
+		public override bool Equals(object obj)
+		{
+			return obj is TestBuffer buffer && Equals(buffer);
+		}
+
+		public bool Equals(TestBuffer other)
+		{
+			return field0 == other.field0 &&
+				   field1 == other.field1;
+		}
+
+		public override int GetHashCode()
+		{
+			int hash = 23;
+			hash = hash * 17 + field0.GetHashCode();
+			hash = hash * 17 + field1.GetHashCode();
+			return hash;
+		}
+
+		public static bool operator ==(TestBuffer left, TestBuffer right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(TestBuffer left, TestBuffer right)
+		{
+			return !(left == right);
+		}
+
+		public override string ToString() => $"(field0={field0}, field1={field1})";
+	}
+
+	[Serializable] internal class AppendTestBuffer : Khorde.Behavior.Authoring.BufferAppendNode<TestBuffer> { }
 }

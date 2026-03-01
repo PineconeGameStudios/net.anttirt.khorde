@@ -114,5 +114,83 @@ namespace Khorde.Behavior.Authoring
 		}
 	}
 
+	[Serializable]
+	[NodeCategory("Component")]
+	public abstract class BufferAppendNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
+	{
+		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
+		public bool IsReadOnly => false;
+
+		public override string Title => $"Append {typeof(T).Name}";
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			var componentIndex = context.LocalComponents.FindIndex(kv => kv.GetManagedType() == typeof(T));
+			if(componentIndex == -1)
+				throw new System.Exception($"component type {typeof(T).Name} not found in type list");
+
+			exec.type = BTExec.BTExecType.Append;
+			exec.data.append = new Append
+			{
+				componentIndex = (byte)componentIndex,
+			};
+
+			var fields = BlobExpressionData.GetBufferFields<T>();
+
+			int index = 0;
+			foreach(var field in fields)
+			{
+				++index;
+			}
+
+			var blobFields = builder.Allocate(ref exec.data.append.fields, index);
+
+			index = 0;
+
+			foreach(var field in fields)
+			{
+				int offset = UnsafeUtility.GetFieldOffset(fields[index]);
+				if(offset > ushort.MaxValue)
+					throw new Exception("component too large; field offset over 65k");
+
+				var port = GetInputPort(index + 1);
+
+				var bakedField = new WriteField.Field
+				{
+					input = context.GetExpressionRef(port),
+					offset = (ushort)offset,
+					size = (ushort)UnsafeUtility.SizeOf(field.FieldType),
+				};
+
+				blobFields[index] = bakedField;
+
+				++index;
+			}
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			var fields = BlobExpressionData.GetBufferFields<T>();
+
+			int index = 0;
+			foreach(var field in fields)
+			{
+				context.AddInputPort(field.Name)
+					.WithDisplayName(field.Name)
+					.WithDataType(field.FieldType)
+					.WithPortCapacity(PortCapacity.Single)
+					.Build();
+
+				index++;
+			}
+		}
+	}
+
 	[Serializable] internal class WriteLocalTransform : ComponentWriterNode<Unity.Transforms.LocalTransform> { }
 }

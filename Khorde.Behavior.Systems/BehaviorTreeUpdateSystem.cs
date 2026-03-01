@@ -146,7 +146,7 @@ namespace Khorde.Behavior
 
 				queryHolder.query.SetSharedComponentFilter(tree);
 
-				state.Dependency = job.ScheduleParallel(queryHolder.query, state.Dependency);
+				state.Dependency = job.ScheduleParallelByRef(queryHolder.query, state.Dependency);
 			}
 		}
 

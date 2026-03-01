@@ -114,10 +114,11 @@ namespace Khorde.Behavior
 
 		public void Evaluate(in ExpressionEvalContext ctx)
 		{
+			var component = ctx.componentPtrs[componentIndex];
 			for(int i = 0; i < fields.Length; ++i)
 			{
 				ref var field = ref fields[i];
-				var fieldSpan = ctx.componentPtrs[componentIndex].AsNativeArray(field.offset, field.size);
+				var fieldSpan = component.AsNativeArray(field.offset, field.size);
 				field.input.Evaluate(in ctx, ref fieldSpan);
 			}
 		}
@@ -256,6 +257,35 @@ namespace Khorde.Behavior
 		public string DumpString()
 		{
 			return $"{{ child={child}, param={param} }}";
+		}
+	}
+
+	public struct Append
+	{
+		public byte componentIndex;
+		public BlobArray<WriteField.Field> fields;
+
+		public void Evaluate(in ExpressionEvalContext ctx)
+		{
+			var buffer = ctx.componentPtrs[componentIndex].AsBuffer();
+
+			var elementBase = buffer.ElementSize * buffer.Length;
+
+			buffer.Resize(buffer.Length + 1, NativeArrayOptions.ClearMemory);
+
+			var data = buffer.AsNativeArray();
+
+			for(int i = 0; i < fields.Length; ++i)
+			{
+				ref var field = ref fields[i];
+				var fieldSpan = data.GetSubArray(elementBase + field.offset, field.size);
+				field.input.Evaluate(in ctx, ref fieldSpan);
+			}
+		}
+
+		public string DumpString()
+		{
+			return $"{{ componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
 		}
 	}
 }

@@ -28,6 +28,7 @@ namespace Khorde.Behavior
 			Parallel,
 			ThreadRoot,
 			Repeat,
+			Append,
 			// Invoke, // TODO: execute callback on main thread (option: execute directly in job)
 		}
 
@@ -47,6 +48,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public Parallel parallel;
 			[FieldOffset(0)] public ThreadRoot threadRoot;
 			[FieldOffset(0)] public Repeat repeat;
+			[FieldOffset(0)] public Append append;
 		}
 
 		public string DumpString()
@@ -69,6 +71,7 @@ namespace Khorde.Behavior
 				case BTExecType.Parallel: result += data.parallel.DumpString(); break;
 				case BTExecType.ThreadRoot: result += data.threadRoot.DumpString(); break;
 				case BTExecType.Repeat: result += data.repeat.DumpString(); break;
+				case BTExecType.Append: result += data.append.DumpString(); break;
 				default: break;
 			}
 

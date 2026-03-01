@@ -149,6 +149,9 @@ namespace Khorde.Expr.Authoring
 		public void RegisterComponentAccess<TComponent>(ExpressionComponentLocation location, ComponentType.AccessMode accessMode) where TComponent : IComponentData
 			=> RegisterComponentAccess(typeof(TComponent), location, accessMode);
 
+		public void RegisterBufferAccess<TComponent>(ExpressionComponentLocation location, ComponentType.AccessMode accessMode) where TComponent : IBufferElementData
+			=> RegisterComponentAccess(typeof(TComponent), location, accessMode);
+
 		public void RegisterComponentAccess(Type type, ExpressionComponentLocation location, ComponentType.AccessMode accessMode)
 		{
 			if(localComponentsDict == null)

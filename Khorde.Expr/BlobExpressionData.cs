@@ -169,6 +169,9 @@ namespace Khorde.Expr
 		public static FieldInfo[] GetComponentFields<T>() where T : unmanaged, IComponentData
 			=> GetComponentFields(typeof(T));
 
+		public static FieldInfo[] GetBufferFields<T>() where T : unmanaged, IBufferElementData
+			=> GetComponentFields(typeof(T));
+
 		static FieldInfo[] GetComponentFields(Type type)
 			=> type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
 				.OrderBy(UnsafeUtility.GetFieldOffset)

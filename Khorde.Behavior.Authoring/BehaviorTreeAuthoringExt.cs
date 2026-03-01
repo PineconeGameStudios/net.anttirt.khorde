@@ -36,6 +36,17 @@ namespace Khorde.Behavior
 			}
 		}
 
+		public static void SetAppend(ref this BTExec self, ref BlobBuilder builder, byte componentIndex, params WriteField.Field[] fields)
+		{
+			self.type = BTExecType.Append;
+			self.data.append.componentIndex = componentIndex;
+			var blobFields = builder.Allocate(ref self.data.append.fields, fields.Length);
+			for(int i = 0; i < fields.Length; ++i)
+			{
+				blobFields[i] = fields[i];
+			}
+		}
+
 		public static void SetData(ref this BTExec self, in Wait value) { self.type = BTExecType.Wait; self.data.wait = value; }
 		public static void SetData(ref this BTExec self, in Fail value) { self.type = BTExecType.Fail; self.data.fail = value; }
 		public static void SetData(ref this BTExec self, in Optional value) { self.type = BTExecType.Optional; self.data.optional = value; }
