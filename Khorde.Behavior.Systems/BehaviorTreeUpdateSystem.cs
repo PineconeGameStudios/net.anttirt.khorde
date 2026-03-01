@@ -238,7 +238,9 @@ namespace Khorde.Behavior
 						debugQuery = debugQuery,
 					});
 
-					Debug.Log($"Created queries / components for Behavior Tree asset {value.tree.GetHash().ToStringBurst()}");
+					FixedString128Bytes name = default;
+					value.tree.Value.exprData.assetName.CopyTo(ref name);
+					Debug.Log($"Created queries / components for Behavior Tree asset {name} ({value.tree.GetHash().ToStringBurst()})");
 				}
 
 				holderQuery.ResetFilter();

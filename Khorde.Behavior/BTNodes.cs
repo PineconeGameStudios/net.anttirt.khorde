@@ -6,6 +6,9 @@ using Unity.Entities;
 
 namespace Khorde.Behavior
 {
+	/// <summary>
+	/// Type-safe wrapper for a Behavior Tree execution node index
+	/// </summary>
 	public struct BTExecNodeId : IEquatable<BTExecNodeId>
 	{
 		public ushort index;
@@ -132,7 +135,7 @@ namespace Khorde.Behavior
 
 		public string DumpString()
 		{
-			return $"{{ until={until} for={duration} }}";
+			return $"{{ until={until}, for={duration} }}";
 		}
 	}
 
@@ -168,11 +171,11 @@ namespace Khorde.Behavior
 	public struct WriteVar
 	{
 		public ExpressionRef input;
-		public int variableIndex;
+		public VariableId variable;
 
 		public string DumpString()
 		{
-			return $"{{ input={input} varIndex={variableIndex} }}";
+			return $"{{ input={input}, varIndex={variable} }}";
 		}
 	}
 
@@ -186,12 +189,12 @@ namespace Khorde.Behavior
 		/// <summary>
 		/// Blackboard variable storing the result items (currently scalar, same as query result item type)
 		/// </summary>
-		public int variableIndex;
+		public VariableId result;
 
 		/// <summary>
 		/// Int blackboard variable storing the result count (currently 0 or 1)
 		/// </summary>
-		public int resultCountVariableIndex;
+		public VariableId resultCount;
 
 		/// <summary>
 		/// Branch to execute on query success (results found)
@@ -210,7 +213,7 @@ namespace Khorde.Behavior
 
 		public string DumpString()
 		{
-			return $"{{ query={queryIndex} var={variableIndex} nRes={resultCountVariableIndex} success={success} failure={failure} }}";
+			return $"{{ query={queryIndex}, var={result}, nRes={resultCount}, success={success}, failure={failure} }}";
 		}
 	}
 
@@ -221,7 +224,7 @@ namespace Khorde.Behavior
 
 		public string DumpString()
 		{
-			return $"{{ main={main} parallel={parallel} }}";
+			return $"{{ main={main}, parallel={parallel} }}";
 		}
 	}
 
@@ -233,6 +236,26 @@ namespace Khorde.Behavior
 		public string DumpString()
 		{
 			return $"{{ child={child}, loop={loop} }}";
+		}
+	}
+
+	public enum RepeatMode : byte
+	{
+		Count,
+		Infinite,
+		Condition,
+	}
+
+	public struct Repeat
+	{
+		public BTExecNodeId child;
+		public ExpressionRef param;
+		public VariableId counter;
+		public RepeatMode mode;
+
+		public string DumpString()
+		{
+			return $"{{ child={child}, param={param} }}";
 		}
 	}
 }

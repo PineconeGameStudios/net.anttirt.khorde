@@ -186,15 +186,15 @@ namespace Khorde.Expr
 		public ref BlobExpressionData data => ref *dataPtr;
 		public ref ExpressionBlackboardLayout layout => ref *blackboardLayout;
 
-		public NativeArray<byte> GetBlackboardVariable(int index)
+		public NativeArray<byte> GetBlackboardVariable(VariableId index)
 		{
-			var slice = layout.variables[index];
+			var slice = layout.variables[index.index];
 			return blackboard.GetSubArray(slice.offset, slice.length);
 		}
 
-		public ExpressionBlackboardLayout.Slice GetBlackboardVariableSlice(int index)
+		public ExpressionBlackboardLayout.Slice GetBlackboardVariableSlice(VariableId index)
 		{
-			return layout.variables[index];
+			return layout.variables[index.index];
 		}
 	}
 

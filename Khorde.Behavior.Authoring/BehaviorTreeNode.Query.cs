@@ -20,14 +20,14 @@ namespace Khorde.Behavior.Authoring
 		private IPort result;
 
 		private INodeOption queryOption;
-		private int resultVariableIndex;
-		private int resultCountVariableIndex;
-		private List<int> queryVariableIndices = new();
+		private VariableId resultVariableIndex;
+		private VariableId resultCountVariableIndex;
+		private List<VariableId> queryVariableIndices = new();
 		private List<IPort> queryVariablePorts = new();
 
 		static Dictionary<string, Assembly> s_assemblies = AppDomain.CurrentDomain.GetAssemblies().ToDictionary(asm => asm.FullName);
 
-		void IExecNode.Register(BTBakingContext context)
+		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
 		{
 			queryVariableIndices.Clear();
 
@@ -44,8 +44,8 @@ namespace Khorde.Behavior.Authoring
 
 			int varIndex = 0;
 
-			resultVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_{Guid}_{resultVariableIndex}_result", true, type);
-			resultCountVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_{Guid}_{resultCountVariableIndex}_count", true, typeof(int));
+			resultVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_Query_{nodeId.index}_result", true, type);
+			resultCountVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_Query_{nodeId.index}_count", true, typeof(int));
 
 			ref var variables = ref qsData.exprData.blackboardVariables;
 			for(int i = 0; i < variables.Length; i++)
@@ -82,8 +82,8 @@ namespace Khorde.Behavior.Authoring
 			exec.type = BTExec.BTExecType.Query;
 			exec.data.query = new Behavior.Query
 			{
-				variableIndex = resultVariableIndex,
-				resultCountVariableIndex = resultCountVariableIndex,
+				result = resultVariableIndex,
+				resultCount = resultCountVariableIndex,
 				queryIndex = context.GetQueryIndex(queryOption),
 				success = context.GetTargetNodeId(execSuccess),
 				failure = context.GetTargetNodeId(execFailure),
@@ -101,7 +101,7 @@ namespace Khorde.Behavior.Authoring
 
 				inputVariables[i] = new Behavior.WriteVar
 				{
-					variableIndex = queryVariableIndices[i],
+					variable = queryVariableIndices[i],
 					input = context.GetExpressionRef(queryVariablePorts[i]),
 				};
 			}

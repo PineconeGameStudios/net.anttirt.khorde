@@ -93,14 +93,15 @@ namespace Khorde.Behavior
 					{
 						switch(node.type)
 						{
-						case BTExec.BTExecType.Root:
-						case BTExec.BTExecType.Wait:
-						case BTExec.BTExecType.Query:
-						case BTExec.BTExecType.ThreadRoot:
-							break;
+							case BTExec.BTExecType.Root:
+							case BTExec.BTExecType.Wait:
+							case BTExec.BTExecType.Query:
+							case BTExec.BTExecType.ThreadRoot:
+							case BTExec.BTExecType.Repeat:
+								break;
 
-						default:
-							throw new InvalidOperationException($"BUG: Execute() on thread {{{threadId}}} started with node type {node.type}");
+							default:
+								throw new InvalidOperationException($"BUG: Execute() on thread {{{threadId}}} started with node type {node.type}");
 						}
 					}
 
@@ -172,278 +173,341 @@ namespace Khorde.Behavior
 
 					switch(node.type)
 					{
-					case BTExec.BTExecType.Nop:
-						Return(ref data, ref node);
-						break;
+						case BTExec.BTExecType.Nop:
+							Return(ref data, ref node);
+							break;
 
-					case BTExec.BTExecType.Root:
-						if(frames.Length != 1)
-							throw new Exception($"Root should always be the first stack frame, found at {frames.Length}");
+						case BTExec.BTExecType.Root:
+							if(frames.Length != 1)
+								throw new Exception($"Root should always be the first stack frame, found at {frames.Length}");
 
-						if(rootVisited)
-						{
-							// visit the root node at most once per frame to avoid getting stuck here
-							Trace(ref node, BTExecTrace.Event.Yield);
-							goto nextThread;
-						}
-
-						rootVisited = true;
-
-						Call(ref data, node.data.root.child);
-						break;
-
-					case BTExec.BTExecType.ThreadRoot:
-						if(frames.Length != 1)
-							throw new Exception($"Root should always be the first stack frame, found at {frames.Length}");
-
-						if(frames[^1].childIndex == 0)
-						{
-							if(threadRootVisited)
+							if(rootVisited)
 							{
-								// visit the thread root node at most once per frame to avoid getting stuck here
+								// visit the root node at most once per frame to avoid getting stuck here
 								Trace(ref node, BTExecTrace.Event.Yield);
 								goto nextThread;
 							}
 
-							threadRootVisited = true;
+							rootVisited = true;
 
-							// thread start
-							Call(ref data, node.data.threadRoot.child, incrementChildIndex: !node.data.threadRoot.loop);
+							Call(ref data, node.data.root.child);
+							break;
 
-							// NOTE: run more cycles to continue executing this
-							// thread as far as it goes
-						}
-						else
-						{
-							// thread end
-							Abort(ref state, ref data, threadIndex, threadIndex, nodeId, frames.Length, cycle);
+						case BTExec.BTExecType.ThreadRoot:
+							if(frames.Length != 1)
+								throw new Exception($"Root should always be the first stack frame, found at {frames.Length}");
 
-							// this index was removed, so loop it again
-							--threadIndex;
-
-							goto nextThread;
-						}
-
-						break;
-
-					case BTExec.BTExecType.Sequence:
-						if(frames[^1].childIndex < node.data.sequence.children.Length)
-						{
-							Call(ref data, node.data.sequence.children[frames[^1].childIndex]);
-						}
-						else
-						{
-							Return(ref data, ref node);
-						}
-
-						break;
-
-					case BTExec.BTExecType.Selector:
-						if(frames[^1].childIndex == 0)
-						{
-							bool any = false;
-
-							for(int childIndex = 0; childIndex < node.data.selector.children.Length; ++childIndex)
+							if(frames[^1].childIndex == 0)
 							{
-								ref var child = ref node.data.selector.children[childIndex];
-								if(child.condition.Evaluate<bool>(in exprContext))
+								if(threadRootVisited)
 								{
-									any = true;
-									Call(ref data, child.nodeId);
+									// visit the thread root node at most once per frame to avoid getting stuck here
+									Trace(ref node, BTExecTrace.Event.Yield);
+									goto nextThread;
+								}
+
+								threadRootVisited = true;
+
+								// thread start
+								Call(ref data, node.data.threadRoot.child, incrementChildIndex: !node.data.threadRoot.loop);
+
+								// NOTE: run more cycles to continue executing this
+								// thread as far as it goes
+							}
+							else
+							{
+								// thread end
+								Abort(ref state, ref data, threadIndex, threadIndex, nodeId, frames.Length, cycle);
+
+								// this index was removed, so loop it again
+								--threadIndex;
+
+								goto nextThread;
+							}
+
+							break;
+
+						case BTExec.BTExecType.Sequence:
+							if(frames[^1].childIndex < node.data.sequence.children.Length)
+							{
+								Call(ref data, node.data.sequence.children[frames[^1].childIndex]);
+							}
+							else
+							{
+								Return(ref data, ref node);
+							}
+
+							break;
+
+						case BTExec.BTExecType.Selector:
+							if(frames[^1].childIndex == 0)
+							{
+								bool any = false;
+
+								for(int childIndex = 0; childIndex < node.data.selector.children.Length; ++childIndex)
+								{
+									ref var child = ref node.data.selector.children[childIndex];
+									if(child.condition.Evaluate<bool>(in exprContext))
+									{
+										any = true;
+										Call(ref data, child.nodeId);
+										break;
+									}
+								}
+
+								if(!any)
+								{
+									// none of the options worked
+									if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
+									{
+										threadIndex = 0;
+									}
+								}
+							}
+							else
+							{
+								// already executed one of our children, go back to parent
+								Return(ref data, ref node);
+							}
+							break;
+
+						case BTExec.BTExecType.WriteField:
+							node.data.writeField.Evaluate(in exprContext);
+							Return(ref data, ref node);
+							break;
+
+						case BTExec.BTExecType.Wait:
+							if(node.data.wait.duration.IsCreated)
+							{
+								if(thread.waitStartTime == ThreadWaitStartTime_Invalid)
+								{
+									thread.waitStartTime = now;
+								}
+
+								float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
+								if(now - thread.waitStartTime >= duration)
+								{
+									thread.waitStartTime = ThreadWaitStartTime_Invalid;
+									Return(ref data, ref node);
+								}
+								else
+								{
+									// still waiting, can't execute any more nodes until more time elapses
+									Trace(ref node, BTExecTrace.Event.Wait);
+									goto nextThread;
+								}
+							}
+							else
+							{
+								if(node.data.wait.until.Evaluate<bool>(in exprContext))
+								{
+									Return(ref data, ref node);
+								}
+								else
+								{
+									// still waiting, can't execute any more nodes until input data changes
+									Trace(ref node, BTExecTrace.Event.Wait);
+									goto nextThread;
+								}
+							}
+
+							break;
+
+						case BTExec.BTExecType.Fail:
+							if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
+							{
+								threadIndex = 0;
+							}
+
+							break;
+
+						case BTExec.BTExecType.Optional:
+							if(frames[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(in exprContext))
+							{
+								Call(ref data, node.data.optional.child);
+							}
+							else
+							{
+								Return(ref data, ref node);
+							}
+							break;
+
+						case BTExec.BTExecType.Catch:
+							if(frames[^1].childIndex == 0)
+							{
+								Call(ref data, node.data.@catch.child);
+							}
+							else
+							{
+								Return(ref data, ref node);
+							}
+							break;
+
+						case BTExec.BTExecType.WriteVar:
+							{
+								var varBytes = exprContext.GetBlackboardVariable(node.data.writeVar.variable);
+								node.data.writeVar.input.Evaluate(exprContext, ref varBytes);
+							}
+
+							Return(ref data, ref node);
+							break;
+
+						case BTExec.BTExecType.Query:
+							if(frames[^1].childIndex == 1)
+							{
+								Return(ref data, ref node);
+								break;
+							}
+							else if(state.QueryExecutorThreadIndex == -1 || state.QueryExecutorThreadIndex == threadIndex)
+							{
+								if(!pendingQuery.complete && !pendingQueryEnabled.ValueRO)
+								{
+									// start query now
+									pendingQueryEnabled.ValueRW = true;
+									pendingQuery.query = queries[node.data.query.queryIndex];
+									pendingQuery.results = exprContext.GetBlackboardVariableSlice(node.data.query.result);
+									state.QueryExecutorThreadIndex = threadIndex;
+
+									for(int i = 0; i < node.data.query.inputs.Length; ++i)
+									{
+										ref var writeVar = ref node.data.query.inputs[i];
+										var varBytes = exprContext.GetBlackboardVariable(writeVar.variable);
+										writeVar.input.Evaluate(exprContext, ref varBytes);
+									}
+
+									Trace(ref node, BTExecTrace.Event.Wait);
+									goto nextThread;
+								}
+								else if(pendingQueryEnabled.ValueRO)
+								{
+									// query still running, can't execute any more nodes until input data changes
+									Trace(ref node, BTExecTrace.Event.Wait);
+									goto nextThread;
+								}
+								else
+								{
+									// query finished running
+
+									// allow a new query to start the next time a Query node is reached
+									pendingQuery.complete = false;
+
+									// TODO: this would be an excellent moment to write the result count somewhere
+									// on the bt execution stack, but a blackboard variable will do for now
+									exprContext.GetBlackboardVariable(node.data.query.resultCount).ReinterpretStore(0, pendingQuery.resultCount);
+
+									// allow other threads to run queries again
+									state.QueryExecutorThreadIndex = -1;
+
+									if(pendingQuery.resultCount > 0)
+										Call(ref data, node.data.query.success);
+									else
+										Call(ref data, node.data.query.failure);
+
 									break;
 								}
 							}
-
-							if(!any)
+							else
 							{
-								// none of the options worked
-								if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
+								// another thread is running a query, need to wait for it to be complete
+								Trace(ref node, BTExecTrace.Event.Wait);
+								goto nextThread;
+							}
+
+						case BTExec.BTExecType.Parallel:
+							if(frames[^1].childIndex == 0)
+							{
+								// Spawn invalidates local ref variables and
+								// buffers, so we leave the Parallel as the current
+								// frame, and run the Call in the second cycle
+								frames.UnsafeElementAt(frames.Length - 1).childIndex++;
+								Spawn(ref state, ref data, node.data.parallel.parallel, threadIndex, nodeId, frames.Length, cycle);
+							}
+							else if(frames[^1].childIndex == 1)
+							{
+								Call(ref data, node.data.parallel.main);
+							}
+							else
+							{
+								// end parallel, and end any threads owned by this
+								// that may still be running
+								for(int otherThreadIndex = 0; otherThreadIndex < threads.Length; ++otherThreadIndex)
 								{
-									threadIndex = 0;
+									if(otherThreadIndex != threadIndex && threads[otherThreadIndex].ownerThreadIndex == threadIndex)
+									{
+										Abort(ref state, ref data, otherThreadIndex, threadIndex, nodeId, frames.Length, cycle);
+									}
 								}
-							}
-						}
-						else
-						{
-							// already executed one of our children, go back to parent
-							Return(ref data, ref node);
-						}
-						break;
 
-					case BTExec.BTExecType.WriteField:
-						node.data.writeField.Evaluate(in exprContext);
-						Return(ref data, ref node);
-						break;
-
-					case BTExec.BTExecType.Wait:
-						if(node.data.wait.duration.IsCreated)
-						{
-							if(thread.waitStartTime == ThreadWaitStartTime_Invalid)
-							{
-								thread.waitStartTime = now;
-							}
-
-							float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
-							if(now - thread.waitStartTime >= duration)
-							{
-								thread.waitStartTime = ThreadWaitStartTime_Invalid;
 								Return(ref data, ref node);
 							}
-							else
-							{
-								// still waiting, can't execute any more nodes until more time elapses
-								Trace(ref node, BTExecTrace.Event.Wait);
-								goto nextThread;
-							}
-						}
-						else
-						{
-							if(node.data.wait.until.Evaluate<bool>(in exprContext))
-							{
-								Return(ref data, ref node);
-							}
-							else
-							{
-								// still waiting, can't execute any more nodes until input data changes
-								Trace(ref node, BTExecTrace.Event.Wait);
-								goto nextThread;
-							}
-						}
 
-						break;
-
-					case BTExec.BTExecType.Fail:
-						if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
-						{
-							threadIndex = 0;
-						}
-
-						break;
-
-					case BTExec.BTExecType.Optional:
-						if(frames[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(in exprContext))
-						{
-							Call(ref data, node.data.optional.child);
-						}
-						else
-						{
-							Return(ref data, ref node);
-						}
-						break;
-
-					case BTExec.BTExecType.Catch:
-						if(frames[^1].childIndex == 0)
-						{
-							Call(ref data, node.data.@catch.child);
-						}
-						else
-						{
-							Return(ref data, ref node);
-						}
-						break;
-
-					case BTExec.BTExecType.WriteVar:
-						{
-							var varBytes = exprContext.GetBlackboardVariable(node.data.writeVar.variableIndex);
-							node.data.writeVar.input.Evaluate(exprContext, ref varBytes);
-						}
-
-						Return(ref data, ref node);
-						break;
-
-					case BTExec.BTExecType.Query:
-						if(frames[^1].childIndex == 1)
-						{
-							Return(ref data, ref node);
 							break;
-						}
-						else if(state.QueryExecutorThreadIndex == -1 || state.QueryExecutorThreadIndex == threadIndex)
-						{
-							if(!pendingQuery.complete && !pendingQueryEnabled.ValueRO)
-							{
-								// start query now
-								pendingQueryEnabled.ValueRW = true;
-								pendingQuery.query = queries[node.data.query.queryIndex];
-								pendingQuery.results = exprContext.GetBlackboardVariableSlice(node.data.query.variableIndex);
-								state.QueryExecutorThreadIndex = threadIndex;
 
-								for(int i = 0; i < node.data.query.inputs.Length; ++i)
+						case BTExec.BTExecType.Repeat:
+							{
+								var counter = exprContext.GetBlackboardVariable(node.data.repeat.counter).Reinterpret<int>(1);
+
+								bool enter = frames[^1].childIndex == 0;
+
+								if(enter)
 								{
-									ref var writeVar = ref node.data.query.inputs[i];
-									var varBytes = exprContext.GetBlackboardVariable(writeVar.variableIndex);
-									writeVar.input.Evaluate(exprContext, ref varBytes);
+									counter.UnsafeElementAt(0) = 0;
+									frames.UnsafeElementAt(frames.Length - 1).childIndex = 1;
 								}
 
-								Trace(ref node, BTExecTrace.Event.Wait);
-								goto nextThread;
-							}
-							else if(pendingQueryEnabled.ValueRO)
-							{
-								// query still running, can't execute any more nodes until input data changes
-								Trace(ref node, BTExecTrace.Event.Wait);
-								goto nextThread;
-							}
-							else
-							{
-								// query finished running
-
-								// allow a new query to start the next time a Query node is reached
-								pendingQuery.complete = false;
-
-								// TODO: this would be an excellent moment to write the result count somewhere
-								// on the bt execution stack, but a blackboard variable will do for now
-								exprContext.GetBlackboardVariable(node.data.query.resultCountVariableIndex).ReinterpretStore(0, pendingQuery.resultCount);
-
-								// allow other threads to run queries again
-								state.QueryExecutorThreadIndex = -1;
-
-								if(pendingQuery.resultCount > 0)
-									Call(ref data, node.data.query.success);
-								else
-									Call(ref data, node.data.query.failure);
-
-								break;
-							}
-						}
-						else
-						{
-							// another thread is running a query, need to wait for it to be complete
-							Trace(ref node, BTExecTrace.Event.Wait);
-							goto nextThread;
-						}
-
-					case BTExec.BTExecType.Parallel:
-						if(frames[^1].childIndex == 0)
-						{
-							// Spawn invalidates local ref variables and
-							// buffers, so we leave the Parallel as the current
-							// frame, and run the Call in the second cycle
-							frames.UnsafeElementAt(frames.Length - 1).childIndex++;
-							Spawn(ref state, ref data, node.data.parallel.parallel, threadIndex, nodeId, frames.Length, cycle);
-						}
-						else if(frames[^1].childIndex == 1)
-						{
-							Call(ref data, node.data.parallel.main);
-						}
-						else
-						{
-							// end parallel, and end any threads owned by this
-							// that may still be running
-							for(int otherThreadIndex = 0; otherThreadIndex < threads.Length; ++otherThreadIndex)
-							{
-								if(otherThreadIndex != threadIndex && threads[otherThreadIndex].ownerThreadIndex == threadIndex)
+								switch(node.data.repeat.mode)
 								{
-									Abort(ref state, ref data, otherThreadIndex, threadIndex, nodeId, frames.Length, cycle);
+									case RepeatMode.Count:
+										int repeatCount = node.data.repeat.param.Evaluate<int>(exprContext);
+
+										if(!enter)
+											counter.UnsafeElementAt(0)++;
+
+										if(counter[0] < repeatCount)
+											Call(ref data, node.data.repeat.child, incrementChildIndex: false);
+										else
+											Return(ref data, ref node);
+
+										break;
+
+									case RepeatMode.Infinite:
+									case RepeatMode.Condition:
+										if(node.data.repeat.mode == RepeatMode.Infinite || node.data.repeat.param.Evaluate<bool>(exprContext))
+										{
+											// in infinite/condition mode, run only one iteration per frame to
+											// avoid getting stuck in this loop
+											if(frames[^1].childIndex == 2)
+											{
+												Trace(ref node, BTExecTrace.Event.Yield);
+												frames.UnsafeElementAt(frames.Length - 1).childIndex = 1;
+												goto nextThread;
+											}
+											else
+											{
+												if(!enter)
+													counter.UnsafeElementAt(0)++;
+
+												frames.UnsafeElementAt(frames.Length - 1).childIndex = 2;
+
+												Call(ref data, node.data.repeat.child, incrementChildIndex: false);
+											}
+										}
+										else
+										{
+											Return(ref data, ref node);
+										}
+
+										break;
+
+									default:
+										break;
 								}
 							}
 
-							Return(ref data, ref node);
-						}
+							break;
 
-						break;
-
-					default:
-						throw new NotImplementedException($"BTExec node type {node.type} not implemented");
+						default:
+							throw new NotImplementedException($"BTExec node type {node.type} not implemented");
 					}
 				}
 

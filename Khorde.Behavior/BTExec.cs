@@ -27,7 +27,7 @@ namespace Khorde.Behavior
 			Query,
 			Parallel,
 			ThreadRoot,
-			// Repeat, // TODO: finite count, condition
+			Repeat,
 			// Invoke, // TODO: execute callback on main thread (option: execute directly in job)
 		}
 
@@ -46,6 +46,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public Query query;
 			[FieldOffset(0)] public Parallel parallel;
 			[FieldOffset(0)] public ThreadRoot threadRoot;
+			[FieldOffset(0)] public Repeat repeat;
 		}
 
 		public string DumpString()
@@ -67,6 +68,7 @@ namespace Khorde.Behavior
 				case BTExecType.Query: result += data.query.DumpString(); break;
 				case BTExecType.Parallel: result += data.parallel.DumpString(); break;
 				case BTExecType.ThreadRoot: result += data.threadRoot.DumpString(); break;
+				case BTExecType.Repeat: result += data.repeat.DumpString(); break;
 				default: break;
 			}
 

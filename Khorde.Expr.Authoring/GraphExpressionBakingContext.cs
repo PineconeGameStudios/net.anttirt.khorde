@@ -64,7 +64,7 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		protected Dictionary<VariableKey, int> variables = new();
+		protected Dictionary<VariableKey, VariableId> variables = new();
 		protected List<(object context, string message)> errors = new();
 		protected List<(object context, string message)> warnings = new();
 
@@ -104,26 +104,26 @@ namespace Khorde.Expr.Authoring
 			return !variable.name.StartsWith("_");
 		}
 
-		public int GetVariableIndex(IVariable variable)
+		public VariableId GetVariableIndex(IVariable variable)
 		{
 			return variables[GetVariableKey(variable)];
 		}
 
-		public int GetVariableIndex(IPort resultVarPort)
+		public VariableId GetVariableIndex(IPort resultVarPort)
 		{
 			portsTemp.Clear();
 			resultVarPort.GetConnectedPorts(portsTemp);
 			if(portsTemp.Count != 1)
 			{
 				AddError(resultVarPort.GetNode(), $"port {resultVarPort.name} must be connected to a single variable");
-				return -1;
+				return VariableId.Invalid;
 			}
 
 			var varNode = portsTemp[0].GetNode() as IVariableNode;
 			if(varNode == null)
 			{
 				AddError(resultVarPort.GetNode(), $"port {resultVarPort.name} must be connected to a blackboard variable");
-				return -1;
+				return VariableId.Invalid;
 			}
 
 			return GetVariableIndex(varNode.variable);
@@ -417,7 +417,7 @@ namespace Khorde.Expr.Authoring
 		/// <param name="type"></param>
 		/// <returns></returns>
 		/// <exception cref="InvalidOperationException"></exception>
-		public int RegisterGeneratedVariable(ICustomExprNode node, int outputIndex, string name, bool isGlobal, Type type)
+		public VariableId RegisterGeneratedVariable(ICustomExprNode node, int outputIndex, string name, bool isGlobal, Type type)
 		{
 			var nodeIndex = exprNodeCounter;
 			if(nodeIndex > ushort.MaxValue)
@@ -527,7 +527,7 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		public void BakeGeneratedVariable(ICustomExprNode node, int outputIndex, int variableIndex)
+		public void BakeGeneratedVariable(ICustomExprNode node, int outputIndex, VariableId variableIndex)
 		{
 			var nodeIndex = generatedVarNodeMap[GetNodeKey(node, outputIndex)];
 			builderSourceGraphNodeIds[nodeIndex] = node.Guid;

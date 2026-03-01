@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -167,7 +168,7 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		public int AddBlackboardVariable<T>(string name, bool isGlobal, T defaultValue = default) where T : unmanaged => AddBlackboardVariable(name, isGlobal, typeof(T), defaultValue);
+		public VariableId AddBlackboardVariable<T>(string name, bool isGlobal, T defaultValue = default) where T : unmanaged => AddBlackboardVariable(name, isGlobal, typeof(T), defaultValue);
 
 		/// <summary>
 		/// Register a blackboard variable and return its variable index
@@ -178,7 +179,7 @@ namespace Khorde.Expr.Authoring
 		/// <param name="defaultValue"></param>
 		/// <returns></returns>
 		/// <exception cref="InvalidOperationException"></exception>
-		public int AddBlackboardVariable(string name, bool isGlobal, Type type, object defaultValue)
+		public VariableId AddBlackboardVariable(string name, bool isGlobal, Type type, object defaultValue)
 		{
 			if(defaultValue != null)
 			{
@@ -194,7 +195,7 @@ namespace Khorde.Expr.Authoring
 				defaultValue = defaultValue,
 			});
 
-			return blackboardVariables.Count - 1;
+			return new (blackboardVariables.Count - 1);
 		}
 
 		/// <summary>

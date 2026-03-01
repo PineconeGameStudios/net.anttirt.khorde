@@ -372,7 +372,7 @@ namespace Khorde.Expr.Test
 
 			baker.InitializeBake(1, 0);
 
-			var n11 = AddExpression(new Variable { index = 0 });
+			var n11 = AddExpression(new Variable { index = new(0) });
 
 			baker.AddBlackboardVariable<float>("TestVar", isGlobal: true);
 

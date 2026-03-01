@@ -85,11 +85,12 @@ namespace Khorde.Behavior.Authoring
 			var index = execNodeIdCounter;
 			if(index > ushort.MaxValue)
 				throw new Exception("max exec node capacity exceeded");
-			if(!execNodeMap.TryAdd(GetNodeKey(execNode), new BTExecNodeId((ushort)index)))
+			var nodeId = new BTExecNodeId((ushort)index);
+			if(!execNodeMap.TryAdd(GetNodeKey(execNode), nodeId))
 				throw new Exception("duplicate node key");
 			execNodeIdCounter += execNode?.NodeCount ?? 1;
 
-			execNode?.Register(this);
+			execNode?.Register(this, nodeId);
 		}
 
 		public BTExecNodeId GetNodeId(IExecNode execNode)

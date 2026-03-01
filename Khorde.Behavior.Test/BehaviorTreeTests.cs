@@ -214,6 +214,271 @@ namespace Khorde.Behavior.Test
 			}
 		}
 
+		static BlobAssetReference<ExpressionBlackboardLayout> MakeVariableLayout(params ExpressionBlackboardLayout.Slice[] variables)
+		{
+			var variablesBuilder = new BlobBuilder(Allocator.Temp);
+			ref var layout = ref variablesBuilder.ConstructRoot<ExpressionBlackboardLayout>();
+			var varArray = variablesBuilder.Allocate(ref layout.variables, variables.Length);
+			for(int i = 0; i < variables.Length; i++)
+			{
+				varArray[i] = variables[i];
+				layout.minByteLength = math.max(layout.minByteLength, variables[i].offset + variables[i].length);
+			}
+			return variablesBuilder.CreateBlobAssetReference<ExpressionBlackboardLayout>(Allocator.Temp);
+		}
+
+		static ExpressionBlackboardLayout.Slice LayoutVar(int offset, int length) => new ExpressionBlackboardLayout.Slice { offset = offset, length = length };
+
+		static NativeArray<ExpressionBlackboardStorage> MakeBlackboard(ref ExpressionBlackboardLayout layout)
+		{
+			var elemSize = UnsafeUtility.SizeOf<ExpressionBlackboardStorage>();
+			int length = (layout.minByteLength + elemSize - 1) / elemSize;
+			return new NativeArray<ExpressionBlackboardStorage>(length, Allocator.Temp);
+		}
+
+		static T ReadVariable<T>(ref ExpressionBlackboardLayout layout, NativeArray<ExpressionBlackboardStorage> blackboard, VariableId var)
+			where T : unmanaged
+		{
+			var slice = layout.variables[var.index];
+			var bytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			return bytes.GetSubArray(slice.offset, slice.length).ReinterpretLoad<T>(0);
+		}
+
+		static void WriteVariable<T>(ref ExpressionBlackboardLayout layout, NativeArray<ExpressionBlackboardStorage> blackboard, VariableId var, T value)
+			where T : unmanaged
+		{
+			var slice = layout.variables[var.index];
+			var bytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
+			bytes.GetSubArray(slice.offset, slice.length).ReinterpretStore<T>(0, value);
+		}
+
+		[Test]
+		public void Test_Repeat_Infinite()
+		{
+			baker.InitializeBake(1, 0);
+
+			var counter = new VariableId(0);
+			var output = new VariableId(1);
+
+			AddExpression(new Variable() { index = counter, });
+
+			var counterRead = ExpressionRef.Node(0, 0);
+
+			var execs = builder.Allocate(ref data.execs, 4);
+
+			execs[1].type = BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+
+			execs[2].type = BTExecType.Repeat;
+			execs[2].data.repeat = new Repeat { child = new BTExecNodeId(3), mode = RepeatMode.Infinite, counter = counter };
+
+			execs[3].type = BTExecType.WriteVar;
+			execs[3].data.writeVar = new WriteVar { input = counterRead, variable = output, };
+
+			var variables = MakeVariableLayout(LayoutVar(0, 4), LayoutVar(4, 4));
+			var blackboard = MakeBlackboard(ref variables.Value);
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			BTState state = default;
+
+			try
+			{
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, counter));
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, output));
+
+				asset.Execute(ref state, threads, stack, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Nop,      0, 0, Event.Spawn),
+					Trace(BTExecType.Root,     1,   1, Event.Start),
+					Trace(BTExecType.Root,     1,   1, Event.Call),
+					Trace(BTExecType.Repeat,   2,     2, Event.Call),
+					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+					Trace(BTExecType.Repeat,   2,     2, Event.Yield)
+					);
+
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, counter));
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, output));
+
+				for(int i = 1; i < 10; ++i)
+				{
+					asset.Execute(ref state, threads, stack, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+					Assert.AreEqual(i, ReadVariable<int>(ref variables.Value, blackboard, counter));
+					Assert.AreEqual(i, ReadVariable<int>(ref variables.Value, blackboard, output));
+				}
+
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Repeat_Condition()
+		{
+			baker.InitializeBake(2, 0);
+
+			var counter = new VariableId(0);
+			var output = new VariableId(1);
+			var condition = new VariableId(2);
+
+			AddExpression(new Variable() { index = counter, });
+			AddExpression(new Variable() { index = condition, });
+
+			var counterRead = ExpressionRef.Node(0, 0);
+			var conditionRead = ExpressionRef.Node(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 4);
+
+			execs[1].type = BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+
+			execs[2].type = BTExecType.Repeat;
+			execs[2].data.repeat = new Repeat { child = new BTExecNodeId(3), mode = RepeatMode.Condition, counter = counter, param = conditionRead };
+
+			execs[3].type = BTExecType.WriteVar;
+			execs[3].data.writeVar = new WriteVar { input = counterRead, variable = output, };
+
+			var variables = MakeVariableLayout(LayoutVar(0, 4), LayoutVar(4, 4), LayoutVar(8, 1));
+			var blackboard = MakeBlackboard(ref variables.Value);
+
+			WriteVariable(ref variables.Value, blackboard, condition, true);
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			BTState state = default;
+
+			try
+			{
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, counter));
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, output));
+
+				asset.Execute(ref state, threads, stack, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Nop,      0, 0, Event.Spawn),
+					Trace(BTExecType.Root,     1,   1, Event.Start),
+					Trace(BTExecType.Root,     1,   1, Event.Call),
+					Trace(BTExecType.Repeat,   2,     2, Event.Call),
+					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+					Trace(BTExecType.Repeat,   2,     2, Event.Yield)
+					);
+
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, counter));
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, output));
+
+				for(int i = 1; i < 10; ++i)
+				{
+					trace.Clear();
+
+					asset.Execute(ref state, threads, stack, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+					AssertTrace(
+						Trace(BTExecType.Repeat,   2,     2, Event.Start),
+						Trace(BTExecType.Repeat,   2,     2, Event.Call),
+						Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+						Trace(BTExecType.Repeat,   2,     2, Event.Yield)
+						);
+
+					Assert.AreEqual(i, ReadVariable<int>(ref variables.Value, blackboard, counter));
+					Assert.AreEqual(i, ReadVariable<int>(ref variables.Value, blackboard, output));
+				}
+
+				WriteVariable(ref variables.Value, blackboard, condition, false);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Repeat,   2,     2, Event.Start),
+					Trace(BTExecType.Repeat,   2,     2, Event.Return),
+					Trace(BTExecType.Root,     1,   1, Event.Call),
+					Trace(BTExecType.Repeat,   2,     2, Event.Return),
+					Trace(BTExecType.Root,     1,   1, Event.Yield)
+					);
+
+				Assert.AreEqual(9, ReadVariable<int>(ref variables.Value, blackboard, output));
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Repeat_Count()
+		{
+			baker.InitializeBake(1, 0);
+
+			var loopCount = baker.Const(5);
+			var counter = new VariableId(0);
+			var output = new VariableId(1);
+
+			AddExpression(new Variable() { index = counter, });
+
+			var counterRead = ExpressionRef.Node(0, 0);
+
+			var execs = builder.Allocate(ref data.execs, 4);
+
+			execs[1].type = BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+
+			execs[2].type = BTExecType.Repeat;
+			execs[2].data.repeat = new Repeat { child = new BTExecNodeId(3), mode = RepeatMode.Count, counter = counter, param = loopCount };
+
+			execs[3].type = BTExecType.WriteVar;
+			execs[3].data.writeVar = new WriteVar { input = counterRead, variable = output, };
+
+			var variables = MakeVariableLayout(LayoutVar(0, 4), LayoutVar(4, 4));
+			var blackboard = MakeBlackboard(ref variables.Value);
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			BTState state = default;
+
+			try
+			{
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, counter));
+				Assert.AreEqual(0, ReadVariable<int>(ref variables.Value, blackboard, output));
+
+				asset.Execute(ref state, threads, stack, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Nop,      0, 0, Event.Spawn),
+					Trace(BTExecType.Root,     1,   1, Event.Start),
+					Trace(BTExecType.Root,     1,   1, Event.Call),
+					Trace(BTExecType.Repeat,   2,     2, Event.Call),
+					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+					Trace(BTExecType.Repeat,   2,     2, Event.Call),
+					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+					Trace(BTExecType.Repeat,   2,     2, Event.Call),
+					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+					Trace(BTExecType.Repeat,   2,     2, Event.Call),
+					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+					Trace(BTExecType.Repeat,   2,     2, Event.Call),
+					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
+					Trace(BTExecType.Repeat,   2,     2, Event.Return),
+					Trace(BTExecType.Root,     1,   1, Event.Yield)
+					);
+
+				Assert.AreEqual(4, ReadVariable<int>(ref variables.Value, blackboard, output));
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
 		[Test]
 		public void Test_Sequence()
 		{
@@ -596,7 +861,7 @@ namespace Khorde.Behavior.Test
 			execs[2].type = BTExec.BTExecType.WriteVar;
 			execs[2].data.writeVar = new WriteVar
 			{
-				variableIndex = 0,
+				variable = new(0),
 				input = baker.Const(3.523f),
 			};
 

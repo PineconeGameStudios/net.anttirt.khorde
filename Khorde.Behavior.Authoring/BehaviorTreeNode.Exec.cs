@@ -1,4 +1,5 @@
 ﻿using Khorde.Expr;
+using Khorde.Expr.Authoring;
 using System;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
@@ -294,11 +295,11 @@ namespace Khorde.Behavior.Authoring
 				return;
 			}
 
-			int varIndex = context.GetVariableIndex(varNode.variable);
+			var varIndex = context.GetVariableIndex(varNode.variable);
 			exec.type = BTExec.BTExecType.WriteVar;
 			exec.data.writeVar = new Behavior.WriteVar
 			{
-				variableIndex = varIndex,
+				variable = varIndex,
 				input = context.GetExpressionRef(valuePort),
 			};
 		}
@@ -409,6 +410,107 @@ namespace Khorde.Behavior.Authoring
 				.WithDisplayName("Parallel")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	[NodeCategory("Execution")]
+	internal class Repeat : ExecBase, IExecNode, ICustomExprNode
+	{
+		private INodeOption infiniteOption;
+		private IPort child;
+		private IPort parameter;
+		private IPort counter;
+		private VariableId counterVariableIndex;
+
+		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
+		{
+			counterVariableIndex = context.RegisterGeneratedVariable(this, 0, $"_Repeat_{nodeId.index}_counter", true, typeof(int));
+		}
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			infiniteOption.TryGetValue<RepeatMode>(out var mode);
+
+			exec.type = BTExec.BTExecType.Repeat;
+			exec.data.repeat = new Behavior.Repeat
+			{
+				child = context.GetTargetNodeId(child),
+				param = parameter == null ? default : context.GetExpressionRef(parameter),
+				mode = mode,
+			};
+
+			context.BakeGeneratedVariable(this, 0, counterVariableIndex);
+		}
+
+		public ExpressionRef GetExpressionRef(GraphExpressionBakingContext context, IPort port)
+		{
+			if(port == counter)
+			{
+				return context.GetGeneratedVariableNodeRef(this, 0);
+			}
+
+			context.AddError(this, $"port doesn't match");
+			return default;
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			infiniteOption = context.AddOption<RepeatMode>("Mode")
+				.WithDisplayName("Mode")
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			infiniteOption.TryGetValue<RepeatMode>(out var mode);
+
+			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			child = context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			switch(mode)
+			{
+				case RepeatMode.Count:
+					parameter = context.AddInputPort<int>("CountParameter")
+						.WithConnectorUI(PortConnectorUI.Circle)
+						.WithPortCapacity(PortCapacity.Single)
+						.WithDisplayName("Count")
+						.Build();
+
+					break;
+
+				case RepeatMode.Infinite:
+					parameter = null;
+
+					break;
+
+				case RepeatMode.Condition:
+					parameter = context.AddInputPort<bool>("ConditionParameter")
+						.WithConnectorUI(PortConnectorUI.Circle)
+						.WithPortCapacity(PortCapacity.Single)
+						.WithDisplayName("Count")
+						.Build();
+
+					break;
+
+				default:
+					break;
+			}
+
+			counter = context.AddOutputPort<int>("LoopCounter")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Multi)
+				.WithDisplayName("Counter")
 				.Build();
 		}
 	}
