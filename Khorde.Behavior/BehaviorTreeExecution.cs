@@ -1,3 +1,4 @@
+using Codice.CM.Common.Tree;
 using Khorde.Blobs;
 using Khorde.Expr;
 using Khorde.Query;
@@ -17,6 +18,8 @@ namespace Khorde.Behavior
 			ref BTState state,
 			DynamicBuffer<BTThread> threads,
 			DynamicBuffer<BTStackFrame> frames,
+			DynamicBuffer<BTInvokeQueue> invoke,
+			EnabledRefRW<BTInvokeQueue> invokeEnabled,
 			NativeArray<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
 			NativeArray<BlobAssetReference<QSData>> queries,
@@ -26,7 +29,7 @@ namespace Khorde.Behavior
 			NativeArray<UntypedComponentLookup> lookups,
 			float now,
 			DynamicBuffer<BTExecTrace> trace)
-			=> Execute(ref asset.Value, ref state, threads, frames, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, trace);
+			=> Execute(ref asset.Value, ref state, threads, frames, invoke, invokeEnabled, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, trace);
 
 		enum FailResult
 		{
@@ -41,6 +44,8 @@ namespace Khorde.Behavior
 			ref BTState state,
 			DynamicBuffer<BTThread> threads,
 			DynamicBuffer<BTStackFrame> allFrames,
+			DynamicBuffer<BTInvokeQueue> invoke,
+			EnabledRefRW<BTInvokeQueue> invokeEnabled,
 			NativeArray<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
 			NativeArray<BlobAssetReference<QSData>> queries,
@@ -98,6 +103,7 @@ namespace Khorde.Behavior
 							case BTExec.BTExecType.Query:
 							case BTExec.BTExecType.ThreadRoot:
 							case BTExec.BTExecType.Repeat:
+							case BTExec.BTExecType.Invoke:
 								break;
 
 							default:
@@ -509,6 +515,36 @@ namespace Khorde.Behavior
 								}
 							}
 
+							break;
+
+						case BTExec.BTExecType.Invoke:
+							{
+								if(frames[^1].childIndex == 0)
+								{
+									// this will be picked up by BehaviorTreeActionSystem
+									invoke.Add(new BTInvokeQueue { actionIndex = node.data.invoke.actionIndex });
+									invokeEnabled.ValueRW = true;
+
+									if(node.data.invoke.blocking)
+									{
+										// blocking: the action system runs the action on the next frame;
+										// wait until that's done
+										Trace(ref node, BTExecTrace.Event.Yield);
+										frames.UnsafeElementAt(frames.Length - 1).childIndex = 1;
+										goto nextThread;
+									}
+									else
+									{
+										// non-blocking: just resume immediately, allowing queueing up
+										// multiple actions on the same frame, etc.
+										Return(ref data, ref node);
+									}
+								}
+								else
+								{
+									Return(ref data, ref node);
+								}
+							}
 							break;
 
 						default:

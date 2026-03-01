@@ -514,4 +514,57 @@ namespace Khorde.Behavior.Authoring
 				.Build();
 		}
 	}
+
+	[Serializable]
+	[NodeCategory("Execution")]
+	internal class Invoke : ExecBase, IExecNode
+	{
+		INodeOption action;
+		INodeOption blocking;
+		int actionIndex;
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			this.blocking.TryGetValue<bool>(out var blocking);
+
+			exec.type = BTExec.BTExecType.Invoke;
+			exec.data.invoke = new Behavior.Invoke { actionIndex = actionIndex, blocking = blocking };
+		}
+
+		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
+		{
+			action.TryGetValue<BehaviorTreeAction>(out var asset);
+
+			int index = context.Actions.IndexOf(asset);
+			if(index == -1)
+			{
+				index = context.Actions.Count;
+				context.Actions.Add(asset);
+			}
+
+			actionIndex = index;
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			action = context.AddOption<BehaviorTreeAction>("Action")
+				.WithDisplayName("Action")
+				.WithTooltip("Action asset to execute")
+				.Build();
+
+			blocking = context.AddOption<bool>("Blocking")
+				.WithDisplayName("Blocking")
+				.WithTooltip("Whether to wait until the action has executed before resuming BT execution")
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+		}
+	}
 }

@@ -62,6 +62,7 @@ namespace Khorde.Behavior
 
 					var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
 					obj.Queries.AddRange(context.Queries);
+					obj.Actions.AddRange(context.Actions);
 					foreach(var q in obj.Queries)
 						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(q));
 					var data = obj.SetAssetData(builder, BTData.SchemaVersion);

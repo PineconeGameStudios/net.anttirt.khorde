@@ -29,7 +29,7 @@ namespace Khorde.Behavior
 			ThreadRoot,
 			Repeat,
 			Append,
-			// Invoke, // TODO: execute callback on main thread (option: execute directly in job)
+			Invoke,
 		}
 
 		[StructLayout(LayoutKind.Explicit, Pack = 8)]
@@ -49,6 +49,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public ThreadRoot threadRoot;
 			[FieldOffset(0)] public Repeat repeat;
 			[FieldOffset(0)] public Append append;
+			[FieldOffset(0)] public Invoke invoke;
 		}
 
 		public string DumpString()
@@ -72,6 +73,7 @@ namespace Khorde.Behavior
 				case BTExecType.ThreadRoot: result += data.threadRoot.DumpString(); break;
 				case BTExecType.Repeat: result += data.repeat.DumpString(); break;
 				case BTExecType.Append: result += data.append.DumpString(); break;
+				case BTExecType.Invoke: result += data.invoke.DumpString(); break;
 				default: break;
 			}
 

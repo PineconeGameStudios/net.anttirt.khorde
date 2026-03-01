@@ -46,6 +46,7 @@ namespace Khorde.Behavior.Test
 		DynamicBuffer<BTThread> threads => em.GetBuffer<BTThread>(testEntity);
 		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
 		DynamicBuffer<BTExecTrace> trace => em.GetBuffer<BTExecTrace>(testEntity);
+		DynamicBuffer<BTInvokeQueue> invoke => em.GetBuffer<BTInvokeQueue>(testEntity);
 		DynamicBuffer<ExpressionBlackboardStorage> blackboard => em.GetBuffer<ExpressionBlackboardStorage>(testEntity);
 		DynamicBuffer<TestBuffer> testBuffer => em.GetBuffer<TestBuffer>(testEntity);
 		BehaviorTestSystem testSystem;
@@ -63,6 +64,8 @@ namespace Khorde.Behavior.Test
 			em.AddBuffer<BTThread>(testEntity);
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
+			em.AddBuffer<BTInvokeQueue>(testEntity);
+			em.SetComponentEnabled<BTInvokeQueue>(testEntity, false);
 			em.AddBuffer<ExpressionBlackboardStorage>(testEntity);
 			em.AddBuffer<TestBuffer>(testEntity);
 		}
@@ -80,7 +83,7 @@ namespace Khorde.Behavior.Test
 				var components = TestComponents.Make();
 				RegisterTestComponents(ref data.Value, ref components, out var comps, out var lookups);
 
-				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, threads, stack, default, default, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -96,7 +99,7 @@ namespace Khorde.Behavior.Test
 
 				trace.Clear();
 
-				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, threads, stack, default, default, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -108,7 +111,7 @@ namespace Khorde.Behavior.Test
 
 				components.moveTarget.enabled = false;
 
-				BehaviorTreeExecution.Execute(data, ref state, threads, stack, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+				BehaviorTreeExecution.Execute(data, ref state, threads, stack, default, default, blackboard.AsNativeArray(), ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 				AssertTrace
 				(
@@ -142,7 +145,7 @@ namespace Khorde.Behavior.Test
 
 			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			Assert.AreEqual(1.23f, blackboardBytes.ReinterpretLoad<float>(0));
 
@@ -167,7 +170,7 @@ namespace Khorde.Behavior.Test
 
 			Assert.AreEqual(0, blackboardBytes.ReinterpretLoad<float>(0));
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(1, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
@@ -192,10 +195,10 @@ namespace Khorde.Behavior.Test
 
 			trace.Clear();
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(2, blackboardBytes.ReinterpretLoad<float>(0));
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
@@ -233,7 +236,7 @@ namespace Khorde.Behavior.Test
 
 			trace.Clear();
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
@@ -271,7 +274,7 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(0, blackboardVars[0]);
 			Assert.AreEqual(0, blackboardVars[1]);
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			Assert.AreEqual(7, blackboardVars[0]);
 			Assert.AreEqual(14, blackboardVars[1]);
@@ -307,7 +310,7 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(28, 8).ReinterpretLoad<float2>(0));
 			Assert.AreEqual(new float2(0), blackboardBytes.GetSubArray(36, 8).ReinterpretLoad<float2>(0));
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			// length(float2(3, 4)) == 5
 			Assert.AreEqual(5.0f, blackboardBytes.GetSubArray(0, 4).ReinterpretLoad<float>(0));
@@ -341,7 +344,7 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(Hex(0), Hex(blackboardBytes.ReinterpretLoad<int>(0)));
 			Assert.AreEqual(Hex(42), Hex(blackboardBytes.ReinterpretLoad<int>(4)));
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			Assert.AreEqual(Hex(42), Hex(blackboardBytes.ReinterpretLoad<int>(0)));
 			Assert.AreEqual(Hex(42), Hex(blackboardBytes.ReinterpretLoad<int>(4)));
@@ -359,7 +362,7 @@ namespace Khorde.Behavior.Test
 
 			Assert.AreEqual(0, testBuffer.Length);
 
-			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
 
 			Assert.AreEqual(5, testBuffer.Length);
 

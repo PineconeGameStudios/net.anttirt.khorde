@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Khorde.Behavior.Authoring;
+using Khorde.Behavior.Systems;
 using Khorde.Expr;
 using Khorde.Query;
 using Khorde.Query.Authoring;
@@ -12,6 +13,7 @@ using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEditor;
 using UnityEngine;
 using static Khorde.Behavior.BTExec;
 using Event = Khorde.Behavior.BTExecTrace.Event;
@@ -22,22 +24,18 @@ namespace Khorde.Behavior.Test
 	{
 		List<UnityEngine.Object> created = new();
 
-		[Test]
-		public void Test_RunQuery()
+		[TearDown]
+		public override void TearDown()
 		{
-			try
-			{
-				Test_RunQuery_Impl();
-			}
-			finally
-			{
-				foreach(var obj in created)
-					if(obj != null)
-						UnityEngine.Object.DestroyImmediate(obj);
-			}
+			foreach(var obj in created)
+				if(obj != null)
+					UnityEngine.Object.DestroyImmediate(obj);
+
+			created.Clear();
 		}
 
-		public void Test_RunQuery_Impl()
+		[Test]
+		public void Test_RunQuery()
 		{
 			ExpressionTypeManager.Initialize();
 
@@ -94,8 +92,11 @@ namespace Khorde.Behavior.Test
 				typeof(BTThread),
 				typeof(BTStackFrame),
 				typeof(BTExecTrace),
-				typeof(BTState)
+				typeof(BTState),
+				typeof(BTInvokeQueue)
 			);
+
+			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
 
 			var reg = new QueryAssetRegistration();
 			reg.Add(queryRef.Reference);
@@ -144,6 +145,97 @@ namespace Khorde.Behavior.Test
 				, Trace(BTExecType.Root, 1, 1, Event.Call)
 				, Trace(BTExecType.Query, 4, 2, Event.Wait)
 				);
+		}
+
+		[Test]
+		public void Test_Invoke()
+		{
+			ExpressionTypeManager.Initialize();
+
+			var entityManager = World.EntityManager;
+
+			var btGraph = GraphDatabase.LoadGraphForImporter<BehaviorTreeGraph>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Invoke.btg");
+			var btBaker = new BTBakingContext(btGraph, Allocator.Temp);
+
+			DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(World
+				, typeof(BehaviorTreeUpdateSystem)
+				, typeof(BehaviorTreeActionSystem)
+				, typeof(Unity.NetCode.PredictedSimulationSystemGroup)
+				);
+
+			Assert.That(World.GetExistingSystem<BehaviorTreeUpdateSystem>(), Is.Not.EqualTo(default(SystemHandle)));
+			Assert.That(World.GetExistingSystem<BehaviorTreeActionSystem>(), Is.Not.EqualTo(default(SystemHandle)));
+
+			World.Update();
+
+			var btBuilder = btBaker.Build();
+			var btAsset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+			created.Add(btAsset);
+			btAsset.SetAssetData(btBuilder, BTData.SchemaVersion);
+			var action = AssetDatabase.LoadAssetAtPath<BTAction_TestCreateEntity>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BTAction_TestCreateEntity.asset");
+
+			Assert.NotNull(action);
+
+			btAsset.Actions.Add(action);
+
+			var querier = entityManager.CreateEntity(
+				typeof(QSResultItemStorage),
+				typeof(QueryAssetRegistration),
+				typeof(PendingQuery),
+				typeof(LocalTransform),
+				typeof(ExpressionBlackboardStorage),
+				typeof(ExpressionBlackboardLayouts),
+				typeof(BehaviorTree),
+				typeof(BTThread),
+				typeof(BTStackFrame),
+				typeof(BTExecTrace),
+				typeof(BTState),
+				typeof(BTInvokeQueue),
+				typeof(BehaviorTreeActionRef)
+			);
+
+			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
+
+			entityManager.GetBuffer<BehaviorTreeActionRef>(querier).Add(new BehaviorTreeActionRef { value = btAsset.Actions[0] });
+
+			if(!btAsset.TryReadInPlace(BTData.SchemaVersion, out var btData))
+				throw new InvalidOperationException();
+
+			entityManager.SetSharedComponent(querier, new BehaviorTree { tree = btData.Reference, });
+
+			var bakedLayout = BehaviorTreeAuthoring.BakeLayout(btAsset, entityManager.GetBuffer<ExpressionBlackboardStorage>(querier), Allocator.Temp, dumpLayout: true);
+			entityManager.SetSharedComponent(querier, new ExpressionBlackboardLayouts { asset = bakedLayout });
+
+			var target = entityManager.CreateEntity(typeof(LocalToWorld));
+
+			var query = World.EntityManager.CreateEntityQuery(typeof(ActionTestComponent));
+
+			Assert.AreEqual(0, query.CalculateEntityCount());
+
+			// first update places action in the queue
+			World.Update();
+
+			var trace = entityManager.GetBuffer<BTExecTrace>(querier);
+
+			AssertTrace(trace
+				, Trace(BTExecType.Nop, 0, 0, Event.Spawn)
+				, Trace(BTExecType.Root, 1, 1, Event.Start)
+				, Trace(BTExecType.Root, 1, 1, Event.Call)
+				, Trace(BTExecType.Invoke, 2, 2, Event.Return)
+				, Trace(BTExecType.Root, 1, 1, Event.Yield)
+				);
+
+			// second update actually performs the action (and places another action in the queue)
+			World.Update();
+
+			Assert.AreEqual(1, query.CalculateEntityCount());
+
+			Assert.AreEqual(42, query.GetSingleton<ActionTestComponent>().value);
+
+			// third update performs the action again (and places a third action in the queue)
+			World.Update();
+
+			Assert.AreEqual(2, query.CalculateEntityCount());
 		}
 
 		void AssertTrace(DynamicBuffer<BTExecTrace> trace, params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());

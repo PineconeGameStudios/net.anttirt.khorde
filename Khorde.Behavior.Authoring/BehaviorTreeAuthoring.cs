@@ -47,12 +47,19 @@ namespace Khorde.Behavior
 				if(authoring.trace)
 					AddBuffer<BTExecTrace>(entity);
 
+				AddBuffer<BTInvokeQueue>(entity);
+				SetComponentEnabled<BTInvokeQueue>(entity, false);
+
 				var blackboard = AddBuffer<ExpressionBlackboardStorage>(entity);
 				var bakedLayout = BakeLayout(authoring.behaviorTree, blackboard, Allocator.Persistent, dumpLayout: authoring.dumpBlackboardLayout);
 				AddBlobAsset(ref bakedLayout, out var _);
 				AddSharedComponent(entity, new ExpressionBlackboardLayouts() { asset = bakedLayout, });
 
 				AddComponent(entity, new BTState { });
+
+				var actions = AddBuffer<BehaviorTreeActionRef>(entity);
+				foreach(var action in authoring.behaviorTree.Actions)
+					actions.Add(new BehaviorTreeActionRef { value = action });
 
 				if(authoring.behaviorTree.Queries.Count > 0)
 				{

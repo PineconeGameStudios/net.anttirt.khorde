@@ -20,6 +20,7 @@ namespace Khorde.Behavior.Authoring
 		private NativeArray<Hash128> builderExecNodeIds;
 		private NativeArray<BlobArray<Hash128>> builderExecNodeSubgraphStacks;
 		private List<QueryGraphAsset> queries = new();
+		private List<BehaviorTreeAction> actions = new();
 
 		public BTBakingContext(Graph rootGraph, Allocator allocator)
 			: base(rootGraph, allocator)
@@ -28,6 +29,8 @@ namespace Khorde.Behavior.Authoring
 		}
 
 		public List<QueryGraphAsset> Queries => queries;
+
+		public List<BehaviorTreeAction> Actions => actions;
 
 		public override void Dispose()
 		{

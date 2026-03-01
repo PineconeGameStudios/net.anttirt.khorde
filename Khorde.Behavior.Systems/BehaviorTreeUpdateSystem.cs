@@ -34,6 +34,7 @@ namespace Khorde.Behavior
 			public BufferTypeHandle<BTThread> threadTypeHandle;
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
 			public BufferTypeHandle<BTExecTrace> traceHandle;
+			public BufferTypeHandle<BTInvokeQueue> invokeHandle;
 			public BufferTypeHandle<ExpressionBlackboardStorage> blackboardTypeHandle;
 			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
 			public SharedComponentTypeHandle<QueryAssetRegistration> queriesTypeHandle;
@@ -49,6 +50,7 @@ namespace Khorde.Behavior
 				var threads = chunk.GetBufferAccessor(ref threadTypeHandle);
 				var stacks = chunk.GetBufferAccessor(ref stackTypeHandle);
 				var traces = chunk.GetBufferAccessor(ref traceHandle);
+				var invokes = chunk.GetBufferAccessor(ref invokeHandle);
 				var blackboards = chunk.GetBufferAccessor(ref blackboardTypeHandle);
 				var lookups = componentLookups.Lookups;
 				var layouts = chunk.GetSharedComponent(blackboardLayoutsTypeHandle);
@@ -65,6 +67,8 @@ namespace Khorde.Behavior
 					pendingQueries = chunk.GetNativeArray(ref pendingQueryHandle);
 				}
 
+				var invokeEnabledMask = chunk.GetEnabledMask(ref invokeHandle);
+
 				PendingQuery defaultValue = default;
 
 				var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
@@ -73,6 +77,8 @@ namespace Khorde.Behavior
 					EnabledRefRW<PendingQuery> pendingQueryEnabled = default;
 					if(btData.Value.hasQueries)
 						pendingQueryEnabled = pendingQueryEnabledMask.GetEnabledRefRW<PendingQuery>(entityIndex);
+
+					var invokeEnabled = invokeEnabledMask.GetEnabledRefRW<BTInvokeQueue>(entityIndex);
 
 					DynamicBuffer<BTExecTrace> trace = default;
 					if(traces.Length > 0)
@@ -86,6 +92,8 @@ namespace Khorde.Behavior
 						ref states[entityIndex],
 						threads[entityIndex],
 						stacks[entityIndex],
+						invokes[entityIndex],
+						invokeEnabled,
 						blackboards[entityIndex].AsNativeArray(),
 						ref layout,
 						queries,
@@ -118,6 +126,7 @@ namespace Khorde.Behavior
 					threadTypeHandle = SystemAPI.GetBufferTypeHandle<BTThread>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
 					traceHandle = SystemAPI.GetBufferTypeHandle<BTExecTrace>(),
+					invokeHandle = SystemAPI.GetBufferTypeHandle<BTInvokeQueue>(),
 					blackboardTypeHandle = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
 					queriesTypeHandle = SystemAPI.GetSharedComponentTypeHandle<QueryAssetRegistration>(),
@@ -222,6 +231,8 @@ namespace Khorde.Behavior
 					{
 						builder.WithPresentRW<PendingQuery>();
 					}
+
+					builder.WithPresent<BTInvokeQueue>();
 
 					var btQuery = state.GetEntityQuery(builder);
 

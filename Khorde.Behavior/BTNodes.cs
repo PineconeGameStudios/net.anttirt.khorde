@@ -288,4 +288,15 @@ namespace Khorde.Behavior
 			return $"{{ componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
 		}
 	}
+
+	public struct Invoke
+	{
+		public int actionIndex;
+		public bool blocking;
+
+		public string DumpString()
+		{
+			return $"{{ actionIndex={actionIndex} blocking={blocking} }}";
+		}
+	}
 }

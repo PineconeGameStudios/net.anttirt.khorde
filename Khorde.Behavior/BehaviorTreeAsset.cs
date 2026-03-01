@@ -10,6 +10,9 @@ namespace Khorde.Behavior
 		[field: SerializeField]
 		public List<QueryGraphAsset> Queries { get; private set; } = new();
 
+		[field: SerializeField]
+		public List<BehaviorTreeAction> Actions { get; private set; } = new();
+
 		private void OnEnable()
 		{
 #if UNITY_EDITOR
