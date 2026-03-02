@@ -16,7 +16,7 @@ namespace Khorde.Expr.Authoring
 		/// <summary>
 		/// Creates a new Expression Subgraph asset file in the project window.
 		/// </summary>
-		[MenuItem("Assets/Create/Expression Subgraph")]
+		[MenuItem("Assets/Create/Khorde/Expression Subgraph")]
 		static void CreateAssetFile()
 		{
 			GraphDatabase.PromptInProjectBrowserToCreateNewAsset<ExprSubgraph>(k_graphName);

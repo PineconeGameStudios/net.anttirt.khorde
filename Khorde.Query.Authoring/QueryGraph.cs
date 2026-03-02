@@ -24,7 +24,7 @@ namespace Khorde.Query.Authoring
 		/// <summary>
 		/// Creates a new Expression Subgraph asset file in the project window.
 		/// </summary>
-		[MenuItem("Assets/Create/Query Graph")]
+		[MenuItem("Assets/Create/Khorde/Query Graph")]
 		static void CreateAssetFile()
 		{
 			GraphDatabase.PromptInProjectBrowserToCreateNewAsset<QueryGraph>(k_graphName);

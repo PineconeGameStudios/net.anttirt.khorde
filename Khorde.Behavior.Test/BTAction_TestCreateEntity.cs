@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Khorde.Behavior.Test
 {
-	[CreateAssetMenu(menuName = "Khorde/Test/Actions/TestCreateEntity")]
 	class BTAction_TestCreateEntity : BehaviorTreeAction
 	{
 		public override void Invoke(ref SystemState state, Entity entity)

@@ -23,7 +23,7 @@ namespace Khorde.Behavior
 		/// Creates a new Visual Novel Director graph asset file in the project window.
 		/// </summary>
 		/// <remarks>This is also where we add the shortcut to create a new graph from the editor Asset menu.</remarks>
-		[MenuItem("Assets/Create/Behavior Tree Graph")]
+		[MenuItem("Assets/Create/Khorde/Behavior Tree Graph")]
 		static void CreateAssetFile()
 		{
 			GraphDatabase.PromptInProjectBrowserToCreateNewAsset<BehaviorTreeGraph>(k_graphName);
