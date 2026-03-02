@@ -83,10 +83,12 @@ namespace Unity.Entities
 
 #else
         internal UntypedBufferLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly,
-                                     int bufferCapacity)
+                                     int bufferCapacity, int elementSize, int alignOf)
         {
             m_TypeIndex = typeIndex;
             m_Access = access;
+            m_ElementSize = elementSize;
+            m_AlignOf = alignOf;
             m_IsReadOnly = isReadOnly ? (byte)1 : (byte)0;;
             m_Cache = default;
             m_GlobalSystemVersion = access->EntityComponentStore->GlobalSystemVersion;
