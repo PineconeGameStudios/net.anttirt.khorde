@@ -238,6 +238,69 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(2, query.CalculateEntityCount());
 		}
 
+		[Test]
+		public void Test_LookupWrite()
+		{
+			ExpressionTypeManager.Initialize();
+
+			var entityManager = World.EntityManager;
+
+			var btGraph = GraphDatabase.LoadGraphForImporter<BehaviorTreeGraph>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_LookupWrite.btg");
+			var btBaker = new BTBakingContext(btGraph, Allocator.Temp);
+
+			DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(World
+				, typeof(BehaviorTreeUpdateSystem)
+				, typeof(BehaviorTreeActionSystem)
+				, typeof(Unity.NetCode.PredictedSimulationSystemGroup)
+				);
+
+			Assert.That(World.GetExistingSystem<BehaviorTreeUpdateSystem>(), Is.Not.EqualTo(default(SystemHandle)));
+			Assert.That(World.GetExistingSystem<BehaviorTreeActionSystem>(), Is.Not.EqualTo(default(SystemHandle)));
+
+			World.Update();
+
+			var btBuilder = btBaker.Build();
+			var btAsset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+			created.Add(btAsset);
+			btAsset.SetAssetData(btBuilder, BTData.SchemaVersion);
+
+			var querier = entityManager.CreateEntity(
+				typeof(QSResultItemStorage),
+				typeof(QueryAssetRegistration),
+				typeof(PendingQuery),
+				typeof(LocalTransform),
+				typeof(ExpressionBlackboardStorage),
+				typeof(ExpressionBlackboardLayouts),
+				typeof(BehaviorTree),
+				typeof(BTThread),
+				typeof(BTStackFrame),
+				typeof(BTExecTrace),
+				typeof(BTState),
+				typeof(BTInvokeQueue),
+				typeof(BehaviorTreeActionRef)
+			);
+
+			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
+
+			if(!btAsset.TryReadInPlace(BTData.SchemaVersion, out var btData))
+				throw new InvalidOperationException();
+
+			entityManager.SetSharedComponent(querier, new BehaviorTree { tree = btData.Reference, });
+
+			var bakedLayout = BehaviorTreeAuthoring.BakeLayout(btAsset, entityManager.GetBuffer<ExpressionBlackboardStorage>(querier), Allocator.Temp, dumpLayout: true);
+			entityManager.SetSharedComponent(querier, new ExpressionBlackboardLayouts { asset = bakedLayout });
+
+			var otherEntity = entityManager.CreateEntity(typeof(TestMoveTarget));
+
+			entityManager.GetBuffer<ExpressionBlackboardStorage>(querier).AsNativeArray().ReinterpretStore<Entity>(0, otherEntity);
+
+			Assert.AreEqual(0.0f, entityManager.GetComponentData<TestMoveTarget>(otherEntity).tolerance);
+
+			World.Update();
+
+			Assert.AreEqual(5.0f, entityManager.GetComponentData<TestMoveTarget>(otherEntity).tolerance);
+		}
+
 		void AssertTrace(DynamicBuffer<BTExecTrace> trace, params BTExecTrace[] expected) => Assert.AreEqual(expected, trace.AsNativeArray().AsSpan().ToArray());
 
 		static BTExecTrace Trace(BTExecType type, ushort nodeId, int depth, Event @event)

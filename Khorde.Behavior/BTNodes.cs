@@ -335,4 +335,35 @@ namespace Khorde.Behavior
 			return $"{{ bufferIndex={bufferIndex} componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
 		}
 	}
+
+	public struct WriteLookupField
+	{
+		public ExpressionRef entity;
+
+		public byte componentIndex;
+
+		public BlobArray<WriteField.Field> fields;
+
+		public bool Evaluate(in ExpressionEvalContext ctx)
+		{
+			if(ctx.componentLookups[componentIndex].TryGetRefRW(entity.Evaluate<Entity>(ctx), out var componentData))
+			{
+				for(int i = 0; i < fields.Length; ++i)
+				{
+					ref var field = ref fields[i];
+					var fieldSpan = componentData.GetSubArray(field.offset, field.size);
+					field.input.Evaluate(in ctx, ref fieldSpan);
+				}
+
+				return true;
+			}
+
+			return false;
+		}
+
+		public string DumpString()
+		{
+			return $"{{ entity={entity} componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
+		}
+	}
 }

@@ -31,6 +31,7 @@ namespace Khorde.Behavior
 			Append,
 			Invoke,
 			WriteBufferField,
+			WriteLookupField,
 		}
 
 		[StructLayout(LayoutKind.Explicit, Pack = 8)]
@@ -52,6 +53,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public Append append;
 			[FieldOffset(0)] public Invoke invoke;
 			[FieldOffset(0)] public WriteBufferField writeBufferField;
+			[FieldOffset(0)] public WriteLookupField writeLookupField;
 		}
 
 		public string DumpString()
@@ -77,6 +79,7 @@ namespace Khorde.Behavior
 				case BTExecType.Append: result += data.append.DumpString(); break;
 				case BTExecType.Invoke: result += data.invoke.DumpString(); break;
 				case BTExecType.WriteBufferField: result += data.writeBufferField.DumpString(); break;
+				case BTExecType.WriteLookupField: result += data.writeLookupField.DumpString(); break;
 				default: break;
 			}
 

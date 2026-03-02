@@ -33,6 +33,7 @@ namespace Khorde.Behavior.Test
 
 	[Serializable] class ReadTestMoveTarget : ComponentReaderNode<TestMoveTarget> { }
 	[Serializable] class WriteTestMoveTarget : ComponentWriterNode<TestMoveTarget> { }
+	[Serializable] class LookupWriteTestMoveTarget : LookupWriterNode<TestMoveTarget> { }
 
 	[Serializable] class ReadTestNpcTargetEntity : ComponentReaderNode<TestNpcTargetEntity> { }
 	[Serializable] class WriteTestNpcTargetEntity : ComponentWriterNode<TestNpcTargetEntity> { }
@@ -411,6 +412,27 @@ namespace Khorde.Behavior.Test
 			}
 		}
 
+		[Test]
+		public void Test_LookupWrite()
+		{
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_LookupWrite.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
+
+			BTState state = default;
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
+
+			var entity = em.CreateEntity(typeof(TestMoveTarget));
+
+			blackboard.ReinterpretStore<Entity>(0, entity);
+
+			Assert.AreEqual(0.0f, em.GetComponentData<TestMoveTarget>(entity).tolerance);
+
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+
+			Assert.AreEqual(5.0f, em.GetComponentData<TestMoveTarget>(entity).tolerance);
+		}
+
 		static HexInt Hex(int value) => value;
 
 		struct HexInt
@@ -476,11 +498,11 @@ namespace Khorde.Behavior.Test
 				var type = data.exprData.lookupComponents[i].ResolveComponentType();
 				var typeIndex = type.TypeIndex;
 				if(typeIndex == TypeManager.GetTypeIndex<TestMoveTarget>())
-					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestMoveTarget>(isReadOnly: true);
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestMoveTarget>(isReadOnly: type.AccessModeType == ComponentType.AccessMode.ReadOnly);
 				else if(typeIndex == TypeManager.GetTypeIndex<LocalTransform>())
-					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: true);
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: type.AccessModeType == ComponentType.AccessMode.ReadOnly);
 				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
-					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestNpcTargetEntity>(isReadOnly: true);
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestNpcTargetEntity>(isReadOnly: type.AccessModeType == ComponentType.AccessMode.ReadOnly);
 				else
 					throw new Exception($"lookup {type.GetManagedType().FullName} not available in test");
 			}

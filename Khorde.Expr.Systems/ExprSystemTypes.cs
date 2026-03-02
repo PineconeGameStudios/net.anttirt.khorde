@@ -211,6 +211,20 @@ namespace Khorde.Expr
     [StructLayout(LayoutKind.Sequential)]
     public struct ExprJobComponentLookups
     {
+        // These safety disables are here for a few reasons:
+
+        // The safety system doesn't allow having both a ComponentTypeHandle
+        // and a lookup for the same type in the same job, so one of them needs
+        // to have safety disabled. It's not immediately clear how to restore
+        // at least some safety checks in this case, but it might be possible.
+
+        // We want to allow writing to looked-up components when we know
+        // they're on entities not related to the main BT entities, but this
+        // can't be statically verified. When a BT has lookup writes, it should
+        // default to sequential execution and have a graph option to allow
+        // unsafe parallel execution. We'll still need at least
+        // [NativeDisableParallelForRestriction] here, regardless.
+
         [NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup0;
         [NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup1;
         [NativeDisableContainerSafetyRestriction] UntypedComponentLookup lookup2;
@@ -341,7 +355,7 @@ namespace Khorde.Expr
                 lookups.Length++;
                 lookups[^1] = new ExprSystemComponentLookupHolder
                 {
-                    componentLookup = state.GetUntypedComponentLookup(type.TypeIndex, true),
+                    componentLookup = state.GetUntypedComponentLookup(type.TypeIndex, isReadOnly: type.AccessModeType == ComponentType.AccessMode.ReadOnly),
                     stableTypeHash = lookupTypes[i].stableTypeHash,
                     typeSize = TypeManager.GetTypeInfo(type.TypeIndex).TypeSize,
                 };

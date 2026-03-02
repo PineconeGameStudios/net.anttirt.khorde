@@ -282,6 +282,20 @@ namespace Khorde.Behavior
 							Return(ref data, ref node);
 							break;
 
+						case BTExec.BTExecType.WriteLookupField:
+							if(node.data.writeLookupField.Evaluate(in exprContext))
+							{
+								Return(ref data, ref node);
+							}
+							else
+							{
+								if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
+								{
+									threadIndex = 0;
+								}
+							}
+							break;
+
 						case BTExec.BTExecType.Append:
 							node.data.append.Evaluate(in exprContext);
 							Return(ref data, ref node);
