@@ -439,6 +439,7 @@ namespace Khorde.Behavior.Authoring
 				child = context.GetTargetNodeId(child),
 				param = parameter == null ? default : context.GetExpressionRef(parameter),
 				mode = mode,
+				counter = counterVariableIndex,
 			};
 
 			context.BakeGeneratedVariable(this, 0, counterVariableIndex);

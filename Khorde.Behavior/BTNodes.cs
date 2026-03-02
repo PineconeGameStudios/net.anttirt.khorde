@@ -299,4 +299,40 @@ namespace Khorde.Behavior
 			return $"{{ actionIndex={actionIndex} blocking={blocking} }}";
 		}
 	}
+
+	public struct WriteBufferField
+	{
+		public ExpressionRef bufferIndex;
+
+		public byte componentIndex;
+
+		public BlobArray<WriteField.Field> fields;
+
+		public bool Evaluate(in ExpressionEvalContext ctx)
+		{
+			var component = ctx.componentPtrs[componentIndex];
+			var buffer = component.AsBuffer();
+			var index = bufferIndex.Evaluate<int>(ctx);
+
+			if(index < 0 || index >= buffer.Length)
+				return false;
+
+			var data = buffer.AsNativeArray();
+			var elemBase = index * buffer.ElementSize;
+
+			for(int i = 0; i < fields.Length; ++i)
+			{
+				ref var field = ref fields[i];
+				var fieldSpan = data.GetSubArray(elemBase + field.offset, field.size);
+				field.input.Evaluate(in ctx, ref fieldSpan);
+			}
+
+			return true;
+		}
+
+		public string DumpString()
+		{
+			return $"{{ bufferIndex={bufferIndex} componentIndex={componentIndex}, fields=[{string.Join(", ", fields.ToArray())}] }}";
+		}
+	}
 }

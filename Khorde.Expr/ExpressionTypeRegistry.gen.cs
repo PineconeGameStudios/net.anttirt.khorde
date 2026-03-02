@@ -26,6 +26,8 @@ namespace Khorde.Expr.Generated
 			new ExpressionTypeInfo(typeof(Swizzle32x4), Swizzle32x4.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(ReadComponentField), ReadComponentField.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(LookupComponentField), LookupComponentField.EvaluateFunc, true),
+			new ExpressionTypeInfo(typeof(ReadBufferLength), ReadBufferLength.EvaluateFunc, true),
+			new ExpressionTypeInfo(typeof(ReadBufferField), ReadBufferField.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(BinaryBool), BinaryBool.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(UnaryBool), UnaryBool.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(LengthFloat2), LengthFloat2.EvaluateFunc, true),

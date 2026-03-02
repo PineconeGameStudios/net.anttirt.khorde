@@ -1339,8 +1339,10 @@ MonoBehaviour:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList: []
-          m_ValueList: []
+          m_KeyList:
+          - 447a53760e93af9b4981d1241c114484
+          m_ValueList:
+          - rid: 8049180532062814276
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -1442,3 +1444,7 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: Value
+    - rid: 8049180532062814276
+      type: {class: 'Constant`1[[System.Int32, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0

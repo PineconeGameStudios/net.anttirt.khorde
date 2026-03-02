@@ -339,6 +339,19 @@ namespace Khorde.Expr.Authoring
 			return assetLayouts;
 		}
 
+		public static void DumpLayout(Dictionary<Hash128, List<LayoutVariable>> layout, params Blobs.BlobAssetBase[] assets)
+			=> DumpLayout(layout, (IEnumerable<Blobs.BlobAssetBase>)assets);
+
+		public static void DumpLayout(Dictionary<Hash128, List<LayoutVariable>> layout, IEnumerable<Blobs.BlobAssetBase> assets)
+		{
+			var assetLookup = assets.ToDictionary(asset => asset.DataHash);
+
+			foreach(var (asset, layoutVariables) in layout)
+			{
+				Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
+			}
+		}
+
 		private static bool IsAllZero(byte[] bytes)
 		{
 			for(int i = 0; i < bytes.Length; ++i)

@@ -287,6 +287,20 @@ namespace Khorde.Behavior
 							Return(ref data, ref node);
 							break;
 
+						case BTExec.BTExecType.WriteBufferField:
+							if(node.data.writeBufferField.Evaluate(in exprContext))
+							{
+								Return(ref data, ref node);
+							}
+							else
+							{
+								if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
+								{
+									threadIndex = 0;
+								}
+							}
+							break;
+
 						case BTExec.BTExecType.Wait:
 							if(node.data.wait.duration.IsCreated)
 							{

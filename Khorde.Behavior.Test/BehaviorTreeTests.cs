@@ -1,3 +1,4 @@
+using Khorde.Behavior.Authoring;
 using Khorde.Expr;
 using Khorde.Expr.Authoring;
 using Khorde.Expr.Test;
@@ -1158,5 +1159,8 @@ namespace Khorde.Behavior.Test
 		public override string ToString() => $"(field0={field0}, field1={field1})";
 	}
 
-	[Serializable] internal class AppendTestBuffer : Khorde.Behavior.Authoring.BufferAppendNode<TestBuffer> { }
+	[Serializable] internal class AppendTestBuffer : BufferAppendNode<TestBuffer> { }
+	[Serializable] internal class WriteTestBuffer : BufferWriterNode<TestBuffer> { }
+	[Serializable] internal class ReadTestBuffer : BufferReaderNode<TestBuffer> { }
+	[Serializable] internal class LengthTestBuffer : BufferLengthNode<TestBuffer> { }
 }

@@ -361,6 +361,30 @@ namespace Khorde.Expr.Authoring
 				throw new System.Exception($"component type {typeof(TComponentData).Name} not found in type list");
 		}
 
+		public void BakeBuffer<TComponentData>(ref ExpressionComponentTypeInfo typeInfo, ExpressionComponentLocation location) where TComponentData : unmanaged, IBufferElementData
+		{
+			int fieldCount = BlobExpressionData.GetBufferFields<TComponentData>().Length;
+			builder.Allocate(ref typeInfo.fields, fieldCount);
+			fixed(void* p = &typeInfo)
+				patchableTypeInfos.Add((TypeManager.GetTypeInfo<TComponentData>().StableTypeHash, (IntPtr)p));
+
+			typeInfo.componentIndex = -1;
+
+			switch(location)
+			{
+				case ExpressionComponentLocation.Local:
+					typeInfo.componentIndex = localComponents.FindIndex(kv => kv.GetManagedType() == typeof(TComponentData));
+					break;
+
+				case ExpressionComponentLocation.Lookup:
+					typeInfo.componentIndex = lookupComponents.FindIndex(kv => kv.GetManagedType() == typeof(TComponentData));
+					break;
+			}
+
+			if(typeInfo.componentIndex == -1)
+				throw new System.Exception($"component type {typeof(TComponentData).Name} not found in type list");
+		}
+
 		public ExpressionRef Const<TConstant>(TConstant constant) where TConstant : unmanaged
 			=> ExprAuthoring.WriteConstant2(constant, constStorage, constCache);
 

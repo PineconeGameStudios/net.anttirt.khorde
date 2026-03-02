@@ -297,6 +297,79 @@ namespace Khorde.Expr.Test
 		}
 
 		[Test]
+		public void Test_Buffer()
+		{
+			baker.RegisterBufferAccess<TestBufferElem>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);
+			baker.InitializeBake(4, 0);
+
+			ExpressionRef len, n0, n1, n2;
+
+			{
+				ref var rbl = ref Allocate<ReadBufferLength>(out len);
+				baker.BakeBuffer<TestBufferElem>(ref rbl.typeInfo, ExpressionComponentLocation.Local);
+			}
+
+			{
+				ref var rbf = ref Allocate<ReadBufferField>(out n0);
+				rbf.Input0 = baker.Const(0);
+				baker.BakeBuffer<TestBufferElem>(ref rbf.typeInfo, ExpressionComponentLocation.Local);
+			}
+
+			{
+				ref var rbf = ref Allocate<ReadBufferField>(out n1);
+				rbf.Input0 = baker.Const(1);
+				baker.BakeBuffer<TestBufferElem>(ref rbf.typeInfo, ExpressionComponentLocation.Local);
+			}
+
+			{
+				ref var rbf = ref Allocate<ReadBufferField>(out n2);
+				rbf.Input0 = baker.Const(2);
+				baker.BakeBuffer<TestBufferElem>(ref rbf.typeInfo, ExpressionComponentLocation.Local);
+			}
+
+			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
+
+			blob.Value.RuntimeInitialize(world.Unmanaged);
+
+			for(int fieldIndex = 0; fieldIndex < 2; ++fieldIndex)
+			{
+				ref var fieldInfo = ref blob.Value.expressions[0].storage.GetUnsafePtr<ReadBufferLength>()->typeInfo.fields[fieldIndex];
+				Assert.Greater(fieldInfo.length, 0,
+					message: $"expr {0} field {fieldIndex} offset={fieldInfo.offset} length={fieldInfo.length}");
+			}
+
+			for(int exprIndex = 1; exprIndex < 4; ++exprIndex)
+				for(int fieldIndex = 0; fieldIndex < 2; ++fieldIndex)
+				{
+					ref var fieldInfo = ref blob.Value.expressions[exprIndex].storage.GetUnsafePtr<ReadBufferField>()->typeInfo.fields[fieldIndex];
+					Assert.Greater(fieldInfo.length, 0,
+						message: $"expr {exprIndex} field {fieldIndex} offset={fieldInfo.offset} length={fieldInfo.length}");
+				}
+
+			Assert.IsTrue(blob.Value.IsRuntimeInitialized(world.Unmanaged));
+
+			var entity = em.CreateEntity(typeof(TestBufferElem));
+			var buffer = em.GetBuffer<TestBufferElem>(entity);
+			buffer.Add(new TestBufferElem { value0 = 42, value1 = 96 });
+			buffer.Add(new TestBufferElem { value0 = 64, value1 = 28 });
+			buffer.Add(new TestBufferElem { value0 = 19236, value1 = 45 });
+			var untypedBuffer = buffer.AsUntyped();
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make<TestBufferElem>(ref untypedBuffer);
+
+			var ctx = new ExpressionEvalContext(ref blob.Value, componentPtrs, default, default, ref ExpressionBlackboardLayout.Empty);
+
+			Assert.AreEqual(3, len.WithOutputIndex(0).Evaluate<int>(in ctx));
+			Assert.AreEqual(42, n0.WithOutputIndex(0).Evaluate<int>(in ctx));
+			Assert.AreEqual(96, n0.WithOutputIndex(1).Evaluate<int>(in ctx));
+			Assert.AreEqual(64, n1.WithOutputIndex(0).Evaluate<int>(in ctx));
+			Assert.AreEqual(28, n1.WithOutputIndex(1).Evaluate<int>(in ctx));
+			Assert.AreEqual(19236, n2.WithOutputIndex(0).Evaluate<int>(in ctx));
+			Assert.AreEqual(45, n2.WithOutputIndex(1).Evaluate<int>(in ctx));
+		}
+
+		[Test]
 		public void Test_Swizzle()
 		{
 			baker.InitializeBake(20, 0);
@@ -426,6 +499,12 @@ namespace Khorde.Expr.Test
 			public int field0;
 			public bool field1;
 			public bool field2;
+		}
+
+		struct TestBufferElem : IBufferElementData
+		{
+			public int value0;
+			public int value1;
 		}
 	}
 

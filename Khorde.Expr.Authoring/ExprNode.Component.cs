@@ -72,6 +72,65 @@ namespace Khorde.Expr.Authoring
 		}
 	}
 
+	[Serializable]
+	[NodeCategory("Component")]
+	public abstract class BufferReaderNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
+	{
+		private IPort index;
+
+		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
+		public bool IsReadOnly => true;
+
+		public override string Title => $"Read {typeof(T).Name}";
+
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
+		{
+			ref var data = ref context.CreateExpression<ReadBufferField>(storage);
+			data.Input0 = context.GetExpressionRef(index);
+			context.BakeBuffer<T>(ref data.typeInfo, ExpressionComponentLocation.Local);
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			index = context.AddInputPort<int>("Index")
+				.WithDisplayName("Index")
+				.WithPortCapacity(PortCapacity.Single)
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.Build();
+
+			foreach(var field in BlobExpressionData.GetBufferFields<T>())
+			{
+				context.AddOutputPort(field.Name)
+					.WithDisplayName(field.Name)
+					.WithDataType(field.FieldType)
+					.Build();
+			}
+		}
+	}
+
+	[Serializable]
+	[NodeCategory("Component")]
+	public abstract class BufferLengthNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
+	{
+		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
+		public bool IsReadOnly => true;
+
+		public override string Title => $"Read {typeof(T).Name}";
+
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
+		{
+			ref var data = ref context.CreateExpression<ReadBufferLength>(storage);
+			context.BakeBuffer<T>(ref data.typeInfo, ExpressionComponentLocation.Local);
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddOutputPort<int>("Length")
+				.WithDisplayName("Length")
+				.Build();
+		}
+	}
+
 	[Serializable] internal class ReadLocalTransform : ComponentReaderNode<Unity.Transforms.LocalTransform> { }
 
 	[Serializable] internal class LookupLocalToWorld : ComponentLookupNode<Unity.Transforms.LocalToWorld> { }

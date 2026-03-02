@@ -89,25 +89,15 @@ namespace Khorde.Behavior
 		{
 			ref var exprData = ref behaviorTree.GetValue(BTData.SchemaVersion).exprData;
 			var exprDatas = new List<(Hash128, Ptr<BlobExpressionData>, string)>();
-			var assetLookup = new Dictionary<Hash128, BlobAssetBase>();
 			exprDatas.Add((behaviorTree.DataHash, new Ptr<BlobExpressionData>(ref exprData), behaviorTree.name));
-			assetLookup[behaviorTree.DataHash] = behaviorTree;
 
 			foreach(var query in behaviorTree.Queries)
-			{
 				exprDatas.Add((query.DataHash, new Ptr<BlobExpressionData>(ref query.GetValue(QSData.SchemaVersion).exprData), query.name));
-				assetLookup[query.DataHash] = query;
-			}
 
 			var layout = ExprAuthoring.ComputeLayout(exprDatas);
 
 			if(dumpLayout)
-			{
-				foreach(var (asset, layoutVariables) in layout)
-				{
-					Debug.Log($"{assetLookup[asset]} blackboard layout:\n" + string.Join('\n', layoutVariables.Select(lv => $"{lv.name}: {lv.offset}+{lv.length} (global:{lv.isGlobal})")));
-				}
-			}
+				ExprAuthoring.DumpLayout(layout, behaviorTree.Queries.Cast<BlobAssetBase>().Append(behaviorTree));
 
 			var baked = ExprAuthoring.BakeLayout(layout, allocator.ToAllocator);
 			blackboard.Resize(baked.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), NativeArrayOptions.ClearMemory);

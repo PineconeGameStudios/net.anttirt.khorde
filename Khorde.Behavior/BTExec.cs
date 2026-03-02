@@ -30,6 +30,7 @@ namespace Khorde.Behavior
 			Repeat,
 			Append,
 			Invoke,
+			WriteBufferField,
 		}
 
 		[StructLayout(LayoutKind.Explicit, Pack = 8)]
@@ -50,6 +51,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public Repeat repeat;
 			[FieldOffset(0)] public Append append;
 			[FieldOffset(0)] public Invoke invoke;
+			[FieldOffset(0)] public WriteBufferField writeBufferField;
 		}
 
 		public string DumpString()
@@ -74,6 +76,7 @@ namespace Khorde.Behavior
 				case BTExecType.Repeat: result += data.repeat.DumpString(); break;
 				case BTExecType.Append: result += data.append.DumpString(); break;
 				case BTExecType.Invoke: result += data.invoke.DumpString(); break;
+				case BTExecType.WriteBufferField: result += data.writeBufferField.DumpString(); break;
 				default: break;
 			}
 

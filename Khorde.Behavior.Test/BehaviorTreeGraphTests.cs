@@ -376,6 +376,41 @@ namespace Khorde.Behavior.Test
 			}, testBuffer.AsNativeArray().ToArray());
 		}
 
+		[Test]
+		public void Test_Buffer()
+		{
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Buffer.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
+
+			BTState state = default;
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
+
+			testBuffer.Add(new TestBuffer { field0 = true, field1 = 5 });
+			testBuffer.Add(new TestBuffer { field0 = true, field1 = 6 });
+			testBuffer.Add(new TestBuffer { field0 = true, field1 = 8 });
+			testBuffer.Add(new TestBuffer { field0 = true, field1 = 12 });
+			testBuffer.Add(new TestBuffer { field0 = true, field1 = 25 });
+
+			int expected = testBuffer.AsNativeArray().ToArray().Sum(f => f.field1);
+
+			Assert.AreEqual(5, testBuffer.Length);
+
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, trace);
+
+			Assert.AreEqual(5, testBuffer.Length);
+
+			int result = blackboard.ReinterpretLoad<int>(0);
+
+			Assert.AreEqual(expected, result);
+
+			for(int i = 0; i < testBuffer.Length; i++)
+			{
+				Assert.AreEqual(false, testBuffer[i].field0);
+				Assert.AreEqual(i, testBuffer[i].field1);
+			}
+		}
+
 		static HexInt Hex(int value) => value;
 
 		struct HexInt
@@ -459,6 +494,8 @@ namespace Khorde.Behavior.Test
 
 			var layout = ExprAuthoring.ComputeLayout(new() { (asset.DataHash, new Ptr<BlobExpressionData>(ref data.ValueRW.exprData), "test") });
 			var bakedLayout = ExprAuthoring.BakeLayout(layout, Allocator.Temp);
+
+			ExprAuthoring.DumpLayout(layout, asset);
 
 			blackboard = new NativeArray<ExpressionBlackboardStorage>(bakedLayout.Value.ComputeStorageLength<ExpressionBlackboardStorage>(), Allocator.Temp);
 			blackboardBytes = blackboard.Reinterpret<byte>(UnsafeUtility.SizeOf<ExpressionBlackboardStorage>());
