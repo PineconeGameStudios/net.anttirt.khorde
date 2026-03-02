@@ -40,7 +40,7 @@ namespace Unity.Entities
                 typeInfo.AlignmentInBytes
                 );
 #else
-            return new BufferLookup<T>(typeIndex, access, isReadOnly,
+            return new UntypedBufferLookup(typeIndex, access, isReadOnly,
                 typeInfo.BufferCapacity,
                 typeInfo.ElementSize,
                 typeInfo.AlignmentInBytes
