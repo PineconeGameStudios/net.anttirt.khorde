@@ -41,6 +41,7 @@ namespace Khorde.Behavior
 			public ComponentTypeHandle<PendingQuery> pendingQueryHandle;
 			public Hash128 dataHash;
 			public float now;
+			public float deltaTime;
 
 			public unsafe void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
 			{
@@ -102,6 +103,7 @@ namespace Khorde.Behavior
 						typeHandles.GetComponents(entityIndex),
 						lookups,
 						now,
+						deltaTime,
 						trace
 						);
 				}
@@ -122,6 +124,7 @@ namespace Khorde.Behavior
 				{
 					btData = tree.tree,
 					now = (float)SystemAPI.Time.ElapsedTime,
+					deltaTime = (float)SystemAPI.Time.DeltaTime,
 					stateTypeHandle = SystemAPI.GetComponentTypeHandle<BTState>(),
 					threadTypeHandle = SystemAPI.GetBufferTypeHandle<BTThread>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),

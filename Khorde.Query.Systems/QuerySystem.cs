@@ -124,6 +124,8 @@ namespace Khorde.Query
 					blackboards = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
 					dataHash = asset.GetHash(),
+					now = (float)SystemAPI.Time.ElapsedTime,
+					deltaTime = (float)SystemAPI.Time.DeltaTime,
 				};
 
 				// TODO: optimize dependencies to enable different queries to run in parallel
@@ -173,6 +175,8 @@ namespace Khorde.Query
 			public EntityTypeHandle entities;
 			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
 			public Hash128 dataHash;
+			public float now;
+			public float deltaTime;
 
 			// need to disable safety because the results of the entity
 			// query job go into a nested NativeList and nested containers
@@ -272,6 +276,9 @@ namespace Khorde.Query
 								typeHandles.GetComponents(entityIndex),
 								componentLookups.Lookups,
 								queryResultLookup);
+
+							qctx.now = now;
+							qctx.deltaTime = deltaTime;
 
 							var blackboard = blackboardBuffers[entityIndex];
 

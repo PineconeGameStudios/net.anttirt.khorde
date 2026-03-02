@@ -494,6 +494,24 @@ namespace Khorde.Expr.Test
 			}
 		}
 
+		[Test]
+		public void Test_Time()
+		{
+			baker.InitializeBake(1, 0);
+
+			var t0 = AddExpression(new Time { });
+
+			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
+			blob.Value.RuntimeInitialize(world.Unmanaged);
+
+			var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
+			ctx.time = 42.0f;
+			ctx.deltaTime = 0.5f;
+
+			Assert.AreEqual(42.0f, t0.WithOutputIndex(0).Evaluate<float>(ctx));
+			Assert.AreEqual(0.5f, t0.WithOutputIndex(1).Evaluate<float>(ctx));
+		}
+
 		struct TestComponent1 : IComponentData
 		{
 			public int field0;

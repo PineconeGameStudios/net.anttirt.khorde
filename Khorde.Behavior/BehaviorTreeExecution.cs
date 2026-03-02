@@ -28,8 +28,9 @@ namespace Khorde.Behavior
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
 			float now,
+			float deltaTime,
 			DynamicBuffer<BTExecTrace> trace)
-			=> Execute(ref asset.Value, ref state, threads, frames, invoke, invokeEnabled, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, trace);
+			=> Execute(ref asset.Value, ref state, threads, frames, invoke, invokeEnabled, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, deltaTime, trace);
 
 		enum FailResult
 		{
@@ -54,6 +55,7 @@ namespace Khorde.Behavior
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
 			float now,
+			float deltaTime,
 			DynamicBuffer<BTExecTrace> trace)
 		{
 			data.exprData.CheckExpressionComponents(componentPtrs, lookups);
@@ -71,6 +73,9 @@ namespace Khorde.Behavior
 
 			var exprContext = new ExpressionEvalContext(ref data.exprData, componentPtrs, lookups, blackboardBytes,
 				ref blackboardLayout);
+
+			exprContext.time = now;
+			exprContext.deltaTime = deltaTime;
 
 			bool rootVisited = false;
 

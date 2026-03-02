@@ -16,6 +16,8 @@ namespace Khorde.Query
 		public NativeArray<UnsafeComponentReference> componentPtrs;
 		public NativeArray<UntypedComponentLookup> lookups;
 		public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
+		public float now;
+		public float deltaTime;
 
 		/// <summary>
 		/// Create a query execution context
@@ -35,6 +37,8 @@ namespace Khorde.Query
 			this.componentPtrs = componentPtrs;
 			this.lookups = lookups;
 			this.queryResultLookup = queryResultLookup;
+			this.now = 0;
+			this.deltaTime = 0;
 		}
 
 		/// <summary>
@@ -71,6 +75,8 @@ namespace Khorde.Query
 			}
 
 			var exprContext = new ExpressionEvalContext(ref data.exprData, supComponentPtrs, lookups, blackboardBytes, ref blackboardLayout);
+			exprContext.time = now;
+			exprContext.deltaTime = deltaTime;
 			int resultCount = data.resultCount.Evaluate<int>(in exprContext);
 
 			int passIndex = 0;

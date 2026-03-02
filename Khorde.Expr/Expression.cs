@@ -137,6 +137,9 @@ namespace Khorde.Expr
 			fixed(ExpressionBlackboardLayout* pLayout = &blackboardLayout)
 				this.blackboardLayout = pLayout;
 
+			this.time = 0;
+			this.deltaTime = 0;
+
 			if(blackboard.Length < blackboardLayout.minByteLength)
 				throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
 
@@ -164,6 +167,9 @@ namespace Khorde.Expr
 			fixed(ExpressionBlackboardLayout* pLayout = &blackboardLayout)
 				this.blackboardLayout = pLayout;
 
+			this.time = 0;
+			this.deltaTime = 0;
+
 			if(blackboard.Length < blackboardLayout.minByteLength)
 				throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
 
@@ -177,6 +183,8 @@ namespace Khorde.Expr
 		public NativeArray<UntypedComponentLookup> componentLookups;
 		public NativeArray<byte> blackboard;
 		ExpressionBlackboardLayout* blackboardLayout;
+		public float time;
+		public float deltaTime;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 		public NativeList<ushort> callStack;
