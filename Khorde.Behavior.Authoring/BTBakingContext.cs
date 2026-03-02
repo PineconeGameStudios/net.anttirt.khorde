@@ -53,7 +53,7 @@ namespace Khorde.Behavior.Authoring
 		protected override bool RegisterGraphNodes()
 		{
 			var roots = rootGraph.GetNodes().OfType<Root>().ToList();
-			bool isSubgraph = rootGraph.GetVariables().Any(v => v.variableKind == VariableKind.Input && v.dataType == typeof(Exec));
+			bool isSubgraph = rootGraph.GetVariables().Any(v => v.variableKind == VariableKind.Input && v.dataType == typeof(ExecutionFlow));
 
 			if(roots.Count == 0)
 			{

@@ -258,7 +258,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: 
     - rid: 1600056877990019153
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 1600056877990019155
       type: {class: WriteVar, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}

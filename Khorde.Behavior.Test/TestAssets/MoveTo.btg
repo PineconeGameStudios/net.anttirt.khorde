@@ -149,7 +149,7 @@ MonoBehaviour:
       data:
         m_Value: 1
     - rid: 5766249509299421257
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 5766249509299421258
       type: {class: WriteTestMoveTarget, ns: Khorde.Behavior.Test, asm: Khorde.Behavior.Test}
@@ -651,7 +651,7 @@ MonoBehaviour:
       data:
         m_Value: 0
     - rid: 8259216277413823400
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823401
       type: {class: Wait, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
@@ -710,7 +710,7 @@ MonoBehaviour:
       data:
         m_Value: 2
     - rid: 8259216277413823418
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823419
       type: {class: Sequence, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
@@ -760,7 +760,7 @@ MonoBehaviour:
         m_Name: exec
         m_UniqueId: 
         m_DataType:
-          m_Identification: Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring,
+          m_Identification: Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring,
             Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         m_IsExposed: 0
         m_Scope: 0
@@ -771,7 +771,7 @@ MonoBehaviour:
         m_Modifiers: 1
         m_VariableFlags: 0
     - rid: 8259216277413823424
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8259216277413823425
       type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}

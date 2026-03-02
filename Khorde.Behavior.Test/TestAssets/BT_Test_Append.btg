@@ -159,7 +159,7 @@ MonoBehaviour:
         m_Node:
           rid: 8049180509939957834
     - rid: 8049180509939957833
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8049180509939957834
       type: {class: AppendTestBuffer, ns: Khorde.Behavior.Test, asm: Khorde.Behavior.Test}
@@ -293,7 +293,7 @@ MonoBehaviour:
           m_Identification: Khorde.Behavior.RepeatMode, Khorde.Behavior, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
     - rid: 8049180509939957862
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.Exec, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 8049180509939957863
       type: {class: 'Constant`1[[System.Int32, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}

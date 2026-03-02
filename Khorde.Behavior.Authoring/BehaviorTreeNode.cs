@@ -18,8 +18,13 @@ namespace Khorde.Behavior.Authoring
 	/// <summary>
 	/// Marker type for ports of type Execution
 	/// </summary>
+	// NOTE: Graphtoolkit hardcodes this specific type name to get a nice
+	// visual style. It also defaults to an internal fake "execution flow" type
+	// if no data type for a port is specified, but refactoring to subgraphs
+	// does not work correctly if that type is used, so we use a real type for
+	// the ports instead as a workaround.
 	[Serializable]
-	public class Exec { }
+	public class ExecutionFlow { }
 
 	public interface IExecNode : INode
 	{

@@ -17,7 +17,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -56,7 +56,7 @@ namespace Khorde.Behavior.Authoring
 			{
 				for(int i = 0; i < childCount; i++)
 				{
-					context.AddOutputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME + "_" + i.ToString())
+					context.AddOutputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME + "_" + i.ToString())
 						.WithDisplayName(string.Empty)
 						.WithConnectorUI(PortConnectorUI.Arrowhead)
 						.WithPortCapacity(PortCapacity.Single)
@@ -64,7 +64,7 @@ namespace Khorde.Behavior.Authoring
 				}
 			}
 
-			context.AddInputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -94,7 +94,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -115,7 +115,7 @@ namespace Khorde.Behavior.Authoring
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			context.AddOutputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME)
+			context.AddOutputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -139,7 +139,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -151,7 +151,7 @@ namespace Khorde.Behavior.Authoring
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -171,7 +171,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -194,13 +194,13 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -252,7 +252,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -314,7 +314,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -394,19 +394,19 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			main = context.AddOutputPort<Exec>("main")
+			main = context.AddOutputPort<ExecutionFlow>("main")
 				.WithDisplayName("Main")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			parallel = context.AddOutputPort<Exec>("parallel")
+			parallel = context.AddOutputPort<ExecutionFlow>("parallel")
 				.WithDisplayName("Parallel")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -466,13 +466,13 @@ namespace Khorde.Behavior.Authoring
 		{
 			infiniteOption.TryGetValue<RepeatMode>(out var mode);
 
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			child = context.AddOutputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			child = context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -560,7 +560,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)

@@ -118,13 +118,13 @@ namespace Khorde.Behavior.Authoring
 		{
 			queryVariablePorts.Clear();
 
-			execInput = context.AddInputPort<Exec>(EXEC_PORT_DEFAULT_NAME)
+			execInput = context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			execSuccess = context.AddOutputPort<Exec>("ExecSuccess")
+			execSuccess = context.AddOutputPort<ExecutionFlow>("ExecSuccess")
 				.WithDisplayName("Success")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -170,7 +170,7 @@ namespace Khorde.Behavior.Authoring
 					.Build();
 			}
 
-			execFailure = context.AddOutputPort<Exec>("ExecFailure")
+			execFailure = context.AddOutputPort<ExecutionFlow>("ExecFailure")
 				.WithDisplayName("Failure")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)

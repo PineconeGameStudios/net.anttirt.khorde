@@ -87,7 +87,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
@@ -170,7 +170,7 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<Exec>(ExecBase.EXEC_PORT_DEFAULT_NAME)
+			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
