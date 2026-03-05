@@ -1,8 +1,10 @@
 using Unity.Collections;
+using Unity.Entities;
+using Unity.Entities.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.Entities.Editor
+namespace Khorde.Entities.Editor
 {
 	public static class EntitySelection
 	{

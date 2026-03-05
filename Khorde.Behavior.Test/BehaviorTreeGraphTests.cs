@@ -1,4 +1,5 @@
 using Khorde.Behavior.Authoring;
+using Khorde.Entities;
 using Khorde.Expr;
 using Khorde.Expr.Authoring;
 using Khorde.Query;

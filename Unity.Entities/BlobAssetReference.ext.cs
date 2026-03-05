@@ -1,6 +1,7 @@
 ﻿using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 
-namespace Unity.Entities
+namespace Khorde.Entities
 {
 	public static class BlobAssetReferenceExt
 	{

@@ -47,7 +47,7 @@ namespace Khorde.Behavior
 
 				var highlights = new NativeHashSet<UnityEngine.Hash128>(10, world.UpdateAllocator.ToAllocator);
 
-				var entities = Unity.Entities.Editor.EntitySelection.GetActiveEntities(world, world.UpdateAllocator.ToAllocator);
+				var entities = Khorde.Entities.Editor.EntitySelection.GetActiveEntities(world, world.UpdateAllocator.ToAllocator);
 
 				if(entities.Length == 1)
 				{

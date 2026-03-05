@@ -2,8 +2,9 @@ using System;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 
-namespace Unity.Entities
+namespace Khorde.Entities
 {
 	/// <summary>
 	/// A [NativeContainer] that provides access to all instances of components of type T, indexed by <see cref="Entity"/>.

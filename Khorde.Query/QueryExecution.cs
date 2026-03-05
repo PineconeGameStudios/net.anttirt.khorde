@@ -1,4 +1,5 @@
 ﻿using Khorde.Blobs;
+using Khorde.Entities;
 using Khorde.Expr;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;

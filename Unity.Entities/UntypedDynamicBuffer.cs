@@ -5,9 +5,10 @@ using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 using Unity.Mathematics;
 
-namespace Unity.Entities
+namespace Khorde.Entities
 {
     /// <summary>
     /// An array-like data structure that can be used as a component.
@@ -705,7 +706,7 @@ namespace Unity.Entities
     #endif
         }
 
-        public unsafe static UntypedDynamicBuffer GetUntypedDynamicBuffer(ref this LowLevel.Unsafe.UnsafeUntypedBufferAccessor accessor, int index)
+        public unsafe static UntypedDynamicBuffer GetUntypedDynamicBuffer(ref this Unity.Entities.LowLevel.Unsafe.UnsafeUntypedBufferAccessor accessor, int index)
         {
             fixed(void* paccessor = &accessor)
             {
@@ -719,7 +720,7 @@ namespace Unity.Entities
             }
         }
 
-        public unsafe static void* GetUnsafeBufferHeaderPtr(ref this LowLevel.Unsafe.UnsafeUntypedBufferAccessor accessor, int index)
+        public unsafe static void* GetUnsafeBufferHeaderPtr(ref this Unity.Entities.LowLevel.Unsafe.UnsafeUntypedBufferAccessor accessor, int index)
         {
             fixed(void* paccessor = &accessor)
             {

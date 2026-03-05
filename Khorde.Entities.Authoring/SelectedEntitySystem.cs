@@ -7,7 +7,7 @@ namespace Khorde.Entities.Authoring
 	{
 		protected override void OnUpdate()
 		{
-			if(Unity.Entities.Editor.EntitySelection.TryGetActiveEntity(out var entity, out var world))
+			if(Editor.EntitySelection.TryGetActiveEntity(out var entity, out var world))
 			{
 				SelectedEntity.Value = entity;
 			}

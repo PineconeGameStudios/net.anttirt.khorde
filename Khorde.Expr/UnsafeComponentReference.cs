@@ -1,3 +1,4 @@
+using Khorde.Entities;
 using System;
 using System.Diagnostics;
 using Unity.Collections;

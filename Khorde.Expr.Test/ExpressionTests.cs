@@ -1,4 +1,5 @@
-﻿using Khorde.Expr.Authoring;
+﻿using Khorde.Entities;
+using Khorde.Expr.Authoring;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,6 @@
-namespace Unity.Entities
+using Unity.Entities;
+
+namespace Khorde.Entities
 {
     public static class SystemStateExt
     {

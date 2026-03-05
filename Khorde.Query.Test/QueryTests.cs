@@ -1,3 +1,4 @@
+using Khorde.Entities;
 using Khorde.Expr;
 using Khorde.Query.Authoring;
 using NUnit.Framework;
