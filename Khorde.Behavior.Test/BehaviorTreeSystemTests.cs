@@ -148,6 +148,138 @@ namespace Khorde.Behavior.Test
 		}
 
 		[Test]
+		public void Test_RunQuery_Retry()
+		{
+			ExpressionTypeManager.Initialize();
+
+			var entityManager = World.EntityManager;
+
+			var queryGraph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/QG_BTTest.queryg");
+			var queryBaker = new QueryBakingContext(queryGraph, Allocator.Temp);
+
+			var btGraph = GraphDatabase.LoadGraphForImporter<BehaviorTreeGraph>("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_QueryRetry.btg");
+			var btBaker = new BTBakingContext(btGraph, Allocator.Temp);
+
+			DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(World
+				, typeof(QuerySystem)
+				, typeof(BehaviorTreeUpdateSystem)
+				, typeof(Unity.NetCode.PredictedSimulationSystemGroup)
+				);
+			Assert.That(World.GetExistingSystem<QuerySystem>(), Is.Not.EqualTo(default(SystemHandle)));
+			Assert.That(World.GetExistingSystem<BehaviorTreeUpdateSystem>(), Is.Not.EqualTo(default(SystemHandle)));
+
+			World.Update();
+
+			var eqb = new EntityQueryBuilder(Allocator.Temp)
+				.WithAll<QuerySystemAssets>()
+				.WithOptions(EntityQueryOptions.IncludeSystems)
+				.Build(entityManager);
+
+			Assert.That(eqb.CalculateEntityCount(), Is.EqualTo(1));
+
+			var queryBuilder = queryBaker.Build();
+			var queryAsset = ScriptableObject.CreateInstance<QueryGraphAsset>();
+			created.Add(queryAsset);
+			queryAsset.SetAssetData(queryBuilder, QSData.SchemaVersion);
+			queryAsset.entityQueries = queryBaker.EntityQueries.ToList();
+
+			if(!queryAsset.TryReadInPlace(QSData.SchemaVersion, out var queryRef))
+				throw new InvalidOperationException();
+
+			queryRef.ValueRW.exprData.RuntimeInitialize(World.Unmanaged);
+
+			var btBuilder = btBaker.Build();
+			var btAsset = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
+			created.Add(btAsset);
+			btAsset.SetAssetData(btBuilder, BTData.SchemaVersion);
+			btAsset.Queries.Add(queryAsset);
+
+			var querier = entityManager.CreateEntity(
+				typeof(QSResultItemStorage),
+				typeof(QueryAssetRegistration),
+				typeof(PendingQuery),
+				typeof(LocalTransform),
+				typeof(ExpressionBlackboardStorage),
+				typeof(ExpressionBlackboardLayouts),
+				typeof(BehaviorTree),
+				typeof(BTThread),
+				typeof(BTStackFrame),
+				typeof(BTExecTrace),
+				typeof(BTState),
+				typeof(BTInvokeQueue)
+			);
+
+			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
+
+			var reg = new QueryAssetRegistration();
+			reg.Add(queryRef.Reference);
+			foreach(var eq in queryAsset.entityQueries)
+			{
+				if(!eq.TryReadInPlace(Blobs.BlobEntityQueryDesc.SchemaVersion, out var eqRef))
+					throw new InvalidOperationException();
+				reg.Add(eqRef.Reference);
+			}
+
+			entityManager.SetSharedComponent(querier, reg);
+			entityManager.SetComponentData(querier, LocalTransform.FromPosition(new float3(-29, -31, 0)));
+			entityManager.SetComponentData(querier, new PendingQuery { query = queryRef.Reference });
+			entityManager.SetComponentEnabled<PendingQuery>(querier, true);
+
+			if(!btAsset.TryReadInPlace(BTData.SchemaVersion, out var btData))
+				throw new InvalidOperationException();
+
+			entityManager.SetSharedComponent(querier, new BehaviorTree { tree = btData.Reference, });
+
+			var bakedLayout = BehaviorTreeAuthoring.BakeLayout(btAsset, entityManager.GetBuffer<ExpressionBlackboardStorage>(querier), Allocator.Temp, dumpLayout: true);
+			entityManager.SetSharedComponent(querier, new ExpressionBlackboardLayouts { asset = bakedLayout });
+
+			World.Update();
+
+			var trace = entityManager.GetBuffer<BTExecTrace>(querier);
+
+			AssertTrace(trace
+				, Trace(BTExecType.Nop,      0, 0, Event.Spawn)
+				, Trace(BTExecType.Root,     1,   1, Event.Start)
+				, Trace(BTExecType.Root,     1,   1, Event.Call)
+				, Trace(BTExecType.Query,    3,     2, Event.Wait)
+				);
+
+			World.Update();
+
+			trace = entityManager.GetBuffer<BTExecTrace>(querier);
+
+			AssertTrace(trace
+				, Trace(BTExecType.Query,    3,     2, Event.Start)
+				, Trace(BTExecType.Query,    3,     2, Event.Yield) // free query lock
+				);
+
+			var target = entityManager.CreateEntity(typeof(LocalToWorld));
+
+			World.Update();
+
+			trace = entityManager.GetBuffer<BTExecTrace>(querier);
+
+			AssertTrace(trace
+				, Trace(BTExecType.Query,    3,     2, Event.Start)
+				, Trace(BTExecType.Query,    3,     2, Event.Wait) // try again
+				);
+
+			World.Update();
+
+			trace = entityManager.GetBuffer<BTExecTrace>(querier);
+
+			AssertTrace(trace
+				, Trace(BTExecType.Query,    3,     2, Event.Start)
+				, Trace(BTExecType.Query,    3,     2, Event.Call)
+				, Trace(BTExecType.WriteVar, 2,       3, Event.Return)
+				, Trace(BTExecType.Query,    3,     2, Event.Return)
+				, Trace(BTExecType.Root,     1,   1, Event.Call)
+				, Trace(BTExecType.Query,    3,     2, Event.Wait)
+				);
+
+		}
+
+		[Test]
 		public void Test_Invoke()
 		{
 			ExpressionTypeManager.Initialize();

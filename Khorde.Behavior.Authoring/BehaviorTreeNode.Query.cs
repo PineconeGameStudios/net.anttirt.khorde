@@ -20,6 +20,7 @@ namespace Khorde.Behavior.Authoring
 		private IPort result;
 
 		private INodeOption queryOption;
+		private INodeOption retryOption;
 		private VariableId resultVariableIndex;
 		private VariableId resultCountVariableIndex;
 		private List<VariableId> queryVariableIndices = new();
@@ -79,6 +80,8 @@ namespace Khorde.Behavior.Authoring
 			var valueType = qsData.itemType;
 			var type = valueType.GetValueType();
 
+			retryOption.TryGetValue<bool>(out var retry);
+
 			exec.type = BTExec.BTExecType.Query;
 			exec.data.query = new Behavior.Query
 			{
@@ -86,7 +89,8 @@ namespace Khorde.Behavior.Authoring
 				resultCount = resultCountVariableIndex,
 				queryIndex = context.GetQueryIndex(queryOption),
 				success = context.GetTargetNodeId(execSuccess),
-				failure = context.GetTargetNodeId(execFailure),
+				failure = retry ? default : context.GetTargetNodeId(execFailure),
+				retry = retry,
 			};
 
 			int varIndex = 0;
@@ -111,6 +115,10 @@ namespace Khorde.Behavior.Authoring
 		{
 			queryOption = context.AddOption<QueryGraphAsset>("Query")
 				.WithDisplayName("Query")
+				.Build();
+
+			retryOption = context.AddOption<bool>("Retry")
+				.WithDisplayName("Retry")
 				.Build();
 		}
 
@@ -170,12 +178,16 @@ namespace Khorde.Behavior.Authoring
 					.Build();
 			}
 
-			execFailure = context.AddOutputPort<ExecutionFlow>("ExecFailure")
-				.WithDisplayName("Failure")
-				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
-				.Build();
+			retryOption.TryGetValue<bool>(out var retry);
 
+			if(!retry)
+			{
+				execFailure = context.AddOutputPort<ExecutionFlow>("ExecFailure")
+					.WithDisplayName("Failure")
+					.WithConnectorUI(PortConnectorUI.Arrowhead)
+					.WithPortCapacity(PortCapacity.Single)
+					.Build();
+			}
 		}
 
 		private static Type GetVariableType(ref BlobExpressionData.BlackboardVariable variable)

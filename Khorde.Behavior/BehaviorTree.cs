@@ -1,6 +1,5 @@
 using Khorde.Expr;
 using System.Runtime.CompilerServices;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 
@@ -146,7 +145,7 @@ namespace Khorde.Behavior
 
 	public struct BTData
 	{
-		public const int SchemaVersion = 10
+		public const int SchemaVersion = 11
 			| (BlobExpressionData.SchemaVersion << 16);
 
 		public BlobExpressionData exprData;

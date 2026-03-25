@@ -443,9 +443,26 @@ namespace Khorde.Behavior
 									state.QueryExecutorThreadIndex = -1;
 
 									if(pendingQuery.resultCount > 0)
+									{
 										Call(ref data, node.data.query.success);
+									}
+									else if(node.data.query.retry)
+									{
+										// retry on the next iteration, but yield for one frame so we don't starve
+										// a parallel branch that might also want to run a query
+
+										// TODO: need fancier scheduling if we
+										// want to support more than 2 threads
+										// competing to run queries
+
+										Trace(ref node, BTExecTrace.Event.Yield);
+										frames.UnsafeElementAt(frames.Length - 1).childIndex = 0;
+										goto nextThread;
+									}
 									else
+									{
 										Call(ref data, node.data.query.failure);
+									}
 
 									break;
 								}

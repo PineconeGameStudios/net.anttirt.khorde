@@ -1,6 +1,5 @@
 using Khorde.Expr;
 using System;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -206,6 +205,11 @@ namespace Khorde.Behavior
 		/// Branch to execute on query failure (no results)
 		/// </summary>
 		public BTExecNodeId failure;
+
+		/// <summary>
+		/// Retry until query succeeds
+		/// </summary>
+		public bool retry;
 
 		/// <summary>
 		/// Blackboard inputs to the query graph
