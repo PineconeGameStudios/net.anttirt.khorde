@@ -17,7 +17,7 @@ namespace Khorde.Blobs.Authoring
 			query.Bake(lines, ref builder, err => ctx.LogImportError(err));
 			var obj = ScriptableObject.CreateInstance<EntityQueryAsset>();
 			var data = obj.SetAssetData(builder, BlobEntityQueryDesc.SchemaVersion);
-			ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+			ctx.AddObjectToAsset("asset", obj);
 			ctx.AddObjectToAsset("data", data);
 			ctx.SetMainObject(obj);
 		}

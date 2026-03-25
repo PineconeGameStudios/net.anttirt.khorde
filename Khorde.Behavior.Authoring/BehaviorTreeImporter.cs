@@ -28,7 +28,7 @@ namespace Khorde.Behavior
 			{
 				// create a blank placeholder so creating a fresh asset doesn't result in a user-visible error
 				var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
-				ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+				ctx.AddObjectToAsset("asset", obj);
 				ctx.SetMainObject(obj);
 			}
 			else if(isSubgraph)
@@ -66,7 +66,7 @@ namespace Khorde.Behavior
 					foreach(var q in obj.Queries)
 						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(q));
 					var data = obj.SetAssetData(builder, BTData.SchemaVersion);
-					ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+					ctx.AddObjectToAsset("asset", obj);
 					ctx.AddObjectToAsset("data", data);
 					ctx.SetMainObject(obj);
 				}

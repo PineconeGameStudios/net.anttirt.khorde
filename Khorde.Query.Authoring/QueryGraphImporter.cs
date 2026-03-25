@@ -27,7 +27,7 @@ namespace Khorde.Query.Authoring
 			{
 				// create a blank placeholder so creating a fresh asset doesn't result in a user-visible error
 				var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
-				ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+				ctx.AddObjectToAsset("asset", obj);
 				ctx.SetMainObject(obj);
 			}
 			else if(isSubgraph)
@@ -58,7 +58,7 @@ namespace Khorde.Query.Authoring
 					obj.entityQueries = context.EntityQueries.ToList();
 					foreach(var eq in obj.entityQueries)
 						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(eq));
-					ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath), obj);
+					ctx.AddObjectToAsset("asset", obj);
 					ctx.AddObjectToAsset("data", data);
 					ctx.SetMainObject(obj);
 				}
