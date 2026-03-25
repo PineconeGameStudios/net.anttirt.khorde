@@ -499,7 +499,7 @@ namespace Khorde.Behavior.Authoring
 					parameter = context.AddInputPort<bool>("ConditionParameter")
 						.WithConnectorUI(PortConnectorUI.Circle)
 						.WithPortCapacity(PortCapacity.Single)
-						.WithDisplayName("Count")
+						.WithDisplayName("Condition")
 						.Build();
 
 					break;
