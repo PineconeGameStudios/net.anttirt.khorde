@@ -274,7 +274,7 @@ MonoBehaviour:
     - rid: 5766249703521124513
       type: {class: 'Constant`1[[Khorde.Blobs.EntityQueryAsset, Khorde.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
-        m_Value: {fileID: 5448240682163730933, guid: b5d21fedc1a82474a86200b4a7c716b4, type: 3}
+        m_Value: {fileID: 93214019566545601, guid: b5d21fedc1a82474a86200b4a7c716b4, type: 3}
     - rid: 5766249703521124514
       type: {class: GeneratorEntityQuery, ns: Khorde.Query.Authoring, asm: Khorde.Query.Authoring}
       data: 

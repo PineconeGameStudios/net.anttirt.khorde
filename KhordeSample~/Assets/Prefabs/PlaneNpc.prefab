@@ -51,7 +51,7 @@ PrefabInstance:
     - target: {fileID: 3482629665782139149, guid: e740227ee43f44640979a8fdae987394, type: 3}
       propertyPath: behaviorTree
       value: 
-      objectReference: {fileID: 2543222612431928190, guid: 40ed0d45c1872e4439a6fe965b4b2972, type: 3}
+      objectReference: {fileID: 93214019566545601, guid: 40ed0d45c1872e4439a6fe965b4b2972, type: 3}
     - target: {fileID: 3998871276553954794, guid: e740227ee43f44640979a8fdae987394, type: 3}
       propertyPath: m_Name
       value: PlaneNpc
