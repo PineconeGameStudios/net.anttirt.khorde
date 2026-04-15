@@ -1,3 +1,4 @@
+using Khorde.Entities;
 using Khorde.Entities.Authoring;
 using System;
 using Unity.Entities;
@@ -22,6 +23,12 @@ namespace Mpr.Entities.Test
 
 		[SerializeField]
 		Material strongTexture;
+
+		[SerializeField]
+		BlobWeakObjectReference<GameObject> serializedPrefab;
+
+		[SerializeField]
+		BlobEntityPrefabReference serializedEntityPrefab;
 
 		class Baker : Baker<TestBlobAuthoring>
 		{

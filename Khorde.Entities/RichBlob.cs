@@ -6,6 +6,7 @@ using Unity.Entities;
 using Unity.Entities.Content;
 using Unity.Entities.LowLevel.Unsafe;
 using Unity.Entities.Serialization;
+using UnityEngine;
 
 #if UNITY_EDITOR
 [assembly: InternalsVisibleTo("Khorde.Entities.Authoring")]
@@ -16,6 +17,7 @@ namespace Khorde.Entities
 	// Workaround to be able to store UntypedWeakReferenceId in a blob.
 	// Usually we want to issue an error when storing UntypedWeakReferenceId in a blob to alert users that this is not yet supported
 	// But in this specific case we know what we are doing. This type must be binary compatible with  UntypedWeakReferenceId
+	[Serializable]
 	public struct UnsafeUntypedWeakReferenceId
 	{
 		public UnsafeUntypedWeakReferenceId(UntypedWeakReferenceId weakAssetRef)
@@ -44,11 +46,12 @@ namespace Khorde.Entities
 	/// Store a weak reference to an asset inside a blob.
 	/// </summary>
 	/// <typeparam name="TObject"></typeparam>
-	//[MayOnlyLiveInBlobStorage]
+	[Serializable]
 	public struct BlobWeakObjectReference<TObject>
 		where TObject : UnityEngine.Object
 	{
-		internal UnsafeUntypedWeakReferenceId Id;
+		[SerializeField]
+		public UnsafeUntypedWeakReferenceId Id;
 
 		public WeakObjectReference<TObject> AsWeakObjectReference => UnsafeUtility.As<BlobWeakObjectReference<TObject>, WeakObjectReference<TObject>>(ref this);
 
@@ -64,10 +67,11 @@ namespace Khorde.Entities
 	/// <summary>
 	/// Store a weak reference to an entity prefab inside a blob.
 	/// </summary>
-	//[MayOnlyLiveInBlobStorage]
+	[Serializable]
 	public struct BlobEntityPrefabReference
 	{
-		internal UnsafeUntypedWeakReferenceId Id;
+		[SerializeField]
+		public UnsafeUntypedWeakReferenceId Id;
 
 		public EntityPrefabReference AsEntityPrefabReference => UnsafeUtility.As<BlobEntityPrefabReference, EntityPrefabReference>(ref this);
 	}
@@ -75,10 +79,11 @@ namespace Khorde.Entities
 	/// <summary>
 	/// Store a weak reference to a gameobject scene inside a blob.
 	/// </summary>
-	//[MayOnlyLiveInBlobStorage]
+	[Serializable]
 	public struct BlobObjectSceneReference
 	{
-		internal UnsafeUntypedWeakReferenceId Id;
+		[SerializeField]
+		public UnsafeUntypedWeakReferenceId Id;
 
 		public WeakObjectSceneReference AsWeakObjectSceneReference => UnsafeUtility.As<BlobObjectSceneReference, WeakObjectSceneReference>(ref this);
 	}
@@ -86,10 +91,11 @@ namespace Khorde.Entities
 	/// <summary>
 	/// Store a weak reference to a gameobject scene inside a blob.
 	/// </summary>
-	[MayOnlyLiveInBlobStorage]
+	[Serializable]
 	public struct BlobEntitySceneReference
 	{
-		internal UnsafeUntypedWeakReferenceId Id;
+		[SerializeField]
+		public UnsafeUntypedWeakReferenceId Id;
 
 		public EntitySceneReference AsWeakEntitySceneReference => UnsafeUtility.As<BlobEntitySceneReference, EntitySceneReference>(ref this);
 	}
