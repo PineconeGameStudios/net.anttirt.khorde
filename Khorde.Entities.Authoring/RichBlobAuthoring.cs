@@ -1,4 +1,6 @@
+using Khorde.Blobs;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -50,7 +52,9 @@ namespace Khorde.Entities.Authoring
 			where TObject : UnityEngine.Object
 		{
 			// the value is stable from editor to build, so it doesn't need to be patched
-			context.Baker.DependsOn(obj);
+			if(context.Baker != null)
+				context.Baker.DependsOn(obj);
+
 			var objRef = new WeakObjectReference<TObject>(obj);
 			self.Id = new(objRef.Id);
 			context.WeakObjRefSet.Add(objRef.Id);
@@ -66,7 +70,9 @@ namespace Khorde.Entities.Authoring
 		public static void Write<TBlob>(ref this BlobEntityPrefabReference self, GameObject obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
 		{
 			// the value is stable from editor to build, so it doesn't need to be patched
-			context.Baker.DependsOn(obj);
+			if(context.Baker != null)
+				context.Baker.DependsOn(obj);
+
 			var objRef = new EntityPrefabReference(obj);
 			self = UnsafeUtility.As<EntityPrefabReference, BlobEntityPrefabReference>(ref objRef);
 			context.WeakObjRefSet.Add(self.Id);
@@ -82,7 +88,9 @@ namespace Khorde.Entities.Authoring
 		public static void Write<TBlob>(ref this BlobEntitySceneReference self, SceneAsset obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
 		{
 			// the value is stable from editor to build, so it doesn't need to be patched
-			context.Baker.DependsOn(obj);
+			if(context.Baker != null)
+				context.Baker.DependsOn(obj);
+
 			var objRef = new EntitySceneReference(obj);
 			self = UnsafeUtility.As<EntitySceneReference, BlobEntitySceneReference>(ref objRef);
 			context.WeakObjRefSet.Add(self.Id);
@@ -98,7 +106,9 @@ namespace Khorde.Entities.Authoring
 		public static void Write<TBlob>(ref this BlobObjectSceneReference self, SceneAsset obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
 		{
 			// the value is stable from editor to build, so it doesn't need to be patched
-			context.Baker.DependsOn(obj);
+			if(context.Baker != null)
+				context.Baker.DependsOn(obj);
+
 			var uwr = UntypedWeakReferenceId.CreateFromObjectInstance(obj);
 			self.Id = new(uwr);
 			context.WeakObjRefSet.Add(self.Id);
@@ -112,6 +122,9 @@ namespace Khorde.Entities.Authoring
 		/// <param name="context"></param>
 		public static void Write<TBlob>(ref this BlobEntity self, Entity entity, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
 		{
+			if(context.Baker == null)
+				throw new InvalidOperationException("Cannot bake strong entity references into a BlobAsset. Use a BlobEntityPrefabReference instead.");
+
 			// the actual value will be patched at runtime after loading
 			self = default;
 			PendingEntityPatch patch = default;
@@ -135,6 +148,12 @@ namespace Khorde.Entities.Authoring
 		public static void Write<TObject, TBlob>(ref this BlobObjectRef<TObject> self, TObject obj, in RichBlobBuilder<TBlob> context) where TBlob : unmanaged
 			where TObject : UnityEngine.Object
 		{
+			// TODO: we could in fact support this
+			// * add the strong references to a regular serialized list in the blob asset
+			// * patch the instance ids at runtime when loading the asset
+			if(context.Baker == null)
+				throw new InvalidOperationException("Cannot bake strong object references into a BlobAsset. Use a BlobWeakObjectReference instead.");
+
 			// the actual value will be patched at runtime after loading
 			self = default;
 			PendingObjectRefPatch patch = default;
@@ -158,10 +177,12 @@ namespace Khorde.Entities.Authoring
 	public unsafe ref struct RichBlobBuilder<TBlob> where TBlob : unmanaged
 	{
 		internal IBaker Baker;
+		internal BlobAsset<RichBlob<TBlob>> BlobAsset;
+		internal int SchemaVersion;
 		internal Entity Entity;
-		internal DynamicBuffer<RichBlobEntityHolder> Entities;
-		internal DynamicBuffer<RichBlobReferenceHolder> ObjRefs;
-		internal DynamicBuffer<RichBlobWeakReferenceHolder> WeakObjRefs;
+		internal INativeList<RichBlobEntityHolder> Entities;
+		internal INativeList<RichBlobReferenceHolder> ObjRefs;
+		internal INativeList<RichBlobWeakReferenceHolder> WeakObjRefs;
 		internal NativeList<PendingEntityPatch> EntityPatches;
 		internal NativeList<PendingObjectRefPatch> ObjRefPatches;
 		internal NativeHashSet<UntypedWeakReferenceId> WeakObjRefSet;
@@ -169,15 +190,37 @@ namespace Khorde.Entities.Authoring
 
 		public BlobBuilder Builder;
 
-		public RichBlobBuilder(IBaker baker)
+		public RichBlobBuilder(IBaker baker, int schemaVersion)
 		{
 			Baker = baker;
+			BlobAsset = null;
+			SchemaVersion = schemaVersion;
 
 			// TODO: add a baking system to deduplicate these entities
 			Entity = baker.CreateAdditionalEntity(TransformUsageFlags.None);
 			Entities = baker.AddBuffer<RichBlobEntityHolder>(Entity);
 			ObjRefs = baker.AddBuffer<RichBlobReferenceHolder>(Entity);
 			WeakObjRefs = baker.AddBuffer<RichBlobWeakReferenceHolder>(Entity);
+			EntityPatches = new NativeList<PendingEntityPatch>(Allocator.Temp);
+			ObjRefPatches = new NativeList<PendingObjectRefPatch>(Allocator.Temp);
+			WeakObjRefSet = new NativeHashSet<UntypedWeakReferenceId>(0, Allocator.Temp);
+			Builder = new BlobBuilder(Allocator.Temp);
+			ref var root = ref Builder.ConstructRoot<RichBlob<TBlob>>();
+			root.PatchData.PatchedWorldSequenceNumber = ~0ul;
+			fixed(RichBlob<TBlob>* rootPtr = &root)
+				RootPtr = rootPtr;
+		}
+
+		public RichBlobBuilder(BlobAsset<RichBlob<TBlob>> blobAsset, int schemaVersion)
+		{
+			Baker = null;
+			BlobAsset = blobAsset;
+			SchemaVersion = schemaVersion;
+
+			Entity = default;
+			Entities = new NativeList<RichBlobEntityHolder>(0, Allocator.Temp);
+			ObjRefs = new NativeList<RichBlobReferenceHolder>(0, Allocator.Temp);
+			WeakObjRefs = new NativeList<RichBlobWeakReferenceHolder>(0, Allocator.Temp);
 			EntityPatches = new NativeList<PendingEntityPatch>(Allocator.Temp);
 			ObjRefPatches = new NativeList<PendingObjectRefPatch>(Allocator.Temp);
 			WeakObjRefSet = new NativeHashSet<UntypedWeakReferenceId>(0, Allocator.Temp);
@@ -216,7 +259,8 @@ namespace Khorde.Entities.Authoring
 				{
 					index = Entities.Length;
 					entityBufferIndices.Add(patch.Target, index);
-					Entities.Add(new RichBlobEntityHolder { Value = patch.Target });
+					Entities.Length += 1;
+					Entities[Entities.Length - 1] = new RichBlobEntityHolder { Value = patch.Target };
 				}
 
 				Builder.SetPointer(ref entityPatches[i].PatchLocation, ref UnsafeUtility.AsRef<Entity>((void*)patch.BlobEntityPtr));
@@ -233,7 +277,8 @@ namespace Khorde.Entities.Authoring
 				{
 					index = ObjRefs.Length;
 					objRefBufferIndices.Add(patch.Target, index);
-					ObjRefs.Add(new RichBlobReferenceHolder { Value = UnsafeUtility.As<UntypedObjectRef, UnityObjectRef<UnityEngine.Object>>(ref patch.Target) });
+					ObjRefs.Length += 1;
+					ObjRefs[ObjRefs.Length - 1] = new RichBlobReferenceHolder { Value = UnsafeUtility.As<UntypedObjectRef, UnityObjectRef<UnityEngine.Object>>(ref patch.Target) };
 				}
 
 				Builder.SetPointer(ref objRefPatches[i].PatchLocation, ref UnsafeUtility.AsRef<UntypedObjectRef>((void*)patch.BlobObjectRefPtr));
@@ -242,13 +287,26 @@ namespace Khorde.Entities.Authoring
 			foreach(var weakRef in WeakObjRefSet)
 			{
 				// these don't need to be patched as the weak ids are already stable
-				WeakObjRefs.Add(new RichBlobWeakReferenceHolder { Id = weakRef });
+				WeakObjRefs.Length += 1;
+				WeakObjRefs[WeakObjRefs.Length - 1] = new RichBlobWeakReferenceHolder { Id = weakRef };
 			}
 
-			var assetRef = Builder.CreateBlobAssetReference<RichBlob<TBlob>>(Allocator.Persistent);
-			Baker.AddBlobAsset(ref assetRef, out _);
-			Baker.AddComponent(Entity, new PatchableRichBlob { Asset = UnsafeUntypedBlobAssetReference.Create(assetRef) });
-			return assetRef;
+			if(Baker != null)
+			{
+				var assetRef = Builder.CreateBlobAssetReference<RichBlob<TBlob>>(Allocator.Persistent);
+				Baker.AddBlobAsset(ref assetRef, out _);
+				Baker.AddComponent(Entity, new PatchableRichBlob { Asset = UnsafeUntypedBlobAssetReference.Create(assetRef) });
+				return assetRef;
+			}
+			else
+			{
+				var weakRefs = new List<UntypedWeakReferenceId>(WeakObjRefs.Length);
+				for(int i = 0; i < WeakObjRefs.Length; i++)
+					weakRefs.Add(WeakObjRefs[i].Id);
+				BlobAsset.SetAssetData(Builder, SchemaVersion, weakRefs);
+				BlobAsset.TryReadInPlace(SchemaVersion, out var result);
+				return result.Reference;
+			}
 		}
 	}
 }

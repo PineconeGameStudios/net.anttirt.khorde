@@ -1,5 +1,4 @@
 using Khorde.Entities;
-using TMPro;
 using Unity.Entities;
 using UnityEngine;
 
@@ -13,6 +12,7 @@ namespace Mpr.Entities.Test
 
 	public struct TestBlob
 	{
+		public const int SchemaVersion = 11;
 		public BlobArray<TestItem> items;
 		public BlobWeakObjectReference<Material> weakTexture;
 		public BlobObjectRef<Material> strongTexture;

@@ -28,7 +28,7 @@ namespace Mpr.Entities.Test
 			public override void Bake(TestBlobAuthoring authoring)
 			{
 				var entity = GetEntity(authoring, TransformUsageFlags.None);
-				var builder = new RichBlobBuilder<TestBlob>(this);
+				var builder = new RichBlobBuilder<TestBlob>(this, TestBlob.SchemaVersion);
 
 				var items = builder.Builder.Allocate(ref builder.Value.items, authoring.items.Length);
 				for(int i = 0; i < authoring.items.Length; ++i)
