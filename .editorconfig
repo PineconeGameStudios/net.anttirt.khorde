@@ -1,0 +1,8 @@
+[*.{cs,vb}]
+tab_width = 4
+indent_size = 4
+indent_style = tab
+end_of_line = crlf
+
+[*.cs]
+csharp_space_after_keywords_in_control_flow_statements = false
