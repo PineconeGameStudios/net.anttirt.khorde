@@ -16,7 +16,7 @@ namespace Khorde.Entities
 	// Workaround to be able to store UntypedWeakReferenceId in a blob.
 	// Usually we want to issue an error when storing UntypedWeakReferenceId in a blob to alert users that this is not yet supported
 	// But in this specific case we know what we are doing. This type must be binary compatible with  UntypedWeakReferenceId
-	internal struct UnsafeUntypedWeakReferenceId
+	public struct UnsafeUntypedWeakReferenceId
 	{
 		public UnsafeUntypedWeakReferenceId(UntypedWeakReferenceId weakAssetRef)
 		{
@@ -44,7 +44,7 @@ namespace Khorde.Entities
 	/// Store a weak reference to an asset inside a blob.
 	/// </summary>
 	/// <typeparam name="TObject"></typeparam>
-	[MayOnlyLiveInBlobStorage]
+	//[MayOnlyLiveInBlobStorage]
 	public struct BlobWeakObjectReference<TObject>
 		where TObject : UnityEngine.Object
 	{
@@ -64,7 +64,7 @@ namespace Khorde.Entities
 	/// <summary>
 	/// Store a weak reference to an entity prefab inside a blob.
 	/// </summary>
-	[MayOnlyLiveInBlobStorage]
+	//[MayOnlyLiveInBlobStorage]
 	public struct BlobEntityPrefabReference
 	{
 		internal UnsafeUntypedWeakReferenceId Id;
@@ -75,7 +75,7 @@ namespace Khorde.Entities
 	/// <summary>
 	/// Store a weak reference to a gameobject scene inside a blob.
 	/// </summary>
-	[MayOnlyLiveInBlobStorage]
+	//[MayOnlyLiveInBlobStorage]
 	public struct BlobObjectSceneReference
 	{
 		internal UnsafeUntypedWeakReferenceId Id;
