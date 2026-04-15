@@ -8,6 +8,7 @@ using Unity.Entities.Content;
 using Unity.Entities.LowLevel.Unsafe;
 using Unity.Entities.Serialization;
 using UnityEditor;
+using UnityEditor.AssetImporters;
 using UnityEngine;
 
 namespace Khorde.Entities.Authoring
@@ -248,6 +249,43 @@ namespace Khorde.Entities.Authoring
 		/// <returns></returns>
 		public BlobAssetReference<RichBlob<TBlob>> CreateAndRegisterBlobAssetReference()
 		{
+			if(Baker == null)
+				throw new InvalidOperationException("must be initialized with a Baker");
+
+			ProcessData();
+
+			var assetRef = Builder.CreateBlobAssetReference<RichBlob<TBlob>>(Allocator.Persistent);
+			Baker.AddBlobAsset(ref assetRef, out _);
+			Baker.AddComponent(Entity, new PatchableRichBlob { Asset = UnsafeUntypedBlobAssetReference.Create(assetRef) });
+			return assetRef;
+		}
+
+		/// <summary>
+		/// Create a blob asset and serialize it into a TextAsset stored in the
+		/// BlobAsset that was passed in the constructor. Optionally adds the
+		/// asset as a sub-asset to the asset import context.
+		/// </summary>
+		/// <returns></returns>
+		/// <exception cref="InvalidOperationException"></exception>
+		public TextAsset CreateAndSerializeBlobAsset(AssetImportContext assetImportContext = null, string subAssetName = null)
+		{
+			if(BlobAsset == null)
+				throw new InvalidOperationException("must be initialized with a BlobAsset");
+
+			ProcessData();
+
+			var weakRefs = new List<UntypedWeakReferenceId>(WeakObjRefs.Length);
+			for(int i = 0; i < WeakObjRefs.Length; i++)
+				weakRefs.Add(WeakObjRefs[i].Id);
+
+			var textAsset = BlobAsset.SetAssetData(Builder, SchemaVersion, weakRefs);
+			if(assetImportContext != null && !string.IsNullOrWhiteSpace(subAssetName))
+				assetImportContext.AddObjectToAsset(subAssetName, textAsset);
+			return textAsset;
+		}
+
+		private void ProcessData()
+		{
 			var entityPatches = Builder.Allocate(ref RootPtr->PatchData.EntityPatches, EntityPatches.Length);
 			var entityBufferIndices = new NativeHashMap<Entity, int>(EntityPatches.Length, Allocator.Temp);
 
@@ -289,23 +327,6 @@ namespace Khorde.Entities.Authoring
 				// these don't need to be patched as the weak ids are already stable
 				WeakObjRefs.Length += 1;
 				WeakObjRefs[WeakObjRefs.Length - 1] = new RichBlobWeakReferenceHolder { Id = weakRef };
-			}
-
-			if(Baker != null)
-			{
-				var assetRef = Builder.CreateBlobAssetReference<RichBlob<TBlob>>(Allocator.Persistent);
-				Baker.AddBlobAsset(ref assetRef, out _);
-				Baker.AddComponent(Entity, new PatchableRichBlob { Asset = UnsafeUntypedBlobAssetReference.Create(assetRef) });
-				return assetRef;
-			}
-			else
-			{
-				var weakRefs = new List<UntypedWeakReferenceId>(WeakObjRefs.Length);
-				for(int i = 0; i < WeakObjRefs.Length; i++)
-					weakRefs.Add(WeakObjRefs[i].Id);
-				BlobAsset.SetAssetData(Builder, SchemaVersion, weakRefs);
-				BlobAsset.TryReadInPlace(SchemaVersion, out var result);
-				return result.Reference;
 			}
 		}
 	}
