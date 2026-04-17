@@ -170,6 +170,12 @@ namespace Khorde.Expr.Authoring
 
 						dstPort = subgraphStack.Current.GetInputPortForVariable(varNode.variable);
 
+						if(dstPort == null)
+						{
+							AddError(varNode, $"node {varNode} returns null for subgraph node {subgraphStack.Current} input port; try resaving the graph '{subgraphStack.Current.GetSubgraph()?.name}'");
+							return default;
+						}
+
 						if(!dstPort.isConnected)
 							return HandleDisconnectedPort(dstPort);
 
