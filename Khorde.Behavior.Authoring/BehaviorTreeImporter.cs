@@ -1,4 +1,6 @@
 using Khorde.Behavior.Authoring;
+using Khorde.Expr.Authoring;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.Collections;
@@ -65,6 +67,8 @@ namespace Khorde.Behavior
 					obj.Actions.AddRange(context.Actions);
 					foreach(var q in obj.Queries)
 						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(q));
+					foreach(var guid in graph.GetSubgraphs())
+						ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
 					var data = obj.SetAssetData(builder, BTData.SchemaVersion);
 					ctx.AddObjectToAsset("asset", obj);
 					ctx.AddObjectToAsset("data", data);

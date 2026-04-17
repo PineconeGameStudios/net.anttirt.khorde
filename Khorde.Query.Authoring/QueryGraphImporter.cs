@@ -1,3 +1,4 @@
+using Khorde.Expr.Authoring;
 using System.IO;
 using System.Linq;
 using Unity.Collections;
@@ -58,6 +59,8 @@ namespace Khorde.Query.Authoring
 					obj.entityQueries = context.EntityQueries.ToList();
 					foreach(var eq in obj.entityQueries)
 						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(eq));
+					foreach(var guid in graph.GetSubgraphs())
+						ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
 					ctx.AddObjectToAsset("asset", obj);
 					ctx.AddObjectToAsset("data", data);
 					ctx.SetMainObject(obj);

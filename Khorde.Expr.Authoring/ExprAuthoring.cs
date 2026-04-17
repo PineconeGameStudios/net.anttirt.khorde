@@ -6,7 +6,9 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine;
 using Hash128 = Unity.Entities.Hash128;
 
@@ -450,6 +452,33 @@ namespace Khorde.Expr.Authoring
 			return (int)typeof(UnsafeUtility).GetMethod(nameof(UnsafeUtility.AlignOf), BindingFlags.Static | BindingFlags.Public)
 				.MakeGenericMethod(type)
 				.Invoke(null, Array.Empty<object>());
+		}
+
+		public static IEnumerable<GUID> GetSubgraphs(this Graph graph)
+		{
+			var assets = new HashSet<GUID>();
+			var visited = new HashSet<Graph>();
+			GetSubgraphs(graph, visited, assets);
+			return assets;
+		}
+
+		static void GetSubgraphs(Graph graph, HashSet<Graph> visited, HashSet<GUID> assets)
+		{
+			foreach(var node in graph.GetNodes())
+			{
+				if(node is ISubgraphNode subgraphNode)
+				{
+					var subgraph = subgraphNode.GetSubgraph();
+					if(!visited.Contains(subgraph))
+					{
+						visited.Add(subgraph);
+						if(subgraphNode.TryGetSubgraphAssetGuid(out var assetGuid))
+							assets.Add(assetGuid);
+
+						GetSubgraphs(subgraph, visited, assets);
+					}
+				}
+			}
 		}
 	}
 }
