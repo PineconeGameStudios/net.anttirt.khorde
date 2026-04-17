@@ -46,7 +46,7 @@ namespace Khorde.Expr.Authoring
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
-			var expr = new Khorde.Expr.RandomInt { };
+			var expr = new Khorde.Expr.RandomFloat { };
 			minOption.TryGetValue(out expr.min);
 			maxOption.TryGetValue(out expr.max);
 			context.CreateExpression(storage, expr);
