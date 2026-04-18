@@ -433,6 +433,4 @@ namespace Khorde.Behavior.Authoring
 			}
 		}
 	}
-
-	[Serializable] internal class WriteLocalTransform : ComponentWriterNode<Unity.Transforms.LocalTransform> { }
 }

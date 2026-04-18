@@ -70,6 +70,17 @@ namespace Khorde.Expr
 			}
 		}
 
+		public ref T AsComponent<T>() where T : unmanaged, IComponentData
+		{
+			CheckIsBuffer(false);
+			CheckCompatible<T>();
+
+			unsafe
+			{
+				return ref *(T*)data.ToPointer();
+			}
+		}
+
 		public UntypedDynamicBuffer AsBuffer()
 		{
 			CheckIsBuffer(true);
@@ -85,6 +96,13 @@ namespace Khorde.Expr
 		{
 			if(isBuffer != wantBuffer)
 				throw new InvalidOperationException("buffer vs non-buffer mismatch");
+		}
+
+		[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+		void CheckCompatible<T>() where T : unmanaged
+		{
+			if(typeSize != UnsafeUtility.SizeOf<T>())
+				throw new InvalidOperationException("retrieving incorrect component type");
 		}
 
 		[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]

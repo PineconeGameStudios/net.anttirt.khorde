@@ -199,6 +199,9 @@ namespace Khorde.Expr.Authoring
 	[Serializable][NodeCategory("Math/ToFloat")] internal class ToFloat3Node : UnaryBase<ToFloat3, int3, float3> { }
 	[Serializable][NodeCategory("Math/ToFloat")] internal class ToFloat4Node : UnaryBase<ToFloat4, int4, float4> { }
 	[Serializable][NodeCategory("Math/Rotation")] internal class AngleToDirectionNode : UnaryBase<AngleToDirection, float, float2> { }
+	[Serializable][NodeCategory("Math/Transform")] internal class GetTranslationNode : UnaryBase<GetTranslation, float4x4, float3> { }
+	[Serializable][NodeCategory("Math/Transform")] internal class GetRotationNode : UnaryBase<GetRotation, float4x4, quaternion> { }
+	[Serializable][NodeCategory("Math/Transform")] internal class GetScaleNode : UnaryBase<GetScale, float4x4, float3> { }
 
 	internal abstract class BinaryBase<TExpr, TIn0, TIn1, TOut> : ExprBase
 		where TExpr : unmanaged, IExpression<TIn0, TIn1>
@@ -255,4 +258,16 @@ namespace Khorde.Expr.Authoring
 	[Serializable][NodeCategory("Math/Rotation")] internal class Rotate2DNode : BinaryBase<Rotate2D, float2, float, float2> { }
 	[Serializable][NodeCategory("Math/Rotation")] internal class Rotate3DNode : BinaryBase<Rotate3D, float3, quaternion, float3> { }
 	[Serializable][NodeCategory("Math/Rotation")] internal class AxisAngleNode : BinaryBase<AxisAngle, float3, float, quaternion> { }
+	[Serializable][NodeCategory("Math/Transform")] internal class WithTranslationNode : BinaryBase<WithTranslation, float4x4, float3, float4x4>
+	{
+		public override string Title => "With Translation";
+	}
+	[Serializable][NodeCategory("Math/Transform")] internal class WithRotationNode : BinaryBase<WithRotation, float4x4, quaternion, float4x4>
+	{
+		public override string Title => "With Rotation";
+	}
+	[Serializable][NodeCategory("Math/Transform")] internal class WithScaleNode : BinaryBase<WithScale, float4x4, float3, float4x4>
+	{
+		public override string Title => "With Scale";
+	}
 }

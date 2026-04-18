@@ -130,9 +130,4 @@ namespace Khorde.Expr.Authoring
 				.Build();
 		}
 	}
-
-	[Serializable] internal class ReadLocalTransform : ComponentReaderNode<Unity.Transforms.LocalTransform> { }
-
-	[Serializable] internal class LookupLocalToWorld : ComponentLookupNode<Unity.Transforms.LocalToWorld> { }
-	[Serializable] internal class LookupLocalTransform : ComponentLookupNode<Unity.Transforms.LocalTransform> { }
 }

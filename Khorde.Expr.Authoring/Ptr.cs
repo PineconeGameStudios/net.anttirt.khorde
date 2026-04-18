@@ -33,7 +33,7 @@ namespace Khorde.Expr.Authoring
 #endif
 	    }
 
-	    public ref readonly T ValueRO
+	    public ref T ValueRO
 	    {
 	        get
 	        {

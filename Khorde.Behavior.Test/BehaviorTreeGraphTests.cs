@@ -7,6 +7,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Permissions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -403,6 +404,84 @@ namespace Khorde.Behavior.Test
 		}
 
 		[Test]
+		public void Test_LocalToWorld()
+		{
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_LocalToWorld.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
+
+			BTState state = default;
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
+
+			var position = blackboardLayout.GetField<float3>(blackboardBytes, 0);
+			var rotation = blackboardLayout.GetField<quaternion>(blackboardBytes, 1);
+			var scale = blackboardLayout.GetField<float3>(blackboardBytes, 2);
+			var result0 = blackboardLayout.GetField<float4x4>(blackboardBytes, 3);
+			var result1 = blackboardLayout.GetField<float4x4>(blackboardBytes, 4);
+			var result2 = blackboardLayout.GetField<float4x4>(blackboardBytes, 5);
+
+			components.localToWorld.Value = float4x4.TRS(
+				new float3(3, 2, 1),
+				quaternion.AxisAngle(math.forward(), math.PIHALF),
+				new float3(5, 2, 5)
+				);
+
+			Assert.AreEqual(default(float3), position[0]);
+			Assert.AreEqual(default(quaternion), rotation[0]);
+			Assert.AreEqual(default(float3), scale[0]);
+			Assert.AreEqual(default(float4x4), result0[0]);
+			Assert.AreEqual(default(float4x4), result1[0]);
+			Assert.AreEqual(default(float4x4), result2[0]);
+
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, 0, trace);
+
+			Assert.AreEqual(new float3(3, 2, 1), position[0]);
+
+			var q = quaternion.AxisAngle(math.forward(), math.PIHALF);
+			Assert.That(rotation[0].value.x, Is.EqualTo(q.value.x).Within(0.0001f));
+			Assert.That(rotation[0].value.y, Is.EqualTo(q.value.y).Within(0.0001f));
+			Assert.That(rotation[0].value.z, Is.EqualTo(q.value.z).Within(0.0001f));
+			Assert.That(rotation[0].value.w, Is.EqualTo(q.value.w).Within(0.0001f));
+
+			var v = new float3(5, 2, 5);
+
+			Assert.That(scale[0].x, Is.EqualTo(v.x).Within(0.0001f));
+			Assert.That(scale[0].y, Is.EqualTo(v.y).Within(0.0001f));
+			Assert.That(scale[0].z, Is.EqualTo(v.z).Within(0.0001f));
+
+			AssertEqualWithin(float4x4.TRS(
+				new float3(1, 1, 1),
+				quaternion.AxisAngle(math.forward(), math.PIHALF),
+				new float3(5, 2, 5)
+				), result0[0], 0.001f);
+
+			AssertEqualWithin(float4x4.TRS(
+				new float3(3, 2, 1),
+				new quaternion(1, 0, 0, 0),
+				new float3(5, 2, 5)
+				), result1[0], 0.001f);
+
+			AssertEqualWithin(float4x4.TRS(
+				new float3(3, 2, 1),
+				quaternion.AxisAngle(math.forward(), math.PIHALF),
+				new float3(2, 1, 2)
+				), result2[0], 0.001f);
+
+			AssertEqualWithin(float4x4.TRS(
+				new float3(1, 1, 1),
+				quaternion.AxisAngle(math.forward(), math.PIHALF),
+				new float3(5, 2, 5)
+				), components.localToWorld.Value, 0.001f);
+		}
+
+		static void AssertEqualWithin(in float4x4 expected, in float4x4 value, float tolerance)
+		{
+			for(int i = 0; i < 4; ++i)
+				for(int j = 0; j < 4; ++j)
+					Assert.That(value[i][j], Is.EqualTo(expected[i][j]).Within(tolerance));
+		}
+
+		[Test]
 		public void Test_DefaultValues()
 		{
 			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_DefaultVar.btg",
@@ -527,6 +606,7 @@ namespace Khorde.Behavior.Test
 					moveTarget = default,
 					localTransform = LocalTransform.FromScale(1),
 					targetEntity = default,
+					localToWorld = new() { Value = float4x4.identity },
 				};
 			}
 
@@ -534,6 +614,7 @@ namespace Khorde.Behavior.Test
 			public LocalTransform localTransform;
 			public TestNpcTargetEntity targetEntity;
 			public UntypedDynamicBuffer testBuffer;
+			public LocalToWorld localToWorld;
 		}
 
 		private void RegisterTestComponents(
@@ -559,6 +640,8 @@ namespace Khorde.Behavior.Test
 					comps[i] = UnsafeComponentReference.Make(ref testComponents.targetEntity);
 				else if(typeIndex == TypeManager.GetTypeIndex<TestBuffer>())
 					comps[i] = UnsafeComponentReference.Make<TestBuffer>(ref testComponents.testBuffer);
+				else if(typeIndex == TypeManager.GetTypeIndex<LocalToWorld>())
+					comps[i] = UnsafeComponentReference.Make(ref testComponents.localToWorld);
 				else
 					throw new Exception($"component {type.GetManagedType().FullName} not available in test");
 			}
@@ -573,6 +656,8 @@ namespace Khorde.Behavior.Test
 					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalTransform>(isReadOnly: type.AccessModeType == ComponentType.AccessMode.ReadOnly);
 				else if(typeIndex == TypeManager.GetTypeIndex<TestNpcTargetEntity>())
 					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<TestNpcTargetEntity>(isReadOnly: type.AccessModeType == ComponentType.AccessMode.ReadOnly);
+				else if(typeIndex == TypeManager.GetTypeIndex<LocalToWorld>())
+					lookups[i] = testSystem.CheckedStateRef.GetUntypedComponentLookup<LocalToWorld>(isReadOnly: type.AccessModeType == ComponentType.AccessMode.ReadOnly);
 				else
 					throw new Exception($"lookup {type.GetManagedType().FullName} not available in test");
 			}
@@ -620,6 +705,19 @@ namespace Khorde.Behavior.Test
 
 			world.Dispose();
 		}
+	}
+
+	public static class BlackboardExt
+	{
+		public static NativeArray<T> GetField<T>(this Ptr<ExpressionBlackboardLayout> blackboardLayout, NativeArray<byte> blackboardBytes, int fieldIndex) where T : unmanaged
+		{
+			var field = blackboardLayout.ValueRO.variables[fieldIndex];
+			Assert.AreEqual(UnsafeUtility.SizeOf<T>(), field.length);
+			var fieldBytes = blackboardBytes.GetSubArray(field.offset, field.length);
+			var position = fieldBytes.Reinterpret<T>(1);
+			return position;
+		}
+
 	}
 
 	[DisableAutoCreation]

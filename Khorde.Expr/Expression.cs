@@ -602,6 +602,7 @@ namespace Khorde.Expr
 		Float3 = 12,
 		Float4 = 13,
 		Quaternion = 14,
+		Float4x4 = 15,
 	}
 
 	public static class ExpressionValueTypeExt
@@ -625,6 +626,7 @@ namespace Khorde.Expr
 				case ExpressionValueType.Float3: return typeof(T) == typeof(float3);
 				case ExpressionValueType.Float4: return typeof(T) == typeof(float4);
 				case ExpressionValueType.Quaternion: return typeof(T) == typeof(quaternion);
+				case ExpressionValueType.Float4x4: return typeof(T) == typeof(float4x4);
 				default: throw new ArgumentOutOfRangeException(nameof(valueType));
 			}
 		}
@@ -648,6 +650,7 @@ namespace Khorde.Expr
 				case ExpressionValueType.Float3: return typeof(float3);
 				case ExpressionValueType.Float4: return typeof(float4);
 				case ExpressionValueType.Quaternion: return typeof(quaternion);
+				case ExpressionValueType.Float4x4: return typeof(float4x4);
 				default: throw new ArgumentOutOfRangeException(nameof(valueType));
 			}
 		}
@@ -668,6 +671,7 @@ namespace Khorde.Expr
 			if(type == typeof(float3)) return ExpressionValueType.Float3;
 			if(type == typeof(float4)) return ExpressionValueType.Float4;
 			if(type == typeof(quaternion)) return ExpressionValueType.Quaternion;
+			if(type == typeof(float4x4)) return ExpressionValueType.Float4x4;
 			return ExpressionValueType.Unknown;
 		}
 	}

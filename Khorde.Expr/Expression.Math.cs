@@ -2,6 +2,7 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace Khorde.Expr
 {
@@ -479,6 +480,87 @@ namespace Khorde.Expr
 		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, in float input1, int outputIndex, ref NativeArray<byte> untypedResult)
 		{
 			untypedResult.AsSingle<quaternion>() = quaternion.AxisAngle(input0, input1);
+		}
+	}
+
+	public partial struct GetTranslation : IExpression<float4x4>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4x4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float3>() = input0.c3.xyz;
+		}
+	}
+
+	public partial struct GetRotation : IExpression<float4x4>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4x4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<quaternion>() = new quaternion(math.orthonormalize(new float3x3(input0)));
+		}
+	}
+
+	public partial struct GetScale : IExpression<float4x4>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4x4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float3>() = input0.Scale();
+		}
+	}
+
+	public partial struct WithTranslation : IExpression<float4x4, float3>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4x4 input0, in float3 input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			var result = input0;
+			result.c3.x = input1.x;
+			result.c3.y = input1.y;
+			result.c3.z = input1.z;
+			untypedResult.AsSingle<float4x4>() = result;
+		}
+	}
+
+	public partial struct WithRotation : IExpression<float4x4, quaternion>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4x4 input0, in quaternion input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float4x4>() = float4x4.TRS(
+				input0.c3.xyz,
+				input1,
+				input0.Scale()
+				);
+		}
+	}
+
+	public partial struct WithScale : IExpression<float4x4, float3>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4x4 input0, in float3 input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float4x4>() = float4x4.TRS(
+				input0.c3.xyz,
+				new quaternion(math.orthonormalize(new float3x3(input0))),
+				input1
+				);
 		}
 	}
 }
