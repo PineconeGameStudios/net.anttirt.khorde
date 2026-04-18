@@ -91,7 +91,7 @@ namespace Khorde.Behavior.Test
 				AssertTrace
 				(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
 					Trace(BTExecType.Sequence, 4, 3, Event.Call),
@@ -106,7 +106,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace
 				(
-					Trace(BTExecType.Wait, 3, 4, Event.Start),
+					Trace(BTExecType.Wait, 3, 4, Event.Resume),
 					Trace(BTExecType.Wait, 3, 4, Event.Wait)
 				);
 
@@ -118,7 +118,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace
 				(
-					Trace(BTExecType.Wait, 3, 4, Event.Start),
+					Trace(BTExecType.Wait, 3, 4, Event.Resume),
 					Trace(BTExecType.Wait, 3, 4, Event.Return),
 					Trace(BTExecType.Sequence, 4, 3, Event.Return),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
@@ -154,7 +154,7 @@ namespace Khorde.Behavior.Test
 
 			AssertTrace(
 				Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-				Trace(BTExecType.Root, 1, 1, Event.Start),
+				Trace(BTExecType.Root, 1, 1, Event.Resume),
 				Trace(BTExecType.Root, 1, 1, Event.Call),
 				Trace(BTExecType.WriteVar, 2, 2, Event.Return),
 				Trace(BTExecType.Root, 1, 1, Event.Yield)
@@ -178,13 +178,13 @@ namespace Khorde.Behavior.Test
 
 			AssertTrace(
 				Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
-				Trace(0, BTExecType.Root,       1,   1, Event.Start),
+				Trace(0, BTExecType.Root,       1,   1, Event.Resume),
 				Trace(0, BTExecType.Root,       1,   1, Event.Call),
 				Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
 				Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
 				Trace(0, BTExecType.Wait,       4,       3, Event.Wait),
 
-				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Start),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Resume),
 				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Call),
 				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
 				Trace(1, BTExecType.WriteVar,   6,       3, Event.Return),
@@ -205,10 +205,10 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
-				Trace(0, BTExecType.Wait,       4,       3, Event.Start),
+				Trace(0, BTExecType.Wait,       4,       3, Event.Resume),
 				Trace(0, BTExecType.Wait,       4,       3, Event.Wait),
 
-				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Start),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Resume),
 				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Call),
 				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
 				Trace(1, BTExecType.WriteVar,   6,       3, Event.Return),
@@ -219,10 +219,10 @@ namespace Khorde.Behavior.Test
 				Trace(1, BTExecType.Sequence,   5,     2, Event.Return),
 				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Yield),
 
-				Trace(0, BTExecType.Wait,       4,       3, Event.Start),
+				Trace(0, BTExecType.Wait,       4,       3, Event.Resume),
 				Trace(0, BTExecType.Wait,       4,       3, Event.Wait),
 
-				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Start),
+				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Resume),
 				Trace(1, BTExecType.ThreadRoot, 3,   1, Event.Call),
 				Trace(1, BTExecType.Sequence,   5,     2, Event.Call),
 				Trace(1, BTExecType.WriteVar,   6,       3, Event.Return),
@@ -243,7 +243,7 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(3, blackboardBytes.ReinterpretLoad<float>(0));
 
 			AssertTrace(
-				Trace(0, BTExecType.Wait,       4,       3, Event.Start),
+				Trace(0, BTExecType.Wait,       4,       3, Event.Resume),
 				Trace(0, BTExecType.Wait,       4,       3, Event.Return),
 				Trace(0, BTExecType.Parallel,   2,     2, Event.Abort),
 				Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
@@ -284,7 +284,7 @@ namespace Khorde.Behavior.Test
 
 			AssertTrace(
 				Trace(0, BTExecType.Nop, 0, 0, Event.Spawn),
-				Trace(0, BTExecType.Root, 1, 1, Event.Start),
+				Trace(0, BTExecType.Root, 1, 1, Event.Resume),
 				Trace(0, BTExecType.Root, 1, 1, Event.Call),
 				Trace(0, BTExecType.Sequence, 3, 2, Event.Call),
 				Trace(0, BTExecType.WriteVar, 2, 3, Event.Return),
@@ -329,7 +329,7 @@ namespace Khorde.Behavior.Test
 
 			AssertTrace(
 				Trace(BTExecType.Nop,      0,  0, Event.Spawn),
-				Trace(BTExecType.Root,     1,    1, Event.Start),
+				Trace(BTExecType.Root,     1,    1, Event.Resume),
 				Trace(BTExecType.Root,     1,    1, Event.Call),
 				Trace(BTExecType.Sequence, 6,      2, Event.Call),
 				Trace(BTExecType.Selector, 2,        3, Event.Call),
@@ -349,7 +349,7 @@ namespace Khorde.Behavior.Test
 				Trace(BTExecType.Selector, 7,        3, Event.Return),
 				Trace(BTExecType.Sequence, 6,      2, Event.Return),
 				Trace(BTExecType.Root,     1,    1, Event.Yield),
-				Trace(BTExecType.Root,     1,    1, Event.Start),
+				Trace(BTExecType.Root,     1,    1, Event.Resume),
 				Trace(BTExecType.Root,     1,    1, Event.Call),
 				Trace(BTExecType.Sequence, 6,      2, Event.Call),
 				Trace(BTExecType.Selector, 2,        3, Event.Call),

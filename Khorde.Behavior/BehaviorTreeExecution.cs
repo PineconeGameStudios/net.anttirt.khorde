@@ -32,12 +32,6 @@ namespace Khorde.Behavior
 			DynamicBuffer<BTExecTrace> trace)
 			=> Execute(ref asset.Value, ref state, threads, frames, invoke, invokeEnabled, blackboard, ref blackboardLayout, queries, pendingQueryEnabled, ref pendingQuery, componentPtrs, lookups, now, deltaTime, trace);
 
-		enum FailResult
-		{
-			Fail,
-			Catch,
-		}
-
 		const float ThreadWaitStartTime_Invalid = -1;
 
 		public static void Execute(
@@ -78,15 +72,23 @@ namespace Khorde.Behavior
 			exprContext.deltaTime = deltaTime;
 
 			bool rootVisited = false;
+			int cycle = -1;
 
 			for(int threadIndex = 0; threadIndex < threads.Length; ++threadIndex)
 			{
 				bool threadRootVisited = false;
+				int threadCycle = -1;
 
-				for(int cycle = 0; ; ++cycle)
+				while(true)
 				{
+					++cycle;
+					++threadCycle;
+
 					if(cycle > 10000)
-						throw new Exception("max cycle count exceeded; almost certainly a bug in the implementation");
+					{
+						UnityEngine.Debug.LogError("max cycle count exceeded; almost certainly a bug in the implementation");
+						return;
+					}
 
 					// NOTE: need to get these here because they may be invalidated from cycle to cycle
 					ref var thread = ref threads.ElementAt(threadIndex);
@@ -96,10 +98,10 @@ namespace Khorde.Behavior
 					var nodeId = frames[^1].nodeId;
 					ref BTExec node = ref data.GetNode(nodeId);
 
-					if(trace.IsCreated && cycle == 0)
-						trace.Add(new(nodeId, node.type, BTExecTrace.Event.Start, threadId, frames.Length, cycle));
+					if(trace.IsCreated && threadCycle == 0)
+						trace.Add(new(nodeId, node.type, BTExecTrace.Event.Resume, threadId, frames.Length, cycle));
 
-					if(cycle == 0)
+					if(threadCycle == 0)
 					{
 						switch(node.type)
 						{
@@ -134,7 +136,7 @@ namespace Khorde.Behavior
 							trace.Add(new(frames[stackIndex].nodeId, data.GetNode(frames[stackIndex].nodeId).type, @event, threadId, stackIndex + 1, cycle));
 					}
 
-					FailResult Fail(ref BTState state, ref BTData data, ref BTExec node, ref BTThread thread)
+					void Fail(ref BTState state, ref BTData data, ref BTExec node, ref BTThread thread)
 					{
 						Trace(ref node, BTExecTrace.Event.Fail);
 
@@ -147,20 +149,48 @@ namespace Khorde.Behavior
 								var count = frames.Length - i;
 								//frames.RemoveRange(i, count);
 								thread.frameCount -= count;
-								return FailResult.Catch;
+								// resume from catch on the same thread on the next cycle
+								return;
+							}
+							else if(stackNode.type == BTExec.BTExecType.Parallel)
+							{
+								// abort any child threads immediately
+								for(int otherThreadIndex = 0; otherThreadIndex < threads.Length; ++otherThreadIndex)
+								{
+									if(otherThreadIndex != threadIndex && threads[otherThreadIndex].ownerThreadIndex == threadIndex)
+									{
+										Abort(ref state, ref data, otherThreadIndex, threadIndex, nodeId, frames.Length, cycle);
+									}
+								}
 							}
 						}
 
 						int depth = frames.Length;
 
-						//frames.Clear();
-						//frames.Add(data.Root);
+						// if this is a parallel branch, end the parallel branch immediately and fail the main branch instead
+						if(thread.ownerThreadIndex != -1)
+						{
+							var ownerThreadIndex = thread.ownerThreadIndex;
+							Abort(ref state, ref data, threadIndex, threadIndex, nodeId, frames.Length, cycle);
 
-						// if nothing catches us, immediately abort all threads and start from scratch
-						threads.Clear();
-						allFrames.Clear();
-						Spawn(ref state, ref data, data.Root, -1, nodeId, depth, cycle);
-						return FailResult.Fail;
+							// switch to owner thread and fail it instead
+							threadIndex = ownerThreadIndex;
+							thread = ref threads.ElementAt(threadIndex);
+							threadId = thread.threadId;
+							frames = allFrames.AsNativeArray().GetSubArray(thread.frameOffset, thread.frameCount);
+							nodeId = frames[^1].nodeId;
+							node = ref data.GetNode(nodeId);
+							Fail(ref state, ref data, ref node, ref thread);
+						}
+						else
+						{
+							// if nothing catches us, immediately abort all threads and start from scratch
+							threads.Clear();
+							allFrames.Clear();
+							threadIndex = 0;
+							state.QueryExecutorThreadIndex = -1;
+							Spawn(ref state, ref data, data.Root, -1, nodeId, depth, cycle);
+						}
 					}
 
 					void Return(ref BTData data, ref BTExec node)
@@ -269,10 +299,7 @@ namespace Khorde.Behavior
 								if(!any)
 								{
 									// none of the options worked
-									if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
-									{
-										threadIndex = 0;
-									}
+									Fail(ref state, ref data, ref node, ref thread);
 								}
 							}
 							else
@@ -294,10 +321,7 @@ namespace Khorde.Behavior
 							}
 							else
 							{
-								if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
-								{
-									threadIndex = 0;
-								}
+								Fail(ref state, ref data, ref node, ref thread);
 							}
 							break;
 
@@ -313,10 +337,7 @@ namespace Khorde.Behavior
 							}
 							else
 							{
-								if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
-								{
-									threadIndex = 0;
-								}
+								Fail(ref state, ref data, ref node, ref thread);
 							}
 							break;
 
@@ -358,11 +379,7 @@ namespace Khorde.Behavior
 							break;
 
 						case BTExec.BTExecType.Fail:
-							if(Fail(ref state, ref data, ref node, ref thread) == FailResult.Fail)
-							{
-								threadIndex = 0;
-							}
-
+							Fail(ref state, ref data, ref node, ref thread);
 							break;
 
 						case BTExec.BTExecType.Optional:

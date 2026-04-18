@@ -125,7 +125,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Nop, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
@@ -162,7 +162,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Fail, 2, 2, Event.Fail),
 					Trace(BTExecType.Fail, 2, 2, Event.Spawn),
@@ -203,7 +203,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Catch, 2, 2, Event.Call),
 					Trace(BTExecType.Fail, 3, 3, Event.Fail),
@@ -296,7 +296,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop,      0, 0, Event.Spawn),
-					Trace(BTExecType.Root,     1,   1, Event.Start),
+					Trace(BTExecType.Root,     1,   1, Event.Resume),
 					Trace(BTExecType.Root,     1,   1, Event.Call),
 					Trace(BTExecType.Repeat,   2,     2, Event.Call),
 					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
@@ -367,7 +367,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop,      0, 0, Event.Spawn),
-					Trace(BTExecType.Root,     1,   1, Event.Start),
+					Trace(BTExecType.Root,     1,   1, Event.Resume),
 					Trace(BTExecType.Root,     1,   1, Event.Call),
 					Trace(BTExecType.Repeat,   2,     2, Event.Call),
 					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
@@ -384,7 +384,7 @@ namespace Khorde.Behavior.Test
 					asset.Execute(ref state, threads, stack, default, default, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, 0, trace);
 
 					AssertTrace(
-						Trace(BTExecType.Repeat,   2,     2, Event.Start),
+						Trace(BTExecType.Repeat,   2,     2, Event.Resume),
 						Trace(BTExecType.Repeat,   2,     2, Event.Call),
 						Trace(BTExecType.WriteVar, 3,       3, Event.Return),
 						Trace(BTExecType.Repeat,   2,     2, Event.Yield)
@@ -401,7 +401,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, default, blackboard, ref variables.Value, default, default, ref defaultPendingQuery, default, default, 0, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Repeat,   2,     2, Event.Start),
+					Trace(BTExecType.Repeat,   2,     2, Event.Resume),
 					Trace(BTExecType.Repeat,   2,     2, Event.Return),
 					Trace(BTExecType.Root,     1,   1, Event.Call),
 					Trace(BTExecType.Repeat,   2,     2, Event.Return),
@@ -458,7 +458,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop,      0, 0, Event.Spawn),
-					Trace(BTExecType.Root,     1,   1, Event.Start),
+					Trace(BTExecType.Root,     1,   1, Event.Resume),
 					Trace(BTExecType.Root,     1,   1, Event.Call),
 					Trace(BTExecType.Repeat,   2,     2, Event.Call),
 					Trace(BTExecType.WriteVar, 3,       3, Event.Return),
@@ -513,7 +513,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
 					Trace(BTExecType.Nop, 3, 3, Event.Return),
@@ -565,7 +565,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Selector, 2, 2, Event.Call),
 					Trace(BTExecType.Nop, 4, 3, Event.Return),
@@ -610,7 +610,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
 					Trace(BTExecType.Fail, 3, 3, Event.Fail),
@@ -649,7 +649,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
 					Trace(BTExecType.Catch, 3, 3, Event.Call),
@@ -718,7 +718,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
 					Trace(BTExecType.Optional, 3, 3, Event.Return),
@@ -769,7 +769,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.WriteField, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
@@ -820,7 +820,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Append, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
@@ -872,7 +872,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Wait, 2, 2, Event.Wait)
 				);
@@ -882,7 +882,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Wait, 2, 2, Event.Start),
+					Trace(BTExecType.Wait, 2, 2, Event.Resume),
 					Trace(BTExecType.Wait, 2, 2, Event.Wait)
 				);
 
@@ -893,7 +893,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
 
 				AssertTrace(
-					Trace(BTExecType.Wait, 2, 2, Event.Start),
+					Trace(BTExecType.Wait, 2, 2, Event.Resume),
 					Trace(BTExecType.Wait, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Wait, 2, 2, Event.Return),
@@ -953,7 +953,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
-					Trace(BTExecType.Root, 1, 1, Event.Start),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.WriteVar, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
@@ -991,7 +991,7 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(0, BTExecType.Nop,      0, 0, Event.Spawn),
-					Trace(0, BTExecType.Root,     1,   1, Event.Start),
+					Trace(0, BTExecType.Root,     1,   1, Event.Resume),
 					Trace(0, BTExecType.Root,     1,   1, Event.Call),
 					Trace(0, BTExecType.Parallel, 2,     2, Event.Spawn),
 					Trace(0, BTExecType.Parallel, 2,     2, Event.Call),
@@ -1047,13 +1047,13 @@ namespace Khorde.Behavior.Test
 
 				AssertTrace(
 					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
-					Trace(0, BTExecType.Root,       1,   1, Event.Start),
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
 					Trace(0, BTExecType.Root,       1,   1, Event.Call),
 					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
 					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
 					Trace(0, BTExecType.Wait,       3,       3, Event.Wait),
 
-					Trace(1, BTExecType.ThreadRoot, 4,   1, Event.Start),
+					Trace(1, BTExecType.ThreadRoot, 4,   1, Event.Resume),
 					Trace(1, BTExecType.ThreadRoot, 4,   1, Event.Call),
 					Trace(1, BTExecType.Nop,        5,     2, Event.Return),
 					Trace(1, BTExecType.ThreadRoot, 4,   1, Event.Abort)
@@ -1064,7 +1064,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
 
 				AssertTrace(
-					Trace(0, BTExecType.Wait,       3,       3, Event.Start),
+					Trace(0, BTExecType.Wait,       3,       3, Event.Resume),
 					Trace(0, BTExecType.Wait,       3,       3, Event.Wait)
 				);
 
@@ -1075,7 +1075,7 @@ namespace Khorde.Behavior.Test
 				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
 
 				AssertTrace(
-					Trace(0, BTExecType.Wait,       3,       3, Event.Start),
+					Trace(0, BTExecType.Wait,       3,       3, Event.Resume),
 					Trace(0, BTExecType.Wait,       3,       3, Event.Return),
 					Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
 
@@ -1095,6 +1095,661 @@ namespace Khorde.Behavior.Test
 					TestContext.WriteLine(item);
 			}
 		}
+
+		[Test]
+		public void Test_Fork_Fail_Main()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 8);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+			execs[2].type = BTExecType.Parallel;
+			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(6) };
+			execs[3].SetSequence(ref builder, execs, 4, 5);
+			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[5].SetData(new Fail());
+			execs[6].type = BTExecType.ThreadRoot;
+			execs[6].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(7), loop = true };
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Call),
+					Trace(1, BTExecType.Nop,        7,     2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait,       4,         4, Event.Resume),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Call),
+					Trace(1, BTExecType.Nop,        7,     2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				tc1.field1 = true;
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait,       4,         4, Event.Resume),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Return),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Fail,       5,         4, Event.Fail),
+					Trace(0, BTExecType.Fail,       5,         4, Event.Abort),
+					Trace(0, BTExecType.Fail,       5,         4, Event.Spawn),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Return),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Fail,       5,         4, Event.Fail),
+					Trace(0, BTExecType.Fail,       5,         4, Event.Abort),
+					Trace(0, BTExecType.Fail,       5,         4, Event.Spawn),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				);
+
+				tc1.field1 = false;
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(3, BTExecType.ThreadRoot, 6,   1, Event.Resume),
+					Trace(3, BTExecType.ThreadRoot, 6,   1, Event.Call),
+					Trace(3, BTExecType.Nop,        7,     2, Event.Return),
+					Trace(3, BTExecType.ThreadRoot, 6,   1, Event.Yield)
+				);
+
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Fork_Catch_Main()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 9);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+			execs[2].type = BTExecType.Parallel;
+			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(7) };
+			execs[3].SetSequence(ref builder, execs, 4, 5);
+			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[5].SetData(new Catch { child = new BTExecNodeId(6) });
+			execs[6].SetData(new Fail());
+			execs[7].type = BTExecType.ThreadRoot;
+			execs[7].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(8), loop = true };
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Call),
+					Trace(1, BTExecType.Nop,        8,     2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait,       4,         4, Event.Resume),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Call),
+					Trace(1, BTExecType.Nop,        8,     2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				tc1.field1 = true;
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait,       4,         4, Event.Resume),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Return),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Catch,      5,         4, Event.Call),
+					Trace(0, BTExecType.Fail,       6,           5, Event.Fail),
+					Trace(0, BTExecType.Catch,      5,         4, Event.Catch),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Return),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Abort),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Return),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Catch,      5,         4, Event.Call),
+					Trace(0, BTExecType.Fail,       6,           5, Event.Fail),
+					Trace(0, BTExecType.Catch,      5,         4, Event.Catch),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Return),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Abort),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Return),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				);
+
+				tc1.field1 = false;
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(3, BTExecType.ThreadRoot, 7,   1, Event.Resume),
+					Trace(3, BTExecType.ThreadRoot, 7,   1, Event.Call),
+					Trace(3, BTExecType.Nop,        8,     2, Event.Return),
+					Trace(3, BTExecType.ThreadRoot, 7,   1, Event.Yield)
+				);
+
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Fork_Catch_Outside_Main()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 9);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+			execs[2].SetData(new Catch { child = new BTExecNodeId(3) });
+			execs[3].type = BTExecType.Parallel;
+			execs[3].data.parallel = new Parallel { main = new BTExecNodeId(4), parallel = new BTExecNodeId(7) };
+			execs[4].SetSequence(ref builder, execs, 5, 6);
+			execs[5].SetData(new Wait { until = TestComponent1_field1 });
+			execs[6].SetData(new Fail());
+			execs[7].type = BTExecType.ThreadRoot;
+			execs[7].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(8), loop = true };
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Catch,      2,     2, Event.Call),
+					Trace(0, BTExecType.Parallel,   3,       3, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   3,       3, Event.Call),
+					Trace(0, BTExecType.Sequence,   4,         4, Event.Call),
+					Trace(0, BTExecType.Wait,       5,           5, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Call),
+					Trace(1, BTExecType.Nop,        8,     2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait,       5,           5, Event.Resume),
+					Trace(0, BTExecType.Wait,       5,           5, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Call),
+					Trace(1, BTExecType.Nop,        8,     2, Event.Return),
+					Trace(1, BTExecType.ThreadRoot, 7,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				tc1.field1 = true;
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait,       5,           5, Event.Resume),
+					Trace(0, BTExecType.Wait,       5,           5, Event.Return),
+					Trace(0, BTExecType.Sequence,   4,         4, Event.Call),
+					Trace(0, BTExecType.Fail,       6,           5, Event.Fail),
+					Trace(0, BTExecType.Fail,       6,           5, Event.Abort),
+					Trace(0, BTExecType.Catch,      2,     2, Event.Catch),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Catch,      2,     2, Event.Call),
+					Trace(0, BTExecType.Parallel,   3,       3, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   3,       3, Event.Call),
+					Trace(0, BTExecType.Sequence,   4,         4, Event.Call),
+					Trace(0, BTExecType.Wait,       5,           5, Event.Return),
+					Trace(0, BTExecType.Sequence,   4,         4, Event.Call),
+					Trace(0, BTExecType.Fail,       6,           5, Event.Fail),
+					Trace(0, BTExecType.Fail,       6,           5, Event.Abort),
+					Trace(0, BTExecType.Catch,      2,     2, Event.Catch),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				);
+
+				tc1.field1 = false;
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Catch,      2,     2, Event.Call),
+					Trace(0, BTExecType.Parallel,   3,       3, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   3,       3, Event.Call),
+					Trace(0, BTExecType.Sequence,   4,         4, Event.Call),
+					Trace(0, BTExecType.Wait,       5,           5, Event.Wait),
+
+					Trace(3, BTExecType.ThreadRoot, 7,   1, Event.Resume),
+					Trace(3, BTExecType.ThreadRoot, 7,   1, Event.Call),
+					Trace(3, BTExecType.Nop,        8,     2, Event.Return),
+					Trace(3, BTExecType.ThreadRoot, 7,   1, Event.Yield)
+				);
+
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Fork_Fail_Parallel()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 8);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+			execs[2].type = BTExecType.Parallel;
+			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(6) };
+			execs[3].SetSequence(ref builder, execs, 4, 5);
+			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[5] = default;
+			execs[6].type = BTExecType.ThreadRoot;
+			execs[6].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(7), loop = true };
+			execs[7].SetData(new Fail());
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Call),
+					Trace(1, BTExecType.Fail,       7,     2, Event.Fail),
+					Trace(1, BTExecType.Fail,       7,     2, Event.Abort),
+
+					Trace(0, BTExecType.Wait,       4,         4, Event.Fail),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(2, BTExecType.ThreadRoot, 6,   1, Event.Resume),
+					Trace(2, BTExecType.ThreadRoot, 6,   1, Event.Call),
+					Trace(2, BTExecType.Fail,       7,     2, Event.Fail),
+					Trace(2, BTExecType.Fail,       7,     2, Event.Abort),
+
+					Trace(0, BTExecType.Wait,       4,         4, Event.Fail),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Fork_Catch_Parallel()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 9);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+			execs[2].type = BTExecType.Parallel;
+			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(6) };
+			execs[3].SetSequence(ref builder, execs, 4, 5);
+			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[5] = default;
+			execs[6].type = BTExecType.ThreadRoot;
+			execs[6].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(7), loop = true };
+			execs[7].SetData(new Catch { child = new BTExecNodeId(8) });
+			execs[8].SetData(new Fail());
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   2,     2, Event.Call),
+					Trace(0, BTExecType.Sequence,   3,       3, Event.Call),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Call),
+					Trace(1, BTExecType.Catch,      7,     2, Event.Call),
+					Trace(1, BTExecType.Fail,       8,       3, Event.Fail),
+					Trace(1, BTExecType.Catch,      7,     2, Event.Catch),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Wait,       4,         4, Event.Resume),
+					Trace(0, BTExecType.Wait,       4,         4, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Call),
+					Trace(1, BTExecType.Catch,      7,     2, Event.Call),
+					Trace(1, BTExecType.Fail,       8,       3, Event.Fail),
+					Trace(1, BTExecType.Catch,      7,     2, Event.Catch),
+					Trace(1, BTExecType.ThreadRoot, 6,   1, Event.Yield)
+				);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Fork_Catch_Parallel_Fail_Outside_Main()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 100);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].type = BTExec.BTExecType.Root;
+			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
+
+			execs[2].SetSequence(ref builder, execs, 3, 10);
+
+			execs[3].SetData(new Catch { child = new BTExecNodeId(4) });
+			execs[4].type = BTExecType.Parallel;
+			execs[4].data.parallel = new Parallel { main = new BTExecNodeId(5), parallel = new BTExecNodeId(8) };
+			execs[5].SetSequence(ref builder, execs, 6, 7, 10);
+			execs[6].SetData(new Wait { until = TestComponent1_field1 });
+			execs[7] = default;
+			execs[8].type = BTExecType.ThreadRoot;
+			execs[8].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(9), loop = false };
+			execs[9].SetData(new Fail());
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Nop,        0, 0, Event.Spawn),
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Sequence,   2,     2, Event.Call),
+					Trace(0, BTExecType.Catch,      3,       3, Event.Call),
+					Trace(0, BTExecType.Parallel,   4,         4, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   4,         4, Event.Call),
+					Trace(0, BTExecType.Sequence,   5,           5, Event.Call),
+					Trace(0, BTExecType.Wait,       6,             6, Event.Wait),
+
+					Trace(1, BTExecType.ThreadRoot, 8,   1, Event.Resume),
+					Trace(1, BTExecType.ThreadRoot, 8,   1, Event.Call),
+					Trace(1, BTExecType.Fail,       9,     2, Event.Fail),
+					Trace(1, BTExecType.Fail,       9,     2, Event.Abort),
+
+					Trace(0, BTExecType.Wait,       6,             6, Event.Fail),
+					Trace(0, BTExecType.Catch,      3,       3, Event.Catch),
+					Trace(0, BTExecType.Sequence,   2,     2, Event.Call),
+					Trace(0, BTExecType.Nop,       10,       3, Event.Return),
+					Trace(0, BTExecType.Sequence,   2,     2, Event.Return),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, 0, 0, trace);
+
+				AssertTrace(
+					Trace(0, BTExecType.Root,       1,   1, Event.Resume),
+					Trace(0, BTExecType.Root,       1,   1, Event.Call),
+					Trace(0, BTExecType.Sequence,   2,     2, Event.Call),
+					Trace(0, BTExecType.Catch,      3,       3, Event.Call),
+					Trace(0, BTExecType.Parallel,   4,         4, Event.Spawn),
+					Trace(0, BTExecType.Parallel,   4,         4, Event.Call),
+					Trace(0, BTExecType.Sequence,   5,           5, Event.Call),
+					Trace(0, BTExecType.Wait,       6,             6, Event.Wait),
+
+					Trace(2, BTExecType.ThreadRoot, 8,   1, Event.Resume),
+					Trace(2, BTExecType.ThreadRoot, 8,   1, Event.Call),
+					Trace(2, BTExecType.Fail,       9,     2, Event.Fail),
+					Trace(2, BTExecType.Fail,       9,     2, Event.Abort),
+
+					Trace(0, BTExecType.Wait,       6,             6, Event.Fail),
+					Trace(0, BTExecType.Catch,      3,       3, Event.Catch),
+					Trace(0, BTExecType.Sequence,   2,     2, Event.Call),
+					Trace(0, BTExecType.Nop,       10,       3, Event.Return),
+					Trace(0, BTExecType.Sequence,   2,     2, Event.Return),
+
+					Trace(0, BTExecType.Root,       1,   1, Event.Yield)
+				);
+
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
 
 		static string GetShortName(System.Type type)
 		{

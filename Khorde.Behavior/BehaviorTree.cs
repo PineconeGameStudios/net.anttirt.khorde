@@ -92,7 +92,7 @@ namespace Khorde.Behavior
 		public enum Event : byte
 		{
 			Spawn,
-			Start,
+			Resume,
 			Call,
 			Return,
 			Fail,
