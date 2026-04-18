@@ -218,6 +218,58 @@ namespace Khorde.Expr.Test
 		}
 
 		[Test]
+		public void Test_Math_Rotate()
+		{
+			baker.InitializeBake(4, 0);
+
+			var n0 = AddExpression(new AngleToDirection
+			{
+				Input0 = baker.Const(math.PIHALF),
+			});
+
+			var n1 = AddExpression(new Rotate2D
+			{
+				Input0 = baker.Const(new float2(2, 2)),
+				Input1 = baker.Const(math.PI),
+			});
+
+			var n2 = AddExpression(new Rotate3D
+			{
+				Input0 = baker.Const(new float3(3, 3, 3)),
+				Input1 = baker.Const(quaternion.AxisAngle(math.up(), math.PI)),
+			});
+
+			var n3 = AddExpression(new AxisAngle
+			{
+				Input0 = baker.Const(math.up()),
+				Input1 = baker.Const(math.PI),
+			});
+
+			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
+
+			blob.Value.RuntimeInitialize(world.Unmanaged);
+
+			Assert.IsTrue(blob.Value.IsRuntimeInitialized(world.Unmanaged));
+
+			var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
+
+			var r0 = n0.Evaluate<float2>(in ctx);
+			Assert.That(r0.x, Is.EqualTo(0).Within(0.001f));
+			Assert.That(r0.y, Is.EqualTo(1).Within(0.001f));
+
+			var r1 = n1.Evaluate<float2>(in ctx);
+			Assert.That(r1.x, Is.EqualTo(-2f).Within(0.001f));
+			Assert.That(r1.y, Is.EqualTo(-2f).Within(0.001f));
+
+			var r2 = n2.Evaluate<float3>(in ctx);
+			Assert.That(r2.x, Is.EqualTo(-3f).Within(0.001f));
+			Assert.That(r2.y, Is.EqualTo( 3f).Within(0.001f));
+			Assert.That(r2.z, Is.EqualTo(-3f).Within(0.001f));
+
+			Assert.AreEqual(quaternion.AxisAngle(math.up(), math.PI), n3.Evaluate<quaternion>(in ctx));
+		}
+
+		[Test]
 		public void Test_Field()
 		{
 			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadOnly);

@@ -266,6 +266,17 @@ namespace Khorde.Expr
 		}
 	}
 
+	public partial struct Floor1 : IExpression<float>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int>() = (int)math.floor(input0);
+		}
+	}
+
 	public partial struct Floor2 : IExpression<float2>
 	{
 		public ExpressionRef Input0 { get; set; }
@@ -299,6 +310,17 @@ namespace Khorde.Expr
 		}
 	}
 
+	public partial struct Ceiling1 : IExpression<float>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<int>() = (int)math.ceil(input0);
+		}
+	}
+
 	public partial struct Ceiling2 : IExpression<float2>
 	{
 		public ExpressionRef Input0 { get; set; }
@@ -329,6 +351,17 @@ namespace Khorde.Expr
 		public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, int outputIndex, ref NativeArray<byte> untypedResult)
 		{
 			untypedResult.AsSingle<int4>() = (int4)math.ceil(input0);
+		}
+	}
+
+	public partial struct ToFloat1 : IExpression<int>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in int input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float>() = input0;
 		}
 	}
 
@@ -398,6 +431,54 @@ namespace Khorde.Expr
 		public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, in float input1, int outputIndex, ref NativeArray<byte> untypedResult)
 		{
 			untypedResult.AsSingle<float4>() = math.normalizesafe(input0) * input1;
+		}
+	}
+
+	public partial struct AngleToDirection : IExpression<float>
+	{
+		public ExpressionRef Input0 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float input0, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			math.sincos(input0, out var s, out var c);
+			untypedResult.AsSingle<float2>() = new float2(c, s);
+		}
+	}
+
+	public partial struct Rotate2D : IExpression<float2, float>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float2 input0, in float input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float2>() = math.mul(float2x2.Rotate(input1), input0);
+		}
+	}
+
+	public partial struct Rotate3D : IExpression<float3, quaternion>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, in quaternion input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float3>() = math.mul(input1, input0);
+		}
+	}
+
+	public partial struct AxisAngle : IExpression<float3, float>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, in float input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<quaternion>() = quaternion.AxisAngle(input0, input1);
 		}
 	}
 }
