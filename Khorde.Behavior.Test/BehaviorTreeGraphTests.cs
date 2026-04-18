@@ -296,6 +296,75 @@ namespace Khorde.Behavior.Test
 		}
 
 		[Test]
+		public void Test_SubgraphExec()
+		{
+			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_ExecSubgraph.btg",
+				out var data, out var blackboard, out var blackboardBytes, out var blackboardLayout);
+
+			BTState state = default;
+			var components = TestComponents.Make();
+			RegisterTestComponents(ref data.ValueRW, ref components, out var comps, out var lookups);
+
+			var blackboardVars = blackboardBytes.Reinterpret<int>(1);
+
+			Assert.AreEqual(0, blackboardVars[0]);
+			Assert.AreEqual(0, blackboardVars[1]);
+			Assert.AreEqual(0, blackboardVars[2]);
+			Assert.AreEqual(0, blackboardVars[3]);
+
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, 0, trace);
+
+			Assert.AreEqual(1, blackboardVars[0]);
+			Assert.AreEqual(0, blackboardVars[1]);
+			Assert.AreEqual(1, blackboardVars[2]);
+			Assert.AreEqual(0, blackboardVars[3]);
+
+			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, 0, trace);
+
+			Assert.AreEqual(1, blackboardVars[0]);
+			Assert.AreEqual(1, blackboardVars[1]);
+			Assert.AreEqual(1, blackboardVars[2]);
+			Assert.AreEqual(1, blackboardVars[3]);
+
+			AssertTrace(
+				Trace(BTExecType.Nop,      0,  0, Event.Spawn),
+				Trace(BTExecType.Root,     1,    1, Event.Start),
+				Trace(BTExecType.Root,     1,    1, Event.Call),
+				Trace(BTExecType.Sequence, 6,      2, Event.Call),
+				Trace(BTExecType.Selector, 2,        3, Event.Call),
+				Trace(BTExecType.Sequence, 5,          4, Event.Call),
+				Trace(BTExecType.WriteVar, 4,            5, Event.Return),
+				Trace(BTExecType.Sequence, 5,          4, Event.Call),
+				Trace(BTExecType.WriteVar, 11,           5, Event.Return),
+				Trace(BTExecType.Sequence, 5,          4, Event.Return),
+				Trace(BTExecType.Selector, 2,        3, Event.Return),
+				Trace(BTExecType.Sequence, 6,      2, Event.Call),
+				Trace(BTExecType.Selector, 7,        3, Event.Call),
+				Trace(BTExecType.Sequence, 10,         4, Event.Call),
+				Trace(BTExecType.WriteVar, 9,            5, Event.Return),
+				Trace(BTExecType.Sequence, 10,         4, Event.Call),
+				Trace(BTExecType.WriteVar, 13,           5, Event.Return),
+				Trace(BTExecType.Sequence, 10,         4, Event.Return),
+				Trace(BTExecType.Selector, 7,        3, Event.Return),
+				Trace(BTExecType.Sequence, 6,      2, Event.Return),
+				Trace(BTExecType.Root,     1,    1, Event.Yield),
+				Trace(BTExecType.Root,     1,    1, Event.Start),
+				Trace(BTExecType.Root,     1,    1, Event.Call),
+				Trace(BTExecType.Sequence, 6,      2, Event.Call),
+				Trace(BTExecType.Selector, 2,        3, Event.Call),
+				Trace(BTExecType.WriteVar, 12,         4, Event.Return),
+				Trace(BTExecType.Selector, 2,        3, Event.Return),
+				Trace(BTExecType.Sequence, 6,      2, Event.Call),
+				Trace(BTExecType.Selector, 7,        3, Event.Call),
+				Trace(BTExecType.WriteVar, 14,         4, Event.Return),
+				Trace(BTExecType.Selector, 7,        3, Event.Return),
+				Trace(BTExecType.Sequence, 6,      2, Event.Return),
+				Trace(BTExecType.Root,     1,    1, Event.Yield)
+			);
+
+		}
+
+		[Test]
 		public void Test_Math()
 		{
 			LoadBehaviorTree("Packages/net.anttirt.khorde/Khorde.Behavior.Test/TestAssets/BT_Test_Math.btg",

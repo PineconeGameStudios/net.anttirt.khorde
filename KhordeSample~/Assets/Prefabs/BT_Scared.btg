@@ -19,6 +19,46 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
+    - rid: 2472349051778498623
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349051778498624
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349051778498625
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349051778498638
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349051778498639
+      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value:
+          x: 0
+          y: 0
+          z: 0
+    - rid: 2472349051778498640
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data: {}
+    - rid: 2472349051778498641
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349051778498642
+      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value:
+          x: 0
+          y: 0
+          z: 0
+    - rid: 2472349051778498643
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data: {}
     - rid: 5766249722080395337
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
@@ -103,9 +143,11 @@ MonoBehaviour:
           m_KeyList:
           - __option_Query
           - Execution
+          - __option_Retry
           m_ValueList:
           - rid: 5766249722080395360
           - rid: 5766249722080395361
+          - rid: 2472349051778498624
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -263,9 +305,11 @@ MonoBehaviour:
           m_KeyList:
           - __option_Query
           - Execution
+          - __option_Retry
           m_ValueList:
           - rid: 5766249722080395402
           - rid: 5766249722080395403
+          - rid: 2472349051778498625
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -705,34 +749,6 @@ MonoBehaviour:
     - rid: 8049180509939957826
       type: {class: 'Constant`1[[Unity.Entities.Entity, Unity.Entities]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: 
-    - rid: 8049180532062814289
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8049180532062814290
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8049180532062814291
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
-    - rid: 8049180532062814292
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 8049180532062814293
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          x: 0
-          y: 0
-          z: 0
-    - rid: 8049180532062814294
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0
     - rid: 8055170888552677679
       type: {class: GraphModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
       data:
@@ -1285,13 +1301,13 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
           - 4a4ba80eaa7dcba5736c8eccd59bbf08
+          - 152ea57da943560b8e717c6ed3449cee
+          - 3f09272e9b9f9ed5a0e2b694eed9d299
           m_ValueList:
-          - rid: 8049180532062814289
-          - rid: 8049180532062814290
-          - rid: 8049180532062814291
+          - rid: 2472349051778498638
+          - rid: 2472349051778498639
+          - rid: 2472349051778498640
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -1350,10 +1366,12 @@ MonoBehaviour:
           - __option_Query
           - Execution
           - _QUERYINPUT_TargetPlayer
+          - __option_Retry
           m_ValueList:
           - rid: 8055170928982097935
           - rid: 8055170928982097936
           - rid: 8049180509939957826
+          - rid: 2472349051778498623
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -2140,13 +2158,13 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - 3f09272e9b9f9ed5a0e2b694eed9d299
-          - 152ea57da943560b8e717c6ed3449cee
           - 4a4ba80eaa7dcba5736c8eccd59bbf08
+          - 152ea57da943560b8e717c6ed3449cee
+          - 3f09272e9b9f9ed5a0e2b694eed9d299
           m_ValueList:
-          - rid: 8049180532062814292
-          - rid: 8049180532062814293
-          - rid: 8049180532062814294
+          - rid: 2472349051778498641
+          - rid: 2472349051778498642
+          - rid: 2472349051778498643
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []

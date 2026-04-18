@@ -253,19 +253,27 @@ namespace Khorde.Behavior.Authoring
 					dstNode = dstPort.GetNode();
 				}
 
-				// else if(dstNode is IVariableNode varNode)
-				// {
-				// 	errors.Add($"subgraph exec outputs not implemented");
+				else if(dstNode is IVariableNode varNode)
+				{
+					var currentSubgraph = subgraphStack.Current;
 
-				// 	var currentSubgraph = subgraphStack.Current;
+					subgraphStack.Pop();
 
-				// 	subgraphStack.Pop();
+					srcPort = currentSubgraph.GetOutputPortForVariable(varNode.variable);
+					srcNode = (ISubgraphNode)srcPort.GetNode();
 
-				// 	// TODO: exit subgraph and follow in parent subgraph
-				// 	// var srcPort = currentSubgraph.GetOutputPortForVariable(varNode);
+					dstPorts.Clear();
+					srcPort.GetConnectedPorts(dstPorts);
 
-				// 	return default;
-				// }
+					if(dstPorts.Count == 0)
+						return default;
+
+					if(dstPorts.Count > 1)
+						AddError(srcNode, $"subgraph node {srcNode} output {srcPort} is connected to multiple exec ports");
+
+					dstPort = dstPorts[0];
+					dstNode = dstPort.GetNode();
+				}
 
 				else if(dstNode is IExecNode execNode)
 				{

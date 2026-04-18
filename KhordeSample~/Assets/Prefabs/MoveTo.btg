@@ -71,8 +71,8 @@ MonoBehaviour:
           serializedVersion: 2
           x: 422
           y: 353
-          width: 533
-          height: 641
+          width: 573
+          height: 675
         m_GraphElementMetaData:
         - m_Guid:
             m_Value0: 11946780605874195274

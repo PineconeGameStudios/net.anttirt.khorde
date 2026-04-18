@@ -113,6 +113,7 @@ namespace Khorde.Behavior.Authoring
 				.WithDisplayName("Condition")
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.WithPortCapacity(PortCapacity.Single)
+				.WithDefaultValue(true)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)

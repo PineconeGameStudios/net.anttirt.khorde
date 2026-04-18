@@ -225,13 +225,15 @@ namespace Khorde.Expr.Authoring
 					if(type == null)
 						throw new InvalidOperationException($"expression references unknown type '{variable.typeName.ToString()}' in assembly '{variable.typeAssembly.ToString()}'");
 
-					var name = variable.name.ToString();
 					byte[] defaultValue;
 					if(variable.defaultValue.Length > 0)
 						defaultValue = variable.defaultValue.ToArray();
 					else
 						defaultValue = Array.Empty<byte>();
 
+					var name = variable.name.ToString();
+					if(!variable.isGlobal)
+						name += varIndex;
 					variableSet.Add((name, type, variable.isGlobal, defaultValue));
 				}
 			}

@@ -16,6 +16,8 @@ namespace Khorde.Behavior
 	{
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
+			UnityEngine.Debug.Log($"importing {ctx.assetPath}");
+
 			var graph = GraphDatabase.LoadGraphForImporter<BehaviorTreeGraph>(ctx.assetPath);
 
 			if(graph == null)
