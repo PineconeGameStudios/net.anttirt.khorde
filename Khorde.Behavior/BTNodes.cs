@@ -130,12 +130,14 @@ namespace Khorde.Behavior
 
 	public struct Wait
 	{
-		public ExpressionRef until;
+		public enum ConditionMode : byte { Until, While, }
+		public ConditionMode mode;
+		public ExpressionRef condition;
 		public ExpressionRef duration;
 
 		public string DumpString()
 		{
-			return $"{{ until={until}, for={duration} }}";
+			return $"{{ mode={mode}, until={condition}, for={duration} }}";
 		}
 	}
 

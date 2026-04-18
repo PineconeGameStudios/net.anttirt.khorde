@@ -852,7 +852,7 @@ namespace Khorde.Behavior.Test
 			var TestComponent1_field1 = n0.WithOutputIndex(1);
 
 			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
-			execs[2].SetData(new Wait { until = TestComponent1_field1 });
+			execs[2].SetData(new Wait { condition = TestComponent1_field1 });
 
 			var asset = baker.Bake();
 			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
@@ -898,6 +898,76 @@ namespace Khorde.Behavior.Test
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Wait, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
+				);
+			}
+			finally
+			{
+				foreach(var item in trace)
+					TestContext.WriteLine(item);
+			}
+		}
+
+		[Test]
+		public void Test_Wait_Timeout()
+		{
+			baker.RegisterComponentAccess<TestComponent1>(ExpressionComponentLocation.Local, ComponentType.AccessMode.ReadWrite);
+			baker.InitializeBake(1, 0);
+
+			var execs = builder.Allocate(ref data.execs, 100);
+
+			ref var rcf = ref Allocate<ReadComponentField>(out var n0);
+			baker.Bake<TestComponent1>(ref rcf.typeInfo, ExpressionComponentLocation.Local);
+
+			var TestComponent1_field1 = n0.WithOutputIndex(1);
+
+			execs[1].SetData(new Root { child = new BTExecNodeId(2) });
+			execs[2].SetData(new Wait { condition = TestComponent1_field1, duration = baker.Const(1.0f) });
+
+			var asset = baker.Bake();
+			asset.Value.exprData.RuntimeInitialize(world.Unmanaged);
+
+			TestComponent1 tc1 = new TestComponent1 { field0 = 42, field1 = false, field2 = true };
+
+			NativeArray<UnsafeComponentReference> componentPtrs = new NativeArray<UnsafeComponentReference>(1, Allocator.Temp);
+			componentPtrs[0] = UnsafeComponentReference.Make(ref tc1);
+
+			NativeArray<UntypedComponentLookup> lookups = default;
+
+			BTState state = default;
+
+			float now = 0;
+
+			try
+			{
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, now, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Nop, 0, 0, Event.Spawn),
+					Trace(BTExecType.Root, 1, 1, Event.Resume),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Wait, 2, 2, Event.Wait)
+				);
+
+				trace.Clear();
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, now, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Wait, 2, 2, Event.Resume),
+					Trace(BTExecType.Wait, 2, 2, Event.Wait)
+				);
+
+				trace.Clear();
+
+				now = 2;
+
+				asset.Execute(ref state, threads, stack, default, default, default, ref ExpressionBlackboardLayout.Empty, default, default, ref defaultPendingQuery, componentPtrs, lookups, now, 0, trace);
+
+				AssertTrace(
+					Trace(BTExecType.Wait, 2, 2, Event.Resume),
+					Trace(BTExecType.Wait, 2, 2, Event.Return),
+					Trace(BTExecType.Root, 1, 1, Event.Call),
+					Trace(BTExecType.Wait, 2, 2, Event.Wait)
 				);
 			}
 			finally
@@ -1025,7 +1095,7 @@ namespace Khorde.Behavior.Test
 			execs[1].data.root = new Root { child = new BTExecNodeId(2) };
 			execs[2].type = BTExecType.Parallel;
 			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(4) };
-			execs[3].SetData(new Wait { until = TestComponent1_field1 });
+			execs[3].SetData(new Wait { condition = TestComponent1_field1 });
 			execs[4].type = BTExecType.ThreadRoot;
 			execs[4].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(5), loop = false };
 
@@ -1114,7 +1184,7 @@ namespace Khorde.Behavior.Test
 			execs[2].type = BTExecType.Parallel;
 			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(6) };
 			execs[3].SetSequence(ref builder, execs, 4, 5);
-			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[4].SetData(new Wait { condition = TestComponent1_field1 });
 			execs[5].SetData(new Fail());
 			execs[6].type = BTExecType.ThreadRoot;
 			execs[6].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(7), loop = true };
@@ -1237,7 +1307,7 @@ namespace Khorde.Behavior.Test
 			execs[2].type = BTExecType.Parallel;
 			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(7) };
 			execs[3].SetSequence(ref builder, execs, 4, 5);
-			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[4].SetData(new Wait { condition = TestComponent1_field1 });
 			execs[5].SetData(new Catch { child = new BTExecNodeId(6) });
 			execs[6].SetData(new Fail());
 			execs[7].type = BTExecType.ThreadRoot;
@@ -1368,7 +1438,7 @@ namespace Khorde.Behavior.Test
 			execs[3].type = BTExecType.Parallel;
 			execs[3].data.parallel = new Parallel { main = new BTExecNodeId(4), parallel = new BTExecNodeId(7) };
 			execs[4].SetSequence(ref builder, execs, 5, 6);
-			execs[5].SetData(new Wait { until = TestComponent1_field1 });
+			execs[5].SetData(new Wait { condition = TestComponent1_field1 });
 			execs[6].SetData(new Fail());
 			execs[7].type = BTExecType.ThreadRoot;
 			execs[7].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(8), loop = true };
@@ -1494,7 +1564,7 @@ namespace Khorde.Behavior.Test
 			execs[2].type = BTExecType.Parallel;
 			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(6) };
 			execs[3].SetSequence(ref builder, execs, 4, 5);
-			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[4].SetData(new Wait { condition = TestComponent1_field1 });
 			execs[5] = default;
 			execs[6].type = BTExecType.ThreadRoot;
 			execs[6].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(7), loop = true };
@@ -1582,7 +1652,7 @@ namespace Khorde.Behavior.Test
 			execs[2].type = BTExecType.Parallel;
 			execs[2].data.parallel = new Parallel { main = new BTExecNodeId(3), parallel = new BTExecNodeId(6) };
 			execs[3].SetSequence(ref builder, execs, 4, 5);
-			execs[4].SetData(new Wait { until = TestComponent1_field1 });
+			execs[4].SetData(new Wait { condition = TestComponent1_field1 });
 			execs[5] = default;
 			execs[6].type = BTExecType.ThreadRoot;
 			execs[6].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(7), loop = true };
@@ -1667,7 +1737,7 @@ namespace Khorde.Behavior.Test
 			execs[4].type = BTExecType.Parallel;
 			execs[4].data.parallel = new Parallel { main = new BTExecNodeId(5), parallel = new BTExecNodeId(8) };
 			execs[5].SetSequence(ref builder, execs, 6, 7, 10);
-			execs[6].SetData(new Wait { until = TestComponent1_field1 });
+			execs[6].SetData(new Wait { condition = TestComponent1_field1 });
 			execs[7] = default;
 			execs[8].type = BTExecType.ThreadRoot;
 			execs[8].data.threadRoot = new ThreadRoot { child = new BTExecNodeId(9), loop = false };

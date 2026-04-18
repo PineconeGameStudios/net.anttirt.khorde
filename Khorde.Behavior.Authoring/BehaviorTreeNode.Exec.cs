@@ -213,41 +213,40 @@ namespace Khorde.Behavior.Authoring
 	[NodeCategory("Execution")]
 	internal class Wait : ExecBase, IExecNode
 	{
-		enum WaitMode
-		{
-			Condition,
-			Duration,
-		}
-
-		INodeOption waitModeOption;
-		IPort untilInputPort;
+		INodeOption timeoutOption;
+		INodeOption conditionModeOption;
+		IPort conditionInputPort;
 		IPort durationInputPort;
+
+		enum ConditionMode : int { Until, While, }
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
 			exec.type = BTExec.BTExecType.Wait;
 
-			waitModeOption.TryGetValue<WaitMode>(out var waitMode);
+			timeoutOption.TryGetValue<bool>(out var timeout);
+			conditionModeOption.TryGetValue<ConditionMode>(out var conditionMode);
 
-			if(waitMode == WaitMode.Condition)
+			exec.data.wait = new Behavior.Wait
 			{
-				exec.data.wait = new Behavior.Wait
-				{
-					until = context.GetExpressionRef(untilInputPort),
-				};
-			}
-			else
+				mode = (Behavior.Wait.ConditionMode)conditionMode,
+				condition = context.GetExpressionRef(conditionInputPort),
+			};
+
+			if(timeout)
 			{
-				exec.data.wait = new Behavior.Wait
-				{
-					duration = context.GetExpressionRef(durationInputPort),
-				};
+				exec.data.wait.duration = context.GetExpressionRef(durationInputPort);
 			}
 		}
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
-			waitModeOption = context.AddOption<WaitMode>("waitMode")
+			timeoutOption = context.AddOption<bool>("timeout")
+				.WithDisplayName("Timeout")
+				.Build();
+
+			conditionModeOption = context.AddOption<ConditionMode>("conditionMode")
+				.WithDisplayName("Condition")
 				.Build();
 		}
 
@@ -259,17 +258,17 @@ namespace Khorde.Behavior.Authoring
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
 
-			waitModeOption.TryGetValue<WaitMode>(out var waitMode);
+			conditionModeOption.TryGetValue<ConditionMode>(out var conditionMode);
 
-			if(waitMode == WaitMode.Condition)
-			{
-				untilInputPort = context.AddInputPort<bool>("Until")
-					.WithDisplayName("Until")
-					.WithConnectorUI(PortConnectorUI.Circle)
-					.WithPortCapacity(PortCapacity.Single)
-					.Build();
-			}
-			else
+			conditionInputPort = context.AddInputPort<bool>("Until")
+				.WithDisplayName(conditionMode.ToString())
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Single)
+				.Build();
+
+			timeoutOption.TryGetValue<bool>(out var timeout);
+
+			if(timeout)
 			{
 				durationInputPort = context.AddInputPort<float>("Duration")
 					.WithDisplayName("Duration")

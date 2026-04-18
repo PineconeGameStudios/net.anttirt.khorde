@@ -31,34 +31,76 @@ MonoBehaviour:
       type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value: 0
-    - rid: 2472349051778498638
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+    - rid: 2472349068226200082
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 1
+    - rid: 2472349068226200083
+      type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value:
+          m_EnumType:
+            m_Identification: Khorde.Behavior.Authoring.Wait+ConditionMode, Khorde.Behavior.Authoring,
+              Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_Value: 0
+        m_EnumType:
+          m_Identification: Khorde.Behavior.Authoring.Wait+ConditionMode, Khorde.Behavior.Authoring,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - rid: 2472349068226200084
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value: 0
-    - rid: 2472349051778498639
+    - rid: 2472349068226200085
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349068226200086
+      type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value:
+          m_EnumType:
+            m_Identification: Khorde.Behavior.Authoring.Wait+ConditionMode, Khorde.Behavior.Authoring,
+              Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_Value: 0
+        m_EnumType:
+          m_Identification: Khorde.Behavior.Authoring.Wait+ConditionMode, Khorde.Behavior.Authoring,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - rid: 2472349068226200087
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349068226200106
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data: {}
+    - rid: 2472349068226200107
       type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value:
           x: 0
           y: 0
           z: 0
-    - rid: 2472349051778498640
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
-    - rid: 2472349051778498641
+    - rid: 2472349068226200108
       type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value: 0
-    - rid: 2472349051778498642
+    - rid: 2472349068226200109
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data: {}
+    - rid: 2472349068226200110
       type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
         m_Value:
           x: 0
           y: 0
           z: 0
-    - rid: 2472349051778498643
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data: {}
+    - rid: 2472349068226200111
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 0
+    - rid: 2472349068226200112
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      data:
+        m_Value: 1
     - rid: 5766249722080395337
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
@@ -459,13 +501,17 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - __option_waitMode
           - Execution
+          - __option_timeout
+          - __option_conditionMode
+          - Until
           - Duration
           m_ValueList:
-          - rid: 5766249722080395415
           - rid: 5766249722080395416
-          - rid: 5766249722080395417
+          - rid: 2472349068226200082
+          - rid: 2472349068226200083
+          - rid: 2472349068226200084
+          - rid: 2472349068226200112
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -481,24 +527,9 @@ MonoBehaviour:
           m_HasUserColor: 0
         m_Node:
           rid: 5766249722080395418
-    - rid: 5766249722080395415
-      type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          m_EnumType:
-            m_Identification: Khorde.Behavior.Authoring.Wait+WaitMode, Khorde.Behavior.Authoring,
-              Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-          m_Value: 1
-        m_EnumType:
-          m_Identification: Khorde.Behavior.Authoring.Wait+WaitMode, Khorde.Behavior.Authoring,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     - rid: 5766249722080395416
       type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
-    - rid: 5766249722080395417
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 1
     - rid: 5766249722080395418
       type: {class: Wait, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
@@ -584,13 +615,15 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - __option_waitMode
           - Execution
-          - Duration
+          - __option_timeout
+          - __option_conditionMode
+          - Until
           m_ValueList:
-          - rid: 5766249722080395423
           - rid: 5766249722080395424
-          - rid: 5766249722080395427
+          - rid: 2472349068226200085
+          - rid: 2472349068226200086
+          - rid: 2472349068226200087
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -638,27 +671,12 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: 
-    - rid: 5766249722080395423
-      type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value:
-          m_EnumType:
-            m_Identification: Khorde.Behavior.Authoring.Wait+WaitMode, Khorde.Behavior.Authoring,
-              Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-          m_Value: 1
-        m_EnumType:
-          m_Identification: Khorde.Behavior.Authoring.Wait+WaitMode, Khorde.Behavior.Authoring,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     - rid: 5766249722080395424
       type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data: {}
     - rid: 5766249722080395426
       type: {class: Wait, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
-    - rid: 5766249722080395427
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
-      data:
-        m_Value: 0.3
     - rid: 5766249740615549003
       type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
       data:
@@ -1301,13 +1319,13 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          - 152ea57da943560b8e717c6ed3449cee
           - 3f09272e9b9f9ed5a0e2b694eed9d299
+          - 152ea57da943560b8e717c6ed3449cee
+          - 4a4ba80eaa7dcba5736c8eccd59bbf08
           m_ValueList:
-          - rid: 2472349051778498638
-          - rid: 2472349051778498639
-          - rid: 2472349051778498640
+          - rid: 2472349068226200106
+          - rid: 2472349068226200107
+          - rid: 2472349068226200108
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -2158,13 +2176,13 @@ MonoBehaviour:
         m_State: 0
         m_InputConstantsById:
           m_KeyList:
-          - 4a4ba80eaa7dcba5736c8eccd59bbf08
-          - 152ea57da943560b8e717c6ed3449cee
           - 3f09272e9b9f9ed5a0e2b694eed9d299
+          - 152ea57da943560b8e717c6ed3449cee
+          - 4a4ba80eaa7dcba5736c8eccd59bbf08
           m_ValueList:
-          - rid: 2472349051778498641
-          - rid: 2472349051778498642
-          - rid: 2472349051778498643
+          - rid: 2472349068226200109
+          - rid: 2472349068226200110
+          - rid: 2472349068226200111
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []

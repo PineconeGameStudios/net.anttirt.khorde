@@ -342,31 +342,35 @@ namespace Khorde.Behavior
 							break;
 
 						case BTExec.BTExecType.Wait:
-							if(node.data.wait.duration.IsCreated)
 							{
 								if(thread.waitStartTime == ThreadWaitStartTime_Invalid)
 								{
 									thread.waitStartTime = now;
 								}
 
-								float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
-								if(now - thread.waitStartTime >= duration)
-								{
-									thread.waitStartTime = ThreadWaitStartTime_Invalid;
-									Return(ref data, ref node);
-								}
-								else
-								{
-									// still waiting, can't execute any more nodes until more time elapses
-									Trace(ref node, BTExecTrace.Event.Wait);
-									goto nextThread;
-								}
-							}
-							else
-							{
-								if(node.data.wait.until.Evaluate<bool>(in exprContext))
+								bool done = node.data.wait.condition.Evaluate<bool>(in exprContext);
+
+								if(node.data.wait.mode == Wait.ConditionMode.While)
+									done = !done;
+
+								if(done)
 								{
 									Return(ref data, ref node);
+								}
+								else if(node.data.wait.duration.IsCreated)
+								{
+									float duration = node.data.wait.duration.Evaluate<float>(in exprContext);
+									if(now - thread.waitStartTime >= duration)
+									{
+										thread.waitStartTime = ThreadWaitStartTime_Invalid;
+										Return(ref data, ref node);
+									}
+									else
+									{
+										// still waiting, can't execute any more nodes until more time elapses
+										Trace(ref node, BTExecTrace.Event.Wait);
+										goto nextThread;
+									}
 								}
 								else
 								{
