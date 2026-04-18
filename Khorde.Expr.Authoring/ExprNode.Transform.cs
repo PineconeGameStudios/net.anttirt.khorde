@@ -33,7 +33,8 @@ namespace Khorde.Expr.Authoring
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			ref var data = ref context.CreateExpression<Expr.LookupLocalToWorld>(storage);
-			context.Bake<Unity.Transforms.LocalToWorld>(ref data.typeInfo, ExpressionComponentLocation.Local);
+			context.Bake<Unity.Transforms.LocalToWorld>(ref data.typeInfo, ExpressionComponentLocation.Lookup);
+			data.Input0 = context.GetExpressionRef(GetInputPort(0));
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)

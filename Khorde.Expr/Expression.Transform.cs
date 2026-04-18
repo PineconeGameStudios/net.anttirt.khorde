@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -60,7 +61,7 @@ namespace Khorde.Expr
 		public const int OutputIndex_Rotation = 3;
 		public const int OutputIndex_Scale = 4;
 
-	    public void Evaluate(in ExpressionEvalContext ctx, in Entity entity, int outputIndex, ref NativeArray<byte> untypedResult)
+	    public unsafe void Evaluate(in ExpressionEvalContext ctx, in Entity entity, int outputIndex, ref NativeArray<byte> untypedResult)
 	    {
 	        if (ctx.componentLookups[typeInfo.componentIndex].TryGetRefRO(entity, out var componentData))
 	        {
@@ -80,13 +81,16 @@ namespace Khorde.Expr
 								untypedResult.CopyFrom(componentData.GetSubArray(field.offset, field.length));
 								break;
 							case OutputIndex_Position:
-								untypedResult.ReinterpretStore<float3>(0, ctx.componentPtrs[typeInfo.componentIndex].AsComponent<LocalToWorld>().Position);
+								var arr = componentData.Reinterpret<LocalToWorld>(1);
+								untypedResult.ReinterpretStore<float3>(0, ((LocalToWorld*)arr.GetUnsafeReadOnlyPtr())->Position);
 								break;
 							case OutputIndex_Rotation:
-								untypedResult.ReinterpretStore<quaternion>(0, ctx.componentPtrs[typeInfo.componentIndex].AsComponent<LocalToWorld>().Rotation);
+								arr = componentData.Reinterpret<LocalToWorld>(1);
+								untypedResult.ReinterpretStore<quaternion>(0, ((LocalToWorld*)arr.GetUnsafeReadOnlyPtr())->Rotation);
 								break;
 							case OutputIndex_Scale:
-								untypedResult.ReinterpretStore<float3>(0, ctx.componentPtrs[typeInfo.componentIndex].AsComponent<LocalToWorld>().Value.Scale());
+								arr = componentData.Reinterpret<LocalToWorld>(1);
+								untypedResult.ReinterpretStore<float3>(0, ((LocalToWorld*)arr.GetUnsafeReadOnlyPtr())->Value.Scale());
 								break;
 							default:
 								untypedResult.Clear();

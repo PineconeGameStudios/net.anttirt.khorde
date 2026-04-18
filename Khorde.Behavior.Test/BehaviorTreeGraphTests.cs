@@ -419,6 +419,13 @@ namespace Khorde.Behavior.Test
 			var result0 = blackboardLayout.GetField<float4x4>(blackboardBytes, 3);
 			var result1 = blackboardLayout.GetField<float4x4>(blackboardBytes, 4);
 			var result2 = blackboardLayout.GetField<float4x4>(blackboardBytes, 5);
+			var entity = blackboardLayout.GetField<Entity>(blackboardBytes, 6);
+			var position2 = blackboardLayout.GetField<float3>(blackboardBytes, 7);
+			var rotation2 = blackboardLayout.GetField<quaternion>(blackboardBytes, 8);
+			var scale2 = blackboardLayout.GetField<float3>(blackboardBytes, 9);
+
+			var e0 = entity[0] = em.CreateEntity(typeof(LocalToWorld));
+			em.SetComponentData(e0, new LocalToWorld { Value = float4x4.TRS(new float3(-2, -2, -2), quaternion.identity, new float3(1, 1, 1)) });
 
 			components.localToWorld.Value = float4x4.TRS(
 				new float3(3, 2, 1),
@@ -435,22 +442,12 @@ namespace Khorde.Behavior.Test
 
 			BehaviorTreeExecution.Execute(ref data.ValueRW, ref state, threads, stack, default, default, blackboard, ref blackboardLayout.ValueRW, default, default, ref defaultPendingQuery, comps, lookups, 0, 0, trace);
 
-			Assert.AreEqual(new float3(3, 2, 1), position[0]);
-
-			var q = quaternion.AxisAngle(math.forward(), math.PIHALF);
-			Assert.That(rotation[0].value.x, Is.EqualTo(q.value.x).Within(0.0001f));
-			Assert.That(rotation[0].value.y, Is.EqualTo(q.value.y).Within(0.0001f));
-			Assert.That(rotation[0].value.z, Is.EqualTo(q.value.z).Within(0.0001f));
-			Assert.That(rotation[0].value.w, Is.EqualTo(q.value.w).Within(0.0001f));
-
-			var v = new float3(5, 2, 5);
-
-			Assert.That(scale[0].x, Is.EqualTo(v.x).Within(0.0001f));
-			Assert.That(scale[0].y, Is.EqualTo(v.y).Within(0.0001f));
-			Assert.That(scale[0].z, Is.EqualTo(v.z).Within(0.0001f));
+			AssertEqualWithin(new float3(3, 2, 1), position[0], 0.0001f);
+			AssertEqualWithin(quaternion.AxisAngle(math.forward(), math.PIHALF), rotation[0], 0.0001f);
+			AssertEqualWithin(new float3(5, 2, 5), scale[0], 0.0001f);
 
 			AssertEqualWithin(float4x4.TRS(
-				new float3(1, 1, 1),
+				new float3(42, 42, 42),
 				quaternion.AxisAngle(math.forward(), math.PIHALF),
 				new float3(5, 2, 5)
 				), result0[0], 0.001f);
@@ -468,10 +465,32 @@ namespace Khorde.Behavior.Test
 				), result2[0], 0.001f);
 
 			AssertEqualWithin(float4x4.TRS(
-				new float3(1, 1, 1),
+				new float3(42, 42, 42),
 				quaternion.AxisAngle(math.forward(), math.PIHALF),
 				new float3(5, 2, 5)
 				), components.localToWorld.Value, 0.001f);
+
+			AssertEqualWithin(new float3(-2, -2, -2), position2[0], 0.0001f);
+			AssertEqualWithin(quaternion.identity, rotation2[0], 0.0001f);
+			AssertEqualWithin(new float3(1, 1, 1), scale2[0], 0.0001f);
+		}
+
+		static void AssertEqualWithin(in float3 expected, in float3 value, float tolerance)
+		{
+			for(int i = 0; i < 3; ++i)
+				Assert.That(value[i], Is.EqualTo(expected[i]).Within(tolerance));
+		}
+
+		static void AssertEqualWithin(in float4 expected, in float4 value, float tolerance)
+		{
+			for(int i = 0; i < 4; ++i)
+				Assert.That(value[i], Is.EqualTo(expected[i]).Within(tolerance));
+		}
+
+		static void AssertEqualWithin(in quaternion expected, in quaternion value, float tolerance)
+		{
+			for(int i = 0; i < 4; ++i)
+				Assert.That(value.value[i], Is.EqualTo(expected.value[i]).Within(tolerance));
 		}
 
 		static void AssertEqualWithin(in float4x4 expected, in float4x4 value, float tolerance)
