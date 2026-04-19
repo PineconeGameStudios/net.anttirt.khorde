@@ -534,7 +534,7 @@ namespace Khorde.Behavior.Authoring
 			exec.type = BTExec.BTExecType.Invoke;
 			exec.data.invoke = new Behavior.Invoke { actionIndex = actionIndex, blocking = blocking };
 
-			if(action.TryGetValue<BehaviorTreeAction>(out var asset))
+			if(action.TryGetValue<BehaviorTreeAction>(out var asset) && asset != null)
 			{
 				using(var so = new SerializedObject(asset))
 				{
@@ -587,7 +587,7 @@ namespace Khorde.Behavior.Authoring
 
 			paramPorts.Clear();
 
-			if(action.TryGetValue<BehaviorTreeAction>(out var actionAsset))
+			if(action.TryGetValue<BehaviorTreeAction>(out var actionAsset) && actionAsset != null)
 			{
 				using(var so = new SerializedObject(actionAsset))
 				{
