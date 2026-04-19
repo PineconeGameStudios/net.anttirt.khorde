@@ -27,6 +27,8 @@ namespace Khorde.Behavior.Test
 		[TearDown]
 		public override void TearDown()
 		{
+			base.TearDown();
+
 			foreach(var obj in created)
 				if(obj != null)
 					UnityEngine.Object.DestroyImmediate(obj);
