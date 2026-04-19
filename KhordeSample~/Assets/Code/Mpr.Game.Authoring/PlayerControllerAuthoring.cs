@@ -26,4 +26,5 @@ namespace Mpr.Game
 
 	[Serializable] class ReadPlayerController : ComponentReaderNode<PlayerController> { }
 	[Serializable] class WritePlayerController : ComponentWriterNode<PlayerController> { }
+	[Serializable] class SwitchUpAxis : SwitchEnum<PlayerController.UpAxis> { }
 }

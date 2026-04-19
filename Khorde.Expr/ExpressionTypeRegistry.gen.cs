@@ -83,6 +83,9 @@ namespace Khorde.Expr.Generated
 			new ExpressionTypeInfo(typeof(MakeFloat3), MakeFloat3.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(MakeFloat4), MakeFloat4.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(Time), Time.EvaluateFunc, true),
+			new ExpressionTypeInfo(typeof(Switch), Switch.EvaluateFunc, true),
+			new ExpressionTypeInfo(typeof(Select), Select.EvaluateFunc, true),
+			new ExpressionTypeInfo(typeof(SwitchLinear), SwitchLinear.EvaluateFunc, true),
 		};
 	}
 }
