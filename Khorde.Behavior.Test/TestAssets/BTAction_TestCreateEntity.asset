@@ -12,3 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1341170ee818814bacd3093249f34a3, type: 3}
   m_Name: BTAction_TestCreateEntity
   m_EditorClassIdentifier: Khorde.Behavior.Test::Khorde.Behavior.Test.BTAction_TestCreateEntity
+  position:
+    offset: 0
+  rotation:
+    offset: 12
+  scale:
+    offset: 28

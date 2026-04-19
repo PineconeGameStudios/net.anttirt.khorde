@@ -2,6 +2,7 @@ using Khorde.Blobs;
 using Khorde.Entities;
 using Khorde.Expr;
 using Khorde.Query;
+using PlasticPipe.PlasticProtocol.Messages;
 using System;
 using System.Collections.Generic;
 using Unity.Burst.CompilerServices;
@@ -18,8 +19,8 @@ namespace Khorde.Behavior
 			ref BTState state,
 			DynamicBuffer<BTThread> threads,
 			DynamicBuffer<BTStackFrame> frames,
-			DynamicBuffer<BTInvokeQueue> invoke,
-			EnabledRefRW<BTInvokeQueue> invokeEnabled,
+			DynamicBuffer<BehaviorTreeInvocation> invoke,
+			EnabledRefRW<BehaviorTreeInvocation> invokeEnabled,
 			NativeArray<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
 			NativeArray<BlobAssetReference<QSData>> queries,
@@ -39,8 +40,8 @@ namespace Khorde.Behavior
 			ref BTState state,
 			DynamicBuffer<BTThread> threads,
 			DynamicBuffer<BTStackFrame> allFrames,
-			DynamicBuffer<BTInvokeQueue> invoke,
-			EnabledRefRW<BTInvokeQueue> invokeEnabled,
+			DynamicBuffer<BehaviorTreeInvocation> invoke,
+			EnabledRefRW<BehaviorTreeInvocation> invokeEnabled,
 			NativeArray<ExpressionBlackboardStorage> blackboard,
 			ref ExpressionBlackboardLayout blackboardLayout,
 			NativeArray<BlobAssetReference<QSData>> queries,
@@ -593,7 +594,20 @@ namespace Khorde.Behavior
 								if(frames[^1].childIndex == 0)
 								{
 									// this will be picked up by BehaviorTreeActionSystem
-									invoke.Add(new BTInvokeQueue { actionIndex = node.data.invoke.actionIndex });
+									invoke.Add(new BehaviorTreeInvocation
+									{
+										actionIndex = node.data.invoke.actionIndex,
+									});
+
+									var storage = invoke.ElementAt(invoke.Length - 1).UnsafeGetTempStorageArray();
+									ref var invokeParams = ref node.data.invoke.parameters;
+									for(int i = 0; i < invokeParams.Length; ++i)
+									{
+										ref var invokeParam = ref invokeParams[i];
+										var slice = storage.GetSubArray(invokeParam.offset, invokeParam.size);
+										invokeParam.expr.Evaluate(in exprContext, ref slice);
+									}
+
 									invokeEnabled.ValueRW = true;
 
 									if(node.data.invoke.blocking)

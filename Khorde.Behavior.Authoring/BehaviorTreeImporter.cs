@@ -53,6 +53,15 @@ namespace Khorde.Behavior
 						ctx.LogImportError($"importing asset '{ctx.assetPath}' failed");
 					}
 
+					foreach(var q in context.Queries)
+						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(q));
+
+					foreach(var guid in graph.GetSubgraphs())
+						ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
+
+					foreach(var action in context.Actions)
+						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(action));
+
 					if(context.Errors.Count > 0)
 					{
 						foreach(var (obj_, msg) in context.Errors)
@@ -67,10 +76,6 @@ namespace Khorde.Behavior
 					var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
 					obj.Queries.AddRange(context.Queries);
 					obj.Actions.AddRange(context.Actions);
-					foreach(var q in obj.Queries)
-						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(q));
-					foreach(var guid in graph.GetSubgraphs())
-						ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
 					var data = obj.SetAssetData(builder, BTData.SchemaVersion);
 					ctx.AddObjectToAsset("asset", obj);
 					ctx.AddObjectToAsset("data", data);

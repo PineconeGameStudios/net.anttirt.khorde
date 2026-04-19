@@ -49,7 +49,7 @@ namespace Khorde.Behavior.Test
 		DynamicBuffer<BTThread> threads => em.GetBuffer<BTThread>(testEntity);
 		DynamicBuffer<BTStackFrame> stack => em.GetBuffer<BTStackFrame>(testEntity);
 		DynamicBuffer<BTExecTrace> trace => em.GetBuffer<BTExecTrace>(testEntity);
-		DynamicBuffer<BTInvokeQueue> invoke => em.GetBuffer<BTInvokeQueue>(testEntity);
+		DynamicBuffer<BehaviorTreeInvocation> invoke => em.GetBuffer<BehaviorTreeInvocation>(testEntity);
 		DynamicBuffer<ExpressionBlackboardStorage> blackboard => em.GetBuffer<ExpressionBlackboardStorage>(testEntity);
 		DynamicBuffer<TestBuffer> testBuffer => em.GetBuffer<TestBuffer>(testEntity);
 		BehaviorTestSystem testSystem;
@@ -67,8 +67,8 @@ namespace Khorde.Behavior.Test
 			em.AddBuffer<BTThread>(testEntity);
 			em.AddBuffer<BTStackFrame>(testEntity);
 			em.AddBuffer<BTExecTrace>(testEntity);
-			em.AddBuffer<BTInvokeQueue>(testEntity);
-			em.SetComponentEnabled<BTInvokeQueue>(testEntity, false);
+			em.AddBuffer<BehaviorTreeInvocation>(testEntity);
+			em.SetComponentEnabled<BehaviorTreeInvocation>(testEntity, false);
 			em.AddBuffer<ExpressionBlackboardStorage>(testEntity);
 			em.AddBuffer<TestBuffer>(testEntity);
 		}

@@ -95,10 +95,10 @@ namespace Khorde.Behavior.Test
 				typeof(BTStackFrame),
 				typeof(BTExecTrace),
 				typeof(BTState),
-				typeof(BTInvokeQueue)
+				typeof(BehaviorTreeInvocation)
 			);
 
-			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
+			entityManager.SetComponentEnabled<BehaviorTreeInvocation>(querier, false);
 
 			var reg = new QueryAssetRegistration();
 			reg.Add(queryRef.Reference);
@@ -208,10 +208,10 @@ namespace Khorde.Behavior.Test
 				typeof(BTStackFrame),
 				typeof(BTExecTrace),
 				typeof(BTState),
-				typeof(BTInvokeQueue)
+				typeof(BehaviorTreeInvocation)
 			);
 
-			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
+			entityManager.SetComponentEnabled<BehaviorTreeInvocation>(querier, false);
 
 			var reg = new QueryAssetRegistration();
 			reg.Add(queryRef.Reference);
@@ -324,11 +324,11 @@ namespace Khorde.Behavior.Test
 				typeof(BTStackFrame),
 				typeof(BTExecTrace),
 				typeof(BTState),
-				typeof(BTInvokeQueue),
+				typeof(BehaviorTreeInvocation),
 				typeof(BehaviorTreeActionRef)
 			);
 
-			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
+			entityManager.SetComponentEnabled<BehaviorTreeInvocation>(querier, false);
 
 			entityManager.GetBuffer<BehaviorTreeActionRef>(querier).Add(new BehaviorTreeActionRef { value = btAsset.Actions[0] });
 
@@ -365,6 +365,12 @@ namespace Khorde.Behavior.Test
 			Assert.AreEqual(1, query.CalculateEntityCount());
 
 			Assert.AreEqual(42, query.GetSingleton<ActionTestComponent>().value);
+
+			var ltw = World.EntityManager.GetComponentData<LocalToWorld>(query.GetSingletonEntity());
+
+			Assert.AreEqual(new float3(1, 2, 3), ltw.Position);
+			Assert.AreEqual(new quaternion(0, 1, 0, 0), ltw.Rotation);
+			Assert.AreEqual(new float3(3, 4, 5), ltw.Value.Scale());
 
 			// third update performs the action again (and places a third action in the queue)
 			World.Update();
@@ -410,11 +416,11 @@ namespace Khorde.Behavior.Test
 				typeof(BTStackFrame),
 				typeof(BTExecTrace),
 				typeof(BTState),
-				typeof(BTInvokeQueue),
+				typeof(BehaviorTreeInvocation),
 				typeof(BehaviorTreeActionRef)
 			);
 
-			entityManager.SetComponentEnabled<BTInvokeQueue>(querier, false);
+			entityManager.SetComponentEnabled<BehaviorTreeInvocation>(querier, false);
 
 			if(!btAsset.TryReadInPlace(BTData.SchemaVersion, out var btData))
 				throw new InvalidOperationException();

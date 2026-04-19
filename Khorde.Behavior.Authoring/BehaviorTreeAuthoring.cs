@@ -47,8 +47,8 @@ namespace Khorde.Behavior
 				if(authoring.trace)
 					AddBuffer<BTExecTrace>(entity);
 
-				AddBuffer<BTInvokeQueue>(entity);
-				SetComponentEnabled<BTInvokeQueue>(entity, false);
+				AddBuffer<BehaviorTreeInvocation>(entity);
+				SetComponentEnabled<BehaviorTreeInvocation>(entity, false);
 
 				var blackboard = AddBuffer<ExpressionBlackboardStorage>(entity);
 				var bakedLayout = BakeLayout(authoring.behaviorTree, blackboard, Allocator.Persistent, dumpLayout: authoring.dumpBlackboardLayout);

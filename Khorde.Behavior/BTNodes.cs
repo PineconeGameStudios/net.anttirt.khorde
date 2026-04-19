@@ -300,6 +300,15 @@ namespace Khorde.Behavior
 		public int actionIndex;
 		public bool blocking;
 
+		public struct Param
+		{
+			public ExpressionRef expr;
+			public ushort offset;
+			public ushort size;
+		}
+
+		public BlobArray<Param> parameters;
+
 		public string DumpString()
 		{
 			return $"{{ actionIndex={actionIndex} blocking={blocking} }}";

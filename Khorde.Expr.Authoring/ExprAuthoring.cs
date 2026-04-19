@@ -449,7 +449,7 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		static int AlignOf(Type type)
+		public static int AlignOf(Type type)
 		{
 			return (int)typeof(UnsafeUtility).GetMethod(nameof(UnsafeUtility.AlignOf), BindingFlags.Static | BindingFlags.Public)
 				.MakeGenericMethod(type)

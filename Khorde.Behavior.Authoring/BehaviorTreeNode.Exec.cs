@@ -1,8 +1,10 @@
 ﻿using Khorde.Expr;
 using Khorde.Expr.Authoring;
 using System;
+using System.Collections.Generic;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
+using UnityEditor;
 
 namespace Khorde.Behavior.Authoring
 {
@@ -523,6 +525,7 @@ namespace Khorde.Behavior.Authoring
 		INodeOption action;
 		INodeOption blocking;
 		int actionIndex;
+		List<IPort> paramPorts = new();
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
@@ -530,6 +533,21 @@ namespace Khorde.Behavior.Authoring
 
 			exec.type = BTExec.BTExecType.Invoke;
 			exec.data.invoke = new Behavior.Invoke { actionIndex = actionIndex, blocking = blocking };
+
+			if(action.TryGetValue<BehaviorTreeAction>(out var asset))
+			{
+				using(var so = new SerializedObject(asset))
+				{
+					var layout = BehaviorTreeActionPostProcessor.GetLayout(asset, so);
+					var parameters = builder.Allocate(ref exec.data.invoke.parameters, paramPorts.Count);
+					for(int i = 0; i < paramPorts.Count; ++i)
+					{
+						parameters[i].offset = layout[i].offset;
+						parameters[i].size = layout[i].size;
+						parameters[i].expr = context.GetExpressionRef(paramPorts[i]);
+					}
+				}
+			}
 		}
 
 		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
@@ -566,6 +584,24 @@ namespace Khorde.Behavior.Authoring
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithPortCapacity(PortCapacity.Single)
 				.Build();
+
+			paramPorts.Clear();
+
+			if(action.TryGetValue<BehaviorTreeAction>(out var actionAsset))
+			{
+				using(var so = new SerializedObject(actionAsset))
+				{
+					var layout = BehaviorTreeActionPostProcessor.GetLayout(actionAsset, so);
+					foreach(var p in layout)
+					{
+						paramPorts.Add(context.AddInputPort(p.name)
+							.WithDisplayName(ObjectNames.NicifyVariableName(p.name))
+							.WithDataType(p.type)
+							.WithPortCapacity(PortCapacity.Single)
+							.Build());
+					}
+				}
+			}
 		}
 	}
 }
