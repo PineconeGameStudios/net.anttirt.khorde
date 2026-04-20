@@ -16,8 +16,6 @@ namespace Khorde.Behavior
 	{
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
-			UnityEngine.Debug.Log($"importing {ctx.assetPath}");
-
 			var graph = GraphDatabase.LoadGraphForImporter<BehaviorTreeGraph>(ctx.assetPath);
 
 			if(graph == null)
@@ -54,13 +52,25 @@ namespace Khorde.Behavior
 					}
 
 					foreach(var q in context.Queries)
-						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(q));
+					{
+						var path = AssetDatabase.GetAssetPath(q);
+						if(!string.IsNullOrWhiteSpace(path))
+							ctx.DependsOnArtifact(path);
+					}
 
 					foreach(var guid in graph.GetSubgraphs())
-						ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
+					{
+						var path = AssetDatabase.GUIDToAssetPath(guid);
+						if(!string.IsNullOrWhiteSpace(path))
+							ctx.DependsOnSourceAsset(path);
+					}
 
 					foreach(var action in context.Actions)
-						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(action));
+					{
+						var path = AssetDatabase.GetAssetPath(action);
+						if(!string.IsNullOrWhiteSpace(path))
+							ctx.DependsOnArtifact(path);
+					}
 
 					if(context.Errors.Count > 0)
 					{
