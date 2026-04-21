@@ -157,7 +157,7 @@ namespace Khorde.Expr.Test
 		[Test]
 		public void Test_Math()
 		{
-			baker.InitializeBake(6, 0);
+			baker.InitializeBake(10, 0);
 
 			var n0 = AddExpression(new BinaryFloat2
 			{
@@ -201,6 +201,34 @@ namespace Khorde.Expr.Test
 				@operator = BinaryMathOp.Add,
 			});
 
+			var n6 = AddExpression(new BinaryFloat2
+			{
+				Input0 = baker.Const(new float2(0, 6)),
+				Input1 = baker.Const(new float2(2, 2)),
+				@operator = BinaryMathOp.Min,
+			});
+
+			var n7 = AddExpression(new BinaryFloat2
+			{
+				Input0 = baker.Const(new float2(0, 6)),
+				Input1 = baker.Const(new float2(2, 2)),
+				@operator = BinaryMathOp.Max,
+			});
+
+			var n8 = AddExpression(new BinaryFloat2
+			{
+				Input0 = baker.Const(new float2(5, 6)),
+				Input1 = baker.Const(new float2(2, 2)),
+				@operator = BinaryMathOp.Mod,
+			});
+
+			var n9 = AddExpression(new BinaryFloat2
+			{
+				Input0 = baker.Const(new float2(2, 3)),
+				Input1 = baker.Const(new float2(3, 0)),
+				@operator = BinaryMathOp.Power,
+			});
+
 			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
 
 			blob.Value.RuntimeInitialize(world.Unmanaged);
@@ -215,6 +243,11 @@ namespace Khorde.Expr.Test
 			Assert.AreEqual(new float2(0, 3), n3.Evaluate<float2>(in ctx));
 			Assert.AreEqual(new float2(2, 6), n4.Evaluate<float2>(in ctx));
 			Assert.AreEqual(new float2(2, 6), n5.Evaluate<float2>(in ctx));
+
+			Assert.AreEqual(new float2(0, 2), n6.Evaluate<float2>(in ctx));
+			Assert.AreEqual(new float2(2, 6), n7.Evaluate<float2>(in ctx));
+			Assert.AreEqual(new float2(1, 0), n8.Evaluate<float2>(in ctx));
+			Assert.AreEqual(new float2(8, 1), n9.Evaluate<float2>(in ctx));
 		}
 
 		[Test]
@@ -263,7 +296,7 @@ namespace Khorde.Expr.Test
 
 			var r2 = n2.Evaluate<float3>(in ctx);
 			Assert.That(r2.x, Is.EqualTo(-3f).Within(0.001f));
-			Assert.That(r2.y, Is.EqualTo( 3f).Within(0.001f));
+			Assert.That(r2.y, Is.EqualTo(3f).Within(0.001f));
 			Assert.That(r2.z, Is.EqualTo(-3f).Within(0.001f));
 
 			Assert.AreEqual(quaternion.AxisAngle(math.up(), math.PI), n3.Evaluate<quaternion>(in ctx));

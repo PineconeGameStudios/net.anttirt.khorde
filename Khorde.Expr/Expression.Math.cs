@@ -12,6 +12,10 @@ namespace Khorde.Expr
 		Subtract,
 		Multiply,
 		Divide,
+		Min,
+		Max,
+		Mod,
+		Power,
 	}
 
 	public interface IBTBinaryOp
@@ -39,6 +43,26 @@ namespace Khorde.Expr
 		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Divide; }
 	}
 
+	public struct BTBinaryOp_Min : IBTBinaryOp
+	{
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Min; }
+	}
+
+	public struct BTBinaryOp_Max : IBTBinaryOp
+	{
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Max; }
+	}
+
+	public struct BTBinaryOp_Mod : IBTBinaryOp
+	{
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Mod; }
+	}
+
+	public struct BTBinaryOp_Power : IBTBinaryOp
+	{
+		public BinaryMathOp Op { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => BinaryMathOp.Power; }
+	}
+
 	public partial struct BinaryFloat : IExpression<float, float>
 	{
 		public ExpressionRef Input0 { get; set; }
@@ -55,6 +79,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = math.fmod(left, right); break;
+				case BinaryMathOp.Power: result = math.pow(left, right); break;
 			}
 		}
 
@@ -76,6 +104,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = math.fmod(left, right); break;
+				case BinaryMathOp.Power: result = math.pow(left, right); break;
 			}
 		}
 	}
@@ -96,6 +128,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = math.fmod(left, right); break;
+				case BinaryMathOp.Power: result = math.pow(left, right); break;
 			}
 		}
 	}
@@ -116,6 +152,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = math.fmod(left, right); break;
+				case BinaryMathOp.Power: result = math.pow(left, right); break;
 			}
 		}
 	}
@@ -136,6 +176,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = left % right; break;
+				case BinaryMathOp.Power: result = (int)math.pow(left, right); break;
 			}
 		}
 
@@ -157,6 +201,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = left % right; break;
+				case BinaryMathOp.Power: result = (int2)math.pow(left, right); break;
 			}
 		}
 	}
@@ -177,6 +225,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = left % right; break;
+				case BinaryMathOp.Power: result = (int3)math.pow(left, right); break;
 			}
 		}
 	}
@@ -197,6 +249,10 @@ namespace Khorde.Expr
 				case BinaryMathOp.Subtract: result = left - right; break;
 				case BinaryMathOp.Multiply: result = left * right; break;
 				case BinaryMathOp.Divide: result = left / right; break;
+				case BinaryMathOp.Min: result = math.min(left, right); break;
+				case BinaryMathOp.Max: result = math.max(left, right); break;
+				case BinaryMathOp.Mod: result = left % right; break;
+				case BinaryMathOp.Power: result = (int4)math.pow(left, right); break;
 			}
 		}
 	}
