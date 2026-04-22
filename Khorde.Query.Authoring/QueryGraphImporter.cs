@@ -1,5 +1,4 @@
 using Khorde.Expr.Authoring;
-using System.IO;
 using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.Editor;
@@ -9,9 +8,13 @@ using UnityEngine;
 
 namespace Khorde.Query.Authoring
 {
-	[ScriptedImporter(QSData.SchemaVersion, QueryGraph.AssetExtension, importQueueOffset: 2)]
+	[ScriptedImporter(QSData.SchemaVersion | (ImporterVersion << 24), QueryGraph.AssetExtension, importQueueOffset: 2)]
 	internal class QueryGraphImporter : ScriptedImporter
 	{
+		public const int ImporterVersion = 1;
+
+		public static string[] GatherDependenciesFromSourceFile(string path) => ExprAuthoring.GatherDependenciesFromSourceFile(path);
+
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
 			var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>(ctx.assetPath);

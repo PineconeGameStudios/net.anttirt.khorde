@@ -1,19 +1,20 @@
 using Khorde.Behavior.Authoring;
 using Khorde.Expr.Authoring;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.Editor;
-using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 
 namespace Khorde.Behavior
 {
-	[ScriptedImporter(BTData.SchemaVersion, BehaviorTreeGraph.AssetExtension, importQueueOffset: 3)]
+	[ScriptedImporter(BTData.SchemaVersion | (ImporterVersion << 24), BehaviorTreeGraph.AssetExtension, importQueueOffset: 3)]
 	internal class BehaviorTreeImporter : ScriptedImporter
 	{
+		public const int ImporterVersion = 1;
+
+		public static string[] GatherDependenciesFromSourceFile(string path) => ExprAuthoring.GatherDependenciesFromSourceFile(path);
+
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
 			var graph = GraphDatabase.LoadGraphForImporter<BehaviorTreeGraph>(ctx.assetPath);
@@ -49,27 +50,6 @@ namespace Khorde.Behavior
 					if(!builder.IsCreated)
 					{
 						ctx.LogImportError($"importing asset '{ctx.assetPath}' failed");
-					}
-
-					foreach(var q in context.Queries)
-					{
-						var path = AssetDatabase.GetAssetPath(q);
-						if(!string.IsNullOrWhiteSpace(path))
-							ctx.DependsOnArtifact(path);
-					}
-
-					foreach(var guid in graph.GetSubgraphs())
-					{
-						var path = AssetDatabase.GUIDToAssetPath(guid);
-						if(!string.IsNullOrWhiteSpace(path))
-							ctx.DependsOnSourceAsset(path);
-					}
-
-					foreach(var action in context.Actions)
-					{
-						var path = AssetDatabase.GetAssetPath(action);
-						if(!string.IsNullOrWhiteSpace(path))
-							ctx.DependsOnArtifact(path);
 					}
 
 					if(context.Errors.Count > 0)

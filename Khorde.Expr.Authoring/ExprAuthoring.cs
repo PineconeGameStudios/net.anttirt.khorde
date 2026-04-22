@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -481,6 +483,43 @@ namespace Khorde.Expr.Authoring
 					}
 				}
 			}
+		}
+
+		static readonly Regex kAssetHash = new("(Hash: |guid: )([0-9a-f]{32})");
+
+		public static string[] GatherDependenciesFromSourceFile(string path)
+		{
+			// subgraph references: "Hash: [0-9a-f]{32}" (nibble-reversed format, though that might change in 6.4?)
+			// regular asset references: "fileID: [0-9]+, guid: [0-9a-f]{32}
+			var text = File.ReadAllText(path);
+			var matches = kAssetHash.Matches(text);
+
+			var result = new List<string>();
+
+			for(int i = 0; i < matches.Count; ++i)
+			{
+				var hex = matches[i].Groups[2].Value;
+				if(GUID.TryParse(hex, out var guid))
+				{
+					var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+
+					if(string.IsNullOrWhiteSpace(assetPath))
+					{
+						// subgraph references are stored in nibble-reversed format
+						var hash = UnityEngine.Hash128.Parse(hex);
+						guid = UnsafeUtility.As<UnityEngine.Hash128, GUID>(ref hash);
+						assetPath = AssetDatabase.GUIDToAssetPath(guid);
+					}
+
+					if(!string.IsNullOrWhiteSpace(assetPath))
+					{
+						if(!assetPath.EndsWith(".cs"))
+							result.Add(assetPath);
+					}
+				}
+			}
+
+			return result.ToArray();
 		}
 	}
 }
