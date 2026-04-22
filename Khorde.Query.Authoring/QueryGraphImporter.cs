@@ -17,57 +17,66 @@ namespace Khorde.Query.Authoring
 
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
-			var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>(ctx.assetPath);
+			try
+			{
+				GraphDatabase.StartEphemeralLoad();
 
-			if(graph == null)
-			{
-				ctx.LogImportError($"Failed to load graph of type '{nameof(QueryGraph)}' from path '{ctx.assetPath}'");
-				return;
-			}
+				var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>(ctx.assetPath);
 
-			bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.variable.variableKind == VariableKind.Input || v.variable.variableKind == VariableKind.Output);
-
-			if(graph.nodeCount == 0)
-			{
-				// create a blank placeholder so creating a fresh asset doesn't result in a user-visible error
-				var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
-				ctx.AddObjectToAsset("asset", obj);
-				ctx.SetMainObject(obj);
-			}
-			else if(isSubgraph)
-			{
-				// not importing subgraphs
-			}
-			else
-			{
-				using(var context = new QueryBakingContext(graph, Allocator.Temp))
+				if(graph == null)
 				{
-					var builder = context.Build();
+					ctx.LogImportError($"Failed to load graph of type '{nameof(QueryGraph)}' from path '{ctx.assetPath}'");
+					return;
+				}
 
-					if(!builder.IsCreated)
-					{
-						ctx.LogImportError($"importing asset '{ctx.assetPath}' failed");
-					}
+				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.variable.variableKind == VariableKind.Input || v.variable.variableKind == VariableKind.Output);
 
-					if(context.Errors.Count > 0)
-					{
-						foreach(var (obj_, msg) in context.Errors)
-							ctx.LogImportError(msg);
-
-						return;
-					}
-
+				if(graph.nodeCount == 0)
+				{
+					// create a blank placeholder so creating a fresh asset doesn't result in a user-visible error
 					var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
-					var data = obj.SetAssetData(builder, QSData.SchemaVersion);
-					obj.entityQueries = context.EntityQueries.ToList();
-					foreach(var eq in obj.entityQueries)
-						ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(eq));
-					foreach(var guid in graph.GetSubgraphs())
-						ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
 					ctx.AddObjectToAsset("asset", obj);
-					ctx.AddObjectToAsset("data", data);
 					ctx.SetMainObject(obj);
 				}
+				else if(isSubgraph)
+				{
+					// not importing subgraphs
+				}
+				else
+				{
+					using(var context = new QueryBakingContext(graph, Allocator.Temp))
+					{
+						var builder = context.Build();
+
+						if(!builder.IsCreated)
+						{
+							ctx.LogImportError($"importing asset '{ctx.assetPath}' failed");
+						}
+
+						if(context.Errors.Count > 0)
+						{
+							foreach(var (obj_, msg) in context.Errors)
+								ctx.LogImportError(msg);
+
+							return;
+						}
+
+						var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
+						var data = obj.SetAssetData(builder, QSData.SchemaVersion);
+						obj.entityQueries = context.EntityQueries.ToList();
+						foreach(var eq in obj.entityQueries)
+							ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(eq));
+						foreach(var guid in graph.GetSubgraphs())
+							ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
+						ctx.AddObjectToAsset("asset", obj);
+						ctx.AddObjectToAsset("data", data);
+						ctx.SetMainObject(obj);
+					}
+				}
+			}
+			finally
+			{
+				GraphDatabase.EndEphemeralLoad();
 			}
 		}
 	}

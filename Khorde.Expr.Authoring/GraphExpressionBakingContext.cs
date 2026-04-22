@@ -141,6 +141,9 @@ namespace Khorde.Expr.Authoring
 			var srcPorts = new List<IPort>();
 			dstPort.GetConnectedPorts(srcPorts);
 
+			if(srcPorts.Count == 0)
+				return HandleDisconnectedPort(dstPort);
+
 			if(srcPorts.Count > 1)
 				AddError(dstPort.GetNode(), $"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
 
