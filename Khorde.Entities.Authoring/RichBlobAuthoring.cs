@@ -302,6 +302,7 @@ namespace Khorde.Entities.Authoring
 				}
 
 				Builder.SetPointer(ref entityPatches[i].PatchLocation, ref UnsafeUtility.AsRef<Entity>((void*)patch.BlobEntityPtr));
+				entityPatches[i].BufferIndex = index;
 			}
 
 			var objRefPatches = Builder.Allocate(ref RootPtr->PatchData.ObjRefPatches, ObjRefPatches.Length);
@@ -320,6 +321,7 @@ namespace Khorde.Entities.Authoring
 				}
 
 				Builder.SetPointer(ref objRefPatches[i].PatchLocation, ref UnsafeUtility.AsRef<UntypedObjectRef>((void*)patch.BlobObjectRefPtr));
+				objRefPatches[i].BufferIndex = index;
 			}
 
 			foreach(var weakRef in WeakObjRefSet)
