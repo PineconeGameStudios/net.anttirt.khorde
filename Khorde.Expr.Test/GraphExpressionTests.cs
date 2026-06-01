@@ -30,7 +30,9 @@ namespace Khorde.Expr.Test
 	        em = world.EntityManager;
 	        bakedExpressionEntity = em.CreateEntity();
 
+			GraphDatabase.StartEphemeralLoad();
 	        var graph = GraphDatabase.LoadGraphForImporter<ExprSubgraph>("Packages/net.anttirt.khorde/Khorde.Expr.Test/TestAssets/TestExpr.exprg");
+			GraphDatabase.EndEphemeralLoad();
         
 	        baker = new GraphExpressionBakingContext(graph, Allocator.Temp);
 	    }

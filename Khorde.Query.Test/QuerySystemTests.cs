@@ -20,7 +20,9 @@ namespace Khorde.Query.Test
 	    {
 	        ExpressionTypeManager.Initialize();
 
+			GraphDatabase.StartEphemeralLoad();
 	        var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>("Packages/net.anttirt.khorde/Khorde.Query.Test/TestAssets/TestQuery.queryg");
+			GraphDatabase.EndEphemeralLoad();
 	        var baker = new QueryBakingContext(graph, Allocator.Temp);
 	        var entityManager = World.EntityManager;
         

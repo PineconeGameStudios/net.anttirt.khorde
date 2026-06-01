@@ -326,7 +326,8 @@ namespace Khorde.Query
 					sb.Clear();
 
 					FixedString128Bytes name = default;
-					pendingQuery.query.Value.exprData.assetName.CopyTo(ref name);
+					if(pendingQuery.query.Value.exprData.assetName.Length > 0)
+						pendingQuery.query.Value.exprData.assetName.CopyTo(ref name);
 					sb.Append($"entity {entity} wants to run QueryGraph{{{name}}} but is missing the required components [");
 					string intr = "";
 

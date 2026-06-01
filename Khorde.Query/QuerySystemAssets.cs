@@ -135,7 +135,8 @@ namespace Khorde.Query
 					//holder.jobQuery = builder.Build(state.EntityManager);
 
 					FixedString128Bytes name = default;
-					pair.Key.Value.exprData.assetName.CopyTo(ref name);
+					if(pair.Key.Value.exprData.assetName.Length > 0)
+						pair.Key.Value.exprData.assetName.CopyTo(ref name);
 					UnityEngine.Debug.Log($"Created queries / components for Query Graph asset {name} ({pair.Key.GetHash().ToStringBurst()})");
 				}
 			}
