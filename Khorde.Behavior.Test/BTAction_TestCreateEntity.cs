@@ -11,7 +11,7 @@ namespace Khorde.Behavior.Test
 		public BehaviorTreeActionParam<quaternion> rotation;
 		public BehaviorTreeActionParam<float3> scale;
 
-		public override void Invoke(ref SystemState state, Entity entity, in BehaviorTreeInvocation call)
+		public override void Invoke(ref SystemState state, Entity btEntity, Entity actionEntity, in BehaviorTreeInvocation call)
 		{
 			var newEntity = state.EntityManager.CreateEntity(typeof(ActionTestComponent), typeof(LocalToWorld));
 

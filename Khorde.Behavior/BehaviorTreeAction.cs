@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -10,12 +9,30 @@ namespace Khorde.Behavior
 {
 	public abstract class BehaviorTreeAction : ScriptableObject
 	{
-		public abstract void Invoke(ref SystemState state, Entity entity, in BehaviorTreeInvocation call);
+#if UNITY_EDITOR
+		/// <summary>
+		/// Bake additional ECS content into components on the ActionEntity.
+		/// Use <see cref="Khorde.Entities.EditorWeakAssetReference{T}"/> to store references
+		/// to authoring prefabs.
+		/// </summary>
+		/// <param name="baker"></param>
+		public virtual Entity Bake(IBaker baker) { return Entity.Null; }
+#endif
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="state"></param>
+		/// <param name="btEntity">The entity owning the behavior tree instance</param>
+		/// <param name="actionEntity">The baked entity matching this action (shared)</param>
+		/// <param name="call"></param>
+		public abstract void Invoke(ref SystemState state, Entity btEntity, Entity actionEntity, in BehaviorTreeInvocation call);
 	}
 
 	public struct BehaviorTreeActionRef : IBufferElementData
 	{
 		public UnityObjectRef<BehaviorTreeAction> value;
+		public Entity actionEntity;
 	}
 
 	[Serializable]

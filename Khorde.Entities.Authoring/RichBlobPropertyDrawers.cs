@@ -147,4 +147,10 @@ namespace Khorde.Entities.Authoring
 	{
 		public override WeakReferenceGenerationType GenerationType => WeakReferenceGenerationType.EntityPrefab;
 	}
+
+	[CustomPropertyDrawer(typeof(EditorWeakAssetReference<>), true)]
+	class EditorWeakAssetReferencePropertyDrawer : BlobWeakReferencePropertyDrawerBase
+	{
+		public override WeakReferenceGenerationType GenerationType => WeakReferenceGenerationType.EntityPrefab;
+	}
 }

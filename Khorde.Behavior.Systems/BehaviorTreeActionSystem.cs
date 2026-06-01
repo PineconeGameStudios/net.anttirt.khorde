@@ -31,7 +31,7 @@ namespace Khorde.Behavior.Systems
 
 					try
 					{
-						action.value.Value.Invoke(ref CheckedStateRef, entity, in call);
+						action.value.Value.Invoke(ref CheckedStateRef, entity, action.actionEntity, in call);
 					}
 					catch(System.Exception e)
 					{

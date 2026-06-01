@@ -59,7 +59,7 @@ namespace Khorde.Behavior
 
 				var actions = AddBuffer<BehaviorTreeActionRef>(entity);
 				foreach(var action in authoring.behaviorTree.Actions)
-					actions.Add(new BehaviorTreeActionRef { value = action });
+					actions.Add(new BehaviorTreeActionRef { value = action, actionEntity = action.Bake(this), });
 
 				if(authoring.behaviorTree.Queries.Count > 0)
 				{
