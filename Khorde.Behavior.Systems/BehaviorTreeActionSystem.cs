@@ -37,6 +37,10 @@ namespace Khorde.Behavior.Systems
 					{
 						LogExecption(e);
 					}
+
+					// re-acquire buffers in case the action performed structural changes
+					queue = EntityManager.GetBuffer<BehaviorTreeInvocation>(entity);
+					actions = EntityManager.GetBuffer<BehaviorTreeActionRef>(entity);
 				}
 
 				queue.Clear();
