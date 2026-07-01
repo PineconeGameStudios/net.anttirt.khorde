@@ -2,12 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using UnityEngine;
 
 namespace Khorde.Expr.Authoring
 {
@@ -31,6 +29,8 @@ namespace Khorde.Expr.Authoring
 		public ref BlobBuilder Builder => ref builder;
 		private BlobExpressionData* data;
 		private NativeList<byte> constStorage;
+		private List<(string, ushort offset)> animatorProperties;
+		private List<(string, ushort offset)> shaderProperties;
 		private Dictionary<Type, ulong> hashCache;
 		private Dictionary<object, (ushort offset, ushort length)> constCache = new();
 		private List<Variable> blackboardVariables = new();
@@ -70,6 +70,8 @@ namespace Khorde.Expr.Authoring
 			patchableTypeInfos = new(allocator);
 			constStorage = new NativeList<byte>(allocator);
 			hashCache = new();
+			animatorProperties = new();
+			shaderProperties = new();
 
 			localComponentsDict = new();
 			lookupComponentsDict = new();
@@ -184,6 +186,9 @@ namespace Khorde.Expr.Authoring
 		/// <exception cref="InvalidOperationException"></exception>
 		public VariableId AddBlackboardVariable(string name, bool isGlobal, Type type, object defaultValue)
 		{
+			if(type == null)
+				throw new ArgumentNullException(nameof(type));
+
 			if(defaultValue != null)
 			{
 				if(defaultValue.GetType() != type)
@@ -221,6 +226,22 @@ namespace Khorde.Expr.Authoring
 		public void FinalizeBake()
 		{
 			ExprAuthoring.BakeConstStorage(ref builder, ref *data, constStorage);
+
+			var shaderProperties = builder.Allocate(ref data->shaderPropertyPatches, this.shaderProperties.Count);
+			for(int i = 0; i < this.shaderProperties.Count; ++i)
+			{
+				var (name, offset) = this.shaderProperties[i];
+				builder.AllocateString(ref shaderProperties[i].name, name);
+				shaderProperties[i].constantOffset = offset;
+			}
+
+			var animatorProperties = builder.Allocate(ref data->animatorPropertyPatches, this.animatorProperties.Count);
+			for(int i = 0; i < this.animatorProperties.Count; ++i)
+			{
+				var (name, offset) = this.animatorProperties[i];
+				builder.AllocateString(ref animatorProperties[i].name, name);
+				animatorProperties[i].constantOffset = offset;
+			}
 
 			var localComponents = builder.Allocate(ref data->localComponents, this.localComponents.Count);
 			for(int i = 0; i < localComponents.Length; ++i)
@@ -390,5 +411,23 @@ namespace Khorde.Expr.Authoring
 
 		public ExpressionRef Const(object constant)
 			=> ExprAuthoring.WriteConstant2(constant, constStorage, constCache);
+
+		public ExpressionRef AnimatorPropertyId(string propertyName)
+		{
+			// skip deduplication cache because the value will be patched at runtime
+			var exprRef = ExprAuthoring.WriteConstant2<int>(0, constStorage, cache: null);
+			var index = exprRef.GetConstantIndex();
+			animatorProperties.Add((propertyName, index));
+			return exprRef;
+		}
+
+		public ExpressionRef ShaderPropertyId(string propertyName)
+		{
+			// skip deduplication cache because the value will be patched at runtime
+			var exprRef = ExprAuthoring.WriteConstant2<int>(0, constStorage, cache: null);
+			var index = exprRef.GetConstantIndex();
+			shaderProperties.Add((propertyName, index));
+			return exprRef;
+		}
 	}
 }

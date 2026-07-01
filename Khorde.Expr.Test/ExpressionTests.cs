@@ -598,6 +598,26 @@ namespace Khorde.Expr.Test
 			Assert.AreEqual(0.5f, t0.WithOutputIndex(1).Evaluate<float>(ctx));
 		}
 
+		[Test]
+		public void Test_ShaderProp()
+		{
+			baker.InitializeBake(2, 0);
+
+			var t0 = AddExpression(new Ref { @ref = baker.ShaderPropertyId("_Color") });
+			var t1 = AddExpression(new Ref { @ref = baker.AnimatorPropertyId("speed") });
+
+			var blob = baker.CreateAsset<BlobExpressionData>(Allocator.Temp);
+			blob.Value.RuntimeInitialize(world.Unmanaged);
+
+			var ctx = new ExpressionEvalContext(ref blob.Value, default, default, default, ref ExpressionBlackboardLayout.Empty);
+
+			int id = Shader.PropertyToID("_Color");
+			Assert.AreEqual(id, t0.WithOutputIndex(0).Evaluate<int>(ctx));
+
+			id = Animator.StringToHash("speed");
+			Assert.AreEqual(id, t1.WithOutputIndex(0).Evaluate<int>(ctx));
+		}
+
 		struct TestComponent1 : IComponentData
 		{
 			public int field0;

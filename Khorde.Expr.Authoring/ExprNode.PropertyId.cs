@@ -1,0 +1,67 @@
+using System;
+using Unity.GraphToolkit.Editor;
+
+namespace Khorde.Expr.Authoring
+{
+	[Serializable]
+	class ShaderPropertyId : ExprBase
+	{
+		private INodeOption propertyName;
+
+		public override string Title => "Shader Prop";
+
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
+		{
+			this.propertyName.TryGetValue<string>(out var propertyName);
+			context.CreateExpression(storage, new Khorde.Expr.Ref { @ref = context.ShaderPropertyId(propertyName) });
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			propertyName = context.AddOption<string>("PropertyName")
+				.WithDisplayName(string.Empty)
+				.WithTooltip("Property Name")
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddOutputPort<int>("Id")
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Multi)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	class AnimatorPropertyId : ExprBase
+	{
+		private INodeOption propertyName;
+
+		public override string Title => "Animator Prop";
+
+		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
+		{
+			this.propertyName.TryGetValue<string>(out var propertyName);
+			context.CreateExpression(storage, new Khorde.Expr.Ref { @ref = context.AnimatorPropertyId(propertyName) });
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			propertyName = context.AddOption<string>("PropertyName")
+				.WithDisplayName(string.Empty)
+				.WithTooltip("Property Name")
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddOutputPort<int>("Id")
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithPortCapacity(PortCapacity.Multi)
+				.Build();
+		}
+	}
+}

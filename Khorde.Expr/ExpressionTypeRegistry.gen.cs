@@ -66,6 +66,7 @@ namespace Khorde.Expr.Generated
 			new ExpressionTypeInfo(typeof(BinaryCompareFloat), BinaryCompareFloat.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(BinaryCompareInt), BinaryCompareInt.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(Variable), Variable.EvaluateFunc, true),
+			new ExpressionTypeInfo(typeof(Ref), Ref.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(RandomFloat), RandomFloat.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(RandomFloat2Direction), RandomFloat2Direction.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(RandomFloat3Direction), RandomFloat3Direction.EvaluateFunc, true),

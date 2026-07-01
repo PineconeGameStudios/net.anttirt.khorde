@@ -43,6 +43,12 @@ namespace Khorde.Behavior.Authoring
 			var valueType = qsData.itemType;
 			var type = valueType.GetValueType();
 
+			if(valueType == ExpressionValueType.Unknown)
+			{
+				context.AddError(this, "query value type is Unknown");
+				return;
+			}
+
 			int varIndex = 0;
 
 			resultVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_Query_{nodeId.index}_result", true, type);

@@ -286,6 +286,16 @@ namespace Khorde.Expr
 
 		public ExpressionRef WithOutputIndex(ushort outputIndex) => Node(index, outputIndex);
 
+		public ushort GetConstantIndex()
+		{
+			CheckCreated();
+
+			if(!isConstant)
+				throw new InvalidOperationException();
+
+			return index;
+		}
+
 		public T Evaluate<T>(in ExpressionEvalContext ctx) where T : unmanaged
 		{
 			CheckCreated();

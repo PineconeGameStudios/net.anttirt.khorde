@@ -1,4 +1,5 @@
 ﻿using Khorde.Blobs;
+using Khorde.Burst;
 using Khorde.Entities;
 using System;
 using System.Diagnostics;
@@ -21,7 +22,7 @@ namespace Khorde.Expr
 	/// </summary>
 	public struct BlobExpressionData
 	{
-		public const int SchemaVersion = 5;
+		public const int SchemaVersion = 6;
 
 		/// <summary>
 		/// Storage for constant-valued expression node references
@@ -98,6 +99,29 @@ namespace Khorde.Expr
 		/// Name of the source graph asset that produced this blob.
 		/// </summary>
 		public BlobString assetName;
+
+		public struct PropertyIdPatch
+		{
+			/// <summary>
+			/// Name of the shader / animator property
+			/// </summary>
+			public BlobString name;
+
+			/// <summary>
+			/// Offset in to <see cref="constants"/>
+			/// </summary>
+			public ushort constantOffset;
+		}
+
+		/// <summary>
+		/// Constants to be patched with <see cref="Shader.PropertyToID(string)"/>
+		/// </summary>
+		public BlobArray<PropertyIdPatch> shaderPropertyPatches;
+
+		/// <summary>
+		/// Constants to be patched with <see cref="Animator.StringToHash(string)"/>
+		/// </summary>
+		public BlobArray<PropertyIdPatch> animatorPropertyPatches;
 
 		/// <summary>
 		/// Get constants buffer as a NativeArray
@@ -206,6 +230,29 @@ namespace Khorde.Expr
 
 		private static ComponentReflectionCache.ComputeFieldsDelegate s_computeFields;
 
+		delegate void PatchPropertiesDelegate(ref BlobExpressionData data);
+		private static readonly SharedStatic<FunctionPointer<PatchPropertiesDelegate>> PatchProperties
+			= SharedStatic<FunctionPointer<PatchPropertiesDelegate>>.GetOrCreate<PatchPropertiesDelegate>();
+		private static PatchPropertiesDelegate PatchPropertiesGC;
+
+		[AOT.MonoPInvokeCallback(typeof(PatchPropertiesDelegate))]
+		private static void PatchPropertiesImpl(ref BlobExpressionData data)
+		{
+			var constants = data.constants.AsSpan();
+
+			for(int i = 0; i < data.animatorPropertyPatches.Length; i++)
+			{
+				ref var patch = ref data.animatorPropertyPatches[i];
+				constants.Slice(patch.constantOffset, 4).Cast<byte, int>()[0] = Animator.StringToHash(patch.name.ToString());
+			}
+
+			for(int i = 0; i < data.shaderPropertyPatches.Length; i++)
+			{
+				ref var patch = ref data.shaderPropertyPatches[i];
+				constants.Slice(patch.constantOffset, 4).Cast<byte, int>()[0] = Shader.PropertyToID(patch.name.ToString());
+			}
+		}
+
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 #if UNITY_EDITOR
 		[UnityEditor.InitializeOnLoadMethod]
@@ -215,6 +262,9 @@ namespace Khorde.Expr
 			s_computeFields = ComponentReflectionCache.GetFieldsImpl;
 			Cache.Data.Cache = new(0, Allocator.Domain);
 			Cache.Data.ComputeFields = new(Marshal.GetFunctionPointerForDelegate(s_computeFields));
+
+			PatchPropertiesGC = PatchPropertiesImpl;
+			PatchProperties.Data = new(Marshal.GetFunctionPointerForDelegate(PatchPropertiesGC));
 		}
 
 		static UnsafeList<ExpressionComponentTypeInfo.Field> GetFields(ulong typeHash)
@@ -271,6 +321,11 @@ namespace Khorde.Expr
 				ref var patchedFields = ref typeInfo.Value.fields;
 				for(int j = 0; j < fields.Length; ++j)
 					patchedFields[j] = fields[j];
+			}
+
+			if(animatorPropertyPatches.Length > 0 || shaderPropertyPatches.Length > 0)
+			{
+				PatchProperties.Data.Invoke(ref this);
 			}
 
 			PatchedWorldSequenceNumber = world.SequenceNumber;
