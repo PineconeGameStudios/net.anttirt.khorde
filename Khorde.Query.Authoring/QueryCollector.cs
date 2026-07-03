@@ -16,6 +16,7 @@ namespace Khorde.Query.Authoring
 	public interface IPass : INode { }
 	public interface IPass<T> : IPass where T : unmanaged { }
 
+	[Serializable]
 	public abstract class Pass<T> : QueryGraphContextBase, IPass<T> where T : unmanaged
 	{
 		// TODO public override string Title => $"Query Pass";
@@ -51,6 +52,7 @@ namespace Khorde.Query.Authoring
 		QueryScoringDirection ScoringDirection { get; }
 	}
 
+	[Serializable]
 	public abstract class Query<T> : QueryGraphNodeBase, IQuery
 	{
 		private INodeOption scoringDirection;

@@ -26,7 +26,7 @@ namespace Khorde.Behavior.Authoring
 		private List<VariableId> queryVariableIndices = new();
 		private List<IPort> queryVariablePorts = new();
 
-		static Dictionary<string, Assembly> s_assemblies = AppDomain.CurrentDomain.GetAssemblies().ToDictionary(asm => asm.FullName);
+		static Dictionary<string, Assembly> s_assemblies = UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies().ToDictionary(asm => asm.FullName);
 
 		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
 		{

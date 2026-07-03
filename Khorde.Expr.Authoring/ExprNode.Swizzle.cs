@@ -5,6 +5,7 @@ using Unity.Mathematics;
 
 namespace Khorde.Expr.Authoring
 {
+	[Serializable]
 	internal abstract class SwizzleBase : ExprBase
 	{
 		protected enum BaseType
@@ -129,7 +130,7 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		public SwizzleBase() { Title = $"Swizzle"; }
+		public override void OnEnable() { Title = $"Swizzle"; }
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{

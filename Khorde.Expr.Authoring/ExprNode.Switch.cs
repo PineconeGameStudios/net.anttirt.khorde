@@ -15,7 +15,7 @@ namespace Khorde.Expr.Authoring
 		List<IPort> options = new();
 		IPort @default;
 
-		public SwitchInt() { Title = "Switch"; }
+		public override void OnEnable() { Title = "Switch"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -152,7 +152,7 @@ namespace Khorde.Expr.Authoring
 		IPort @switch;
 		List<IPort> options = new();
 
-		public SwitchEnum() { Title = "Switch " + typeof(TEnum).Name; }
+		public override void OnEnable() { Title = "Switch " + typeof(TEnum).Name; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

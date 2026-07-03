@@ -3,6 +3,7 @@ using Khorde.Expr;
 using Khorde.Query.Authoring;
 using NUnit.Framework;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
@@ -53,7 +54,7 @@ namespace Khorde.Query.Test
 			var player1 = entityManager.CreateEntity(typeof(LocalTransform), typeof(TestPlayerController));
 			entityManager.SetComponentData(player1, LocalTransform.FromPosition(new float3(-30, -30, 0)));
 
-			var queryResultLookup = new NativeHashMap<Hash128, NativeList<Entity>>(0, Allocator.Temp);
+			var queryResultLookup = new UnsafeHashMap<Hash128, NativeList<Entity>>(0, Allocator.Temp);
 			foreach(var entityQuery in baker.EntityQueries)
 			{
 				var entityQueryResults = entityQuery.CreateEntityQuery(entityManager).ToEntityArray(Allocator.Temp);

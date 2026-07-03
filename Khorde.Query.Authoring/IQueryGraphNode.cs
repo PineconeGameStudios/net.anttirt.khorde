@@ -1,3 +1,4 @@
+using System;
 using Unity.GraphToolkit.Editor;
 
 namespace Khorde.Query.Authoring
@@ -7,16 +8,19 @@ namespace Khorde.Query.Authoring
 		void Validate(GraphLogger logger);
 	}
 
+	[Serializable]
 	public abstract class QueryGraphNodeBase : Node, IQueryGraphNode
 	{
 		public virtual void Validate(GraphLogger logger) { }
 	}
 
+	[Serializable]
 	public abstract class QueryGraphContextBase : ContextNode, IQueryGraphNode
 	{
 		public virtual void Validate(GraphLogger logger) { }
 	}
 
+	[Serializable]
 	public abstract class QueryGraphBlockBase : BlockNode, IQueryGraphNode
 	{
 		public virtual void Validate(GraphLogger logger) { }
