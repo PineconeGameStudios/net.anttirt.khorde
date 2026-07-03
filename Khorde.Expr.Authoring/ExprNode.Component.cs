@@ -12,7 +12,7 @@ namespace Khorde.Expr.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public ComponentReaderNode() { Title = $"Read {typeof(T).Name}"; }
+		public override void OnEnable() { Title = $"Read {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -39,7 +39,7 @@ namespace Khorde.Expr.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public ComponentLookupNode() { Title = $"Lookup {typeof(T).Name}"; }
+		public override void OnEnable() { Title = $"Lookup {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -81,7 +81,7 @@ namespace Khorde.Expr.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public BufferReaderNode() { Title = $"Read {typeof(T).Name}"; }
+		public override void OnEnable() { Title = $"Read {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -115,7 +115,7 @@ namespace Khorde.Expr.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public BufferLengthNode() { Title = $"Read {typeof(T).Name}"; }
+		public override void OnEnable() { Title = $"Read {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

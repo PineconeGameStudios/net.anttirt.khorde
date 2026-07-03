@@ -4,12 +4,10 @@ using Unity.Mathematics;
 
 namespace Khorde.Expr.Authoring
 {
+	[Serializable]
 	internal abstract class OpBase<T, OpT> : ExprBase where T : unmanaged where OpT : unmanaged, IBTBinaryOp
 	{
-		public OpBase()
-		{
-			Title = $"{default(OpT).Op}";
-		}
+		public override void OnEnable() { Title = $"{default(OpT).Op}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -167,6 +165,7 @@ namespace Khorde.Expr.Authoring
 	[Serializable][NodeCategory("Math/Mod")] internal class ModFloat4 : OpBase<float4, BTBinaryOp_Mod> { }
 	[Serializable][NodeCategory("Math/Power")] internal class PowerFloat4 : OpBase<float4, BTBinaryOp_Power> { }
 
+	[Serializable]
 	internal abstract class UnaryBase<TExpr, TIn, TOut> : ExprBase
 		where TExpr : unmanaged, IExpression<TIn>
 		where TIn : unmanaged
@@ -175,7 +174,7 @@ namespace Khorde.Expr.Authoring
 		private IPort input;
 		private IPort output;
 
-		public UnaryBase()
+		public override void OnEnable()
 		{
 			var name = typeof(TExpr).Name;
 			Title = name.Substring(0, name.Length - 1);
@@ -227,6 +226,7 @@ namespace Khorde.Expr.Authoring
 	[Serializable][NodeCategory("Math/Transform")] internal class GetRotationNode : UnaryBase<GetRotation, float4x4, quaternion> { }
 	[Serializable][NodeCategory("Math/Transform")] internal class GetScaleNode : UnaryBase<GetScale, float4x4, float3> { }
 
+	[Serializable]
 	internal abstract class BinaryBase<TExpr, TIn0, TIn1, TOut> : ExprBase
 		where TExpr : unmanaged, IExpression<TIn0, TIn1>
 		where TIn0 : unmanaged
@@ -237,7 +237,7 @@ namespace Khorde.Expr.Authoring
 		private IPort input1;
 		private IPort output;
 
-		public BinaryBase()
+		public override void OnEnable()
 		{
 			var name = typeof(TExpr).Name;
 			Title = name.Substring(0, name.Length - 1);
@@ -283,7 +283,7 @@ namespace Khorde.Expr.Authoring
 	[NodeCategory("Math/Transform")]
 	internal class WithTranslationNode : BinaryBase<WithTranslation, float4x4, float3, float4x4>
 	{
-		public WithTranslationNode()
+		public override void OnEnable()
 		{
 			Title = "With Translation";
 		}
@@ -292,7 +292,7 @@ namespace Khorde.Expr.Authoring
 	[NodeCategory("Math/Transform")]
 	internal class WithRotationNode : BinaryBase<WithRotation, float4x4, quaternion, float4x4>
 	{
-		public WithRotationNode()
+		public override void OnEnable()
 		{
 			Title = "With Rotation";
 		}
@@ -301,7 +301,7 @@ namespace Khorde.Expr.Authoring
 	[NodeCategory("Math/Transform")]
 	internal class WithScaleNode : BinaryBase<WithScale, float4x4, float3, float4x4>
 	{
-		public WithScaleNode()
+		public override void OnEnable()
 		{
 			Title = "With Scale";
 		}

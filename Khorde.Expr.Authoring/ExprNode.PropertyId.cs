@@ -8,7 +8,7 @@ namespace Khorde.Expr.Authoring
 	{
 		private INodeOption propertyName;
 
-		public ShaderPropertyId() { Title = "Shader Prop"; }
+		public override void OnEnable() { Title = "Shader Prop"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -39,7 +39,7 @@ namespace Khorde.Expr.Authoring
 	{
 		private INodeOption propertyName;
 
-		public AnimatorPropertyId() { Title = "Animator Prop"; }
+		public override void OnEnable() { Title = "Animator Prop"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

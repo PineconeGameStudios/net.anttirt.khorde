@@ -12,6 +12,7 @@ namespace Khorde.Query.Authoring
 		Type ItemType { get; }
 	}
 	
+	[Serializable]
 	abstract class ItemNodeBase<T> : QueryGraphNodeBase, IExprNode, IQueryCurrentItemNode
 	{
 		// TODO public override string Title => $"Current Item ({typeof(T).Name})";

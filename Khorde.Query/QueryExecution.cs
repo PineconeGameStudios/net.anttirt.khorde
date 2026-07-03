@@ -16,7 +16,7 @@ namespace Khorde.Query
 		public ref QSData data => ref *pData;
 		public NativeArray<UnsafeComponentReference> componentPtrs;
 		public NativeArray<UntypedComponentLookup> lookups;
-		public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
+		public UnsafeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 		public float now;
 		public float deltaTime;
 
@@ -30,7 +30,7 @@ namespace Khorde.Query
 			ref QSData data,
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
-			NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup
+			UnsafeHashMap<Hash128, NativeList<Entity>> queryResultLookup
 		)
 		{
 			fixed(QSData* pData = &data)
