@@ -238,7 +238,7 @@ namespace Khorde.Expr
 		[AOT.MonoPInvokeCallback(typeof(PatchPropertiesDelegate))]
 		private static void PatchPropertiesImpl(ref BlobExpressionData data)
 		{
-			var constants = data.constants.AsSpan();
+			var constants = data.constants.AsRWSpan();
 
 			for(int i = 0; i < data.animatorPropertyPatches.Length; i++)
 			{
@@ -337,7 +337,7 @@ namespace Khorde.Expr
 			if(localComponents.Length > componentPtrs.Length)
 			{
 				var missing = new NativeHashSet<TypeIndex>(0, Allocator.Temp);
-				foreach(ref var bct in localComponents.AsSpan())
+				foreach(ref var bct in localComponents.AsRWSpan())
 					missing.Add(bct.ResolveComponentType().TypeIndex);
 
 				foreach(var cptr in componentPtrs)

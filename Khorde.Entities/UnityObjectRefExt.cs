@@ -2,7 +2,6 @@
 using Unity.Entities;
 
 #if UNITY_6000_4_OR_NEWER
-#error TODO: fix when UnityObjectRef switches to EntityId
 using UnityObjectRefId = UnityEngine.EntityId;
 #else
 using UnityObjectRefId = System.Int32;
