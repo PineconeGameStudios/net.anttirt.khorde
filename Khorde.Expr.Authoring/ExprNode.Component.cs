@@ -53,7 +53,7 @@ namespace Khorde.Expr.Authoring
 			context.AddInputPort<Entity>("Entity")
 				.WithDisplayName("Entity")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			/// NOTE: this offsets output indices for fields by 1 (see <see cref="Khorde.Expr.BTExpr.LookupField.Evaluate"/>
@@ -94,7 +94,7 @@ namespace Khorde.Expr.Authoring
 		{
 			index = context.AddInputPort<int>("Index")
 				.WithDisplayName("Index")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 

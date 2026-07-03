@@ -90,7 +90,7 @@ namespace Khorde.Expr.Authoring
 					.WithDisplayName(new string(names[i], 1))
 					.WithDataType(inputType.ScalarType())
 					.WithConnectorUI(PortConnectorUI.Circle)
-					.WithPortCapacity(PortCapacity.Multi)
+					.WithCapacity(PortCapacity.Multi)
 					.Build()
 					).ToList();
 		}
@@ -139,7 +139,7 @@ namespace Khorde.Expr.Authoring
 				.WithDisplayName(new string(names[i], 1))
 				.WithDataType(outputType.ScalarType())
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build()
 				).ToList();
 		}

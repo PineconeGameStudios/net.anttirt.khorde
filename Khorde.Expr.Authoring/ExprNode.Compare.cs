@@ -59,8 +59,8 @@ namespace Khorde.Expr.Authoring
 
 	    protected override void OnDefinePorts(IPortDefinitionContext context)
 	    {
-	        context.AddInputPort<TArg>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
-	        context.AddInputPort<TArg>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
+	        context.AddInputPort<TArg>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
+	        context.AddInputPort<TArg>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
 	        context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 	    }
 	}

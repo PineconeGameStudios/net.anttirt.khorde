@@ -31,7 +31,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<int>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -63,7 +63,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<float>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -83,7 +83,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<float2>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -103,7 +103,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<float3>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}

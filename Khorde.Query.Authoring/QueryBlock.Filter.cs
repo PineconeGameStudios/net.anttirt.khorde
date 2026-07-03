@@ -26,7 +26,7 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddInputPort<bool>("in_pass")
 				.WithDisplayName("Accept Item")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}

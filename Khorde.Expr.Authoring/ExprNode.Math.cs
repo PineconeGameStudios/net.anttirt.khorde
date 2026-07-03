@@ -91,13 +91,13 @@ namespace Khorde.Expr.Authoring
 			context.AddInputPort<T>("a")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddInputPort<T>("b")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<T>("out")
@@ -208,13 +208,13 @@ namespace Khorde.Expr.Authoring
 			input = context.AddInputPort<TIn>("input")
 				.WithDisplayName("")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			output = context.AddOutputPort<TOut>("output")
 				.WithDisplayName("")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -274,19 +274,19 @@ namespace Khorde.Expr.Authoring
 			input0 = context.AddInputPort<TIn0>("input0")
 				.WithDisplayName("")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			input1 = context.AddInputPort<TIn1>("input1")
 				.WithDisplayName("")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			output = context.AddOutputPort<TOut>("output")
 				.WithDisplayName("")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}

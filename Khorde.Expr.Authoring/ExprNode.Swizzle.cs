@@ -157,7 +157,7 @@ namespace Khorde.Expr.Authoring
 			context.AddInputPort("in")
 				.WithDisplayName(string.Empty)
 				.WithDataType<T>()
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			if(pattern.Length == 0)
@@ -191,7 +191,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort("out")
 				.WithDisplayName(string.Empty)
 				.WithDataType(resultType)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}

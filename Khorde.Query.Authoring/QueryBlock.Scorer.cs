@@ -53,7 +53,7 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddInputPort<float>("in_score")
 				.WithDisplayName(string.Empty)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}

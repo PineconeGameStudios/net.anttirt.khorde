@@ -63,7 +63,7 @@ namespace Khorde.Expr
                 new NativeHashMap<ulong, FunctionPointer<ExpressionEvalDelegate>>(0, Allocator.Domain);
 
 #if UNITY_6000_6_OR_NEWER
-            foreach (var asm in CurrentAssemblies.GetLoadedAssemblies())
+            foreach (var asm in UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies())
 #else
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
 #endif
