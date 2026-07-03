@@ -10,7 +10,7 @@ namespace Khorde.Expr.Authoring
 		private INodeOption minOption;
 		private INodeOption maxOption;
 
-		public override string Title => "Random";
+		public RandomInt() { Title = "Random"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -42,7 +42,7 @@ namespace Khorde.Expr.Authoring
 		private INodeOption minOption;
 		private INodeOption maxOption;
 
-		public override string Title => "Random";
+		public RandomFloat() { Title = "Random"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -71,7 +71,7 @@ namespace Khorde.Expr.Authoring
 	[Serializable]
 	class RandomFloat2Direction : ExprBase
 	{
-		public override string Title => "Random Direction";
+		public RandomFloat2Direction() { Title = "Random Direction"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -91,7 +91,7 @@ namespace Khorde.Expr.Authoring
 	[Serializable]
 	class RandomFloat3Direction : ExprBase
 	{
-		public override string Title => "Random Direction";
+		public RandomFloat3Direction() { Title = "Random Direction"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

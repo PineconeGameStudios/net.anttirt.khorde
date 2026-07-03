@@ -40,7 +40,7 @@ namespace Khorde.Behavior.Authoring
 		{
 			exec.type = BTExec.BTExecType.Sequence;
 			exec.data.sequence = new Behavior.Sequence { };
-			var outputPorts = builder.Allocate(ref exec.data.sequence.children, outputPortCount);
+			var outputPorts = builder.Allocate(ref exec.data.sequence.children, OutputPortCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
 				outputPorts[i] = context.GetTargetNodeId(GetOutputPort(i));
 		}
@@ -85,7 +85,7 @@ namespace Khorde.Behavior.Authoring
 			exec.type = BTExec.BTExecType.Selector;
 			exec.data.selector = new Behavior.Selector { };
 
-			var outputPorts = builder.Allocate(ref exec.data.selector.children, blockCount);
+			var outputPorts = builder.Allocate(ref exec.data.selector.children, BlockCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
 			{
 				var option = (SubTreeOption)GetBlock(i);
@@ -291,13 +291,13 @@ namespace Khorde.Behavior.Authoring
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
-			if(varPort.firstConnectedPort?.GetNode() is not IVariableNode varNode)
+			if(varPort.FirstConnectedPort?.GetNode() is not IVariableNode varNode)
 			{
 				context.AddError(this, "variable port must be connected directly to a variable");
 				return;
 			}
 
-			var varIndex = context.GetVariableIndex(varNode.variable);
+			var varIndex = context.GetVariableIndex(varNode.Variable);
 			exec.type = BTExec.BTExecType.WriteVar;
 			exec.data.writeVar = new Behavior.WriteVar
 			{

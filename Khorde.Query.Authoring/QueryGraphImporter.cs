@@ -19,7 +19,7 @@ namespace Khorde.Query.Authoring
 		{
 			try
 			{
-				GraphDatabase.StartEphemeralLoad();
+				//GraphDatabase.StartEphemeralLoad();
 
 				var graph = GraphDatabase.LoadGraphForImporter<QueryGraph>(ctx.assetPath);
 
@@ -29,9 +29,9 @@ namespace Khorde.Query.Authoring
 					return;
 				}
 
-				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.variable.variableKind == VariableKind.Input || v.variable.variableKind == VariableKind.Output);
+				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.Variable.VariableKind == VariableKind.Input || v.Variable.VariableKind == VariableKind.Output);
 
-				if(graph.nodeCount == 0)
+				if(graph.NodeCount == 0)
 				{
 					// create a blank placeholder so creating a fresh asset doesn't result in a user-visible error
 					var obj = ScriptableObject.CreateInstance<QueryGraphAsset>();
@@ -76,7 +76,7 @@ namespace Khorde.Query.Authoring
 			}
 			finally
 			{
-				GraphDatabase.EndEphemeralLoad();
+				//GraphDatabase.EndEphemeralLoad();
 			}
 		}
 	}

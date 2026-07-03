@@ -1,4 +1,5 @@
 using Khorde.Behavior.Authoring;
+using Khorde.Expr.Authoring;
 using System;
 using Unity.Collections;
 using Unity.Entities;
@@ -9,7 +10,7 @@ using UnityEditor;
 namespace Khorde.Behavior
 {
 	[Serializable]
-	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs, typeof(BehaviorTreeGraphViewController))]
+	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
 	[UseNodes(typeof(Khorde.Expr.Authoring.IExprNode))]
 	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
 	[UseSubgraph(typeof(BehaviorTreeGraph))]

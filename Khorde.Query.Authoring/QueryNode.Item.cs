@@ -14,7 +14,7 @@ namespace Khorde.Query.Authoring
 	
 	abstract class ItemNodeBase<T> : QueryGraphNodeBase, IExprNode, IQueryCurrentItemNode
 	{
-		public override string Title => $"Current Item ({typeof(T).Name})";
+		// TODO public override string Title => $"Current Item ({typeof(T).Name})";
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{

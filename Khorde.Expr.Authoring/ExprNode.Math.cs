@@ -1,27 +1,15 @@
 using System;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
-using UnityEditor;
-using UnityEngine.UIElements;
 
 namespace Khorde.Expr.Authoring
 {
 	internal abstract class OpBase<T, OpT> : ExprBase where T : unmanaged where OpT : unmanaged, IBTBinaryOp
 	{
-		static StyleSheet s_styleSheet;
-
-		public override StyleSheet CustomStyleSheet
+		public OpBase()
 		{
-			get
-			{
-				if(s_styleSheet == null)
-					s_styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>($"Assets/Settings/BTStyleSheets/Nodes/{default(OpT).Op}.uss");
-
-				return s_styleSheet;
-			}
+			Title = $"{default(OpT).Op}";
 		}
-
-		public override string Title => $"{default(OpT).Op}";
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -187,13 +175,10 @@ namespace Khorde.Expr.Authoring
 		private IPort input;
 		private IPort output;
 
-		public override string Title
+		public UnaryBase()
 		{
-			get
-			{
-				var name = typeof(TExpr).Name;
-				return name.Substring(0, name.Length - 1);
-			}
+			var name = typeof(TExpr).Name;
+			Title = name.Substring(0, name.Length - 1);
 		}
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
@@ -252,13 +237,10 @@ namespace Khorde.Expr.Authoring
 		private IPort input1;
 		private IPort output;
 
-		public override string Title
+		public BinaryBase()
 		{
-			get
-			{
-				var name = typeof(TExpr).Name;
-				return name.Substring(0, name.Length - 1);
-			}
+			var name = typeof(TExpr).Name;
+			Title = name.Substring(0, name.Length - 1);
 		}
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
@@ -301,18 +283,27 @@ namespace Khorde.Expr.Authoring
 	[NodeCategory("Math/Transform")]
 	internal class WithTranslationNode : BinaryBase<WithTranslation, float4x4, float3, float4x4>
 	{
-		public override string Title => "With Translation";
+		public WithTranslationNode()
+		{
+			Title = "With Translation";
+		}
 	}
 	[Serializable]
 	[NodeCategory("Math/Transform")]
 	internal class WithRotationNode : BinaryBase<WithRotation, float4x4, quaternion, float4x4>
 	{
-		public override string Title => "With Rotation";
+		public WithRotationNode()
+		{
+			Title = "With Rotation";
+		}
 	}
 	[Serializable]
 	[NodeCategory("Math/Transform")]
 	internal class WithScaleNode : BinaryBase<WithScale, float4x4, float3, float4x4>
 	{
-		public override string Title => "With Scale";
+		public WithScaleNode()
+		{
+			Title = "With Scale";
+		}
 	}
 }

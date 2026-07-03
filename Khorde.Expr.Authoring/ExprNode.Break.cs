@@ -58,7 +58,7 @@ namespace Khorde.Expr.Authoring
 		private IPort inputPort;
 		private List<IPort> outputPorts;
 
-		public override string Title => "Break";
+		public BreakBase() { Title = "Break"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

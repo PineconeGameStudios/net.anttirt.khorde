@@ -50,7 +50,7 @@ namespace Mpr.Game
 		protected override void OnUpdate()
 		{
 			if(camera == null)
-				camera = Object.FindFirstObjectByType<CinemachineCamera>();
+				camera = Object.FindAnyObjectByType<CinemachineCamera>();
 
 			if(camera == null)
 				return;

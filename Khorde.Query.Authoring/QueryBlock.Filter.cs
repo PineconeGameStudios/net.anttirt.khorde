@@ -14,7 +14,7 @@ namespace Khorde.Query.Authoring
 	[Serializable]
 	class ExpressionFilter : QueryGraphBlockBase, IFilter
 	{
-		public override string Title => $"Expression Filter";
+		// TODO public override string Title => $"Expression Filter";
 
 		public void Bake(ref QSFilter qsFilter, QueryBakingContext queryBakingContext)
 		{
