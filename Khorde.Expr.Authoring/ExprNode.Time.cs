@@ -19,13 +19,13 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<float>("Time")
 				.WithDisplayName("Time")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 
 			context.AddOutputPort<float>("DeltaTime")
 				.WithDisplayName("DeltaTime")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}

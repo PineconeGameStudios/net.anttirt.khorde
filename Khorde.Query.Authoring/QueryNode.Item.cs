@@ -20,7 +20,7 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddOutputPort<T>("item")
 				.WithDisplayName(string.Empty)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}

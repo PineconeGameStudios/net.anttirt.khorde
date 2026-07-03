@@ -22,7 +22,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 
@@ -61,7 +61,7 @@ namespace Khorde.Behavior.Authoring
 					context.AddOutputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME + "_" + i.ToString())
 						.WithDisplayName(string.Empty)
 						.WithConnectorUI(PortConnectorUI.Arrowhead)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.Build();
 				}
 			}
@@ -69,7 +69,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -99,7 +99,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -114,14 +114,14 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<bool>("Condition")
 				.WithDisplayName("Condition")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithDefaultValue(true)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -145,19 +145,19 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddInputPort<bool>("Condition")
 				.WithDisplayName("Condition")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -177,7 +177,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -200,13 +200,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -257,7 +257,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			conditionModeOption.TryGetValue<ConditionMode>(out var conditionMode);
@@ -265,7 +265,7 @@ namespace Khorde.Behavior.Authoring
 			conditionInputPort = context.AddInputPort<bool>("Until")
 				.WithDisplayName(conditionMode.ToString())
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			timeoutOption.TryGetValue<bool>(out var timeout);
@@ -275,7 +275,7 @@ namespace Khorde.Behavior.Authoring
 				durationInputPort = context.AddInputPort<float>("Duration")
 					.WithDisplayName("Duration")
 					.WithConnectorUI(PortConnectorUI.Circle)
-					.WithPortCapacity(PortCapacity.Single)
+					.WithCapacity(PortCapacity.Single)
 					.Build();
 			}
 		}
@@ -319,7 +319,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			valueTypeOption.TryGetValue<ExpressionValueType>(out var valueType);
@@ -332,14 +332,14 @@ namespace Khorde.Behavior.Authoring
 				.WithDisplayName("Variable")
 				.WithDataType(type)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			valuePort = context.AddInputPort("Value")
 				.WithDisplayName("Value")
 				.WithDataType(type)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -399,19 +399,19 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			main = context.AddOutputPort<ExecutionFlow>("main")
 				.WithDisplayName("Main")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			parallel = context.AddOutputPort<ExecutionFlow>("parallel")
 				.WithDisplayName("Parallel")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
@@ -472,13 +472,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			child = context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			switch(mode)
@@ -486,7 +486,7 @@ namespace Khorde.Behavior.Authoring
 				case RepeatMode.Count:
 					parameter = context.AddInputPort<int>("CountParameter")
 						.WithConnectorUI(PortConnectorUI.Circle)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.WithDisplayName("Count")
 						.Build();
 
@@ -500,7 +500,7 @@ namespace Khorde.Behavior.Authoring
 				case RepeatMode.Condition:
 					parameter = context.AddInputPort<bool>("ConditionParameter")
 						.WithConnectorUI(PortConnectorUI.Circle)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.WithDisplayName("Condition")
 						.Build();
 
@@ -512,7 +512,7 @@ namespace Khorde.Behavior.Authoring
 
 			counter = context.AddOutputPort<int>("LoopCounter")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.WithDisplayName("Counter")
 				.Build();
 		}
@@ -582,7 +582,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			paramPorts.Clear();
@@ -597,7 +597,7 @@ namespace Khorde.Behavior.Authoring
 						paramPorts.Add(context.AddInputPort(p.name)
 							.WithDisplayName(ObjectNames.NicifyVariableName(p.name))
 							.WithDataType(p.type)
-							.WithPortCapacity(PortCapacity.Single)
+							.WithCapacity(PortCapacity.Single)
 							.Build());
 					}
 				}

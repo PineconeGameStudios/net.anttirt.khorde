@@ -29,7 +29,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<int>("Id")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -60,7 +60,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<int>("Id")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}

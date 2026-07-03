@@ -91,7 +91,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetComponentFields<T>();
@@ -106,7 +106,7 @@ namespace Khorde.Behavior.Authoring
 					context.AddInputPort(field.Name)
 						.WithDisplayName(field.Name)
 						.WithDataType(field.FieldType)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.Build();
 				}
 
@@ -202,7 +202,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetComponentFields<T>();
@@ -211,7 +211,7 @@ namespace Khorde.Behavior.Authoring
 
 			entity = context.AddInputPort<Entity>("Entity")
 				.WithDisplayName("Entity")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
@@ -226,7 +226,7 @@ namespace Khorde.Behavior.Authoring
 						context.AddInputPort(field.Name)
 							.WithDisplayName(field.Name)
 							.WithDataType(field.FieldType)
-							.WithPortCapacity(PortCapacity.Single)
+							.WithCapacity(PortCapacity.Single)
 							.Build()
 						);
 				}
@@ -295,7 +295,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetBufferFields<T>();
@@ -306,7 +306,7 @@ namespace Khorde.Behavior.Authoring
 				context.AddInputPort(field.Name)
 					.WithDisplayName(field.Name)
 					.WithDataType(field.FieldType)
-					.WithPortCapacity(PortCapacity.Single)
+					.WithCapacity(PortCapacity.Single)
 					.Build();
 
 				index++;
@@ -401,13 +401,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			bufferIndex = context.AddInputPort<int>("Index")
 				.WithDisplayName("Index")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetBufferFields<T>();
@@ -424,7 +424,7 @@ namespace Khorde.Behavior.Authoring
 						context.AddInputPort(field.Name)
 							.WithDisplayName(field.Name)
 							.WithDataType(field.FieldType)
-							.WithPortCapacity(PortCapacity.Single)
+							.WithCapacity(PortCapacity.Single)
 							.Build()
 							);
 				}

@@ -135,13 +135,13 @@ namespace Khorde.Behavior.Authoring
 			execInput = context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			execSuccess = context.AddOutputPort<ExecutionFlow>("ExecSuccess")
 				.WithDisplayName("Success")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			queryOption.TryGetValue<QueryGraphAsset>(out var queryGraphAsset);
@@ -155,7 +155,7 @@ namespace Khorde.Behavior.Authoring
 					.WithDisplayName("Result")
 					.WithDataType(type)
 					.WithConnectorUI(PortConnectorUI.Circle)
-					.WithPortCapacity(PortCapacity.Multi)
+					.WithCapacity(PortCapacity.Multi)
 					.Build();
 
 				ref var variables = ref qsData.exprData.blackboardVariables;
@@ -171,7 +171,7 @@ namespace Khorde.Behavior.Authoring
 						.WithDisplayName(name)
 						.WithDataType(varType)
 						.WithConnectorUI(PortConnectorUI.Circle)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.Build());
 				}
 			}
@@ -180,7 +180,7 @@ namespace Khorde.Behavior.Authoring
 				result = context.AddOutputPort("Result")
 					.WithDisplayName("Result")
 					.WithConnectorUI(PortConnectorUI.Circle)
-					.WithPortCapacity(PortCapacity.Multi)
+					.WithCapacity(PortCapacity.Multi)
 					.Build();
 			}
 
@@ -191,7 +191,7 @@ namespace Khorde.Behavior.Authoring
 				execFailure = context.AddOutputPort<ExecutionFlow>("ExecFailure")
 					.WithDisplayName("Failure")
 					.WithConnectorUI(PortConnectorUI.Arrowhead)
-					.WithPortCapacity(PortCapacity.Single)
+					.WithCapacity(PortCapacity.Single)
 					.Build();
 			}
 		}

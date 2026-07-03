@@ -23,7 +23,7 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddOutputPort<PassRef<T>>("pass")
 				.WithDisplayName("Pass")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.Build();
 		}
@@ -113,7 +113,7 @@ namespace Khorde.Query.Authoring
 				.WithDisplayName("Result Count")
 				.WithDefaultValue(1)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			passCountOption.TryGetValue<int>(out var passCount);
@@ -126,7 +126,7 @@ namespace Khorde.Query.Authoring
 				context.AddInputPort<PassRef<T>>($"pass_{i}")
 					.WithDisplayName($"Pass #{i + 1}")
 					.WithConnectorUI(PortConnectorUI.Arrowhead)
-					.WithPortCapacity(PortCapacity.Single)
+					.WithCapacity(PortCapacity.Single)
 					.Build();
 			}
 		}
