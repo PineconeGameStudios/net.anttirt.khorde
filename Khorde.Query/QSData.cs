@@ -288,7 +288,15 @@ namespace Khorde.Query
 			public void Generate(in QueryExecutionContext qctx, in ExpressionEvalContext ctx, NativeList<Entity> items)
 			{
 				if(qctx.queryResultLookup.TryGetValue(queryHash, out var results))
-					items.CopyFrom(results);
+				{
+					unsafe
+					{
+						// NOTE: [NativeDisableContainerSafetyRestriction] seems to have stopped working on
+						// NativeHashMap<..., NativeList<...>> in Unity 6000.6, so we use GetUnsafeList()
+						// here which bypasses the safety checks
+						items.CopyFrom(*results.GetUnsafeList());
+					}
+				}
 				else
 					throw new InvalidOperationException($"results for query with hash {queryHash} not available");
 			}
