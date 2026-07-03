@@ -53,7 +53,7 @@ namespace Khorde.Behavior.Authoring
 		protected override bool RegisterGraphNodes()
 		{
 			var roots = rootGraph.GetNodes().OfType<Root>().ToList();
-			bool isSubgraph = rootGraph.GetVariables().Any(v => v.variableKind == VariableKind.Input && v.dataType == typeof(ExecutionFlow));
+			bool isSubgraph = rootGraph.GetVariables().Any(v => v.VariableKind == VariableKind.Input && v.DataType == typeof(ExecutionFlow));
 
 			if(roots.Count == 0)
 			{
@@ -120,7 +120,7 @@ namespace Khorde.Behavior.Authoring
 
 		void BakeExecNodes(Graph graph)
 		{
-			using var _ = TraceScope(graph.name);
+			using var _ = TraceScope(graph.Name);
 
 			foreach(var node in graph.GetNodes())
 			{
@@ -134,7 +134,7 @@ namespace Khorde.Behavior.Authoring
 				{
 					var nodeId = GetNodeId(execNode);
 					var index = nodeId.index;
-					builderExecNodeIds[index] = execNode.Guid;
+					builderExecNodeIds[index] = execNode.ID;
 					var subgraphStackIds = builder.Allocate(ref builderExecNodeSubgraphStacks.UnsafeElementAt(index), subgraphStack.Depth);
 					int i = 0;
 					foreach(var hash in subgraphStack.Hashes)
@@ -170,7 +170,7 @@ namespace Khorde.Behavior.Authoring
 
 		void RegisterExecNodes(Graph graph)
 		{
-			using var _ = TraceScope(graph.name);
+			using var _ = TraceScope(graph.Name);
 
 			foreach(var node in graph.GetNodes())
 			{
@@ -214,7 +214,7 @@ namespace Khorde.Behavior.Authoring
 
 					var dstVariable = subgraphNode.GetVariableForInputPort(dstPort);
 					var subgraph = subgraphNode.GetSubgraph();
-					var dstVariableNodes = subgraph.GetNodes().OfType<IVariableNode>().Where(vn => vn.variable == dstVariable).ToList();
+					var dstVariableNodes = subgraph.GetNodes().OfType<IVariableNode>().Where(vn => vn.Variable == dstVariable).ToList();
 
 					if(dstVariableNodes.Count == 0)
 					{
@@ -228,13 +228,13 @@ namespace Khorde.Behavior.Authoring
 
 					srcNode = dstVariableNodes[0];
 
-					if(srcNode.outputPortCount == 0)
+					if(srcNode.OutputPortCount == 0)
 					{
 						AddWarning(subgraphNode, $"execution reaches subgraph {subgraph} variable {dstVariable} but it is not connected to anything within the subgraph");
 						return default;
 					}
 
-					if(srcNode.outputPortCount > 1)
+					if(srcNode.OutputPortCount > 1)
 						AddError(srcNode, $"subgraph {subgraph} node {srcNode} has multiple exec output ports");
 
 					dstPorts.Clear();
@@ -259,7 +259,7 @@ namespace Khorde.Behavior.Authoring
 
 					subgraphStack.Pop();
 
-					srcPort = currentSubgraph.GetOutputPortForVariable(varNode.variable);
+					srcPort = currentSubgraph.GetOutputPortForVariable(varNode.Variable);
 					srcNode = (ISubgraphNode)srcPort.GetNode();
 
 					dstPorts.Clear();

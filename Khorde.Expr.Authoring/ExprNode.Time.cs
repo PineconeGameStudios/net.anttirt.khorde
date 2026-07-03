@@ -7,8 +7,6 @@ namespace Khorde.Expr.Authoring
 	[Serializable]
 	class Time : ExprBase
 	{
-		public override string Title => "Time";
-
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
 			context.CreateExpression(storage, new Khorde.Expr.Time { });

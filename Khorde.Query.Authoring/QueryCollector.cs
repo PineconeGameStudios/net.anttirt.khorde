@@ -1,3 +1,4 @@
+using Khorde.Expr.Authoring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace Khorde.Query.Authoring
 
 	public abstract class Pass<T> : QueryGraphContextBase, IPass<T> where T : unmanaged
 	{
-		public override string Title => $"Query Pass";
+		// TODO public override string Title => $"Query Pass";
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
@@ -30,7 +31,7 @@ namespace Khorde.Query.Authoring
 
 		public override void Validate(GraphLogger logger)
 		{
-			bool haveGenerators = blockNodes.Any(b => b is IGenerator);
+			bool haveGenerators = BlockNodes.Any(b => b is IGenerator);
 			if(!haveGenerators)
 				logger.LogError("must have at least one generator", this);
 		}
@@ -58,7 +59,7 @@ namespace Khorde.Query.Authoring
 		const int MinPassCount = 1;
 		const int MaxPassCount = 10;
 
-		public override string Title => $"Query (Result Item: {typeof(T).Name})";
+		// TODO public override string Title => $"Query (Result Item: {typeof(T).Name})";
 
 		public Type ItemType => typeof(T);
 		public Type PassRefType => typeof(PassRef<T>);
@@ -72,7 +73,7 @@ namespace Khorde.Query.Authoring
 			}
 		}
 
-		public List<IPort> GetPassPorts() => GetInputPorts().Where(p => p.dataType == PassRefType).ToList();
+		public List<IPort> GetPassPorts() => GetInputPorts().Where(p => p.DataType == PassRefType).ToList();
 		public IPort GetResultCountPort() => GetInputPort(0);
 
 		public override void Validate(GraphLogger logger)
@@ -87,7 +88,7 @@ namespace Khorde.Query.Authoring
 
 			foreach(var port in GetInputPorts().Skip(1))
 			{
-				if(port.isConnected)
+				if(port.IsConnected)
 					return;
 			}
 

@@ -1,4 +1,5 @@
 
+using Khorde.Expr.Authoring;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -97,7 +98,7 @@ namespace Khorde.Query.Authoring
 
 				if(node is QueryGraphContextBase context)
 				{
-					foreach(var blockNode in context.blockNodes)
+					foreach(var blockNode in context.BlockNodes)
 					{
 						if(blockNode is IQueryGraphNode iqn)
 						{

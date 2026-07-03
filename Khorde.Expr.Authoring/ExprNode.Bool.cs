@@ -8,7 +8,7 @@ namespace Khorde.Expr.Authoring
 	[NodeCategory("Boolean")]
 	internal class AndBool : ExprBase
 	{
-		public override string Title => "And (bool)";
+		public AndBool() { Title = "And (bool)"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -30,7 +30,7 @@ namespace Khorde.Expr.Authoring
 	[NodeCategory("Boolean")]
 	internal class OrBool : ExprBase
 	{
-		public override string Title => "Or (bool)";
+		public OrBool() { Title = "Or (bool)"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -52,7 +52,7 @@ namespace Khorde.Expr.Authoring
 	[NodeCategory("Boolean")]
 	internal class NotBool : ExprBase
 	{
-		public override string Title => "Not (bool)";
+		public NotBool() { Title = "Not (bool)"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

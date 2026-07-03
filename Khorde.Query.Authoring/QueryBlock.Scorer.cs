@@ -12,7 +12,7 @@ namespace Khorde.Query.Authoring
 	[Serializable]
 	class ExpressionScorer : QueryGraphBlockBase, IScorer
 	{
-		public override string Title => $"Expression Scorer";
+		// TODO public override string Title => $"Expression Scorer";
 		private INodeOption normalizerOption;
 		private INodeOption negateOption;
 		private INodeOption noiseOption;

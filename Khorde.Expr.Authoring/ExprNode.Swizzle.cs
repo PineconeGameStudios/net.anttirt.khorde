@@ -129,7 +129,7 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		public override string Title => $"Swizzle";
+		public SwizzleBase() { Title = $"Swizzle"; }
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{

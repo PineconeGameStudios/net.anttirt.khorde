@@ -7,17 +7,6 @@ namespace Khorde.Expr.Authoring
 	{
 	    private INodeOption @operator;
 
-	    public override string Title
-	    {
-	        get
-	        {
-	            if (@operator != null && @operator.TryGetValue(out BinaryCompareOp op))
-	                return op.ToString();
-
-	            return "(compare)";
-	        }
-	    }
-
 	    public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 	    {
 			if(typeof(TArg) == typeof(float))

@@ -15,7 +15,7 @@ namespace Khorde.Behavior.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Write {typeof(T).Name}";
+		public ComponentWriterNode() { Title = $"Write {typeof(T).Name}"; }
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
@@ -122,7 +122,7 @@ namespace Khorde.Behavior.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Write {typeof(T).Name}";
+		public LookupWriterNode() { Title = $"Write {typeof(T).Name}"; }
 
 		IPort entity;
 		List<IPort> fieldPorts = new();
@@ -243,7 +243,7 @@ namespace Khorde.Behavior.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Append {typeof(T).Name}";
+		public BufferAppendNode() { Title = $"Append {typeof(T).Name}"; }
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
@@ -321,7 +321,7 @@ namespace Khorde.Behavior.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Write {typeof(T).Name}";
+		public BufferWriterNode() { Title = $"Write {typeof(T).Name}"; }
 
 		IPort bufferIndex;
 		List<IPort> fieldPorts = new();

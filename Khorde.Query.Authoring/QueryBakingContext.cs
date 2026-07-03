@@ -96,7 +96,7 @@ namespace Khorde.Query.Authoring
 				filterCount = 0,
 				scorerCount = 0;
 
-			foreach(var blockNode in ((ContextNode)node).blockNodes)
+			foreach(var blockNode in ((ContextNode)node).BlockNodes)
 			{
 				if(blockNode is IGenerator)
 					++generatorCount;
@@ -114,7 +114,7 @@ namespace Khorde.Query.Authoring
 
 			generatorCount = filterCount = scorerCount = 0;
 
-			foreach(var blockNode in ((ContextNode)node).blockNodes)
+			foreach(var blockNode in ((ContextNode)node).BlockNodes)
 			{
 				if(blockNode is IGenerator generator)
 					generator.Bake(ref generators[generatorCount++], this);
@@ -153,7 +153,7 @@ namespace Khorde.Query.Authoring
 					{
 						subgraphStack.Push(subgraphNode);
 						var variable = subgraphNode.GetVariableForOutputPort(srcPort);
-						var varNodes = subgraphNode.GetSubgraph().GetNodes().Where(n => n is IVariableNode varNode && varNode.variable == variable).ToList();
+						var varNodes = subgraphNode.GetSubgraph().GetNodes().Where(n => n is IVariableNode varNode && varNode.Variable == variable).ToList();
 						if(varNodes.Count == 0)
 						{
 							AddWarning(dstPort, $"wire is cut, pass not added");
@@ -172,14 +172,14 @@ namespace Khorde.Query.Authoring
 					}
 					else if(srcNode is IVariableNode varNode)
 					{
-						if(varNode.variable.variableKind == VariableKind.Input)
+						if(varNode.Variable.VariableKind == VariableKind.Input)
 						{
-							dstPort = subgraphStack.Current.GetInputPortForVariable(varNode.variable);
+							dstPort = subgraphStack.Current.GetInputPortForVariable(varNode.Variable);
 							subgraphStack.Pop();
 						}
 						else
 						{
-							AddError(varNode, $"unhandled var kind {varNode.variable.variableKind} for {varNode}");
+							AddError(varNode, $"unhandled var kind {varNode.Variable.VariableKind} for {varNode}");
 							return null;
 						}
 					}

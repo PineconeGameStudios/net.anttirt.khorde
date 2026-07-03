@@ -31,7 +31,7 @@ namespace Mpr.Entities.Test
 	{
 		void ISystem.OnUpdate(ref SystemState state)
 		{
-			var text = GameObject.FindFirstObjectByType<TMPro.TMP_Text>(FindObjectsInactive.Exclude);
+			var text = GameObject.FindAnyObjectByType<TMPro.TMP_Text>(FindObjectsInactive.Exclude);
 			if(text == null)
 				return;
 

@@ -777,7 +777,7 @@ namespace Khorde.Behavior
 			output.Add("");
 
 			int j = 0;
-			foreach(ref var exec in data.execs.AsSpan())
+			foreach(ref var exec in data.execs.AsRWSpan())
 			{
 				output.Add("Exec " + j.ToString() + ": " + exec.DumpString());
 				j++;
@@ -786,7 +786,7 @@ namespace Khorde.Behavior
 			output.Add("");
 
 			j = 0;
-			foreach(ref var expr in data.exprData.expressions.AsSpan())
+			foreach(ref var expr in data.exprData.expressions.AsRWSpan())
 			{
 				output.Add("Expr " + j.ToString() + ": (TODO)");// + expr.DumpString());
 			}

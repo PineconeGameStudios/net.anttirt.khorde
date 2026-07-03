@@ -88,7 +88,7 @@ namespace Khorde.Expr.Authoring
 			base.InitializeBake(expressionCount, outputCount);
 
 			ref var data = ref GetData();
-			builder.AllocateString(ref data.assetName, rootGraph.name);
+			builder.AllocateString(ref data.assetName, rootGraph.Name);
 		}
 
 		List<IPort> portsTemp = new();
@@ -96,12 +96,12 @@ namespace Khorde.Expr.Authoring
 		protected VariableKey GetVariableKey(IVariable variable)
 		{
 			bool isGlobal = IsGlobal(variable);
-			return new VariableKey(isGlobal ? globalKey : subgraphStack.GetKey(), variable.name);
+			return new VariableKey(isGlobal ? globalKey : subgraphStack.GetKey(), variable.Name);
 		}
 
 		public static bool IsGlobal(IVariable variable)
 		{
-			return !variable.name.StartsWith("_");
+			return !variable.Name.StartsWith("_");
 		}
 
 		public VariableId GetVariableIndex(IVariable variable)
@@ -115,25 +115,25 @@ namespace Khorde.Expr.Authoring
 			resultVarPort.GetConnectedPorts(portsTemp);
 			if(portsTemp.Count != 1)
 			{
-				AddError(resultVarPort.GetNode(), $"port {resultVarPort.name} must be connected to a single variable");
+				AddError(resultVarPort.GetNode(), $"port {resultVarPort.Name} must be connected to a single variable");
 				return VariableId.Invalid;
 			}
 
 			var varNode = portsTemp[0].GetNode() as IVariableNode;
 			if(varNode == null)
 			{
-				AddError(resultVarPort.GetNode(), $"port {resultVarPort.name} must be connected to a blackboard variable");
+				AddError(resultVarPort.GetNode(), $"port {resultVarPort.Name} must be connected to a blackboard variable");
 				return VariableId.Invalid;
 			}
 
-			return GetVariableIndex(varNode.variable);
+			return GetVariableIndex(varNode.Variable);
 		}
 
 		public ExpressionRef GetExpressionRef(IPort dstPort)
 		{
-			using var _l = TraceScope(dstPort.name);
+			using var _l = TraceScope(dstPort.Name);
 
-			if(!dstPort.isConnected)
+			if(!dstPort.IsConnected)
 				return HandleDisconnectedPort(dstPort);
 
 			using var _ = SaveSubgraph();
@@ -152,15 +152,15 @@ namespace Khorde.Expr.Authoring
 
 			while(true)
 			{
-				Trace($"srcNode={NodeName(srcNode)} port={srcPort.name}");
+				Trace($"srcNode={NodeName(srcNode)} port={srcPort.Name}");
 
 				if(srcNode is IVariableNode varNode)
 				{
-					if(varNode.variable.variableKind == VariableKind.Local)
+					if(varNode.Variable.VariableKind == VariableKind.Local)
 					{
-						return ExpressionRef.Node(varNodeMap[GetNodeKey(varNode.variable)], 0);
+						return ExpressionRef.Node(varNodeMap[GetNodeKey(varNode.Variable)], 0);
 					}
-					else if(varNode.variable.variableKind == VariableKind.Input)
+					else if(varNode.Variable.VariableKind == VariableKind.Input)
 					{
 						// exit subgraph
 						if(subgraphStack.Depth == 0)
@@ -171,15 +171,15 @@ namespace Khorde.Expr.Authoring
 							return default;
 						}
 
-						dstPort = subgraphStack.Current.GetInputPortForVariable(varNode.variable);
+						dstPort = subgraphStack.Current.GetInputPortForVariable(varNode.Variable);
 
 						if(dstPort == null)
 						{
-							AddError(varNode, $"node {varNode} returns null for subgraph node {subgraphStack.Current} input port; try resaving the graph '{subgraphStack.Current.GetSubgraph()?.name}'");
+							AddError(varNode, $"node {varNode} returns null for subgraph node {subgraphStack.Current} input port; try resaving the graph '{subgraphStack.Current.GetSubgraph()?.Name}'");
 							return default;
 						}
 
-						if(!dstPort.isConnected)
+						if(!dstPort.IsConnected)
 							return HandleDisconnectedPort(dstPort);
 
 						PopSubgraph();
@@ -193,7 +193,7 @@ namespace Khorde.Expr.Authoring
 						srcPort = srcPorts[0];
 						srcNode = srcPort.GetNode();
 					}
-					else if(varNode.variable.variableKind == VariableKind.Output)
+					else if(varNode.Variable.VariableKind == VariableKind.Output)
 					{
 						// output variable node within a subgraph; just follow normally
 						dstPort = varNode.GetInputPort(0);
@@ -209,7 +209,7 @@ namespace Khorde.Expr.Authoring
 					}
 					else
 					{
-						AddError(srcNode, $"unsupported variable kind {varNode.variable.variableKind}");
+						AddError(srcNode, $"unsupported variable kind {varNode.Variable.VariableKind}");
 					}
 				}
 				else if(srcNode is ISubgraphNode subgraphNode)
@@ -217,7 +217,7 @@ namespace Khorde.Expr.Authoring
 					PushSubgraph(subgraphNode);
 
 					var subgraphVariable = subgraphNode.GetVariableForOutputPort(srcPort);
-					var nodes = subgraphNode.GetSubgraph().GetNodes().OfType<IVariableNode>().Where(v => v.variable == subgraphVariable).ToArray();
+					var nodes = subgraphNode.GetSubgraph().GetNodes().OfType<IVariableNode>().Where(v => v.Variable == subgraphVariable).ToArray();
 					if(nodes.Length != 1)
 					{
 						if(nodes.Length > 1)
@@ -310,7 +310,7 @@ namespace Khorde.Expr.Authoring
 				{
 					if(varNodesByIndex.TryGetValue(nodeIndex, out var variableNode))
 					{
-						AddError(variableNode.node, $"variable {variableNode.node.name} at index {nodeIndex} failed to add an expression type hash");
+						AddError(variableNode.node, $"variable {variableNode.node.Name} at index {nodeIndex} failed to add an expression type hash");
 					}
 					else if(exprNodesByIndex.TryGetValue(nodeIndex, out var exprNode))
 					{
@@ -332,11 +332,11 @@ namespace Khorde.Expr.Authoring
 
 		void RegisterExprNodes(Graph graph)
 		{
-			using var _ = TraceScope(graph.name);
+			using var _ = TraceScope(graph.Name);
 
 			foreach(var variable in graph.GetVariables())
 			{
-				if(variable.variableKind == VariableKind.Local)
+				if(variable.VariableKind == VariableKind.Local)
 				{
 					var key = GetVariableKey(variable);
 					if(!variables.ContainsKey(key))
@@ -345,7 +345,7 @@ namespace Khorde.Expr.Authoring
 						variables[key] = AddBlackboardVariable(
 							GetVariableName(variable),
 							IsGlobal(variable),
-							variable.dataType,
+							variable.DataType,
 							defaultValue
 						);
 					}
@@ -366,21 +366,21 @@ namespace Khorde.Expr.Authoring
 				}
 				else if(node is IVariableNode varNode)
 				{
-					if(varNode.variable.variableKind == VariableKind.Output)
+					if(varNode.Variable.VariableKind == VariableKind.Output)
 					{
 						RegisterOutput(varNode);
 					}
-					else if(varNode.variable.variableKind == VariableKind.Local)
+					else if(varNode.Variable.VariableKind == VariableKind.Local)
 					{
 						RegisterVariableRead(varNode);
 					}
-					else if(varNode.variable.variableKind == VariableKind.Input)
+					else if(varNode.Variable.VariableKind == VariableKind.Input)
 					{
 						RegisterInput(varNode);
 					}
 					else
 					{
-						AddError(this, $"unsupported variable kind {varNode.variable.variableKind}");
+						AddError(this, $"unsupported variable kind {varNode.Variable.VariableKind}");
 					}
 				}
 
@@ -404,7 +404,7 @@ namespace Khorde.Expr.Authoring
 
 		protected virtual string GetVariableName(IVariable variable)
 		{
-			return variable.name;
+			return variable.Name;
 		}
 
 		private void RegisterVariableRead(IVariableNode varNode)
@@ -412,7 +412,7 @@ namespace Khorde.Expr.Authoring
 			var nodeIndex = exprNodeCounter;
 			if(nodeIndex > ushort.MaxValue)
 				throw new InvalidOperationException("max expr node capacity exceeded");
-			if(!varNodeMap.TryAdd(GetNodeKey(varNode.variable), nodeIndex))
+			if(!varNodeMap.TryAdd(GetNodeKey(varNode.Variable), nodeIndex))
 				return;
 			exprNodeCounter++;
 		}
@@ -471,7 +471,7 @@ namespace Khorde.Expr.Authoring
 
 		void BakeExprNodes(Graph graph)
 		{
-			using var _ = TraceScope(graph.name);
+			using var _ = TraceScope(graph.Name);
 
 			foreach(var node in graph.GetNodes())
 			{
@@ -484,12 +484,12 @@ namespace Khorde.Expr.Authoring
 				else if(node is IExprNode exprNode)
 				{
 					var nodeIndex = exprNodeMap[GetNodeKey(exprNode)];
-					builderSourceGraphNodeIds[nodeIndex] = exprNode.Guid;
+					builderSourceGraphNodeIds[nodeIndex] = exprNode.ID;
 					exprNode.Bake(this, GetStorage(nodeIndex));
 				}
 				else if(node is IVariableNode varNode)
 				{
-					if(varNode.variable.variableKind == VariableKind.Output)
+					if(varNode.Variable.VariableKind == VariableKind.Output)
 					{
 						// NOTE: Baking these is only relevant for standalone
 						// expressions, not for subgraphs.
@@ -501,22 +501,22 @@ namespace Khorde.Expr.Authoring
 							builderOutputs[outputIndex] = new ExpressionOutput
 							{
 								expression = GetExpressionRef(input),
-								valueType = input.dataType.GetExpressionValueType(),
-								valueSize = (ushort)UnsafeUtility.SizeOf(input.dataType),
+								valueType = input.DataType.GetExpressionValueType(),
+								valueSize = (ushort)UnsafeUtility.SizeOf(input.DataType),
 							};
 						}
 					}
-					else if(varNode.variable.variableKind == VariableKind.Local)
+					else if(varNode.Variable.VariableKind == VariableKind.Local)
 					{
-						var nodeIndex = varNodeMap[GetNodeKey(varNode.variable)];
+						var nodeIndex = varNodeMap[GetNodeKey(varNode.Variable)];
 						// NOTE: this means variable nodes for the same variable are folded into one in the baked data
-						builderSourceGraphNodeIds[nodeIndex] = varNode.Guid;
+						builderSourceGraphNodeIds[nodeIndex] = varNode.ID;
 						CreateExpression(GetStorage(nodeIndex), new Variable
 						{
-							index = GetVariableIndex(varNode.variable),
+							index = GetVariableIndex(varNode.Variable),
 						});
 					}
-					else if(varNode.variable.variableKind == VariableKind.Input)
+					else if(varNode.Variable.VariableKind == VariableKind.Input)
 					{
 						// NOTE: Baking these is only relevant for standalone
 						// expressions, not for subgraphs.
@@ -530,7 +530,7 @@ namespace Khorde.Expr.Authoring
 					}
 					else
 					{
-						AddError(varNode, $"unsupported var kind {varNode.variable.variableKind}");
+						AddError(varNode, $"unsupported var kind {varNode.Variable.VariableKind}");
 					}
 				}
 			}
@@ -539,7 +539,7 @@ namespace Khorde.Expr.Authoring
 		public void BakeGeneratedVariable(ICustomExprNode node, int outputIndex, VariableId variableIndex)
 		{
 			var nodeIndex = generatedVarNodeMap[GetNodeKey(node, outputIndex)];
-			builderSourceGraphNodeIds[nodeIndex] = node.Guid;
+			builderSourceGraphNodeIds[nodeIndex] = node.ID;
 			CreateExpression(GetStorage(nodeIndex), new Variable
 			{
 				index = variableIndex,
@@ -584,13 +584,13 @@ namespace Khorde.Expr.Authoring
 		public void PushSubgraph(ISubgraphNode subgraphNode)
 		{
 			subgraphStack.Push(subgraphNode);
-			Trace($"push subgraph {subgraphNode.Guid}; stack = [{string.Join(", ", subgraphStack.Hashes.Select(h => h.ToString().Substring(0, 8)))}]");
+			Trace($"push subgraph {subgraphNode.ID}; stack = [{string.Join(", ", subgraphStack.Hashes.Select(h => h.ToString().Substring(0, 8)))}]");
 		}
 		public void PopSubgraph()
 		{
 			var cur = subgraphStack.Current;
 			subgraphStack.Pop();
-			Trace($"pop subgraph  {cur.Guid}; stack = [{string.Join(", ", subgraphStack.Hashes.Select(h => h.ToString().Substring(0, 8)))}]");
+			Trace($"pop subgraph  {cur.ID}; stack = [{string.Join(", ", subgraphStack.Hashes.Select(h => h.ToString().Substring(0, 8)))}]");
 		}
 
 		protected bool traceBaking = false;
@@ -633,10 +633,10 @@ namespace Khorde.Expr.Authoring
 
 		static string NodeName(INode node) => node switch
 		{
-			IVariableNode varNode => varNode.variable.name,
-			ISubgraphNode subgraphNode => subgraphNode.GetSubgraph().name,
-			IConstantNode constNode => $"({constNode.dataType.Name}) {(constNode.TryGetValue(out var value) ? value.ToString() : "")}",
-			_ => $"{node.GetType().Name}({node.Guid.ToString().Substring(0, 8)})",
+			IVariableNode varNode => varNode.Variable.Name,
+			ISubgraphNode subgraphNode => subgraphNode.GetSubgraph().Name,
+			IConstantNode constNode => $"({constNode.DataType.Name}) {(constNode.TryGetValue(out var value) ? value.ToString() : "")}",
+			_ => $"{node.GetType().Name}({node.ID.ToString().Substring(0, 8)})",
 		};
 	}
 }

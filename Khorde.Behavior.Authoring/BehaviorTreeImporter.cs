@@ -19,7 +19,7 @@ namespace Khorde.Behavior
 		{
 			try
 			{
-				GraphDatabase.StartEphemeralLoad();
+				//GraphDatabase.StartEphemeralLoad();
 
 				var graph = GraphDatabase.LoadGraphForImporter<BehaviorTreeGraph>(ctx.assetPath);
 
@@ -29,9 +29,9 @@ namespace Khorde.Behavior
 					return;
 				}
 
-				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.variable.variableKind == VariableKind.Input || v.variable.variableKind == VariableKind.Output);
+				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.Variable.VariableKind == VariableKind.Input || v.Variable.VariableKind == VariableKind.Output);
 
-				if(graph.nodeCount == 0)
+				if(graph.NodeCount == 0)
 				{
 					// create a blank placeholder so creating a fresh asset doesn't result in a user-visible error
 					var obj = ScriptableObject.CreateInstance<BehaviorTreeAsset>();
@@ -79,7 +79,7 @@ namespace Khorde.Behavior
 			}
 			finally
 			{
-				GraphDatabase.EndEphemeralLoad();
+				//GraphDatabase.EndEphemeralLoad();
 			}
 		}
 	}
