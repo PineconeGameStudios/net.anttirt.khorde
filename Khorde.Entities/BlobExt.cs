@@ -7,7 +7,7 @@ namespace Khorde.Blobs
 {
 	public static class BlobExt
 	{
-		public static Span<T> AsSpan<T>(ref this BlobArray<T> array) where T : unmanaged
+		public static Span<T> AsRWSpan<T>(ref this BlobArray<T> array) where T : unmanaged
 		{
 			unsafe
 			{

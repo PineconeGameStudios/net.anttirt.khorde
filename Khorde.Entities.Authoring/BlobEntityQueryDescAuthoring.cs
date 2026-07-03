@@ -159,7 +159,7 @@ namespace Khorde.Blobs.Authoring
 	                stringBuilder.Append(name);
 	                stringBuilder.Append(": ");
 	                var sep = "";
-	                foreach (ref var ctype in blobArray.AsSpan())
+	                foreach (ref var ctype in blobArray.AsRWSpan())
 	                {
 	                    stringBuilder.Append(sep);
 	                    stringBuilder.Append(ctype.ResolveComponentType().GetManagedType().FullName);

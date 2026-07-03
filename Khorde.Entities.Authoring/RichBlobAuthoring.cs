@@ -11,6 +11,12 @@ using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 
+#if UNITY_6000_4_OR_NEWER
+using UnityObjectRefId = UnityEngine.EntityId;
+#else
+using UnityObjectRefId = System.Int32;
+#endif
+
 namespace Khorde.Entities.Authoring
 {
 	struct PendingObjectRefPatch
@@ -164,8 +170,14 @@ namespace Khorde.Entities.Authoring
 			}
 
 			context.Baker.DependsOn(obj);
-			int instanceId = obj != null ? obj.GetInstanceID() : 0;
-			patch.Target = UnsafeUtility.As<int, UntypedObjectRef>(ref instanceId);
+			UnityObjectRefId instanceId = obj != null ?
+#if UNITY_6000_4_OR_NEWER
+				obj.GetEntityId()
+#else
+				obj.GetInstanceID()
+#endif
+				: default;
+			patch.Target = UnsafeUtility.As<UnityObjectRefId, UntypedObjectRef>(ref instanceId);
 			context.ObjRefPatches.Add(patch);
 		}
 	}

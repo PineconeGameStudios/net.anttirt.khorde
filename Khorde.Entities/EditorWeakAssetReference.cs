@@ -3,12 +3,6 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities.Serialization;
 using UnityEngine;
 
-#if UNITY_6000_4_OR_NEWER
-#error TODO: fix when UnityObjectRef switches to EntityId
-using UnityObjectRefId = UnityEngine.EntityId;
-#else
-#endif
-
 namespace Khorde.Entities
 {
 	/// <summary>

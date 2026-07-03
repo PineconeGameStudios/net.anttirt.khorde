@@ -101,7 +101,7 @@ namespace Khorde.Expr
 			public ref ExpressionBlackboardLayout FindLayout(Hash128 assetHash)
 			{
 
-				foreach(ref var layout in layouts.AsSpan())
+				foreach(ref var layout in layouts.AsRWSpan())
 					if(layout.asset == assetHash)
 						return ref layout;
 

@@ -12,7 +12,6 @@ using UnityEngine;
 using Hash128 = Unity.Entities.Hash128;
 
 #if UNITY_6000_4_OR_NEWER
-#error TODO: fix when UnityObjectRef switches to EntityId
 using UnityObjectRefId = UnityEngine.EntityId;
 #else
 using UnityObjectRefId = System.Int32;
@@ -138,10 +137,14 @@ namespace Khorde.Blobs
 		[AOT.MonoPInvokeCallback(typeof(GetDataStrongDelegate))]
 		static unsafe bool GetDataStrong(UnityObjectRefId objectId, NativeArray<byte>* result)
 		{
+#if UNITY_6000_4_OR_NEWER
+			var asset = Resources.EntityIdToObject(objectId) as BlobAssetBase;
+#else
 			// NOTE: disable warning until UnityObjectRef<T> changes to EntityId instead of int instanceId
 #pragma warning disable CS0618 // Type or member is obsolete
 			var asset = Resources.InstanceIDToObject(objectId) as BlobAssetBase;
 #pragma warning restore CS0618 // Type or member is obsolete
+#endif
 			if(asset == null)
 				return false;
 
@@ -163,10 +166,14 @@ namespace Khorde.Blobs
 		[AOT.MonoPInvokeCallback(typeof(GetHashStrongDelegate))]
 		static unsafe bool GetHashStrong(UnityObjectRefId objectId, Hash128* result)
 		{
+#if UNITY_6000_4_OR_NEWER
+			var asset = Resources.EntityIdToObject(objectId) as BlobAssetBase;
+#else
 			// NOTE: disable warning until UnityObjectRef<T> changes to EntityId instead of int instanceId
 #pragma warning disable CS0618 // Type or member is obsolete
 			var asset = Resources.InstanceIDToObject(objectId) as BlobAssetBase;
 #pragma warning restore CS0618 // Type or member is obsolete
+#endif
 			if(asset == null)
 				return false;
 
