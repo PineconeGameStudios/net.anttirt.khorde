@@ -29,7 +29,9 @@ namespace Khorde.Entities
 				PatchableRichBlob,
 				DynamicBuffer<RichBlobEntityHolder>,
 				DynamicBuffer<RichBlobReferenceHolder>
-				>().WithEntityAccess())
+				>()
+				.WithOptions(EntityQueryOptions.IncludePrefab)
+				.WithEntityAccess())
 			{
 				data.Asset.Reinterpret<UntypedRichBlobPatchData>().Value
 					.Patch(entities, objRefs, state.WorldUnmanaged.SequenceNumber);
