@@ -17,11 +17,13 @@ namespace Khorde.Expr.Authoring
 		static object Field(object obj, string name) => obj.GetType().GetField(name, InstanceFlags).GetValue(obj);
 		static object StaticField(Type type, string name) => type.GetField(name, StaticFlags).GetValue(null);
 
+		// Required in order to support arbitrary types from downstream assemblies as constant types when baking a graph
 		public static bool TryGetValue(this IConstantNode node, out object value)
 		{
 			return TryGetValue_Constant(Prop(node, "Value"), out value);
 		}
 
+		// Required in order to support arbitrary types from downstream assemblies as port types when baking a graph
 		public static bool TryGetValue(this IPort port, out object value)
 		{
 			if(port.IsConnected)
@@ -47,6 +49,7 @@ namespace Khorde.Expr.Authoring
 			return true;
 		}
 
+		// Required in order to traverse subgraph nodes
 		public static IPort GetInputPortForVariable(this ISubgraphNode node, IVariable variable)
 		{
 			var e = ((IDictionary)Prop(node, "InputPortToVariableDeclarationDictionary")).GetEnumerator();
@@ -60,6 +63,7 @@ namespace Khorde.Expr.Authoring
 			return null;
 		}
 
+		// Required in order to traverse subgraph nodes
 		public static IPort GetOutputPortForVariable(this ISubgraphNode node, IVariable variable)
 		{
 			var e = ((IDictionary)Prop(node, "OutputPortToVariableDeclarationDictionary")).GetEnumerator();
@@ -73,6 +77,7 @@ namespace Khorde.Expr.Authoring
 			return null;
 		}
 
+		// Required in order to traverse subgraph nodes
 		public static IVariable GetVariableForOutputPort(this ISubgraphNode node, IPort port)
 		{
 			var dict = (IDictionary)Prop(node, "OutputPortToVariableDeclarationDictionary");
@@ -82,6 +87,7 @@ namespace Khorde.Expr.Authoring
 			return null;
 		}
 
+		// Required in order to traverse subgraph nodes
 		public static IVariable GetVariableForInputPort(this ISubgraphNode node, IPort port)
 		{
 			var dict = (IDictionary)Prop(node, "InputPortToVariableDeclarationDictionary");
@@ -91,6 +97,7 @@ namespace Khorde.Expr.Authoring
 			return null;
 		}
 
+		// Required for UnityEditor.AssetImporters.AssetImportContext.DependsOnSourceAsset(UnityEngine.GUID)
 		public static bool TryGetSubgraphAssetGuid(this ISubgraphNode node, out UnityEngine.GUID guid)
 		{
 			guid = (UnityEngine.GUID)Prop(Prop(node, "SubgraphReference"), "AssetGuid");
@@ -111,6 +118,8 @@ namespace Khorde.Expr.Authoring
 			foreach(Type graphType in s_GraphInfos.Keys)
 			{
 				var graphInfo = s_GraphInfos[graphType];
+
+				// NEW FEATURE: [UseSubgraph(...)] allowing the use of a subgraph type from another referenced assembly
 				var subgraphTypes = (List<Type>)Field(graphInfo, "subgraphTypes");
 				foreach(var useSubgraphAttribute in graphType.GetCustomAttributes<UseSubgraphAttribute>())
 				{
@@ -118,10 +127,8 @@ namespace Khorde.Expr.Authoring
 						subgraphTypes.Add(useSubgraphAttribute.SubGraphType);
 				}
 
-				// ensure graphInfo.nodeTypes is populated
-				GetNodeTypes(graphType);
-
-				// remove duplicates
+				// BUGFIX: remove duplicate nodes from item library
+				GetNodeTypes(graphType); // ensure nodeTypes gets populated
 				var nodeTypes = (List<Type>)Field(graphInfo, "nodeTypes");
 				var typeSet = new HashSet<Type>(nodeTypes);
 				for(int i = 0; i < nodeTypes.Count;)
