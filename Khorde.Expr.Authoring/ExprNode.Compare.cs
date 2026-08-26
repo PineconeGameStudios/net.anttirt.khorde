@@ -55,6 +55,6 @@ namespace Khorde.Expr.Authoring
 	    }
 	}
 
-	[Serializable] [NodeCategory("Compare")] internal class CompareFloatNode : CompareBase<float> { }
-	[Serializable] [NodeCategory("Compare")] internal class CompareIntNode : CompareBase<int> { }
+	[Serializable] [Node("Compare")] internal class CompareFloatNode : CompareBase<float> { }
+	[Serializable] [Node("Compare")] internal class CompareIntNode : CompareBase<int> { }
 }

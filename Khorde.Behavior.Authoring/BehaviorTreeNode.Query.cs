@@ -11,7 +11,7 @@ using Unity.GraphToolkit.Editor;
 namespace Khorde.Behavior.Authoring
 {
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Query : ExecBase, IExecNode, ICustomExprNode
 	{
 		private IPort execInput;

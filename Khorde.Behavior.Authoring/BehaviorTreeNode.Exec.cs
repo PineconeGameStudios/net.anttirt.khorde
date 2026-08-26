@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Khorde.Behavior.Authoring
 {
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Root : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -33,7 +33,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Sequence : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -75,7 +75,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Selector : ContextNode, IExecNode
 	{
 		public int NodeCount => 1;
@@ -105,7 +105,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	[UseWithContext(typeof(Selector))]
 	internal class SubTreeOption : BlockNode
 	{
@@ -127,7 +127,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Optional : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -163,7 +163,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Fail : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -183,7 +183,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Catch : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -212,7 +212,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Wait : ExecBase, IExecNode
 	{
 		INodeOption timeoutOption;
@@ -282,7 +282,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class WriteVar : ExecBase, IExecNode
 	{
 		private INodeOption valueTypeOption;
@@ -345,7 +345,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Parallel : ExecBase, IExecNode
 	{
 		private IPort main;
@@ -417,7 +417,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Repeat : ExecBase, IExecNode, ICustomExprNode
 	{
 		private INodeOption infiniteOption;
@@ -519,7 +519,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Invoke : ExecBase, IExecNode
 	{
 		INodeOption action;

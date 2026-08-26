@@ -6,7 +6,7 @@ using Unity.GraphToolkit.Editor;
 namespace Khorde.Expr.Authoring
 {
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class ComponentReaderNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
@@ -33,7 +33,7 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class ComponentLookupNode<T> : ExprBase, IComponentLookup where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
@@ -73,7 +73,7 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferReaderNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		private IPort index;
@@ -109,7 +109,7 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferLengthNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
