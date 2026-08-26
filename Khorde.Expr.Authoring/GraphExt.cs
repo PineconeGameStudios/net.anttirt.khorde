@@ -107,7 +107,7 @@ namespace Khorde.Expr.Authoring
 		delegate IReadOnlyList<Type> GetNodeTypesDelegate(Type graphType);
 
 		[OnCodeLoaded]
-		static void ProcessSubGraphAttributes()
+		static void PatchPublicGraphFactory()
 		{
 			var publicGraphFactoryT = typeof(IVariable).Assembly.GetType("Unity.GraphToolkit.Editor.Implementation.PublicGraphFactory");
 			RuntimeHelpers.RunClassConstructor(publicGraphFactoryT.TypeHandle);
