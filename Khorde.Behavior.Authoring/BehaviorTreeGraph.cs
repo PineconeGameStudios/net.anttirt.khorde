@@ -6,6 +6,7 @@ using Unity.Entities;
 using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
+using UnityEngine;
 
 namespace Khorde.Behavior
 {
@@ -80,6 +81,15 @@ namespace Khorde.Behavior
 
 				BlobAssetReference<BTData>.Write(writer, builder, 0);
 			}
+		}
+	}
+
+	[DataTypeStyleMapper(typeof(BehaviorTreeGraph))]
+	public class BehaviorTreeGraphDataStyleMapper : EntitiesDataStyleMapper
+	{
+		public BehaviorTreeGraphDataStyleMapper() : base()
+		{
+			Register(typeof(ExecutionFlow), EditorGUIUtility.IconContent("Packages/net.anttirt.khorde/Icons/BehaviorGraph.psd").image as Texture2D, Color.orange);
 		}
 	}
 }
