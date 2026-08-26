@@ -156,4 +156,12 @@ namespace Khorde.Query.Authoring
 			}
 		}
 	}
+
+	[DataTypeStyleMapper(typeof(QueryGraph))]
+	public class QueryGraphDataStyleMapper : EntitiesDataStyleMapper
+	{
+		public QueryGraphDataStyleMapper() : base()
+		{
+		}
+	}
 }
