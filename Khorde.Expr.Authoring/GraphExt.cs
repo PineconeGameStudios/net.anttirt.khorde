@@ -1,14 +1,21 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Unity.GraphToolkit.Editor;
-
+using Unity.Scripting.LifecycleManagement;
 using BF = System.Reflection.BindingFlags;
 
 namespace Khorde.Expr.Authoring
 {
-	public static class GraphExt
+	public static partial class GraphExt
 	{
-		const BF Flags = BF.Public | BF.NonPublic | BF.FlattenHierarchy | BF.Instance;
-		static object Prop(object obj, string name) => obj.GetType().GetProperty(name, Flags).GetValue(obj);
+		const BF InstanceFlags = BF.Public | BF.NonPublic | BF.FlattenHierarchy | BF.Instance;
+		const BF StaticFlags = BF.Public | BF.NonPublic | BF.FlattenHierarchy | BF.Static;
+		static object Prop(object obj, string name) => obj.GetType().GetProperty(name, InstanceFlags).GetValue(obj);
+		static object Field(object obj, string name) => obj.GetType().GetField(name, InstanceFlags).GetValue(obj);
+		static object StaticField(Type type, string name) => type.GetField(name, StaticFlags).GetValue(null);
 
 		public static bool TryGetValue(this IConstantNode node, out object value)
 		{
@@ -88,6 +95,41 @@ namespace Khorde.Expr.Authoring
 		{
 			guid = (UnityEngine.GUID)Prop(Prop(node, "SubgraphReference"), "AssetGuid");
 			return guid != default;
+		}
+
+		[OnCodeLoaded]
+		static void ProcessSubGraphAttributes()
+		{
+			var publicGraphFactoryT = typeof(IVariable).Assembly.GetType("Unity.GraphToolkit.Editor.Implementation.PublicGraphFactory");
+			RuntimeHelpers.RunClassConstructor(publicGraphFactoryT.TypeHandle);
+
+			var s_GraphInfos = (IDictionary)StaticField(publicGraphFactoryT, "s_GraphInfos");
+			foreach(Type graphType in s_GraphInfos.Keys)
+			{
+				var graphInfo = s_GraphInfos[graphType];
+				var subgraphTypes = (List<Type>)Field(graphInfo, "subgraphTypes");
+				foreach(var useSubgraphAttribute in graphType.GetCustomAttributes<UseSubgraphAttribute>())
+				{
+					if(!subgraphTypes.Contains(useSubgraphAttribute.SubGraphType))
+						subgraphTypes.Add(useSubgraphAttribute.SubGraphType);
+				}
+			}
+		}
+	}
+
+	[AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
+	public sealed class UseSubgraphAttribute : Attribute
+	{
+		readonly Type subGraphType;
+
+		public UseSubgraphAttribute(Type subGraphType)
+		{
+			this.subGraphType = subGraphType;
+		}
+
+		public Type SubGraphType
+		{
+			get { return subGraphType; }
 		}
 	}
 }

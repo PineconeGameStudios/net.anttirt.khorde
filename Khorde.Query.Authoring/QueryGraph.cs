@@ -13,10 +13,8 @@ namespace Khorde.Query.Authoring
 {
 	[Serializable]
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
-	[UseNodes(typeof(IQueryGraphNode))]
-	[UseNodes(typeof(Expr.Authoring.IExprNode))]
-	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
-	public class QueryGraph : Graph
+	[UseSubgraph(typeof(ExprSubgraph))]
+	public class QueryGraph : Graph, IExprGraph
 	{
 		internal const string AssetExtension = "queryg";
 
