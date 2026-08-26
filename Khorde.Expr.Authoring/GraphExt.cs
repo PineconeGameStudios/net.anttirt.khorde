@@ -97,11 +97,15 @@ namespace Khorde.Expr.Authoring
 			return guid != default;
 		}
 
+		delegate IReadOnlyList<Type> GetNodeTypesDelegate(Type graphType);
+
 		[OnCodeLoaded]
 		static void ProcessSubGraphAttributes()
 		{
 			var publicGraphFactoryT = typeof(IVariable).Assembly.GetType("Unity.GraphToolkit.Editor.Implementation.PublicGraphFactory");
 			RuntimeHelpers.RunClassConstructor(publicGraphFactoryT.TypeHandle);
+
+			var GetNodeTypes = (GetNodeTypesDelegate)publicGraphFactoryT.GetMethod("GetNodeTypes", BF.Static | BF.Public | BF.NonPublic).CreateDelegate(typeof(GetNodeTypesDelegate));
 
 			var s_GraphInfos = (IDictionary)StaticField(publicGraphFactoryT, "s_GraphInfos");
 			foreach(Type graphType in s_GraphInfos.Keys)
@@ -112,6 +116,24 @@ namespace Khorde.Expr.Authoring
 				{
 					if(!subgraphTypes.Contains(useSubgraphAttribute.SubGraphType))
 						subgraphTypes.Add(useSubgraphAttribute.SubGraphType);
+				}
+
+				// ensure graphInfo.nodeTypes is populated
+				GetNodeTypes(graphType);
+
+				// remove duplicates
+				var nodeTypes = (List<Type>)Field(graphInfo, "nodeTypes");
+				var typeSet = new HashSet<Type>(nodeTypes);
+				for(int i = 0; i < nodeTypes.Count;)
+				{
+					if(!typeSet.Remove(nodeTypes[i]))
+					{
+						nodeTypes.RemoveAt(i);
+					}
+					else
+					{
+						i++;
+					}
 				}
 			}
 		}
