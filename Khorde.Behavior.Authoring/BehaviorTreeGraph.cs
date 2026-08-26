@@ -11,10 +11,8 @@ namespace Khorde.Behavior
 {
 	[Serializable]
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
-	[UseNodes(typeof(Khorde.Expr.Authoring.IExprNode))]
-	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
-	[UseSubgraph(typeof(BehaviorTreeGraph))]
-	public class BehaviorTreeGraph : Graph
+	[UseSubgraph(typeof(ExprSubgraph))]
+	public class BehaviorTreeGraph : Graph, IExprGraph
 	{
 		internal const string AssetExtension = "btg";
 

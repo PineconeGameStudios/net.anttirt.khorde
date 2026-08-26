@@ -6,8 +6,7 @@ namespace Khorde.Expr.Authoring
 {
 	[Serializable]
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
-	[UseNodes(typeof(IExprNode))]
-	public class ExprSubgraph : Graph
+	public class ExprSubgraph : Graph, IExprGraph
 	{
 		internal const string AssetExtension = "exprg";
 
