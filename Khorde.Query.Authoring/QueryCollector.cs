@@ -38,11 +38,11 @@ namespace Khorde.Query.Authoring
 		}
 	}
 
-	[Serializable][NodeCategory("Query")] class QueryPassInt2 : Pass<int2> { }
-	[Serializable][NodeCategory("Query")] class QueryPassInt3 : Pass<int3> { }
-	[Serializable][NodeCategory("Query")] class QueryPassFloat2 : Pass<float2> { }
-	[Serializable][NodeCategory("Query")] class QueryPassFloat3 : Pass<float3> { }
-	[Serializable][NodeCategory("Query")] class QueryPassEntity : Pass<Entity> { }
+	[Serializable][Node("Query")] class QueryPassInt2 : Pass<int2> { }
+	[Serializable][Node("Query")] class QueryPassInt3 : Pass<int3> { }
+	[Serializable][Node("Query")] class QueryPassFloat2 : Pass<float2> { }
+	[Serializable][Node("Query")] class QueryPassFloat3 : Pass<float3> { }
+	[Serializable][Node("Query")] class QueryPassEntity : Pass<Entity> { }
 
 	public interface IQuery : INode
 	{
@@ -135,9 +135,9 @@ namespace Khorde.Query.Authoring
 		}
 	}
 
-	[Serializable][NodeCategory("Query")] class QueryInt2 : Query<int2> { }
-	[Serializable][NodeCategory("Query")] class QueryInt3 : Query<int3> { }
-	[Serializable][NodeCategory("Query")] class QueryFloat2 : Query<float2> { }
-	[Serializable][NodeCategory("Query")] class QueryFloat3 : Query<float3> { }
-	[Serializable][NodeCategory("Query")] class QueryEntity : Query<Entity> { }
+	[Serializable][Node("Query")] class QueryInt2 : Query<int2> { }
+	[Serializable][Node("Query")] class QueryInt3 : Query<int3> { }
+	[Serializable][Node("Query")] class QueryFloat2 : Query<float2> { }
+	[Serializable][Node("Query")] class QueryFloat3 : Query<float3> { }
+	[Serializable][Node("Query")] class QueryEntity : Query<Entity> { }
 }

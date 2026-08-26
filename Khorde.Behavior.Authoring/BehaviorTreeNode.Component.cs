@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace Khorde.Behavior.Authoring
 {
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class ComponentWriterNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
@@ -116,7 +116,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class LookupWriterNode<T> : ExecBase, IComponentLookup where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
@@ -237,7 +237,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferAppendNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
@@ -315,7 +315,7 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferWriterNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);

@@ -5,7 +5,7 @@ using Unity.GraphToolkit.Editor;
 namespace Khorde.Expr.Authoring
 {
 	[Serializable]
-	[NodeCategory("Boolean")]
+	[Node("Boolean")]
 	internal class AndBool : ExprBase
 	{
 		public override void OnEnable() { Title = "And (bool)"; }
@@ -27,7 +27,7 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Boolean")]
+	[Node("Boolean")]
 	internal class OrBool : ExprBase
 	{
 		public override void OnEnable() { Title = "Or (bool)"; }
@@ -49,7 +49,7 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Boolean")]
+	[Node("Boolean")]
 	internal class NotBool : ExprBase
 	{
 		public override void OnEnable() { Title = "Not (bool)"; }
