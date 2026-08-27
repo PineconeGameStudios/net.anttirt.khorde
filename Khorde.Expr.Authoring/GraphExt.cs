@@ -16,6 +16,7 @@ namespace Khorde.Expr.Authoring
 		static object Prop(object obj, string name) => obj.GetType().GetProperty(name, InstanceFlags).GetValue(obj);
 		static object Field(object obj, string name) => obj.GetType().GetField(name, InstanceFlags).GetValue(obj);
 		static object StaticField(Type type, string name) => type.GetField(name, StaticFlags).GetValue(null);
+		static object Method(object obj, string name, params object[] parameters) => obj.GetType().GetMethod(name, InstanceFlags).Invoke(obj, parameters);
 
 		// Required in order to support arbitrary types from downstream assemblies as constant types when baking a graph
 		public static bool TryGetValue(this IConstantNode node, out object value)
@@ -41,7 +42,7 @@ namespace Khorde.Expr.Authoring
 
 			if(objectValue_Object.GetType().Name == "EnumValueReference")
 			{
-				value = Prop(objectValue_Object, "Value");
+				value = Method(objectValue_Object, "ValueAsEnum");
 				return true;
 			}
 
