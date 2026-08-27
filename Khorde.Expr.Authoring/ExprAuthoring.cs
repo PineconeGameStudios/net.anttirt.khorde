@@ -38,16 +38,24 @@ namespace Khorde.Expr.Authoring
 
 	public static class ExprAuthoring
 	{
-		delegate ushort WriteConstantDelegate(object objectValue, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache);
+		delegate ushort WriteConstantDelegate(object objectValue, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null, List<ConstRefl> refl = null);
 
 		static Dictionary<System.Type, WriteConstantDelegate> writeConstantMethodCache = new();
 
 		public const ushort MaxConstantSize = 0x7fff;
 
-		public static ExpressionRef WriteConstant2(object value, NativeList<byte> constStorage,
-			Dictionary<object, (ushort offset, ushort length)> cache = null)
+		public struct ConstRefl
 		{
-			ushort offset = WriteConstant(value, out var length, constStorage, cache);
+			public Type type;
+			public int offset;
+			public int size;
+			public int alignment;
+		}
+
+		public static ExpressionRef WriteConstant2(object value, NativeList<byte> constStorage,
+			Dictionary<object, (ushort offset, ushort length)> cache = null, List<ConstRefl> reflection = null)
+		{
+			ushort offset = WriteConstant(value, out var length, constStorage, cache, reflection);
 			return ExpressionRef.Const(offset, length);
 		}
 
@@ -60,7 +68,7 @@ namespace Khorde.Expr.Authoring
 		/// <param name="cache">Value cache for constant value deduplication</param>
 		/// <returns></returns>
 		/// <exception cref="System.InvalidOperationException"></exception>
-		public static ushort WriteConstant(object value, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null)
+		public static ushort WriteConstant(object value, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null, List<ConstRefl> reflection = null)
 		{
 			var type = value.GetType();
 
@@ -76,13 +84,13 @@ namespace Khorde.Expr.Authoring
 				writeConstantMethodCache[type] = impl;
 			}
 
-			return impl(value, out length, constStorage, cache);
+			return impl(value, out length, constStorage, cache, reflection);
 		}
 
-		static ushort WriteConstantTrampoline<T>(object objectValue, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
+		static ushort WriteConstantTrampoline<T>(object objectValue, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null, List<ConstRefl> reflection = null) where T : unmanaged
 		{
 			T value = (T)objectValue;
-			return WriteConstant(value, out length, constStorage, cache);
+			return WriteConstant(value, out length, constStorage, cache, reflection);
 		}
 
 		/// <summary>
@@ -94,9 +102,9 @@ namespace Khorde.Expr.Authoring
 		/// <param name="cache">Value cache for constant value deduplication</param>
 		/// <returns></returns>
 		/// <exception cref="System.Exception"></exception>
-		public static ExpressionRef WriteConstant2<T>(T value, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
+		public static ExpressionRef WriteConstant2<T>(T value, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null, List<ConstRefl> reflection = null) where T : unmanaged
 		{
-			var offset = WriteConstant<T>(value, out var length, constStorage, cache);
+			var offset = WriteConstant<T>(value, out var length, constStorage, cache, reflection);
 			return ExpressionRef.Const(offset, length);
 		}
 
@@ -110,7 +118,7 @@ namespace Khorde.Expr.Authoring
 		/// <param name="cache">Value cache for constant value deduplication</param>
 		/// <returns></returns>
 		/// <exception cref="System.Exception"></exception>
-		public static ushort WriteConstant<T>(T value, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null) where T : unmanaged
+		public static ushort WriteConstant<T>(T value, out ushort length, NativeList<byte> constStorage, Dictionary<object, (ushort offset, ushort length)> cache = null, List<ConstRefl> reflection = null) where T : unmanaged
 		{
 			if(cache != null)
 			{
@@ -150,10 +158,18 @@ namespace Khorde.Expr.Authoring
 				cache[value] = ((ushort)offset, length);
 			}
 
+			reflection?.Add(new()
+			{
+				type = typeof(T),
+				offset = offset,
+				size = size,
+				alignment = align,
+			});
+
 			return (ushort)offset;
 		}
 
-		public static void BakeConstStorage(ref BlobBuilder builder, ref BlobExpressionData exprData, NativeList<byte> constStorage)
+		public static void BakeConstStorage(ref BlobBuilder builder, ref BlobExpressionData exprData, NativeList<byte> constStorage, List<ConstRefl> reflection = null)
 		{
 			unsafe
 			{
@@ -162,6 +178,26 @@ namespace Khorde.Expr.Authoring
 					constStorage.GetUnsafePtr(),
 					constStorage.Length
 				);
+			}
+
+			if(reflection != null)
+			{
+				var result = builder.Allocate(ref exprData.constantReflection, reflection.Count);
+				for(int i = 0; i < reflection.Count; ++i)
+				{
+					ref var dst = ref result[i];
+					var src = reflection[i];
+
+					dst.size = src.size;
+					dst.alignment = src.alignment;
+					dst.offset = src.offset;
+					builder.AllocateString(ref dst.typeName, src.type.FullName);
+					builder.AllocateString(ref dst.typeAssembly, src.type.Assembly.FullName);
+				}
+			}
+			else
+			{
+				builder.Allocate(ref exprData.constantReflection, 0);
 			}
 		}
 
