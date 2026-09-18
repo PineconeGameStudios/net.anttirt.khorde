@@ -3,20 +3,10 @@ using Unity.GraphToolkit.Editor;
 
 namespace Khorde.Expr.Authoring
 {
+	[Serializable]
 	abstract public class CompareBase<TArg> : ExprBase where TArg : unmanaged
 	{
 	    private INodeOption @operator;
-
-	    public override string Title
-	    {
-	        get
-	        {
-	            if (@operator != null && @operator.TryGetValue(out BinaryCompareOp op))
-	                return op.ToString();
-
-	            return "(compare)";
-	        }
-	    }
 
 	    public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 	    {
@@ -59,12 +49,12 @@ namespace Khorde.Expr.Authoring
 
 	    protected override void OnDefinePorts(IPortDefinitionContext context)
 	    {
-	        context.AddInputPort<TArg>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
-	        context.AddInputPort<TArg>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
+	        context.AddInputPort<TArg>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
+	        context.AddInputPort<TArg>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
 	        context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 	    }
 	}
 
-	[Serializable] [NodeCategory("Compare")] internal class CompareFloatNode : CompareBase<float> { }
-	[Serializable] [NodeCategory("Compare")] internal class CompareIntNode : CompareBase<int> { }
+	[Serializable] [Node("Compare")] internal class CompareFloatNode : CompareBase<float> { }
+	[Serializable] [Node("Compare")] internal class CompareIntNode : CompareBase<int> { }
 }

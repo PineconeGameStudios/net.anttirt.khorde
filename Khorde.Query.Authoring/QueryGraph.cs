@@ -1,4 +1,5 @@
 
+using Khorde.Expr.Authoring;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -12,10 +13,8 @@ namespace Khorde.Query.Authoring
 {
 	[Serializable]
 	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
-	[UseNodes(typeof(IQueryGraphNode))]
-	[UseNodes(typeof(Expr.Authoring.IExprNode))]
-	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
-	public class QueryGraph : Graph
+	[UseSubgraph(typeof(ExprSubgraph))]
+	public class QueryGraph : Graph, IExprGraph
 	{
 		internal const string AssetExtension = "queryg";
 
@@ -97,7 +96,7 @@ namespace Khorde.Query.Authoring
 
 				if(node is QueryGraphContextBase context)
 				{
-					foreach(var blockNode in context.blockNodes)
+					foreach(var blockNode in context.BlockNodes)
 					{
 						if(blockNode is IQueryGraphNode iqn)
 						{
@@ -155,6 +154,14 @@ namespace Khorde.Query.Authoring
 
 				BlobAssetReference<QSData>.Write(writer, builder, 0);
 			}
+		}
+	}
+
+	[DataTypeStyleMapper(typeof(QueryGraph))]
+	public class QueryGraphDataStyleMapper : EntitiesDataStyleMapper
+	{
+		public QueryGraphDataStyleMapper() : base()
+		{
 		}
 	}
 }

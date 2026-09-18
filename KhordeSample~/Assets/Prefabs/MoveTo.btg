@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 790b4d75d92f4b0984310a268dbd952f, type: 3}
+  m_Script: {fileID: 12501, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: MoveTo
-  m_EditorClassIdentifier: Unity.GraphToolkit.Editor::Unity.GraphToolkit.Editor.Implementation.GraphObjectImp
+  m_EditorClassIdentifier: UnityEditor.GraphToolkitModule::Unity.GraphToolkit.Editor.Implementation.GraphObjectImp
   m_GraphModel:
     rid: 8259216277413823363
   references:
@@ -20,7 +20,7 @@ MonoBehaviour:
     - rid: -2
       type: {class: , ns: , asm: }
     - rid: 8055170928982098266
-      type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: EnumConstant, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value:
           m_EnumType:
@@ -31,7 +31,7 @@ MonoBehaviour:
           m_Identification: Khorde.Behavior.Authoring.Wait+WaitMode, Khorde.Behavior.Authoring,
             Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     - rid: 8259216277413823363
-      type: {class: GraphModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: GraphModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 9940425866889112470
@@ -223,7 +223,7 @@ MonoBehaviour:
         m_Graph:
           rid: 8259216277413823365
     - rid: 8259216277413823364
-      type: {class: SectionModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: SectionModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 7457210653796469815
@@ -241,7 +241,7 @@ MonoBehaviour:
       type: {class: BehaviorTreeGraph, ns: Khorde.Behavior, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 8259216277413823380
-      type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 14995826777496842703
@@ -278,7 +278,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 4a4ba80eaa7dcba5736c8eccd59bbf08
     - rid: 8259216277413823381
-      type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 4503403828850601318
@@ -315,7 +315,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 152ea57da943560b8e717c6ed3449cee
     - rid: 8259216277413823382
-      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 10900030870935110408
@@ -349,7 +349,7 @@ MonoBehaviour:
         m_Node:
           rid: 8259216277413823390
     - rid: 8259216277413823383
-      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 16446906277694176784
@@ -397,7 +397,7 @@ MonoBehaviour:
         m_Node:
           rid: 8259216277413823398
     - rid: 8259216277413823384
-      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 6416156827855185447
@@ -437,7 +437,7 @@ MonoBehaviour:
         m_Node:
           rid: 8259216277413823401
     - rid: 8259216277413823385
-      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 13559960159371641932
@@ -469,7 +469,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: position
     - rid: 8259216277413823387
-      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 18203825194583244164
@@ -501,7 +501,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: tolerance
     - rid: 8259216277413823388
-      type: {class: VariableDeclarationModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: VariableDeclarationModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 11946780605874195274
@@ -524,7 +524,7 @@ MonoBehaviour:
         m_Modifiers: 1
         m_VariableFlags: 0
     - rid: 8259216277413823389
-      type: {class: VariableDeclarationModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: VariableDeclarationModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 816914777650834965
@@ -550,34 +550,34 @@ MonoBehaviour:
       type: {class: ReadMoveTarget, ns: Mpr.Game, asm: Mpr.Game.Authoring}
       data: 
     - rid: 8259216277413823397
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data: {}
     - rid: 8259216277413823398
       type: {class: WriteMoveTarget, ns: Mpr.Game, asm: Mpr.Game.Authoring}
       data: 
     - rid: 8259216277413823399
-      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 0
     - rid: 8259216277413823400
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data: {}
     - rid: 8259216277413823401
       type: {class: Wait, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 8259216277413823402
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 0
     - rid: 8259216277413823403
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value:
           x: 0
           y: 0
           z: 0
     - rid: 8259216277413823416
-      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 17735072126667411003
@@ -615,17 +615,17 @@ MonoBehaviour:
         m_Node:
           rid: 8259216277413823419
     - rid: 8259216277413823417
-      type: {class: 'Constant`1[[System.Int32, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Int32, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 2
     - rid: 8259216277413823418
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data: {}
     - rid: 8259216277413823419
       type: {class: Sequence, ns: Khorde.Behavior.Authoring, asm: Khorde.Behavior.Authoring}
       data: 
     - rid: 8259216277413823420
-      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 8519212751776933688
@@ -657,7 +657,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: 
     - rid: 8259216277413823421
-      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 13795011935720968494
@@ -689,7 +689,7 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: 
     - rid: 8259216277413823422
-      type: {class: VariableDeclarationModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: VariableDeclarationModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 15392916065241991487
@@ -712,10 +712,10 @@ MonoBehaviour:
         m_Modifiers: 1
         m_VariableFlags: 0
     - rid: 8259216277413823424
-      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Khorde.Behavior.Authoring.ExecutionFlow, Khorde.Behavior.Authoring]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data: {}
     - rid: 8259216277413823425
-      type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: VariableNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 18343999354752518986
@@ -752,7 +752,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 3f09272e9b9f9ed5a0e2b694eed9d299
     - rid: 8259216277413823426
-      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 773293672676063210
@@ -784,34 +784,34 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: 
     - rid: 8259216303520743439
-      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 1
     - rid: 8259216303520743440
-      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 1
     - rid: 8259216303520743441
-      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 1
     - rid: 8259216303520743442
-      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[Unity.Mathematics.float3, Unity.Mathematics]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value:
           x: 0
           y: 0
           z: 0
     - rid: 8259216303520743443
-      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Single, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 0
     - rid: 8259216303520743446
-      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 1
     - rid: 8259216303520743699
-      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: Unity.GraphToolkit.Editor}
+      type: {class: UserNodeModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 18139194293859894426
@@ -847,7 +847,7 @@ MonoBehaviour:
         m_Node:
           rid: 8259216303520743702
     - rid: 8259216303520743700
-      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 2823205876002651571
@@ -879,14 +879,14 @@ MonoBehaviour:
           m_PortOrientation: 0
           m_Title: 
     - rid: 8259216303520743701
-      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: 0
     - rid: 8259216303520743702
       type: {class: NotBool, ns: Khorde.Expr.Authoring, asm: Khorde.Expr.Authoring}
       data: 
     - rid: 8259216303520743703
-      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: Unity.GraphToolkit.Internal.Editor}
+      type: {class: WireModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
           m_Value0: 8869547952885466363

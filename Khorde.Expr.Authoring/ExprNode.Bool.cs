@@ -5,10 +5,10 @@ using Unity.GraphToolkit.Editor;
 namespace Khorde.Expr.Authoring
 {
 	[Serializable]
-	[NodeCategory("Boolean")]
+	[Node("Boolean")]
 	internal class AndBool : ExprBase
 	{
-		public override string Title => "And (bool)";
+		public override void OnEnable() { Title = "And (bool)"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -20,17 +20,17 @@ namespace Khorde.Expr.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
-			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
+			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
+			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
 			context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Boolean")]
+	[Node("Boolean")]
 	internal class OrBool : ExprBase
 	{
-		public override string Title => "Or (bool)";
+		public override void OnEnable() { Title = "Or (bool)"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -42,17 +42,17 @@ namespace Khorde.Expr.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
-			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
+			context.AddInputPort<bool>("a").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
+			context.AddInputPort<bool>("b").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
 			context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Boolean")]
+	[Node("Boolean")]
 	internal class NotBool : ExprBase
 	{
-		public override string Title => "Not (bool)";
+		public override void OnEnable() { Title = "Not (bool)"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -63,7 +63,7 @@ namespace Khorde.Expr.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			context.AddInputPort<bool>("in").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithPortCapacity(PortCapacity.Single).Build();
+			context.AddInputPort<bool>("in").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).WithCapacity(PortCapacity.Single).Build();
 			context.AddOutputPort<bool>("out").WithDisplayName(string.Empty).WithConnectorUI(PortConnectorUI.Circle).Build();
 		}
 	}

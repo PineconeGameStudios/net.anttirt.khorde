@@ -35,28 +35,28 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddInputPort<float2>("center")
 				.WithDisplayName("Center")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
 			context.AddInputPort<float>("orientation")
 				.WithDisplayName("Orientation")
 				.WithDefaultValue(1.0f)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
 			context.AddInputPort<float2>("size")
 				.WithDisplayName("Size")
 				.WithDefaultValue(new float2(4, 4))
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
 			context.AddInputPort<float>("spacing")
 				.WithDisplayName("Spacing")
 				.WithDefaultValue(1.0f)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}
@@ -75,21 +75,21 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddInputPort<float2>("center")
 				.WithDisplayName("Center")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
 			context.AddInputPort<float>("density")
 				.WithDisplayName("Density")
 				.WithDefaultValue(1.0f)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
 			context.AddInputPort<float>("radius")
 				.WithDisplayName("Radius")
 				.WithDefaultValue(10.0f)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}

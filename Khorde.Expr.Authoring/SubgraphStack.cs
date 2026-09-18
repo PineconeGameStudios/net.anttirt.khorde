@@ -82,7 +82,7 @@ namespace Khorde.Expr.Authoring
 		public IEnumerable<UnityEngine.Hash128> Hashes => pathHashes;
 
 		public int Depth => pathHashes.Count;
-		public void Push(ISubgraphNode node) { path.Add(node); pathHashes.Add(node.Guid); }
+		public void Push(ISubgraphNode node) { path.Add(node); pathHashes.Add(node.ID); }
 		public void Pop() { path.RemoveAt(path.Count - 1); pathHashes.RemoveAt(pathHashes.Count - 1); }
 		public UnityEngine.Hash128 GetKey() => UnityEngine.Hash128.Compute(pathHashes);
 		public override bool Equals(object obj) => Equals(obj as SubgraphStack);

@@ -19,7 +19,7 @@ namespace Khorde.Query
 		/// <summary>
 		/// Results for Entity generators
 		/// </summary>
-		private NativeHashMap<Hash128, NativeList<Entity>> entityQueryResultLookup;
+		private UnsafeHashMap<Hash128, NativeList<Entity>> entityQueryResultLookup;
 		private NativeHashSet<Entity> warnedEntities;
 		private NativeList<Entity> warnPendingEntities;
 		private JobHandle warnPendingEntitiesHandle;
@@ -29,7 +29,7 @@ namespace Khorde.Query
 
 		public void OnCreate(ref SystemState state)
 		{
-			entityQueryResultLookup = new NativeHashMap<Hash128, NativeList<Entity>>(1, Allocator.Persistent);
+			entityQueryResultLookup = new UnsafeHashMap<Hash128, NativeList<Entity>>(1, Allocator.Persistent);
 			assets = new QuerySystemAssets(Allocator.Persistent);
 			warnedEntities = new NativeHashSet<Entity>(0, Allocator.Persistent);
 			warnPendingEntities = default;
@@ -78,7 +78,7 @@ namespace Khorde.Query
 			}
 
 			var entityQueryJobHandles =
-				new NativeHashMap<BlobAssetReference<BlobEntityQueryDesc>, JobHandle>(0, state.WorldUpdateAllocator);
+				new UnsafeHashMap<BlobAssetReference<BlobEntityQueryDesc>, JobHandle>(0, state.WorldUpdateAllocator);
 
 			entityQueryJobHandles[default] = state.Dependency;
 
@@ -182,7 +182,7 @@ namespace Khorde.Query
 			// query job go into a nested NativeList and nested containers
 			// are not supported by the safety system
 			[NativeDisableContainerSafetyRestriction]
-			public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
+			public UnsafeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 
 			public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask,
 				in v128 chunkEnabledMask)

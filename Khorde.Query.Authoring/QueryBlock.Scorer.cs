@@ -12,7 +12,7 @@ namespace Khorde.Query.Authoring
 	[Serializable]
 	class ExpressionScorer : QueryGraphBlockBase, IScorer
 	{
-		public override string Title => $"Expression Scorer";
+		// TODO public override string Title => $"Expression Scorer";
 		private INodeOption normalizerOption;
 		private INodeOption negateOption;
 		private INodeOption noiseOption;
@@ -53,7 +53,7 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddInputPort<float>("in_score")
 				.WithDisplayName(string.Empty)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}

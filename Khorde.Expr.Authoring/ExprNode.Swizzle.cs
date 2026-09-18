@@ -5,6 +5,7 @@ using Unity.Mathematics;
 
 namespace Khorde.Expr.Authoring
 {
+	[Serializable]
 	internal abstract class SwizzleBase : ExprBase
 	{
 		protected enum BaseType
@@ -129,7 +130,7 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
-		public override string Title => $"Swizzle";
+		public override void OnEnable() { Title = $"Swizzle"; }
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
@@ -157,7 +158,7 @@ namespace Khorde.Expr.Authoring
 			context.AddInputPort("in")
 				.WithDisplayName(string.Empty)
 				.WithDataType<T>()
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			if(pattern.Length == 0)
@@ -191,22 +192,22 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort("out")
 				.WithDisplayName(string.Empty)
 				.WithDataType(resultType)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
 
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt : SwizzleBase<int> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt2 : SwizzleBase<int2> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt3 : SwizzleBase<int3> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleInt4 : SwizzleBase<int4> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat : SwizzleBase<float> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat2 : SwizzleBase<float2> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat3 : SwizzleBase<float3> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleFloat4 : SwizzleBase<float4> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble : SwizzleBase<double> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble2 : SwizzleBase<double2> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble3 : SwizzleBase<double3> { }
-	[Serializable][NodeCategory("Math/Swizzle")] internal class SwizzleDouble4 : SwizzleBase<double4> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleInt : SwizzleBase<int> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleInt2 : SwizzleBase<int2> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleInt3 : SwizzleBase<int3> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleInt4 : SwizzleBase<int4> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleFloat : SwizzleBase<float> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleFloat2 : SwizzleBase<float2> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleFloat3 : SwizzleBase<float3> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleFloat4 : SwizzleBase<float4> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleDouble : SwizzleBase<double> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleDouble2 : SwizzleBase<double2> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleDouble3 : SwizzleBase<double3> { }
+	[Serializable][Node("Math/Swizzle")] internal class SwizzleDouble4 : SwizzleBase<double4> { }
 
 }

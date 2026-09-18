@@ -8,7 +8,7 @@ namespace Khorde.Expr.Authoring
 	{
 		private INodeOption propertyName;
 
-		public override string Title => "Shader Prop";
+		public override void OnEnable() { Title = "Shader Prop"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -29,7 +29,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<int>("Id")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -39,7 +39,7 @@ namespace Khorde.Expr.Authoring
 	{
 		private INodeOption propertyName;
 
-		public override string Title => "Animator Prop";
+		public override void OnEnable() { Title = "Animator Prop"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -60,7 +60,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<int>("Id")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}

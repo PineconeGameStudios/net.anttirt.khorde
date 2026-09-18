@@ -208,7 +208,7 @@ namespace Khorde.Expr.Authoring
 		{
 			var variableSets = new List<List<(string name, Type type, bool isGlobal, byte[] defaultValue)>>();
 
-			var assemblies = AppDomain.CurrentDomain.GetAssemblies().ToDictionary(asm => asm.FullName);
+			var assemblies = UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies().ToDictionary(asm => asm.FullName);
 
 			for(int assetIndex = 0; assetIndex < expressions.Count; ++assetIndex)
 			{

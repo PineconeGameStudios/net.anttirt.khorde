@@ -1,19 +1,19 @@
 using Khorde.Behavior.Authoring;
+using Khorde.Expr.Authoring;
 using System;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
+using UnityEngine;
 
 namespace Khorde.Behavior
 {
 	[Serializable]
-	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs, typeof(BehaviorTreeGraphViewController))]
-	[UseNodes(typeof(Khorde.Expr.Authoring.IExprNode))]
-	[UseSubgraph(typeof(Expr.Authoring.ExprSubgraph))]
-	[UseSubgraph(typeof(BehaviorTreeGraph))]
-	public class BehaviorTreeGraph : Graph
+	[Graph(AssetExtension, GraphOptions.SupportsSubgraphs)]
+	[UseSubgraph(typeof(ExprSubgraph))]
+	public class BehaviorTreeGraph : Graph, IExprGraph
 	{
 		internal const string AssetExtension = "btg";
 
@@ -81,6 +81,15 @@ namespace Khorde.Behavior
 
 				BlobAssetReference<BTData>.Write(writer, builder, 0);
 			}
+		}
+	}
+
+	[DataTypeStyleMapper(typeof(BehaviorTreeGraph))]
+	public class BehaviorTreeGraphDataStyleMapper : EntitiesDataStyleMapper
+	{
+		public BehaviorTreeGraphDataStyleMapper() : base()
+		{
+			Register(typeof(ExecutionFlow), EditorGUIUtility.IconContent("Packages/net.anttirt.khorde/Icons/BehaviorGraph.psd").image as Texture2D, Color.orange);
 		}
 	}
 }

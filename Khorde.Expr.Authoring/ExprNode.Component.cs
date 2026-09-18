@@ -6,13 +6,13 @@ using Unity.GraphToolkit.Editor;
 namespace Khorde.Expr.Authoring
 {
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class ComponentReaderNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public override string Title => $"Read {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Read {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -33,13 +33,13 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class ComponentLookupNode<T> : ExprBase, IComponentLookup where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public override string Title => $"Lookup {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Lookup {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -53,7 +53,7 @@ namespace Khorde.Expr.Authoring
 			context.AddInputPort<Entity>("Entity")
 				.WithDisplayName("Entity")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			/// NOTE: this offsets output indices for fields by 1 (see <see cref="Khorde.Expr.BTExpr.LookupField.Evaluate"/>
@@ -73,7 +73,7 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferReaderNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		private IPort index;
@@ -81,7 +81,7 @@ namespace Khorde.Expr.Authoring
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public override string Title => $"Read {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Read {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -94,7 +94,7 @@ namespace Khorde.Expr.Authoring
 		{
 			index = context.AddInputPort<int>("Index")
 				.WithDisplayName("Index")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
@@ -109,13 +109,13 @@ namespace Khorde.Expr.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferLengthNode<T> : ExprBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadOnly);
 		public bool IsReadOnly => true;
 
-		public override string Title => $"Read {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Read {typeof(T).Name}"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{

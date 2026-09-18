@@ -14,7 +14,7 @@ namespace Khorde.Query.Authoring
 	[Serializable]
 	class ExpressionFilter : QueryGraphBlockBase, IFilter
 	{
-		public override string Title => $"Expression Filter";
+		// TODO public override string Title => $"Expression Filter";
 
 		public void Bake(ref QSFilter qsFilter, QueryBakingContext queryBakingContext)
 		{
@@ -26,7 +26,7 @@ namespace Khorde.Query.Authoring
 		{
 			context.AddInputPort<bool>("in_pass")
 				.WithDisplayName("Accept Item")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}

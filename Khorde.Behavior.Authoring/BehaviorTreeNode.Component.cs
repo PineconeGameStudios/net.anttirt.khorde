@@ -9,13 +9,13 @@ using System.Collections.Generic;
 namespace Khorde.Behavior.Authoring
 {
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class ComponentWriterNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Write {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Write {typeof(T).Name}"; }
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
@@ -91,7 +91,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetComponentFields<T>();
@@ -106,7 +106,7 @@ namespace Khorde.Behavior.Authoring
 					context.AddInputPort(field.Name)
 						.WithDisplayName(field.Name)
 						.WithDataType(field.FieldType)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.Build();
 				}
 
@@ -116,13 +116,13 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class LookupWriterNode<T> : ExecBase, IComponentLookup where T : unmanaged, Unity.Entities.IComponentData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Write {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Write {typeof(T).Name}"; }
 
 		IPort entity;
 		List<IPort> fieldPorts = new();
@@ -202,7 +202,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetComponentFields<T>();
@@ -211,7 +211,7 @@ namespace Khorde.Behavior.Authoring
 
 			entity = context.AddInputPort<Entity>("Entity")
 				.WithDisplayName("Entity")
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 
@@ -226,7 +226,7 @@ namespace Khorde.Behavior.Authoring
 						context.AddInputPort(field.Name)
 							.WithDisplayName(field.Name)
 							.WithDataType(field.FieldType)
-							.WithPortCapacity(PortCapacity.Single)
+							.WithCapacity(PortCapacity.Single)
 							.Build()
 						);
 				}
@@ -237,13 +237,13 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferAppendNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Append {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Append {typeof(T).Name}"; }
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
@@ -295,7 +295,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetBufferFields<T>();
@@ -306,7 +306,7 @@ namespace Khorde.Behavior.Authoring
 				context.AddInputPort(field.Name)
 					.WithDisplayName(field.Name)
 					.WithDataType(field.FieldType)
-					.WithPortCapacity(PortCapacity.Single)
+					.WithCapacity(PortCapacity.Single)
 					.Build();
 
 				index++;
@@ -315,13 +315,13 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Component")]
+	[Node("Component")]
 	public abstract class BufferWriterNode<T> : ExecBase, IComponentAccess where T : unmanaged, Unity.Entities.IBufferElementData
 	{
 		public ComponentType ComponentType => new ComponentType(typeof(T), ComponentType.AccessMode.ReadWrite);
 		public bool IsReadOnly => false;
 
-		public override string Title => $"Write {typeof(T).Name}";
+		public override void OnEnable() { Title = $"Write {typeof(T).Name}"; }
 
 		IPort bufferIndex;
 		List<IPort> fieldPorts = new();
@@ -401,13 +401,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			bufferIndex = context.AddInputPort<int>("Index")
 				.WithDisplayName("Index")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			var fields = BlobExpressionData.GetBufferFields<T>();
@@ -424,7 +424,7 @@ namespace Khorde.Behavior.Authoring
 						context.AddInputPort(field.Name)
 							.WithDisplayName(field.Name)
 							.WithDataType(field.FieldType)
-							.WithPortCapacity(PortCapacity.Single)
+							.WithCapacity(PortCapacity.Single)
 							.Build()
 							);
 				}

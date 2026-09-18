@@ -12,15 +12,16 @@ namespace Khorde.Query.Authoring
 		Type ItemType { get; }
 	}
 	
+	[Serializable]
 	abstract class ItemNodeBase<T> : QueryGraphNodeBase, IExprNode, IQueryCurrentItemNode
 	{
-		public override string Title => $"Current Item ({typeof(T).Name})";
+		// TODO public override string Title => $"Current Item ({typeof(T).Name})";
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
 			context.AddOutputPort<T>("item")
 				.WithDisplayName(string.Empty)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.Build();
 		}

@@ -52,13 +52,14 @@ namespace Khorde.Expr.Authoring
 		};
 	}
 
+	[Serializable]
 	abstract class BreakBase : ExprBase
 	{
 		protected abstract VectorType inputType { get; }
 		private IPort inputPort;
 		private List<IPort> outputPorts;
 
-		public override string Title => "Break";
+		public override void OnEnable() { Title = "Break"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -90,7 +91,7 @@ namespace Khorde.Expr.Authoring
 					.WithDisplayName(new string(names[i], 1))
 					.WithDataType(inputType.ScalarType())
 					.WithConnectorUI(PortConnectorUI.Circle)
-					.WithPortCapacity(PortCapacity.Multi)
+					.WithCapacity(PortCapacity.Multi)
 					.Build()
 					).ToList();
 		}
@@ -103,6 +104,7 @@ namespace Khorde.Expr.Authoring
 	[Serializable] class BreakFloat3Node : BreakBase { protected override VectorType inputType => VectorType.Float3; }
 	[Serializable] class BreakFloat4Node : BreakBase { protected override VectorType inputType => VectorType.Float4; }
 
+	[Serializable]
 	abstract class MakeBase : ExprBase
 	{
 		protected abstract VectorType outputType { get; }
@@ -139,7 +141,7 @@ namespace Khorde.Expr.Authoring
 				.WithDisplayName(new string(names[i], 1))
 				.WithDataType(outputType.ScalarType())
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build()
 				).ToList();
 		}

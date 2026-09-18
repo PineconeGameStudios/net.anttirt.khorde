@@ -10,7 +10,7 @@ namespace Khorde.Expr.Authoring
 		private INodeOption minOption;
 		private INodeOption maxOption;
 
-		public override string Title => "Random";
+		public override void OnEnable() { Title = "Random"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -31,7 +31,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<int>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -42,7 +42,7 @@ namespace Khorde.Expr.Authoring
 		private INodeOption minOption;
 		private INodeOption maxOption;
 
-		public override string Title => "Random";
+		public override void OnEnable() { Title = "Random"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -63,7 +63,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<float>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -71,7 +71,7 @@ namespace Khorde.Expr.Authoring
 	[Serializable]
 	class RandomFloat2Direction : ExprBase
 	{
-		public override string Title => "Random Direction";
+		public override void OnEnable() { Title = "Random Direction"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -83,7 +83,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<float2>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}
@@ -91,7 +91,7 @@ namespace Khorde.Expr.Authoring
 	[Serializable]
 	class RandomFloat3Direction : ExprBase
 	{
-		public override string Title => "Random Direction";
+		public override void OnEnable() { Title = "Random Direction"; }
 
 		public override void Bake(GraphExpressionBakingContext context, ExpressionStorageRef storage)
 		{
@@ -103,7 +103,7 @@ namespace Khorde.Expr.Authoring
 			context.AddOutputPort<float3>("Result")
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.Build();
 		}
 	}

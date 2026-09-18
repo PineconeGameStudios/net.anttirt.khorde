@@ -36,8 +36,7 @@ namespace Khorde.Entities
 
 	internal struct UntypedObjectRef : IEquatable<UntypedObjectRef>
 	{
-		// currently a InstanceId, later switch this EntityId repr
-		internal int Value;
+		internal EntityId Value;
 
 		public bool Equals(UntypedObjectRef other) => Value == other.Value;
 	}
@@ -106,8 +105,7 @@ namespace Khorde.Entities
 	[MayOnlyLiveInBlobStorage]
 	public struct BlobEntity
 	{
-		internal int Index;
-		internal int Version;
+		internal EntityId Value;
 
 		public Entity AsEntity => UnsafeUtility.As<BlobEntity, Entity>(ref this);
 	}

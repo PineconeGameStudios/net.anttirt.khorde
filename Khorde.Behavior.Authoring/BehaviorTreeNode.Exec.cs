@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Khorde.Behavior.Authoring
 {
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Root : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -22,7 +22,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 
@@ -33,14 +33,14 @@ namespace Khorde.Behavior.Authoring
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Sequence : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
 			exec.type = BTExec.BTExecType.Sequence;
 			exec.data.sequence = new Behavior.Sequence { };
-			var outputPorts = builder.Allocate(ref exec.data.sequence.children, outputPortCount);
+			var outputPorts = builder.Allocate(ref exec.data.sequence.children, OutputPortCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
 				outputPorts[i] = context.GetTargetNodeId(GetOutputPort(i));
 		}
@@ -61,7 +61,7 @@ namespace Khorde.Behavior.Authoring
 					context.AddOutputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME + "_" + i.ToString())
 						.WithDisplayName(string.Empty)
 						.WithConnectorUI(PortConnectorUI.Arrowhead)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.Build();
 				}
 			}
@@ -69,13 +69,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Selector : ContextNode, IExecNode
 	{
 		public int NodeCount => 1;
@@ -85,7 +85,7 @@ namespace Khorde.Behavior.Authoring
 			exec.type = BTExec.BTExecType.Selector;
 			exec.data.selector = new Behavior.Selector { };
 
-			var outputPorts = builder.Allocate(ref exec.data.selector.children, blockCount);
+			var outputPorts = builder.Allocate(ref exec.data.selector.children, BlockCount);
 			for(int i = 0; i < outputPorts.Length; ++i)
 			{
 				var option = (SubTreeOption)GetBlock(i);
@@ -99,13 +99,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	[UseWithContext(typeof(Selector))]
 	internal class SubTreeOption : BlockNode
 	{
@@ -114,20 +114,20 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<bool>("Condition")
 				.WithDisplayName("Condition")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.WithDefaultValue(true)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(ExecBase.EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Optional : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -145,25 +145,25 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddInputPort<bool>("Condition")
 				.WithDisplayName("Condition")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Fail : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -177,13 +177,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Catch : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
@@ -200,19 +200,19 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Wait : ExecBase, IExecNode
 	{
 		INodeOption timeoutOption;
@@ -257,7 +257,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			conditionModeOption.TryGetValue<ConditionMode>(out var conditionMode);
@@ -265,7 +265,7 @@ namespace Khorde.Behavior.Authoring
 			conditionInputPort = context.AddInputPort<bool>("Until")
 				.WithDisplayName(conditionMode.ToString())
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			timeoutOption.TryGetValue<bool>(out var timeout);
@@ -275,14 +275,14 @@ namespace Khorde.Behavior.Authoring
 				durationInputPort = context.AddInputPort<float>("Duration")
 					.WithDisplayName("Duration")
 					.WithConnectorUI(PortConnectorUI.Circle)
-					.WithPortCapacity(PortCapacity.Single)
+					.WithCapacity(PortCapacity.Single)
 					.Build();
 			}
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class WriteVar : ExecBase, IExecNode
 	{
 		private INodeOption valueTypeOption;
@@ -291,13 +291,13 @@ namespace Khorde.Behavior.Authoring
 
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
-			if(varPort.firstConnectedPort?.GetNode() is not IVariableNode varNode)
+			if(varPort.FirstConnectedPort?.GetNode() is not IVariableNode varNode)
 			{
 				context.AddError(this, "variable port must be connected directly to a variable");
 				return;
 			}
 
-			var varIndex = context.GetVariableIndex(varNode.variable);
+			var varIndex = context.GetVariableIndex(varNode.Variable);
 			exec.type = BTExec.BTExecType.WriteVar;
 			exec.data.writeVar = new Behavior.WriteVar
 			{
@@ -319,7 +319,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			valueTypeOption.TryGetValue<ExpressionValueType>(out var valueType);
@@ -332,20 +332,20 @@ namespace Khorde.Behavior.Authoring
 				.WithDisplayName("Variable")
 				.WithDataType(type)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			valuePort = context.AddInputPort("Value")
 				.WithDisplayName("Value")
 				.WithDataType(type)
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Parallel : ExecBase, IExecNode
 	{
 		private IPort main;
@@ -399,25 +399,25 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			main = context.AddOutputPort<ExecutionFlow>("main")
 				.WithDisplayName("Main")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			parallel = context.AddOutputPort<ExecutionFlow>("parallel")
 				.WithDisplayName("Parallel")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Repeat : ExecBase, IExecNode, ICustomExprNode
 	{
 		private INodeOption infiniteOption;
@@ -472,13 +472,13 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			child = context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			switch(mode)
@@ -486,7 +486,7 @@ namespace Khorde.Behavior.Authoring
 				case RepeatMode.Count:
 					parameter = context.AddInputPort<int>("CountParameter")
 						.WithConnectorUI(PortConnectorUI.Circle)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.WithDisplayName("Count")
 						.Build();
 
@@ -500,7 +500,7 @@ namespace Khorde.Behavior.Authoring
 				case RepeatMode.Condition:
 					parameter = context.AddInputPort<bool>("ConditionParameter")
 						.WithConnectorUI(PortConnectorUI.Circle)
-						.WithPortCapacity(PortCapacity.Single)
+						.WithCapacity(PortCapacity.Single)
 						.WithDisplayName("Condition")
 						.Build();
 
@@ -512,14 +512,14 @@ namespace Khorde.Behavior.Authoring
 
 			counter = context.AddOutputPort<int>("LoopCounter")
 				.WithConnectorUI(PortConnectorUI.Circle)
-				.WithPortCapacity(PortCapacity.Multi)
+				.WithCapacity(PortCapacity.Multi)
 				.WithDisplayName("Counter")
 				.Build();
 		}
 	}
 
 	[Serializable]
-	[NodeCategory("Execution")]
+	[Node("Execution")]
 	internal class Invoke : ExecBase, IExecNode
 	{
 		INodeOption action;
@@ -582,7 +582,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
-				.WithPortCapacity(PortCapacity.Single)
+				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			paramPorts.Clear();
@@ -597,7 +597,7 @@ namespace Khorde.Behavior.Authoring
 						paramPorts.Add(context.AddInputPort(p.name)
 							.WithDisplayName(ObjectNames.NicifyVariableName(p.name))
 							.WithDataType(p.type)
-							.WithPortCapacity(PortCapacity.Single)
+							.WithCapacity(PortCapacity.Single)
 							.Build());
 					}
 				}

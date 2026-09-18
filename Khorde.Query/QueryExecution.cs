@@ -16,7 +16,7 @@ namespace Khorde.Query
 		public ref QSData data => ref *pData;
 		public NativeArray<UnsafeComponentReference> componentPtrs;
 		public NativeArray<UntypedComponentLookup> lookups;
-		public NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
+		public UnsafeHashMap<Hash128, NativeList<Entity>> queryResultLookup;
 		public float now;
 		public float deltaTime;
 
@@ -30,7 +30,7 @@ namespace Khorde.Query
 			ref QSData data,
 			NativeArray<UnsafeComponentReference> componentPtrs,
 			NativeArray<UntypedComponentLookup> lookups,
-			NativeHashMap<Hash128, NativeList<Entity>> queryResultLookup
+			UnsafeHashMap<Hash128, NativeList<Entity>> queryResultLookup
 		)
 		{
 			fixed(QSData* pData = &data)
@@ -92,7 +92,7 @@ namespace Khorde.Query
 				ref var pass = ref data.passes[passIndex];
 
 				// generate items
-				foreach(ref var generator in pass.generators.AsSpan())
+				foreach(ref var generator in pass.generators.AsRWSpan())
 					generator.Generate(in this, in exprContext, items);
 
 				var unfilteredItems = items.AsArray().GetSubArray(passItemStartIndex, items.Length - passItemStartIndex);
@@ -113,7 +113,7 @@ namespace Khorde.Query
 					passBits.Set(i, true);
 
 				// compute filters
-				foreach(ref var filter in pass.filters.AsSpan())
+				foreach(ref var filter in pass.filters.AsRWSpan())
 					filter.Pass(in this, in exprContext, ref tempState, unfilteredItems, passBits);
 
 				// for(int i = passItemStartIndex; i < passItemStartIndex + newItemCount; ++i)
@@ -149,7 +149,7 @@ namespace Khorde.Query
 				// foreach(var filteredItem in filteredItems)
 				// 	UnityEngine.Debug.Log($"generated {filteredItem}");
 
-				foreach(ref var scorer in pass.scorers.AsSpan())
+				foreach(ref var scorer in pass.scorers.AsRWSpan())
 					scorer.Score(in this, in exprContext, ref tempState, filteredItems, passScores);
 
 				passItemStartIndex = items.Length;

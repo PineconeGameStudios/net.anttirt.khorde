@@ -1,3 +1,7 @@
+#if !UNITY_6000_4_OR_NEWER
+
+// TODO: use new debug api in gtk
+
 using System.Linq;
 using Khorde.Blobs;
 using Unity.Collections;
@@ -103,3 +107,4 @@ namespace Khorde.Behavior
 		}
 	}
 }
+#endif
