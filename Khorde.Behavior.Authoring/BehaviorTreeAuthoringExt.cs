@@ -49,7 +49,7 @@ namespace Khorde.Behavior
 
 		public static void SetData(ref this BTExec self, in Wait value) { self.type = BTExecType.Wait; self.data.wait = value; }
 		public static void SetData(ref this BTExec self, in Fail value) { self.type = BTExecType.Fail; self.data.fail = value; }
-		public static void SetData(ref this BTExec self, in Optional value) { self.type = BTExecType.Optional; self.data.optional = value; }
+		public static void SetData(ref this BTExec self, in If value) { self.type = BTExecType.If; self.data.@if = value; }
 		public static void SetData(ref this BTExec self, in Catch value) { self.type = BTExecType.Catch; self.data.@catch = value; }
 	}
 }

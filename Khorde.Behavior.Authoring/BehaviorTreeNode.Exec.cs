@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace Khorde.Behavior.Authoring
 {
@@ -128,14 +129,16 @@ namespace Khorde.Behavior.Authoring
 
 	[Serializable]
 	[Node("Execution")]
-	internal class Optional : ExecBase, IExecNode
+	[MovedFrom(autoUpdateAPI: false, sourceClassName: "Optional")]
+	internal class If : ExecBase, IExecNode
 	{
 		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
 		{
-			exec.type = BTExec.BTExecType.Optional;
-			exec.data.optional = new Behavior.Optional
+			exec.type = BTExec.BTExecType.If;
+			exec.data.@if = new Behavior.If
 			{
-				child = context.GetTargetNodeId(GetOutputPort(0)),
+				then = context.GetTargetNodeId(GetOutputPort(0)),
+				@else = context.GetTargetNodeId(GetOutputPort(1)),
 				condition = context.GetExpressionRef(GetInputPort(1)),
 			};
 		}
@@ -149,13 +152,19 @@ namespace Khorde.Behavior.Authoring
 				.Build();
 
 			context.AddInputPort<bool>("Condition")
-				.WithDisplayName("Condition")
+				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Circle)
 				.WithCapacity(PortCapacity.Single)
 				.Build();
 
 			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
-				.WithDisplayName(string.Empty)
+				.WithDisplayName("Then")
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+
+			context.AddOutputPort<ExecutionFlow>("ExecElse")
+				.WithDisplayName("Else")
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithCapacity(PortCapacity.Single)
 				.Build();

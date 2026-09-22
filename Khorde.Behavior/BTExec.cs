@@ -21,7 +21,7 @@ namespace Khorde.Behavior
 			WriteField,
 			Wait,
 			Fail,
-			Optional,
+			If,
 			Catch, // TODO: catch failures from child threads
 			WriteVar,
 			Query,
@@ -43,7 +43,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public WriteField writeField;
 			[FieldOffset(0)] public Wait wait;
 			[FieldOffset(0)] public Fail fail;
-			[FieldOffset(0)] public Optional optional;
+			[FieldOffset(0)] public If @if;
 			[FieldOffset(0)] public Catch @catch;
 			[FieldOffset(0)] public WriteVar writeVar;
 			[FieldOffset(0)] public Query query;
@@ -69,7 +69,7 @@ namespace Khorde.Behavior
 				case BTExecType.WriteField: result += data.writeField.DumpString(); break;
 				case BTExecType.Wait: result += data.wait.DumpString(); break;
 				case BTExecType.Fail: result += data.fail.DumpString(); break;
-				case BTExecType.Optional: result += data.optional.DumpString(); break;
+				case BTExecType.If: result += data.@if.DumpString(); break;
 				case BTExecType.Catch: result += data.@catch.DumpString(); break;
 				case BTExecType.WriteVar: result += data.writeVar.DumpString(); break;
 				case BTExecType.Query: result += data.query.DumpString(); break;

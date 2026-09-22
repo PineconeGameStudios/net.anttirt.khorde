@@ -149,14 +149,15 @@ namespace Khorde.Behavior
 		}
 	}
 
-	public struct Optional
+	public struct If
 	{
 		public ExpressionRef condition;
-		public BTExecNodeId child;
+		public BTExecNodeId then;
+		public BTExecNodeId @else;
 
 		public string DumpString()
 		{
-			return $"{{ condition={condition}, child={child} }}";
+			return $"{{ condition={condition}, then={then}, else={@else} }}";
 		}
 	}
 

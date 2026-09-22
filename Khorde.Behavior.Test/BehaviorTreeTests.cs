@@ -695,9 +695,9 @@ namespace Khorde.Behavior.Test
 			var TestComponent1_field1 = n0.WithOutputIndex(1);
 			var TestComponent1_field2 = n0.WithOutputIndex(2);
 
-			execs[3].SetData(new Optional { condition = TestComponent1_field1, child = new BTExecNodeId(4) });
+			execs[3].SetData(new If { condition = TestComponent1_field1, then = new BTExecNodeId(4) });
 			execs[4].type = BTExecType.Nop;
-			execs[5].SetData(new Optional { condition = TestComponent1_field2, child = new BTExecNodeId(6) });
+			execs[5].SetData(new If { condition = TestComponent1_field2, then = new BTExecNodeId(6) });
 			execs[6].type = BTExecType.Nop;
 
 			var asset = baker.Bake();
@@ -721,11 +721,13 @@ namespace Khorde.Behavior.Test
 					Trace(BTExecType.Root, 1, 1, Event.Resume),
 					Trace(BTExecType.Root, 1, 1, Event.Call),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
-					Trace(BTExecType.Optional, 3, 3, Event.Return),
+					Trace(BTExecType.If, 3, 3, Event.Call),
+					Trace(BTExecType.Nop, 0, 4, Event.Return),
+					Trace(BTExecType.If, 3, 3, Event.Return),
 					Trace(BTExecType.Sequence, 2, 2, Event.Call),
-					Trace(BTExecType.Optional, 5, 3, Event.Call),
+					Trace(BTExecType.If, 5, 3, Event.Call),
 					Trace(BTExecType.Nop, 6, 4, Event.Return),
-					Trace(BTExecType.Optional, 5, 3, Event.Return),
+					Trace(BTExecType.If, 5, 3, Event.Return),
 					Trace(BTExecType.Sequence, 2, 2, Event.Return),
 					Trace(BTExecType.Root, 1, 1, Event.Yield)
 				);

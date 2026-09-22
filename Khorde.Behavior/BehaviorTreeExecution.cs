@@ -386,10 +386,13 @@ namespace Khorde.Behavior
 							Fail(ref state, ref data, ref node, ref thread);
 							break;
 
-						case BTExec.BTExecType.Optional:
-							if(frames[^1].childIndex == 0 && node.data.optional.condition.Evaluate<bool>(in exprContext))
+						case BTExec.BTExecType.If:
+							if(frames[^1].childIndex == 0)
 							{
-								Call(ref data, node.data.optional.child);
+								if(node.data.@if.condition.Evaluate<bool>(in exprContext))
+									Call(ref data, node.data.@if.then);
+								else
+									Call(ref data, node.data.@if.@else);
 							}
 							else
 							{
