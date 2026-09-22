@@ -436,10 +436,27 @@ namespace Khorde.Behavior
 		public BlobCurve curve;
 		public bool customInput; // if true, pass the input to the curve instead of the downstream utility
 		public ExpressionRef input;
+		public float invInputRange;
 
 		public string DumpString()
 		{
 			return $"{{ child={child} customInput={customInput} input={input} }}";
+		}
+	}
+
+	public struct UtilityRange
+	{
+		public BTExecNodeId child;
+		public BlobCurve softRangeCurve;
+		public ExpressionRef targetEntity;
+		public float range;
+		public ExpressionComponentTypeInfo localTypeInfo;
+		public ExpressionComponentTypeInfo lookupTypeInfo;
+		public bool softRange;
+
+		public string DumpString()
+		{
+			return $"{{ child={child} }}";
 		}
 	}
 

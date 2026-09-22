@@ -837,6 +837,13 @@ namespace Khorde.Behavior
 								Return(ref data, ref node);
 							break;
 
+						case BTExec.BTExecType.UtilityRange:
+							if(frames[^1].childIndex == 0)
+								Call(ref data, node.data.utilityRange.child);
+							else
+								Return(ref data, ref node);
+							break;
+
 						default:
 							throw new NotImplementedException($"BTExec node type {node.type} not implemented");
 					}
@@ -1032,7 +1039,30 @@ namespace Khorde.Behavior
 								);
 
 							// NOTE: no saturate here so this curve can be used to normalize values
-							result = nd.curve.Evaluate(input);
+							result = nd.curve.Evaluate(input * nd.invInputRange);
+							break;
+						}
+
+					case BTExec.BTExecType.UtilityRange:
+						{
+							ref var nd = ref node.data.utilityRange;
+							var entity = nd.targetEntity.Evaluate<Entity>(in exprContext);
+							if(exprContext.componentLookups[nd.lookupTypeInfo.componentIndex].TryGetRefRO(entity, out var targetComponentData))
+							{
+								var localComponentData = exprContext.componentPtrs[nd.localTypeInfo.componentIndex].AsNativeArray();
+								var targetLtw = targetComponentData.ReinterpretLoad<Unity.Transforms.LocalToWorld>(0);
+								var localLtw = localComponentData.ReinterpretLoad<Unity.Transforms.LocalToWorld>(0);
+								var vector = targetLtw.Position - localLtw.Position;
+								float input = math.length(vector);
+								if(nd.softRange)
+									result = nd.softRangeCurve.Evaluate(input / nd.range);
+								else
+									result = input <= nd.range ? 1.0f : 0.0f;
+							}
+							else
+							{
+								result = 0;
+							}
 							break;
 						}
 

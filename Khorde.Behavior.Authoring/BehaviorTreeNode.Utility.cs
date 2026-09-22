@@ -2,6 +2,7 @@
 using Khorde.Expr;
 using Khorde.Expr.Authoring;
 using System;
+using System.Data;
 using System.Linq;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
@@ -225,6 +226,7 @@ namespace Khorde.Behavior.Authoring
 	internal class UtilityCurve : ExecBase, IUtilityNode
 	{
 		private INodeOption curve;
+		private INodeOption inputRange;
 		private INodeOption customInput;
 		private IPort value;
 		private IPort child;
@@ -239,6 +241,11 @@ namespace Khorde.Behavior.Authoring
 			if(data.customInput)
 				data.input = context.GetExpressionRef(value);
 			data.child = context.GetTargetNodeId(child);
+			inputRange.TryGetValue(out data.invInputRange);
+			if(data.invInputRange > 0)
+				data.invInputRange = 1.0f / data.invInputRange;
+			else
+				data.invInputRange = 1;
 		}
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
@@ -246,6 +253,12 @@ namespace Khorde.Behavior.Authoring
 			curve = context.AddOption<AnimationCurve>("Curve")
 				.WithDisplayName(string.Empty)
 				.WithDefaultValue(UtilityCurves.LinearClamped)
+				.Build();
+
+			inputRange = context.AddOption<float>("InputRange")
+				.WithDisplayName("Input Range")
+				.WithTooltip("Divisor for the input value before passing it to the curve")
+				.WithDefaultValue(1.0f)
 				.Build();
 
 			customInput = context.AddOption<bool>("CustomInput")
@@ -285,6 +298,90 @@ namespace Khorde.Behavior.Authoring
 			context.AddUtilityDebugDisplayPort(out utilityPort);
 		}
 		IPort utilityPort;
+		IPort IUtilityNode.GetUtilityDebugPort() => utilityPort;
+	}
+
+	/// <summary>
+	/// Sets utility to a value based on the world distance to the target entity.
+	/// </summary>
+	[Serializable]
+	[Node("Execution/Utility", iconPath: "Packages/net.anttirt.khorde/Icons/Utility.png", title: "Utility (Range)", stylesheet: "Packages/net.anttirt.khorde/Styles/Utility.uss")]
+	internal class UtilityRange : ExecBase, IUtilityNode, IComponentLookup, IComponentAccess
+	{
+		public ComponentType ComponentType => new ComponentType(typeof(Unity.Transforms.LocalToWorld), ComponentType.AccessMode.ReadOnly);
+		public bool IsReadOnly => true;
+
+		private INodeOption softRange;
+		private INodeOption softRangeCurve;
+		private INodeOption range;
+		private IPort child;
+		private IPort targetEntity;
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			exec.type = BTExec.BTExecType.UtilityRange;
+			ref var data = ref exec.data.utilityRange;
+			this.softRange.TryGetValue(out data.softRange);
+			if(data.softRange)
+			{
+				this.softRangeCurve.TryGetValue<AnimationCurve>(out var curve);
+				curve.ConstructBlob(ref builder, ref data.softRangeCurve);
+			}
+			data.child = context.GetTargetNodeId(child);
+			range.TryGetValue(out data.range);
+			data.targetEntity = context.GetExpressionRef(targetEntity);
+			context.Bake<Unity.Transforms.LocalToWorld>(ref data.localTypeInfo, ExpressionComponentLocation.Local);
+			context.Bake<Unity.Transforms.LocalToWorld>(ref data.lookupTypeInfo, ExpressionComponentLocation.Lookup);
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			range = context.AddOption<float>("Range")
+				.WithDisplayName("Range")
+				.WithTooltip("Range. When using the curve, this value matches X=1.")
+				.WithDefaultValue(1.0f)
+				.Build();
+
+			softRange = context.AddOption<bool>("SoftRange")
+				.WithDisplayName("Soft Range")
+				.Build();
+
+			if(softRange.TryGetValue<bool>(out var s) && s)
+			{
+				softRangeCurve = context.AddOption<AnimationCurve>("Curve")
+					.WithDisplayName(string.Empty)
+					.WithDefaultValue(UtilityCurves.StepDownOne)
+					.Build();
+			}
+			else
+			{
+				softRangeCurve = null;
+			}
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+
+			targetEntity = context.AddInputPort<Entity>("TargetEntity")
+				.WithDisplayName("Target")
+				.Build();
+
+			child = context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+
+			context.AddUtilityDebugDisplayPort(out utilityPort);
+		}
+
+		IPort utilityPort;
+
 		IPort IUtilityNode.GetUtilityDebugPort() => utilityPort;
 	}
 
@@ -358,6 +455,7 @@ namespace Khorde.Behavior.Authoring
 		private static AnimationCurve full;
 		private static AnimationCurve linearClamped;
 		private static AnimationCurve stepOne;
+		private static AnimationCurve stepDownOne;
 
 		public static AnimationCurve Full => full ??= new AnimationCurve(new Keyframe(0, 1), new Keyframe(1, 1));
 		public static AnimationCurve LinearClamped
@@ -391,6 +489,23 @@ namespace Khorde.Behavior.Authoring
 				}
 
 				return stepOne;
+			}
+		}
+
+		public static AnimationCurve StepDownOne
+		{
+			get
+			{
+				if(stepDownOne == null)
+				{
+					stepDownOne = new AnimationCurve(new Keyframe(0, 1), new Keyframe(1, 0)) { postWrapMode = WrapMode.ClampForever };
+					AnimationUtility.SetKeyLeftTangentMode(stepDownOne, 0, AnimationUtility.TangentMode.Constant);
+					AnimationUtility.SetKeyRightTangentMode(stepDownOne, 0, AnimationUtility.TangentMode.Constant);
+					AnimationUtility.SetKeyLeftTangentMode(stepDownOne, 1, AnimationUtility.TangentMode.Constant);
+					AnimationUtility.SetKeyRightTangentMode(stepDownOne, 1, AnimationUtility.TangentMode.Constant);
+				}
+
+				return stepDownOne;
 			}
 		}
 

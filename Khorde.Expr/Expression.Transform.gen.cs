@@ -25,4 +25,15 @@ namespace Khorde.Expr
 			EvalHelper.Evaluate<LookupLocalToWorld, Entity>(self, in ctx, outputIndex, ref untypedResult);
 		}
 	}
+
+	[BurstCompile]
+	public partial struct WorldDistance
+	{
+		[BurstCompile]
+		public static unsafe void EvaluateFunc(ExpressionStorage* self, in ExpressionEvalContext ctx, int outputIndex,
+			ref NativeArray<byte> untypedResult)
+		{
+			EvalHelper.Evaluate<WorldDistance, Entity>(self, in ctx, outputIndex, ref untypedResult);
+		}
+	}
 }

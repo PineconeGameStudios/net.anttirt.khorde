@@ -109,4 +109,49 @@ namespace Khorde.Expr
 	        }
 	    }
 	}
+
+	public partial struct WorldDistance : IExpression<Entity>
+	{
+	    public ExpressionComponentTypeInfo localTypeInfo;
+	    public ExpressionComponentTypeInfo lookupTypeInfo;
+
+		public ExpressionRef Input0 { get; set; }
+
+		public const int OutputIndex_HasComponent = 0;
+		public const int OutputIndex_Vector = 1;
+		public const int OutputIndex_Distance = 2;
+
+		public void Evaluate(in ExpressionEvalContext ctx, in Entity entity, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+	        if (ctx.componentLookups[lookupTypeInfo.componentIndex].TryGetRefRO(entity, out var targetComponentData))
+	        {
+				if(outputIndex == OutputIndex_HasComponent)
+				{
+					untypedResult.AsSingle<bool>() = true;
+				}
+				else
+				{
+					var localComponentData = ctx.componentPtrs[localTypeInfo.componentIndex].AsNativeArray();
+
+					var targetLtw = targetComponentData.ReinterpretLoad<LocalToWorld>(0);
+					var localLtw = localComponentData.ReinterpretLoad<LocalToWorld>(0);
+
+					var vector = targetLtw.Position - localLtw.Position;
+
+					if(outputIndex == OutputIndex_Vector)
+					{
+						untypedResult.ReinterpretStore(0, vector);
+					}
+					else
+					{
+						untypedResult.ReinterpretStore(0, math.length(vector));
+					}
+				}
+	        }
+	        else
+	        {
+	            untypedResult.Clear();
+	        }
+		}
+	}
 }

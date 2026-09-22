@@ -28,6 +28,7 @@ namespace Khorde.Expr.Generated
 			new ExpressionTypeInfo(typeof(LookupComponentField), LookupComponentField.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(ReadLocalToWorld), ReadLocalToWorld.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(LookupLocalToWorld), LookupLocalToWorld.EvaluateFunc, true),
+			new ExpressionTypeInfo(typeof(WorldDistance), WorldDistance.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(ReadBufferLength), ReadBufferLength.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(ReadBufferField), ReadBufferField.EvaluateFunc, true),
 			new ExpressionTypeInfo(typeof(BinaryBool), BinaryBool.EvaluateFunc, true),
