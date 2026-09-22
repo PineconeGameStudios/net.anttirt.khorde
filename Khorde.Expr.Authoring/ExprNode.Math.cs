@@ -206,6 +206,9 @@ namespace Khorde.Expr.Authoring
 	[Serializable][Node("Math/Length")] internal class LengthFloat2Node : UnaryBase<LengthFloat2, float2, float> { }
 	[Serializable][Node("Math/Length")] internal class LengthFloat3Node : UnaryBase<LengthFloat3, float3, float> { }
 	[Serializable][Node("Math/Length")] internal class LengthFloat4Node : UnaryBase<LengthFloat4, float4, float> { }
+	[Serializable][Node("Math/Distance")] internal class DistanceFloat2Node : BinaryBase<DistanceFloat2, float2, float2, float> { }
+	[Serializable][Node("Math/Distance")] internal class DistanceFloat3Node : BinaryBase<DistanceFloat3, float3, float3, float> { }
+	[Serializable][Node("Math/Distance")] internal class DistanceFloat4Node : BinaryBase<DistanceFloat4, float4, float4, float> { }
 	[Serializable][Node("Math/Normalize")] internal class Normalize2Node : UnaryBase<Normalize2, float2, float2> { }
 	[Serializable][Node("Math/Normalize")] internal class Normalize3Node : UnaryBase<Normalize3, float3, float3> { }
 	[Serializable][Node("Math/Normalize")] internal class Normalize4Node : UnaryBase<Normalize4, float4, float4> { }

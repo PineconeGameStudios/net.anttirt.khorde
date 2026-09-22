@@ -290,6 +290,42 @@ namespace Khorde.Expr
 		}
 	}
 
+	public partial struct DistanceFloat2 : IExpression<float2, float2>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float2 input0, in float2 input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float>() = math.distance(input0, input1);
+		}
+	}
+
+	public partial struct DistanceFloat3 : IExpression<float3, float3>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float3 input0, in float3 input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float>() = math.distance(input0, input1);
+		}
+	}
+
+	public partial struct DistanceFloat4 : IExpression<float4, float4>
+	{
+		public ExpressionRef Input0 { get; set; }
+		public ExpressionRef Input1 { get; set; }
+
+		[BurstCompile]
+		public void Evaluate(in ExpressionEvalContext ctx, in float4 input0, in float4 input1, int outputIndex, ref NativeArray<byte> untypedResult)
+		{
+			untypedResult.AsSingle<float>() = math.distance(input0, input1);
+		}
+	}
+
 	public partial struct Normalize2 : IExpression<float2>
 	{
 		public ExpressionRef Input0 { get; set; }
