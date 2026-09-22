@@ -12,10 +12,13 @@ namespace Mpr.Game
 
 		protected override void OnCreate()
 		{
-			inputActions = new Input.InputActions();
-			inputActions.Enable();
-
 			RequireForUpdate<PlayerInput>();
+			inputActions = new Input.InputActions();
+		}
+
+		protected override void OnStartRunning()
+		{
+			inputActions.Enable();
 		}
 
 		protected override void OnUpdate()
@@ -36,9 +39,13 @@ namespace Mpr.Game
 			}
 		}
 
-		protected override void OnDestroy()
+		protected override void OnStopRunning()
 		{
 			inputActions.Disable();
+		}
+
+		protected override void OnDestroy()
+		{
 			inputActions.Dispose();
 		}
 	}
