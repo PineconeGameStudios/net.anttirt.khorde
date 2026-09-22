@@ -58,7 +58,7 @@ namespace Khorde.Blobs.Authoring
 		/// <param name="entityQueryDesc"></param>
 		/// <param name="description"></param>
 		/// <param name="blobBuilder"></param>
-		public static void Bake(ref this BlobEntityQueryDesc entityQueryDesc, string description, ref BlobBuilder blobBuilder, Action<string> logError)
+		public static void Bake(ref this BlobEntityQueryDesc entityQueryDesc, string name, string description, ref BlobBuilder blobBuilder, Action<string> logError)
 		{
 			var all = new NativeList<ulong>(Allocator.Temp);
 			var any = new NativeList<ulong>(Allocator.Temp);
@@ -68,6 +68,8 @@ namespace Khorde.Blobs.Authoring
 			var present = new NativeList<ulong>(Allocator.Temp);
 			entityQueryDesc.pendingOptions = default;
 
+			blobBuilder.AllocateString(ref entityQueryDesc.name, name);
+
 			var (typeLookup, ambLookup) = s_typeHashLookup;
 
 			void AddTypes(NativeList<ulong> dst, string src)
@@ -75,8 +77,10 @@ namespace Khorde.Blobs.Authoring
 				foreach(var ctype in src.Split(',', StringSplitOptions.RemoveEmptyEntries))
 				{
 					var trimmed = ctype.Trim();
-					if(typeLookup.TryGetValue(trimmed, out ulong stableTypeHash))
+					if(typeLookup.TryGetValue(trimmed, out ulong stableTypeHash) && stableTypeHash != 0)
 						dst.Add(stableTypeHash);
+					else if(stableTypeHash == 0)
+						logError($"type name '{trimmed}' resulted in stableTypeHash=0");
 					else if(ambLookup.TryGetValue(trimmed, out var ambs))
 						logError($"type name '{trimmed}' is ambiguous between [{(string.Join(", ", ambs.Select(t => t.FullName)))}]");
 					else

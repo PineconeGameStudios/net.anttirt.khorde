@@ -8,8 +8,9 @@ namespace Khorde.Blobs
 	/// </summary>
 	public struct BlobEntityQueryDesc
 	{
-		public const int SchemaVersion = 1;
+		public const int SchemaVersion = 3;
 
+		public BlobString name;
 		public BlobArray<BlobComponentType> all;
 		public BlobArray<BlobComponentType> any;
 		public BlobArray<BlobComponentType> none;
@@ -26,7 +27,7 @@ namespace Khorde.Blobs
 			{
 				var ctype = src[i].ResolveComponentType();
 				if(ctype.TypeIndex == TypeIndex.Null)
-					UnityEngine.Debug.LogError($"failed to resolve stable type hash {src[i].stableTypeHash} to component type");
+					UnityEngine.Debug.LogError($"{name}: #{i}: failed to resolve stable type hash {src[i].stableTypeHash} to component type");
 				dst.Add(ctype);
 			}
 

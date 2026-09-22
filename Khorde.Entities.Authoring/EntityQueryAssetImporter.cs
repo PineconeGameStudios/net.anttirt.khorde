@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Khorde.Blobs.Authoring
 {
-	[ScriptedImporter(2, "entityquery", importQueueOffset: 1)]
+	[ScriptedImporter(BlobEntityQueryDesc.SchemaVersion, "entityquery", importQueueOffset: 1)]
 	public class EntityQueryAssetImporter : ScriptedImporter
 	{
 		public override void OnImportAsset(AssetImportContext ctx)
@@ -14,7 +14,7 @@ namespace Khorde.Blobs.Authoring
 			var lines = File.ReadAllText(ctx.assetPath);
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref var query = ref builder.ConstructRoot<BlobEntityQueryDesc>();
-			query.Bake(lines, ref builder, err => ctx.LogImportError(err));
+			query.Bake(Path.GetFileName(ctx.assetPath), lines, ref builder, err => ctx.LogImportError(err));
 			var obj = ScriptableObject.CreateInstance<EntityQueryAsset>();
 			var data = obj.SetAssetData(builder, BlobEntityQueryDesc.SchemaVersion);
 			ctx.AddObjectToAsset("asset", obj);

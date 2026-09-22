@@ -15,11 +15,17 @@ namespace Khorde.Query
 	{
 		public NativeHashMap<BlobAssetReference<BlobEntityQueryDesc>, EntityQueryMetaData> entityQueries;
 		public NativeHashMap<BlobAssetReference<QSData>, QueryMetaData> queryGraphs;
+		public int epoch;
 
 		public struct EntityQueryMetaData
 		{
 			public EntityQuery query;
 			public Hash128 hash;
+			public int epoch;
+
+			public void Dispose()
+			{
+			}
 		}
 
 		public struct QueryMetaData : IDisposable
@@ -27,6 +33,7 @@ namespace Khorde.Query
 			public NativeList<ExprSystemTypeHandleHolder> typeHandles;
 			public NativeList<ExprSystemComponentLookupHolder> lookups;
 			public EntityQuery jobQuery;
+			public int epoch;
 
 			public void Dispose()
 			{
@@ -39,44 +46,77 @@ namespace Khorde.Query
 		{
 			entityQueries = new(0, allocator);
 			queryGraphs = new(0, allocator);
-		}
-
-		/// <summary>
-		/// Register a query graph asset.
-		/// </summary>
-		/// <param name="queryGraph"></param>
-		public void Register(BlobAssetReference<QSData> queryGraph)
-		{
-			queryGraphs.TryAdd(queryGraph, default);
-		}
-
-		/// <summary>
-		/// Register an entity query asset.
-		/// </summary>
-		/// <param name="queryGraph"></param>
-		public void Register(BlobAssetReference<BlobEntityQueryDesc> entityQuery)
-		{
-			entityQueries.TryAdd(entityQuery, default);
+			epoch = 1;
 		}
 
 		public void Update(ref SystemState state, NativeList<QueryAssetRegistration> regs)
 		{
+			++epoch;
+
 			foreach(var queryAssetRegistration in regs)
 			{
 				foreach(var asset in queryAssetRegistration.Assets)
 				{
-					if(!queryGraphs.ContainsKey(asset))
+					if(!queryGraphs.TryAdd(asset, new() { epoch = epoch }))
 					{
-						Register(asset);
+						var temp = queryGraphs[asset];
+						temp.epoch = epoch;
+						queryGraphs[asset] = temp;
 					}
 				}
 
 				foreach(var asset in queryAssetRegistration.EntityQueryAssets)
 				{
-					if(!entityQueries.ContainsKey(asset))
+					if(!entityQueries.TryAdd(asset, new() { epoch = epoch }))
 					{
-						Register(asset);
+						var temp = entityQueries[asset];
+						temp.epoch = epoch;
+						entityQueries[asset] = temp;
 					}
+				}
+			}
+
+			NativeList<BlobAssetReference<QSData>> staleQueryGraphs = default;
+
+			foreach(var kv in queryGraphs)
+			{
+				if(kv.Value.epoch != epoch)
+				{
+					if(!staleQueryGraphs.IsCreated)
+						staleQueryGraphs = new(1, Allocator.Temp);
+
+					staleQueryGraphs.Add(kv.Key);
+				}
+			}
+
+			if(staleQueryGraphs.IsCreated)
+			{
+				foreach(var key in staleQueryGraphs)
+				{
+					queryGraphs[key].Dispose();
+					queryGraphs.Remove(key);
+				}
+			}
+
+			NativeList<BlobAssetReference<BlobEntityQueryDesc>> staleEntityQueries = default;
+
+			foreach(var kv in entityQueries)
+			{
+				if(kv.Value.epoch != epoch)
+				{
+					if(!staleEntityQueries.IsCreated)
+						staleEntityQueries = new(1, Allocator.Temp);
+
+					staleEntityQueries.Add(kv.Key);
+				}
+			}
+
+			if(staleEntityQueries.IsCreated)
+			{
+				foreach(var key in staleEntityQueries)
+				{
+					entityQueries[key].Dispose();
+					entityQueries.Remove(key);
 				}
 			}
 
@@ -152,6 +192,8 @@ namespace Khorde.Query
 
 		public void Dispose()
 		{
+			foreach(var pair in entityQueries)
+				pair.Value.Dispose();
 			entityQueries.Dispose();
 			foreach(var pair in queryGraphs)
 				pair.Value.Dispose();
@@ -185,6 +227,9 @@ namespace Khorde.Query
 		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset6;
 		BlobAssetReference<BlobEntityQueryDesc> entityQueryAsset7;
 
+		private int queryCount;
+		private int entityQueryCount;
+
 		public const int Capacity = 8;
 
 		unsafe BlobAssetReference<QSData>* GetQueryData()
@@ -199,41 +244,15 @@ namespace Khorde.Query
 				return ptr;
 		}
 
-		public unsafe int QueryCount
-		{
-			get
-			{
-				var data = GetQueryData();
-
-				for(int i = 0; i < Capacity; ++i)
-					if(data[i] == default)
-						return i;
-
-				return Capacity;
-			}
-		}
-
-		public unsafe int EntityQueryCount
-		{
-			get
-			{
-				var data = GetEntityQueryData();
-
-				for(int i = 0; i < Capacity; ++i)
-					if(data[i] == default)
-						return i;
-
-				return Capacity;
-			}
-		}
+		public int QueryCount => queryCount;
+		public int EntityQueryCount => entityQueryCount;
 
 		public unsafe void Add(BlobAssetReference<QSData> asset)
 		{
 			var data = GetQueryData();
 
-			int length = QueryCount;
-			if(length < Capacity)
-				data[length] = asset;
+			if(queryCount < Capacity)
+				data[queryCount++] = asset;
 			else
 				throw new InvalidOperationException("max supported queries reached");
 		}
@@ -242,9 +261,8 @@ namespace Khorde.Query
 		{
 			var data = GetEntityQueryData();
 
-			int length = EntityQueryCount;
-			if(length < Capacity)
-				data[length] = asset;
+			if(entityQueryCount < Capacity)
+				data[entityQueryCount++] = asset;
 			else
 				throw new InvalidOperationException("max supported queries reached");
 		}
