@@ -162,7 +162,7 @@ namespace Khorde.Behavior
 
 	public struct BTData
 	{
-		public const int SchemaVersion = 20
+		public const int SchemaVersion = 14
 			| (BlobExpressionData.SchemaVersion << 16);
 
 		public BlobExpressionData exprData;

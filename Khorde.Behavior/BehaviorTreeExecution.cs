@@ -1053,11 +1053,19 @@ namespace Khorde.Behavior
 								var targetLtw = targetComponentData.ReinterpretLoad<Unity.Transforms.LocalToWorld>(0);
 								var localLtw = localComponentData.ReinterpretLoad<Unity.Transforms.LocalToWorld>(0);
 								var vector = targetLtw.Position - localLtw.Position;
-								float input = math.length(vector);
+								float distance = math.length(vector);
 								if(nd.softRange)
-									result = nd.softRangeCurve.Evaluate(input / nd.range);
+									result = nd.softRangeCurve.Evaluate(distance / nd.range);
 								else
-									result = input <= nd.range ? 1.0f : 0.0f;
+									result = distance <= nd.range ? 1.0f : 0.0f;
+
+								var input = GetUtility(ref state, ref data, in exprContext, nd.child
+#if UNITY_EDITOR
+									, utilityDebug
+#endif
+									);
+
+								result *= input;
 							}
 							else
 							{
