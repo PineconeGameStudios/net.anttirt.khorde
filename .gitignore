@@ -23,6 +23,9 @@
 # LibreOffice backup file
 *.ods#
 
+# vim temp file
+.*.swp
+
 # Firebase generated resource files
 /ProjectSettings/AndroidResolverDependencies.xml
 /ProjectSettings/AndroidResolverDependencies.xml.meta
