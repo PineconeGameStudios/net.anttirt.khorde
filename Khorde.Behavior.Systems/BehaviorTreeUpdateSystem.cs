@@ -273,6 +273,11 @@ namespace Khorde.Behavior
 					builder.WithAll<BehaviorTree>();
 					builder.WithNone<BTQueryHolder>();
 
+					if(clientWorld)
+					{
+						builder.WithAll<Simulate>();
+					}
+
 					var debugQuery = state.GetEntityQuery(builder);
 
 					state.EntityManager.AddSharedComponent(queryHolder, value);
@@ -344,20 +349,166 @@ namespace Khorde.Behavior
 
 						FixedString128Bytes name = default;
 						tree.tree.Value.exprData.assetName.CopyTo(ref name);
-						sb.Append($"entity {entity} has BehaviorTree{{{name}}} but is missing the required components [");
-						string intr = "";
+						sb.Append($"entity {entity} has BehaviorTree{{{name}}} but the following rules don't match: ");
 
-						foreach(var type in descs[0].All)
+						string intr = "{{ ";
+
+						foreach(var desc in descs)
 						{
-							if(!EntityManager.HasComponent(entity, type))
+							sb.Append(intr);
+							intr = "";
+
+							if(desc.All.Length > 0)
 							{
 								sb.Append(intr);
-								sb.Append(type.GetManagedType().FullName);
+								sb.Append("all:[");
+								intr = "";
+
+								foreach(var type in desc.All)
+								{
+									if(!EntityManager.HasComponent(entity, type))
+									{
+										sb.Append(intr);
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+									else if(type.TypeIndex.IsEnableable && !EntityManager.IsComponentEnabled(entity, type))
+									{
+										sb.Append(intr);
+										sb.Append('*');
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+								}
+
+								sb.Append("]");
 								intr = ", ";
 							}
-						}
 
-						sb.Append("]");
+							if(desc.None.Length > 0)
+							{
+								sb.Append(intr);
+								sb.Append("none:[");
+								intr = "";
+
+								foreach(var type in desc.None)
+								{
+									if(EntityManager.HasComponent(entity, type))
+									{
+										sb.Append(intr);
+										if(type.TypeIndex.IsEnableable && EntityManager.IsComponentEnabled(entity, type))
+											sb.Append('*');
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+								}
+
+								sb.Append("]");
+								intr = ", ";
+							}
+
+							if(desc.Absent.Length > 0)
+							{
+								sb.Append(intr);
+								sb.Append("absent:[");
+								intr = "";
+
+								foreach(var type in desc.Absent)
+								{
+									if(EntityManager.HasComponent(entity, type))
+									{
+										sb.Append(intr);
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+								}
+
+								sb.Append("]");
+								intr = ", ";
+							}
+
+							if(desc.Present.Length > 0)
+							{
+								sb.Append(intr);
+								sb.Append("present:[");
+								intr = "";
+
+								foreach(var type in desc.Present)
+								{
+									if(!EntityManager.HasComponent(entity, type))
+									{
+										sb.Append(intr);
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+								}
+
+								sb.Append("]");
+								intr = ", ";
+							}
+
+							if(desc.Disabled.Length > 0)
+							{
+								sb.Append(intr);
+								sb.Append("disabled:[");
+								intr = "";
+
+								foreach(var type in desc.Disabled)
+								{
+									if(!EntityManager.HasComponent(entity, type))
+									{
+										sb.Append(intr);
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+									else if(type.TypeIndex.IsEnableable && EntityManager.IsComponentEnabled(entity, type))
+									{
+										sb.Append(intr);
+										sb.Append('*');
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+								}
+
+								sb.Append("]");
+								intr = ", ";
+							}
+
+							if(desc.Any.Length > 0)
+							{
+								sb.Append(intr);
+								sb.Append("any:[");
+								intr = "";
+
+								bool foundAny = false;
+								foreach(var type in desc.Any)
+								{
+									if(EntityManager.HasComponent(entity, type) && (!type.TypeIndex.IsEnableable || EntityManager.IsComponentEnabled(entity, type)))
+									{
+										foundAny = true;
+										break;
+									}
+								}
+
+								if(!foundAny)
+								{
+									foreach(var type in desc.Disabled)
+									{
+										sb.Append(intr);
+										if(type.TypeIndex.IsEnableable && EntityManager.HasComponent(entity, type))
+											sb.Append('*');
+										sb.Append(type.GetManagedType().FullName);
+										intr = ", ";
+									}
+								}
+
+								sb.Append("]");
+								intr = ", ";
+							}
+
+							sb.Append(" }}");
+							intr = ", {{ ";
+						}
 
 						UnityEngine.Debug.LogError(sb.ToString());
 					}
