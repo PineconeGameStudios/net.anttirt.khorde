@@ -77,6 +77,7 @@ namespace Khorde.Behavior.Authoring
 
 	[Serializable]
 	[Node("Execution")]
+	[UseWithGraph(typeof(BehaviorTreeGraph))]
 	internal class Selector : ContextNode, IExecNode
 	{
 		public int NodeCount => 1;

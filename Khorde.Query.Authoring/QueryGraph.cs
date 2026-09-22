@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Serialization;
 using Unity.GraphToolkit.Editor;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -158,10 +159,17 @@ namespace Khorde.Query.Authoring
 	}
 
 	[DataTypeStyleMapper(typeof(QueryGraph))]
-	public class QueryGraphDataStyleMapper : EntitiesDataStyleMapper
+	public class QueryGraphDataStyleMapper : DataTypeStyleMapper
 	{
-		public QueryGraphDataStyleMapper() : base()
+		public QueryGraphDataStyleMapper()
 		{
+			EntitiesDataStyleMapper.RegisterAll(this);
+			var queryIcon = EntitiesDataStyleMapper.GetIcon("QueryGraph.psd");
+			Register(typeof(PassRef<int2>), queryIcon, new Color(1, 1, 1));
+			Register(typeof(PassRef<int3>), queryIcon, new Color(1, 1, 1));
+			Register(typeof(PassRef<float2>), queryIcon, new Color(1, 1, 1));
+			Register(typeof(PassRef<float3>), queryIcon, new Color(1, 1, 1));
+			Register(typeof(PassRef<Entity>), queryIcon, new Color(1, 1, 1));
 		}
 	}
 }

@@ -1,7 +1,9 @@
 using Khorde.Expr;
+using System;
 using System.Runtime.CompilerServices;
 using Unity.Entities;
 using Unity.NetCode;
+using Random = Unity.Mathematics.Random;
 
 namespace Khorde.Behavior
 {
@@ -24,6 +26,7 @@ namespace Khorde.Behavior
 		}
 
 		public int threadIdCounter;
+		public Random random;
 	}
 
 	[InternalBufferCapacity(2)]
@@ -58,6 +61,11 @@ namespace Khorde.Behavior
 		/// Start time for the current Wait operation, if there is one on this thread
 		/// </summary>
 		public float waitStartTime;
+
+		/// <summary>
+		/// Duration for the current Wait operation, if there is one on this thread.
+		/// </summary>
+		public float waitDuration;
 	}
 
 	[InternalBufferCapacity(8)]
@@ -70,6 +78,15 @@ namespace Khorde.Behavior
 		public static implicit operator BTStackFrame(BTExecNodeId nodeId) => new() { nodeId = nodeId };
 	}
 
+#if UNITY_EDITOR
+	[InternalBufferCapacity(0)]
+	public struct BTUtilityDebug : IBufferElementData
+	{
+		public float value;
+	}
+#endif
+
+	[InternalBufferCapacity(0)]
 	public struct BTExecTrace : IBufferElementData
 	{
 		public BTExecNodeId nodeId;
@@ -145,14 +162,26 @@ namespace Khorde.Behavior
 
 	public struct BTData
 	{
-		public const int SchemaVersion = 13
+		public const int SchemaVersion = 18
 			| (BlobExpressionData.SchemaVersion << 16);
 
 		public BlobExpressionData exprData;
 		public BlobArray<BTExec> execs;
 		public BlobArray<UnityEngine.Hash128> execNodeIds;
+		public BlobArray<UnityEngine.Hash128> utilityPreviewPortIds;
 		public BlobArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStacks;
-		public bool hasQueries;
+		public Flags flags;
+		public UnityEngine.Hash128 graphId;
+
+		public bool HasFlag(Flags flag) => (this.flags & flag) == flag;
+
+		[Flags]
+		public enum Flags : uint
+		{
+			None = 0,
+			HasQueries = 1 << 0,
+			HasUtilitySelectors = 1 << 1,
+		}
 
 		public BTExecNodeId Root
 		{

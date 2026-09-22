@@ -18,6 +18,7 @@ namespace Khorde.Behavior.Authoring
 		private BTData* data;
 		private NativeArray<BTExec> builderExecs;
 		private NativeArray<Hash128> builderExecNodeIds;
+		private NativeArray<Hash128> utilityPreviewPortIds;
 		private NativeArray<BlobArray<Hash128>> builderExecNodeSubgraphStacks;
 		private List<QueryGraphAsset> queries = new();
 		private List<BehaviorTreeAction> actions = new();
@@ -38,6 +39,7 @@ namespace Khorde.Behavior.Authoring
 
 			builderExecs = default;
 			builderExecNodeIds = default;
+			utilityPreviewPortIds = default;
 			builderExecNodeSubgraphStacks = default;
 			execNodeIdCounter = 0;
 		}
@@ -109,7 +111,9 @@ namespace Khorde.Behavior.Authoring
 
 			builderExecs = AsArray(builder.Allocate(ref data->execs, execCount));
 			builderExecNodeIds = AsArray(builder.Allocate(ref data->execNodeIds, execCount));
+			utilityPreviewPortIds = AsArray(builder.Allocate(ref data->utilityPreviewPortIds, execCount));
 			builderExecNodeSubgraphStacks = AsArray(builder.Allocate(ref data->execNodeSubgraphStacks, execCount));
+			data->graphId = rootGraph?.ID ?? default;
 		}
 
 		protected override bool BakeGraphNodes()
@@ -121,6 +125,8 @@ namespace Khorde.Behavior.Authoring
 		void BakeExecNodes(Graph graph)
 		{
 			using var _ = TraceScope(graph.Name);
+
+			bool hasUtilitySelectors = false;
 
 			foreach(var node in graph.GetNodes())
 			{
@@ -135,6 +141,9 @@ namespace Khorde.Behavior.Authoring
 					var nodeId = GetNodeId(execNode);
 					var index = nodeId.index;
 					builderExecNodeIds[index] = execNode.ID;
+					if(node is IUtilityNode utilityNode)
+						utilityPreviewPortIds[index] = utilityNode.GetUtilityDebugPort()?.ID ?? default;
+
 					var subgraphStackIds = builder.Allocate(ref builderExecNodeSubgraphStacks.UnsafeElementAt(index), subgraphStack.Depth);
 					int i = 0;
 					foreach(var hash in subgraphStack.Hashes)
@@ -145,13 +154,20 @@ namespace Khorde.Behavior.Authoring
 						execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index + j), this, j, nodeId);
 
 						//UnityEngine.Debug.Log($"baked {execNode} into {builderExecs.UnsafeElementAt(index + j).DumpString()} at node {nodeId} (pass {j})");
-						
+
 						nodeId.index++;
 					}
 				}
+
+				if(!hasUtilitySelectors && node is UtilitySelector)
+					hasUtilitySelectors = true;
 			}
 
-			data->hasQueries = queries.Count > 0;
+			if(queries.Count > 0)
+				data->flags |= BTData.Flags.HasQueries;
+
+			if(hasUtilitySelectors)
+				data->flags |= BTData.Flags.HasUtilitySelectors;
 		}
 
 		public int GetQueryIndex(INodeOption queryOption)

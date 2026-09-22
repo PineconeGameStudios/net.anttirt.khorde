@@ -1,0 +1,19 @@
+.ge-node {
+	background-color: #26475A;
+}
+
+.ge-node > VisualElement {
+	background-color: #26475A;
+}
+
+#outputs  {
+	background-color: #26475A;
+}
+
+VisualElement .ge-node__outputs .ge-port-hierarchy-container__container {
+	background-color: #26475A;
+}
+
+CurveField {
+	height: 80px;
+}

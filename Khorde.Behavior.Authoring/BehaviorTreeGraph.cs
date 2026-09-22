@@ -85,11 +85,13 @@ namespace Khorde.Behavior
 	}
 
 	[DataTypeStyleMapper(typeof(BehaviorTreeGraph))]
-	public class BehaviorTreeGraphDataStyleMapper : EntitiesDataStyleMapper
+	public class BehaviorTreeGraphDataStyleMapper : DataTypeStyleMapper
 	{
-		public BehaviorTreeGraphDataStyleMapper() : base()
+		public BehaviorTreeGraphDataStyleMapper()
 		{
-			Register(typeof(ExecutionFlow), EditorGUIUtility.IconContent("Packages/net.anttirt.khorde/Icons/BehaviorGraph.psd").image as Texture2D, Color.orange);
+			EntitiesDataStyleMapper.RegisterAll(this);
+			Register(typeof(ExecutionFlow), EntitiesDataStyleMapper.GetIcon("BehaviorGraph.psd"), Color.orange);
+			Register(typeof(UtilityValue), EntitiesDataStyleMapper.GetIcon("Utility.png"), Color.lightSkyBlue);
 		}
 	}
 }

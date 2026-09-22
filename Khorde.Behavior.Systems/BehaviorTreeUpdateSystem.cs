@@ -1,4 +1,3 @@
-using Khorde.Blobs;
 using Khorde.Entities;
 using Khorde.Expr;
 using Khorde.Query;
@@ -22,6 +21,9 @@ namespace Khorde.Behavior
 		{
 			state.IgnoreCreateQueryInOnUpdateWarning();
 			state.AddDependency<BTExecTrace>();
+#if UNITY_EDITOR
+			state.AddDependency<BTUtilityDebug>();
+#endif
 		}
 
 		[BurstCompile]
@@ -34,6 +36,9 @@ namespace Khorde.Behavior
 			public BufferTypeHandle<BTThread> threadTypeHandle;
 			public BufferTypeHandle<BTStackFrame> stackTypeHandle;
 			public BufferTypeHandle<BTExecTrace> traceHandle;
+#if UNITY_EDITOR
+			public BufferTypeHandle<BTUtilityDebug> utilityDebugHandle;
+#endif
 			public BufferTypeHandle<BehaviorTreeInvocation> invokeHandle;
 			public BufferTypeHandle<ExpressionBlackboardStorage> blackboardTypeHandle;
 			public SharedComponentTypeHandle<ExpressionBlackboardLayouts> blackboardLayoutsTypeHandle;
@@ -51,6 +56,10 @@ namespace Khorde.Behavior
 				var threads = chunk.GetBufferAccessor(ref threadTypeHandle);
 				var stacks = chunk.GetBufferAccessor(ref stackTypeHandle);
 				var traces = chunk.GetBufferAccessor(ref traceHandle);
+#if UNITY_EDITOR
+				BufferAccessor<BTUtilityDebug> utilityDebugs = default;
+				utilityDebugs = chunk.GetBufferAccessor(ref utilityDebugHandle);
+#endif
 				var invokes = chunk.GetBufferAccessor(ref invokeHandle);
 				var blackboards = chunk.GetBufferAccessor(ref blackboardTypeHandle);
 				var lookups = componentLookups.Lookups;
@@ -61,12 +70,19 @@ namespace Khorde.Behavior
 				EnabledMask pendingQueryEnabledMask = default;
 				NativeArray<PendingQuery> pendingQueries = default;
 
-				if(btData.Value.hasQueries)
+				if(btData.Value.HasFlag(BTData.Flags.HasQueries))
 				{
 					queries = chunk.GetSharedComponent(queriesTypeHandle).Assets;
 					pendingQueryEnabledMask = chunk.GetEnabledMask(ref pendingQueryHandle);
 					pendingQueries = chunk.GetNativeArray(ref pendingQueryHandle);
 				}
+
+#if UNITY_EDITOR
+				if(btData.Value.HasFlag(BTData.Flags.HasUtilitySelectors))
+				{
+					utilityDebugs = chunk.GetBufferAccessor(ref utilityDebugHandle);
+				}
+#endif
 
 				var invokeEnabledMask = chunk.GetEnabledMask(ref invokeHandle);
 
@@ -76,7 +92,7 @@ namespace Khorde.Behavior
 				while(enumerator.NextEntityIndex(out var entityIndex))
 				{
 					EnabledRefRW<PendingQuery> pendingQueryEnabled = default;
-					if(btData.Value.hasQueries)
+					if(btData.Value.HasFlag(BTData.Flags.HasQueries))
 						pendingQueryEnabled = pendingQueryEnabledMask.GetEnabledRefRW<PendingQuery>(entityIndex);
 
 					var invokeEnabled = invokeEnabledMask.GetEnabledRefRW<BehaviorTreeInvocation>(entityIndex);
@@ -87,6 +103,14 @@ namespace Khorde.Behavior
 						trace = traces[entityIndex];
 						trace.Clear();
 					}
+
+					DynamicBuffer<BTUtilityDebug> utilityDebug = default;
+#if UNITY_EDITOR
+					if(btData.Value.HasFlag(BTData.Flags.HasUtilitySelectors) && utilityDebugs.Length > 0)
+					{
+						utilityDebug = utilityDebugs[entityIndex];
+					}
+#endif
 
 					BehaviorTreeExecution.Execute(
 						ref btData.Value,
@@ -105,6 +129,9 @@ namespace Khorde.Behavior
 						now,
 						deltaTime,
 						trace
+#if UNITY_EDITOR
+						, utilityDebug
+#endif
 						);
 				}
 			}
@@ -129,6 +156,9 @@ namespace Khorde.Behavior
 					threadTypeHandle = SystemAPI.GetBufferTypeHandle<BTThread>(),
 					stackTypeHandle = SystemAPI.GetBufferTypeHandle<BTStackFrame>(),
 					traceHandle = SystemAPI.GetBufferTypeHandle<BTExecTrace>(),
+#if UNITY_EDITOR
+					utilityDebugHandle = SystemAPI.GetBufferTypeHandle<BTUtilityDebug>(),
+#endif
 					invokeHandle = SystemAPI.GetBufferTypeHandle<BehaviorTreeInvocation>(),
 					blackboardTypeHandle = SystemAPI.GetBufferTypeHandle<ExpressionBlackboardStorage>(),
 					blackboardLayoutsTypeHandle = SystemAPI.GetSharedComponentTypeHandle<ExpressionBlackboardLayouts>(),
@@ -213,7 +243,7 @@ namespace Khorde.Behavior
 
 					ref var btData = ref value.tree.Value;
 
-					if(btData.hasQueries)
+					if(btData.HasFlag(BTData.Flags.HasQueries))
 					{
 						instanceComponents.Add(ComponentType.ReadOnly<QueryAssetRegistration>());
 					}
@@ -230,7 +260,7 @@ namespace Khorde.Behavior
 
 					builder.WithAll(ref instanceComponents);
 
-					if(btData.hasQueries)
+					if(btData.HasFlag(BTData.Flags.HasQueries))
 					{
 						builder.WithPresentRW<PendingQuery>();
 					}

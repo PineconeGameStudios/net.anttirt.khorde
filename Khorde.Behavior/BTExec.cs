@@ -9,6 +9,7 @@ namespace Khorde.Behavior
 	public struct BTExec
 	{
 		public BTExecType type;
+		public Flags flags;
 		[Tooltip("Index of this node within its parent Sequence")]
 		public Data data;
 
@@ -32,6 +33,16 @@ namespace Khorde.Behavior
 			Invoke,
 			WriteBufferField,
 			WriteLookupField,
+			UtilitySelector,
+			Utility,
+			UtilityCooldown,
+			UtilityCurve,
+		}
+
+		public enum Flags : byte
+		{
+			None = 0,
+			ZeroUtility = 1 << 0,
 		}
 
 		[StructLayout(LayoutKind.Explicit, Pack = 8)]
@@ -54,6 +65,10 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public Invoke invoke;
 			[FieldOffset(0)] public WriteBufferField writeBufferField;
 			[FieldOffset(0)] public WriteLookupField writeLookupField;
+			[FieldOffset(0)] public UtilitySelector utilitySelector;
+			[FieldOffset(0)] public Utility utility;
+			[FieldOffset(0)] public UtilityCooldown utilityCooldown;
+			[FieldOffset(0)] public UtilityCurve utilityCurve;
 		}
 
 		public string DumpString()
@@ -80,6 +95,10 @@ namespace Khorde.Behavior
 				case BTExecType.Invoke: result += data.invoke.DumpString(); break;
 				case BTExecType.WriteBufferField: result += data.writeBufferField.DumpString(); break;
 				case BTExecType.WriteLookupField: result += data.writeLookupField.DumpString(); break;
+				case BTExecType.UtilitySelector: result += data.utilitySelector.DumpString(); break;
+				case BTExecType.Utility: result += data.utility.DumpString(); break;
+				case BTExecType.UtilityCooldown: result += data.utilityCooldown.DumpString(); break;
+				case BTExecType.UtilityCurve: result += data.utilityCurve.DumpString(); break;
 				default: break;
 			}
 

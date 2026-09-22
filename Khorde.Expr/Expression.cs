@@ -140,6 +140,7 @@ namespace Khorde.Expr
 
 			this.time = 0;
 			this.deltaTime = 0;
+			this.utility = 0;
 
 			if(blackboard.Length < blackboardLayout.minByteLength)
 				throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
@@ -170,6 +171,7 @@ namespace Khorde.Expr
 
 			this.time = 0;
 			this.deltaTime = 0;
+			this.utility = 0;
 
 			if(blackboard.Length < blackboardLayout.minByteLength)
 				throw new InvalidOperationException($"blackboard too small for layout {blackboard.Length} < {blackboardLayout.minByteLength}");
@@ -187,6 +189,11 @@ namespace Khorde.Expr
 		public float time;
 		public float deltaTime;
 
+		/// <summary>
+		/// During utility evaluation, this is the current utility value from downstream nodes.
+		/// </summary>
+		public float utility;
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 		public NativeList<ushort> callStack;
 		public NativeHashSet<ushort> callStackLookup;
@@ -199,6 +206,31 @@ namespace Khorde.Expr
 		{
 			var slice = layout.variables[index.index];
 			return blackboard.GetSubArray(slice.offset, slice.length);
+		}
+
+		public ref T GetBlackboardVariable<T>(VariableId index) where T : unmanaged
+		{
+			CheckVariableType<T>(index);
+
+			var slice = layout.variables[index.index];
+			unsafe
+			{
+				byte* bytes = (byte*)blackboard.GetUnsafePtr();
+				return ref *(T*)(bytes + slice.offset);
+			}
+		}
+
+		[Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+		private void CheckVariableType<T>(VariableId index) where T : unmanaged
+		{
+			int size = UnsafeUtility.SizeOf<T>();
+			var slice = layout.variables[index.index];
+			if(size != slice.length)
+				throw new InvalidCastException("type size mismatch");
+
+			int align = UnsafeUtility.AlignOf<T>();
+			if((slice.offset % align) != 0)
+				throw new InvalidCastException("type align mismatch");
 		}
 
 		public ExpressionBlackboardLayout.Slice GetBlackboardVariableSlice(VariableId index)

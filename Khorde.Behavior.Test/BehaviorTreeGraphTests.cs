@@ -7,7 +7,6 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Permissions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -16,7 +15,6 @@ using Unity.Transforms;
 using UnityEditor;
 using static Khorde.Behavior.BTExec;
 using static Khorde.Behavior.BTExecTrace;
-using Debug = UnityEngine.Debug;
 
 namespace Khorde.Behavior.Test
 {

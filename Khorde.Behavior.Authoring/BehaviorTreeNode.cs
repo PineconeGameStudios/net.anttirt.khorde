@@ -33,4 +33,8 @@ namespace Khorde.Behavior.Authoring
 		public int NodeCount { get; }
 	}
 
+	public interface IUtilityNode : INode
+	{
+		public IPort GetUtilityDebugPort();
+	}
 }

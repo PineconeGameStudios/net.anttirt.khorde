@@ -47,6 +47,10 @@ namespace Khorde.Behavior
 				if(authoring.trace)
 					AddBuffer<BTExecTrace>(entity);
 
+#if UNITY_EDITOR
+				AddBuffer<BTUtilityDebug>(entity);
+#endif
+
 				AddBuffer<BehaviorTreeInvocation>(entity);
 				SetComponentEnabled<BehaviorTreeInvocation>(entity, false);
 
