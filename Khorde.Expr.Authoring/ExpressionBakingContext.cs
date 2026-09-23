@@ -29,6 +29,7 @@ namespace Khorde.Expr.Authoring
 		public ref BlobBuilder Builder => ref builder;
 		private BlobExpressionData* data;
 		private NativeList<byte> constStorage;
+		private List<ExprAuthoring.ConstRefl> constReflection;
 		private List<(string, ushort offset)> animatorProperties;
 		private List<(string, ushort offset)> shaderProperties;
 		private Dictionary<Type, ulong> hashCache;
@@ -69,6 +70,7 @@ namespace Khorde.Expr.Authoring
 
 			patchableTypeInfos = new(allocator);
 			constStorage = new NativeList<byte>(allocator);
+			constReflection = new();
 			hashCache = new();
 			animatorProperties = new();
 			shaderProperties = new();
@@ -225,7 +227,7 @@ namespace Khorde.Expr.Authoring
 
 		public void FinalizeBake()
 		{
-			ExprAuthoring.BakeConstStorage(ref builder, ref *data, constStorage);
+			ExprAuthoring.BakeConstStorage(ref builder, ref *data, constStorage, constReflection);
 
 			var shaderProperties = builder.Allocate(ref data->shaderPropertyPatches, this.shaderProperties.Count);
 			for(int i = 0; i < this.shaderProperties.Count; ++i)
@@ -407,15 +409,15 @@ namespace Khorde.Expr.Authoring
 		}
 
 		public ExpressionRef Const<TConstant>(TConstant constant) where TConstant : unmanaged
-			=> ExprAuthoring.WriteConstant2(constant, constStorage, constCache);
+			=> ExprAuthoring.WriteConstant2(constant, constStorage, constCache, constReflection);
 
 		public ExpressionRef Const(object constant)
-			=> ExprAuthoring.WriteConstant2(constant, constStorage, constCache);
+			=> ExprAuthoring.WriteConstant2(constant, constStorage, constCache, constReflection);
 
 		public ExpressionRef AnimatorPropertyId(string propertyName)
 		{
 			// skip deduplication cache because the value will be patched at runtime
-			var exprRef = ExprAuthoring.WriteConstant2<int>(0, constStorage, cache: null);
+			var exprRef = ExprAuthoring.WriteConstant2<int>(0, constStorage, cache: null, constReflection);
 			var index = exprRef.GetConstantIndex();
 			animatorProperties.Add((propertyName, index));
 			return exprRef;
@@ -424,7 +426,7 @@ namespace Khorde.Expr.Authoring
 		public ExpressionRef ShaderPropertyId(string propertyName)
 		{
 			// skip deduplication cache because the value will be patched at runtime
-			var exprRef = ExprAuthoring.WriteConstant2<int>(0, constStorage, cache: null);
+			var exprRef = ExprAuthoring.WriteConstant2<int>(0, constStorage, cache: null, constReflection);
 			var index = exprRef.GetConstantIndex();
 			shaderProperties.Add((propertyName, index));
 			return exprRef;

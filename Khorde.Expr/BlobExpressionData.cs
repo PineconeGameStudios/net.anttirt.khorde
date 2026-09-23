@@ -22,12 +22,26 @@ namespace Khorde.Expr
 	/// </summary>
 	public struct BlobExpressionData
 	{
-		public const int SchemaVersion = 6;
+		public const int SchemaVersion = 7;
 
 		/// <summary>
 		/// Storage for constant-valued expression node references
 		/// </summary>
 		public BlobArray<byte> constants;
+
+		public struct ConstantReflection
+		{
+			public BlobString typeAssembly;
+			public BlobString typeName;
+			public int offset;
+			public int size;
+			public int alignment;
+		}
+
+		/// <summary>
+		/// Reflection for baked constants, for debugging.
+		/// </summary>
+		public BlobArray<ConstantReflection> constantReflection;
 
 		/// <summary>
 		/// Storage for expressions
