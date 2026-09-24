@@ -1,6 +1,7 @@
 using Khorde.Behavior;
 using Khorde.Entities;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor.GraphVisualization;
 using Unity.Mathematics;
@@ -10,14 +11,27 @@ namespace Khorde.Behaviour.Authoring
 	[UpdateInGroup(typeof(PresentationSystemGroup))]
 	partial class BehaviorTreeDebugGraphSystem : SystemBase
 	{
-		HashSet<NodeReference> playing = new();
-		HashSet<NodeReference> stillPlaying = new();
-		Dictionary<Hash128, Context> contexts = new();
+		class GraphContext
+		{
+			public HashSet<NodeReference> playing = new();
+			public HashSet<NodeReference> stillPlaying = new();
+			public Context context;
+
+			public GraphContext(Context context)
+			{
+				this.context = context;
+			}
+		}
+
+		Dictionary<Hash128, GraphContext> contexts = new();
 
 		protected override void OnDestroy()
 		{
 			foreach(var (_, context) in contexts)
-				context.Dispose();
+			{
+				context.context.ClearAllVisualization();
+				context.context.Dispose();
+			}
 
 			contexts.Clear();
 		}
@@ -25,6 +39,10 @@ namespace Khorde.Behaviour.Authoring
 		protected override void OnUpdate()
 		{
 			var selected = SelectedEntity.Value;
+
+			foreach(var (_, context) in contexts)
+				context.stillPlaying.Clear();
+
 			if(EntityManager.HasComponent<BehaviorTree>(selected))
 			{
 				ref var tree = ref EntityManager.GetSharedComponent<BehaviorTree>(selected).tree.Value;
@@ -36,28 +54,31 @@ namespace Khorde.Behaviour.Authoring
 				}
 
 				if(!contexts.TryGetValue(tree.graphId, out var context))
-					context = Registry.CreateVisualizationContext(tree.graphId);
+					context = contexts[tree.graphId] = new(Registry.CreateVisualizationContext(tree.graphId));
 
-				var stack = EntityManager.GetBuffer<BTStackFrame>(selected, isReadOnly: true);
-				var state = EntityManager.GetComponentData<BTState>(selected);
-				var threads = EntityManager.GetBuffer<BTThread>(selected);
+				var stack = SystemAPI.GetBuffer<BTStackFrame>(selected);
+				var state = SystemAPI.GetComponent<BTState>(selected);
+				var threads = SystemAPI.GetBuffer<BTThread>(selected);
+				var utility = SystemAPI.GetBuffer<BTUtilityDebug>(selected);
 				var now = (float)SystemAPI.Time.ElapsedTime;
 
 				// preview utility values
-				for(int i = 0; i < tree.execs.Length; ++i)
+				if(utility.Length > 0)
 				{
-					ref var node = ref tree.execs[i];
-
-					if(tree.utilityPreviewPortIds[i] != default)
+					for(int i = 0; i < tree.execs.Length; ++i)
 					{
-						var port = context.GetPortReference(tree.utilityPreviewPortIds[i]);
-						// TODO: get the last computed utility value; separate buffer?
-						port.SetPreview("0.34");
+						ref var node = ref tree.execs[i];
+
+						if(tree.utilityPreviewPortIds[i] != default)
+						{
+							var port = context.context.GetPortReference(tree.utilityPreviewPortIds[i]);
+							// TODO: get the last computed utility value; separate buffer?
+							port.SetPreview(utility[i].value.ToString("N2"));
+						}
 					}
 				}
 
 				// active nodes on the thread's current stack
-				stillPlaying.Clear();
 
 				for(int tid = 0; tid < threads.Length; ++tid)
 				{
@@ -65,7 +86,13 @@ namespace Khorde.Behaviour.Authoring
 					for(int frameId = 0; frameId < threadStack.Length; ++frameId)
 					{
 						var frame = threadStack[frameId];
-						var nodeRef = context.GetNodeReference(tree.execNodeIds[frame.nodeId.index]);
+						var nodeId = tree.execNodeIds[frame.nodeId.index];
+
+						// generate nodes (Nop etc) don't have a matching graph node
+						if(!nodeId.isValid)
+							continue;
+
+						var nodeRef = context.context.GetNodeReference(nodeId);
 
 						ref var nodeData = ref tree.GetNode(frame.nodeId);
 						switch(nodeData.type)
@@ -77,39 +104,63 @@ namespace Khorde.Behaviour.Authoring
 								}
 								else
 								{
-									PlayNode(context, nodeRef);
+									PlayNode(context, nodeRef, nodeData.type);
 								}
 								break;
 
 							case BTExec.BTExecType.UtilityCooldown:
 								// TODO: get cooldown progress
-								PlayNode(context, nodeRef);
+								PlayNode(context, nodeRef, nodeData.type);
 								break;
 
 							default:
-								PlayNode(context, nodeRef);
+								PlayNode(context, nodeRef, nodeData.type);
 								break;
 						}
 					}
 				}
+			}
 
-				foreach(var nodeRef in playing)
+			foreach(var (_, context) in contexts)
+			{
+				if(context.playing.Count != context.stillPlaying.Count)
 				{
-					if(!stillPlaying.Contains(nodeRef))
+					foreach(var nodeRef in context.playing.ToArray())
 					{
-						playing.Remove(nodeRef);
-						context.Motion.Stop(nodeRef);
+						if(!context.stillPlaying.Contains(nodeRef))
+						{
+							context.playing.Remove(nodeRef);
+							try
+							{
+								nodeRef.Context.Motion.Stop(nodeRef);
+							}
+							catch(System.Exception) { }
+						}
 					}
 				}
 			}
 		}
 
-		private void PlayNode(Context context, NodeReference nodeRef)
+		private void PlayNode(GraphContext context, NodeReference nodeRef, BTExec.BTExecType nodeType)
 		{
-			if(playing.Add(nodeRef))
-				context.Motion.Play(nodeRef);
+			if(context.playing.Add(nodeRef))
+			{
+				try
+				{
+					nodeRef.Context.Motion.Play(nodeRef);
+				}
+				catch(System.Exception e)
+				{
+					UnityEngine.Debug.Log($"{e.GetType().Name}: {e.Message.Replace("\r\n", " ").Replace('\n', ' ')}. ID={nodeRef.NodeID} Type={nodeType}");
+					try
+					{
+						nodeRef.Context.Motion.Stop(nodeRef);
+					}
+					catch(System.Exception) { }
+				}
+			}
 
-			stillPlaying.Add(nodeRef);
+			context.stillPlaying.Add(nodeRef);
 		}
 	}
 }
