@@ -1,12 +1,9 @@
 
-using System;
 using Khorde.Blobs;
-using Khorde.Blobs.Authoring;
-using Unity.Collections;
+using System;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Khorde.Query.Authoring
 {
@@ -103,8 +100,9 @@ namespace Khorde.Query.Authoring
 		
 		public void Bake(ref QSGenerator generator, QueryBakingContext queryBakingContext)
 		{
-			if (!query.TryGetValue<EntityQueryAsset>(out var entityQuery))
+			if (!query.TryGetValue<EntityQueryAsset>(out var entityQuery) || entityQuery == null)
 			{
+				queryBakingContext.AddError(this, "entity query must be assigned on generator");
 				return;
 			}
 
