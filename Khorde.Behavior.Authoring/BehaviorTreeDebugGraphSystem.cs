@@ -12,6 +12,15 @@ namespace Khorde.Behaviour.Authoring
 	{
 		HashSet<NodeReference> playing = new();
 		HashSet<NodeReference> stillPlaying = new();
+		Dictionary<Hash128, Context> contexts = new();
+
+		protected override void OnDestroy()
+		{
+			foreach(var (_, context) in contexts)
+				context.Dispose();
+
+			contexts.Clear();
+		}
 
 		protected override void OnUpdate()
 		{
@@ -19,7 +28,15 @@ namespace Khorde.Behaviour.Authoring
 			if(EntityManager.HasComponent<BehaviorTree>(selected))
 			{
 				ref var tree = ref EntityManager.GetSharedComponent<BehaviorTree>(selected).tree.Value;
-				var context = Registry.GetActiveContext(tree.graphId);
+
+				if(tree.graphId == default)
+				{
+					UnityEngine.Debug.LogError($"tree was not baked with a graph id");
+					return;
+				}
+
+				if(!contexts.TryGetValue(tree.graphId, out var context))
+					context = Registry.CreateVisualizationContext(tree.graphId);
 
 				var stack = EntityManager.GetBuffer<BTStackFrame>(selected, isReadOnly: true);
 				var state = EntityManager.GetComponentData<BTState>(selected);
