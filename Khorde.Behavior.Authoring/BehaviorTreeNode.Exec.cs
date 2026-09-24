@@ -293,6 +293,66 @@ namespace Khorde.Behavior.Authoring
 
 	[Serializable]
 	[Node("Execution")]
+	internal class Delay : ExecBase, IExecNode
+	{
+		IPort durationInputPort;
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			exec.type = BTExec.BTExecType.Wait;
+
+			exec.data.wait = new Behavior.Wait
+			{
+				mode = Behavior.Wait.ConditionMode.Until,
+				condition = context.Const(false),
+				duration = context.GetExpressionRef(durationInputPort),
+			};
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+
+			durationInputPort = context.AddInputPort<float>("Duration")
+				.WithDisplayName("Duration")
+				.WithConnectorUI(PortConnectorUI.Circle)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	[Node("Execution", iconPath: null, title: "Wait Until Next Frame")]
+	internal class WaitUntilNextFrame : ExecBase, IExecNode
+	{
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			exec.type = BTExec.BTExecType.Wait;
+
+			exec.data.wait = new Behavior.Wait
+			{
+				mode = Behavior.Wait.ConditionMode.Until,
+				condition = context.Const(false),
+				duration = context.Const(0.001f),
+			};
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+		}
+	}
+
+	[Serializable]
+	[Node("Execution")]
 	internal class WriteVar : ExecBase, IExecNode
 	{
 		private INodeOption valueTypeOption;
