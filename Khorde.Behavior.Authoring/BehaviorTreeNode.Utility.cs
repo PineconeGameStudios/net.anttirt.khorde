@@ -50,6 +50,11 @@ namespace Khorde.Behavior.Authoring
 				queries[i] = allQueries[i].Value;
 		}
 
+		public override void OnEnable()
+		{
+			DefaultColor = Utility.UtilityDefaultColor;
+		}
+
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
 			tieScoreTolerance = context.AddOption<float>("TieScoreTolerance")
@@ -163,6 +168,11 @@ namespace Khorde.Behavior.Authoring
 			data.lastExecutionTime = execTimeVariableIndex;
 		}
 
+		public override void OnEnable()
+		{
+			DefaultColor = Utility.UtilityDefaultColor;
+		}
+
 		ExpressionRef ICustomExprNode.GetExpressionRef(GraphExpressionBakingContext context, IPort port)
 		{
 			context.AddError(this, $"port doesn't match");
@@ -246,6 +256,11 @@ namespace Khorde.Behavior.Authoring
 				data.invInputRange = 1.0f / data.invInputRange;
 			else
 				data.invInputRange = 1;
+		}
+
+		public override void OnEnable()
+		{
+			DefaultColor = Utility.UtilityDefaultColor;
 		}
 
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
@@ -334,6 +349,11 @@ namespace Khorde.Behavior.Authoring
 			context.Bake<Unity.Transforms.LocalToWorld>(ref data.lookupTypeInfo, ExpressionComponentLocation.Lookup);
 		}
 
+		public override void OnEnable()
+		{
+			DefaultColor = Utility.UtilityDefaultColor;
+		}
+
 		protected override void OnDefineOptions(IOptionDefinitionContext context)
 		{
 			range = context.AddOption<float>("Range")
@@ -392,6 +412,8 @@ namespace Khorde.Behavior.Authoring
 	[Node("Execution/Utility", iconPath: "Packages/net.anttirt.khorde/Icons/Utility.png", title: "Utility", stylesheet: "Packages/net.anttirt.khorde/Styles/Utility.uss")]
 	internal class Utility : ExecBase, IUtilityNode
 	{
+		public static readonly Color UtilityDefaultColor = new(0.3098f, 0.62745f, 1.0f);
+
 		private IPort value;
 		private IPort child;
 
@@ -401,6 +423,12 @@ namespace Khorde.Behavior.Authoring
 			ref var data = ref exec.data.utility;
 			data.input = context.GetExpressionRef(value);
 			data.child = context.GetTargetNodeId(child);
+		}
+
+		public override void OnEnable()
+		{
+			DefaultColor = UtilityDefaultColor;
+			Tooltip = "Set utility value.\nUpstream nodes may modify this utility value based on curves etc.";
 		}
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
