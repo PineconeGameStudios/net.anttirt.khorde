@@ -312,6 +312,7 @@ namespace Khorde.Behavior
 						case BTExec.BTExecType.Sequence:
 							if(frames[^1].childIndex < node.data.sequence.children.Length)
 							{
+								frames.ElementAt(frames.Length - 1).execOutputIndex = frames[^1].childIndex;
 								Call(ref data, node.data.sequence.children[frames[^1].childIndex]);
 							}
 							else
@@ -332,6 +333,7 @@ namespace Khorde.Behavior
 									if(child.condition.Evaluate<bool>(in exprContext))
 									{
 										any = true;
+										frames.ElementAt(frames.Length - 1).execOutputIndex = (byte)childIndex;
 										Call(ref data, child.nodeId);
 										break;
 									}
@@ -432,9 +434,15 @@ namespace Khorde.Behavior
 							if(frames[^1].childIndex == 0)
 							{
 								if(node.data.@if.condition.Evaluate<bool>(in exprContext))
+								{
+									frames.ElementAt(frames.Length - 1).execOutputIndex = 0;
 									Call(ref data, node.data.@if.then);
+								}
 								else
+								{
+									frames.ElementAt(frames.Length - 1).execOutputIndex = 1;
 									Call(ref data, node.data.@if.@else);
+								}
 							}
 							else
 							{
@@ -528,6 +536,7 @@ namespace Khorde.Behavior
 									}
 									else
 									{
+										frames.ElementAt(frames.Length - 1).execOutputIndex = 1;
 										Call(ref data, query.failure);
 									}
 
@@ -800,6 +809,7 @@ namespace Khorde.Behavior
 
 								if(index != -1)
 								{
+									frames.ElementAt(frames.Length - 1).execOutputIndex = (byte)index;
 									Call(ref data, node.data.utilitySelector.actions[index].nodeId);
 								}
 								else

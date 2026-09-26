@@ -19,6 +19,7 @@ namespace Khorde.Behavior.Authoring
 		private NativeArray<BTExec> builderExecs;
 		private NativeArray<Hash128> builderExecNodeIds;
 		private NativeArray<Hash128> utilityPreviewPortIds;
+		private NativeArray<BTData.ExecPorts> builderExecNodeExecPorts;
 		private NativeArray<BlobArray<Hash128>> builderExecNodeSubgraphStacks;
 		private List<QueryGraphAsset> queries = new();
 		private List<BehaviorTreeAction> actions = new();
@@ -40,6 +41,7 @@ namespace Khorde.Behavior.Authoring
 			builderExecs = default;
 			builderExecNodeIds = default;
 			utilityPreviewPortIds = default;
+			builderExecNodeExecPorts = default;
 			builderExecNodeSubgraphStacks = default;
 			execNodeIdCounter = 0;
 		}
@@ -112,6 +114,7 @@ namespace Khorde.Behavior.Authoring
 			builderExecs = AsArray(builder.Allocate(ref data->execs, execCount));
 			builderExecNodeIds = AsArray(builder.Allocate(ref data->execNodeIds, execCount));
 			utilityPreviewPortIds = AsArray(builder.Allocate(ref data->utilityPreviewPortIds, execCount));
+			builderExecNodeExecPorts = AsArray(builder.Allocate(ref data->execNodeExecPorts, execCount));
 			builderExecNodeSubgraphStacks = AsArray(builder.Allocate(ref data->execNodeSubgraphStacks, execCount));
 			data->graphId = rootGraph?.ID ?? default;
 		}
@@ -139,21 +142,37 @@ namespace Khorde.Behavior.Authoring
 				else if(node is IExecNode execNode)
 				{
 					var nodeId = GetNodeId(execNode);
-					var index = nodeId.index;
-					builderExecNodeIds[index] = execNode.ID;
+					var baseIndex = nodeId.index;
+					var execPorts = execNode.GetOutputExecPorts().ToArray();
+					Hash128 utilityPort = default;
 					if(node is IUtilityNode utilityNode)
-						utilityPreviewPortIds[index] = utilityNode.GetUtilityDebugPort()?.ID ?? default;
-
-					var subgraphStackIds = builder.Allocate(ref builderExecNodeSubgraphStacks.UnsafeElementAt(index), subgraphStack.Depth);
-					int i = 0;
-					foreach(var hash in subgraphStack.Hashes)
-						subgraphStackIds[i++] = hash;
+						utilityPort = utilityNode.GetUtilityDebugPort()?.ID ?? default;
 
 					for(int j = 0; j < execNode.NodeCount; j++)
 					{
-						execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index + j), this, j, nodeId);
+						var index = baseIndex + j;
+
+						execNode.Bake(ref builder, ref builderExecs.UnsafeElementAt(index), this, j, nodeId);
 
 						//UnityEngine.Debug.Log($"baked {execNode} into {builderExecs.UnsafeElementAt(index + j).DumpString()} at node {nodeId} (pass {j})");
+
+						builderExecNodeIds[index] = execNode.ID;
+						utilityPreviewPortIds[index] = utilityPort;
+
+						var subgraphStackIds = builder.Allocate(ref builderExecNodeSubgraphStacks.UnsafeElementAt(index), subgraphStack.Depth);
+						int i = 0;
+						foreach(var hash in subgraphStack.Hashes)
+							subgraphStackIds[i++] = hash;
+
+						var portPairs = builder.Allocate(ref builderExecNodeExecPorts.ElementAt(index).pairs, execPorts.Length);
+						for(int k = 0;  k < execPorts.Length; k++)
+						{
+							portPairs[k] = new()
+							{
+								output = execPorts[k].ID,
+								input = execPorts[k].IsConnected ? execPorts[k].FirstConnectedPort.ID : default,
+							};
+						}
 
 						nodeId.index++;
 					}

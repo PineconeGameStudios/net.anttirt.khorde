@@ -73,6 +73,8 @@ namespace Khorde.Behavior
 	{
 		[GhostField] public BTExecNodeId nodeId;
 		[GhostField] public byte childIndex;
+		// index of the exec output being currently executed, if there are more stack frames
+		public byte execOutputIndex;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static implicit operator BTStackFrame(BTExecNodeId nodeId) => new() { nodeId = nodeId };
@@ -162,13 +164,24 @@ namespace Khorde.Behavior
 
 	public struct BTData
 	{
-		public const int SchemaVersion = 14
+		public const int SchemaVersion = 15
 			| (BlobExpressionData.SchemaVersion << 16);
 
 		public BlobExpressionData exprData;
 		public BlobArray<BTExec> execs;
 		public BlobArray<UnityEngine.Hash128> execNodeIds;
 		public BlobArray<UnityEngine.Hash128> utilityPreviewPortIds;
+		public struct PortPair
+		{
+			public UnityEngine.Hash128 output;
+			public UnityEngine.Hash128 input;
+		}
+		public struct ExecPorts
+		{
+			// indexed by childIndex during execution; used for debug-visualizing exec wires
+			public BlobArray<PortPair> pairs;
+		}
+		public BlobArray<ExecPorts> execNodeExecPorts;
 		public BlobArray<BlobArray<UnityEngine.Hash128>> execNodeSubgraphStacks;
 		public Flags flags;
 		public UnityEngine.Hash128 graphId;

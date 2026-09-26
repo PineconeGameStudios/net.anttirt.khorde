@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 
@@ -31,6 +32,35 @@ namespace Khorde.Behavior.Authoring
 		public void Register(BTBakingContext context, BTExecNodeId nodeId) { }
 		public void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId);
 		public int NodeCount { get; }
+
+		/// <summary>
+		/// Get an ordered list of all output ports of type <see cref="ExecutionFlow"/>. The index in this list corresponds to <see cref="BTStackFrame.execOutputIndex"/>.
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<IPort> GetOutputExecPorts()
+		{
+			if(this is Node node)
+			{
+				foreach(var port in EnumPorts(node))
+					yield return port;
+			}
+
+			if(this is ContextNode context)
+			{
+				foreach(var block in context.BlockNodes)
+				{
+					foreach(var port in EnumPorts(block))
+						yield return port;
+				}
+			}
+		}
+
+		protected static IEnumerable<IPort> EnumPorts(Node node)
+		{
+			foreach(var port in node.GetOutputPorts())
+				if(port.DataType == typeof(ExecutionFlow))
+					yield return port;
+		}
 	}
 
 	public interface IUtilityNode : INode
