@@ -1079,6 +1079,10 @@ namespace Khorde.Behavior
 							}
 							else
 							{
+#if UNITY_EDITOR
+								// get downstream values for debugging even if we would otherwise stop evaluation here
+								GetUtility(ref state, ref data, in exprContext, nd.child, utilityDebug);
+#endif
 								result = 0;
 							}
 							break;

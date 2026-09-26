@@ -142,6 +142,7 @@ namespace Khorde.Behavior.Authoring
 		private INodeOption cooldown;
 		private INodeOption softCooldown;
 		private INodeOption softCooldownCurve;
+		private IPort child;
 		private VariableId execTimeVariableIndex;
 
 		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
@@ -166,6 +167,7 @@ namespace Khorde.Behavior.Authoring
 
 			context.BakeGeneratedVariable(this, 0, execTimeVariableIndex);
 			data.lastExecutionTime = execTimeVariableIndex;
+			data.child = context.GetTargetNodeId(child);
 		}
 
 		public override void OnEnable()
@@ -216,7 +218,7 @@ namespace Khorde.Behavior.Authoring
 				.WithCapacity(PortCapacity.Single)
 				.Build();
 
-			context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
+			child = context.AddOutputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
 				.WithCapacity(PortCapacity.Single)
@@ -225,6 +227,7 @@ namespace Khorde.Behavior.Authoring
 			context.AddUtilityDebugDisplayPort(out utilityPort);
 		}
 		IPort utilityPort;
+
 		IPort IUtilityNode.GetUtilityDebugPort() => utilityPort;
 	}
 
