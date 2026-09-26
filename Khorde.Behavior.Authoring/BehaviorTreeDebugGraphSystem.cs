@@ -15,6 +15,8 @@ namespace Khorde.Behaviour.Authoring
 		{
 			public HashSet<NodeReference> playing = new();
 			public HashSet<NodeReference> stillPlaying = new();
+			public HashSet<WireReference> activeWires = new();
+			public HashSet<WireReference> stillActive = new();
 			public Context context;
 
 			public GraphContext(Context context)
@@ -41,7 +43,10 @@ namespace Khorde.Behaviour.Authoring
 			var selected = SelectedEntity.Value;
 
 			foreach(var (_, context) in contexts)
+			{
 				context.stillPlaying.Clear();
+				context.stillActive.Clear();
+			}
 
 			if(EntityManager.HasComponent<BehaviorTree>(selected))
 			{
@@ -72,7 +77,6 @@ namespace Khorde.Behaviour.Authoring
 						if(tree.utilityPreviewPortIds[i] != default)
 						{
 							var port = context.context.GetPortReference(tree.utilityPreviewPortIds[i]);
-							// TODO: get the last computed utility value; separate buffer?
 							port.SetPreview(utility[i].value.ToString("N2"));
 						}
 					}
@@ -92,9 +96,31 @@ namespace Khorde.Behaviour.Authoring
 						if(!nodeId.isValid)
 							continue;
 
-						var nodeRef = context.context.GetNodeReference(nodeId);
-
 						ref var nodeData = ref tree.GetNode(frame.nodeId);
+
+						if(frameId < threadStack.Length - 1)
+						{
+							ref var portPairs = ref tree.execNodeExecPorts[frame.nodeId.index];
+							if(frame.execOutputIndex < portPairs.pairs.Length)
+							{
+								ref var portPair = ref portPairs.pairs[frame.execOutputIndex];
+								if(portPair.input != default && portPair.output != default)
+								{
+									var wire = context.context.GetWireReference(portPair.output, portPair.input);
+									if(context.activeWires.Add(wire))
+									{
+										wire.WidthOverride = 10;
+										context.context.Motion.Play(wire);
+									}
+
+									context.stillActive.Add(wire);
+								}
+							}
+						}
+
+						/*
+						// PlayNode and FillAmount don't work with subgraphs in 6000.6.1f1
+						var nodeRef = context.context.GetNodeReference(nodeId);
 						switch(nodeData.type)
 						{
 							case BTExec.BTExecType.Wait:
@@ -117,12 +143,27 @@ namespace Khorde.Behaviour.Authoring
 								PlayNode(context, nodeRef, nodeData.type);
 								break;
 						}
+						*/
 					}
 				}
 			}
 
 			foreach(var (_, context) in contexts)
 			{
+				if(context.activeWires.Count != context.stillActive.Count)
+				{
+					foreach(var wireRef in context.activeWires.ToArray())
+					{
+						if(!context.stillActive.Contains(wireRef))
+						{
+							context.activeWires.Remove(wireRef);
+							wireRef.ClearCustomization();
+							context.context.Motion.Stop(wireRef);
+						}
+					}
+				}
+
+				/*
 				if(context.playing.Count != context.stillPlaying.Count)
 				{
 					foreach(var nodeRef in context.playing.ToArray())
@@ -138,6 +179,7 @@ namespace Khorde.Behaviour.Authoring
 						}
 					}
 				}
+				*/
 			}
 		}
 

@@ -73,8 +73,10 @@ namespace Khorde.Behavior
 	{
 		[GhostField] public BTExecNodeId nodeId;
 		[GhostField] public byte childIndex;
-		// index of the exec output being currently executed, if there are more stack frames
-		public byte execOutputIndex;
+
+		// index of the exec output being currently executed, if there are more
+		// stack frames; used to detect the execution wire for debug viz
+		[GhostField] public byte execOutputIndex;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static implicit operator BTStackFrame(BTExecNodeId nodeId) => new() { nodeId = nodeId };
