@@ -155,9 +155,9 @@ namespace Khorde.Behavior.Authoring
 			exec.type = BTExec.BTExecType.UtilityCooldown;
 			ref var data = ref exec.data.utilityCooldown;
 
-			cooldown.TryGetValue(out data.invDuration);
-			if(data.invDuration > 0)
-				data.invDuration = 1 / data.invDuration;
+			cooldown.TryGetValue(out data.duration);
+			if(data.duration < 0)
+				data.duration = 0;
 			this.softCooldown.TryGetValue(out data.softCooldown);
 			if(data.softCooldown)
 			{

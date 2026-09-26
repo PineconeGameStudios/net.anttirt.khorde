@@ -1030,8 +1030,15 @@ namespace Khorde.Behavior
 #endif
 								);
 							var lastExecutionTime = exprContext.GetBlackboardVariable<float>(uc.lastExecutionTime);
-							var t = math.saturate((now - lastExecutionTime) * uc.invDuration);
-							result = uc.curve.Evaluate(t) * input;
+							if(uc.softCooldown)
+							{
+								var t = math.clamp((now - lastExecutionTime) / (uc.duration == 0 ? 1 : uc.duration), 0, 1000);
+								result = uc.curve.Evaluate(t) * input;
+							}
+							else
+							{
+								result = (now - lastExecutionTime) < uc.duration ? 0 : input;
+							}
 							break;
 						}
 
