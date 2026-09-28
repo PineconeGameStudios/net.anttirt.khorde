@@ -486,4 +486,16 @@ namespace Khorde.Behavior
 	/// </summary>
 	[Serializable]
 	public struct UtilityValue { }
+
+	public struct Once
+	{
+		public BTExecNodeId once;
+		public BTExecNodeId then;
+		public VariableId latch;
+
+		public string DumpString()
+		{
+			return $"{{ once={once} then={then} latch={latch} }}";
+		}
+	}
 }

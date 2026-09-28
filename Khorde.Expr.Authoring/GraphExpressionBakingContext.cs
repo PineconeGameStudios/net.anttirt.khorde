@@ -469,7 +469,7 @@ namespace Khorde.Expr.Authoring
 					}
 					else if(genVarNodesByIndex.TryGetValue(nodeIndex, out var genVar))
 					{
-						AddError(variableNode.node, $"genvar {genVar.node.Item1.GetType().FullName}/{genVar.node.outputIndex} at index {nodeIndex} failed to add an expression type hash");
+						AddError(variableNode.node, $"genvar {genVar.node.Item1.GetType().FullName}/{genVar.node.outputIndex} at index {nodeIndex} failed to add an expression type hash; make sure to call context.BakeGeneratedVariable in Bake()");
 					}
 					else
 					{

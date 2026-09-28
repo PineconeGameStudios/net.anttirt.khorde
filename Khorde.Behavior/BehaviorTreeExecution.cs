@@ -869,6 +869,26 @@ namespace Khorde.Behavior
 								Return(ref data, ref node);
 							break;
 
+						case BTExec.BTExecType.Once:
+							if(frames[^1].childIndex == 0)
+							{
+								ref bool latch = ref exprContext.GetBlackboardVariable<bool>(node.data.once.latch);
+								if(!latch)
+								{
+									latch = true;
+									Call(ref data, node.data.once.once, incrementChildIndex: false);
+								}
+								else
+								{
+									Call(ref data, node.data.once.then);
+								}
+							}
+							else
+							{
+								Return(ref data, ref node);
+							}
+							break;
+
 						default:
 							throw new NotImplementedException($"BTExec node type {node.type} not implemented");
 					}
@@ -1108,6 +1128,24 @@ namespace Khorde.Behavior
 								result = 0;
 							}
 							break;
+						}
+
+					case BTExec.BTExecType.Once:
+						{
+							ref var nd = ref node.data.once;
+							bool latch = exprContext.GetBlackboardVariable<bool>(nd.latch);
+							if(!latch)
+								return GetUtility(ref state, ref data, in exprContext, nd.once
+#if UNITY_EDITOR
+										, utilityDebug
+#endif
+									);
+							else
+								return GetUtility(ref state, ref data, in exprContext, nd.then
+#if UNITY_EDITOR
+									, utilityDebug
+#endif
+									);
 						}
 
 					default:

@@ -132,6 +132,7 @@ namespace Khorde.Behavior.Authoring
 
 			retryOption = context.AddOption<bool>("Retry")
 				.WithDisplayName("Retry")
+				.WithTooltip("Continue retrying the query until it succeeds.")
 				.Build();
 		}
 

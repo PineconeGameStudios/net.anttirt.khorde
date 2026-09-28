@@ -674,4 +674,67 @@ namespace Khorde.Behavior.Authoring
 			}
 		}
 	}
+
+	[Serializable]
+	[Node("Execution")]
+	internal class Once : ExecBase, IExecNode, ICustomExprNode
+	{
+		IPort once;
+		IPort then;
+		VariableId latch;
+
+		public override void OnEnable()
+		{
+			Subtitle = "One-time execution";
+			Tooltip = "Execute the first branch exactly once per owner.\nOn all subsequent evaluations, execute the second branch.";
+		}
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			exec.type = BTExec.BTExecType.Once;
+			exec.data.once = new()
+			{
+				once = context.GetTargetNodeId(once),
+				then = context.GetTargetNodeId(then),
+				latch = latch,
+			};
+
+			context.BakeGeneratedVariable(this, 0, latch);
+		}
+
+		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
+		{
+			latch = context.RegisterGeneratedVariable(this, 0, $"_Once_{nodeId.index}_latch", true, typeof(bool));
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+
+			once = context.AddOutputPort<ExecutionFlow>("Once")
+				.WithDisplayName("Once")
+				.WithCapacity(PortCapacity.Single)
+				.WithTooltip("This is executed once, and never again for the same owner.")
+				.Build();
+
+			then = context.AddOutputPort<ExecutionFlow>("Then")
+				.WithDisplayName("Then")
+				.WithCapacity(PortCapacity.Single)
+				.WithTooltip("This is executed after the first branch, and on all subsequent evaluations for the same owner.")
+				.Build();
+		}
+
+		public ExpressionRef GetExpressionRef(GraphExpressionBakingContext context, IPort port)
+		{
+			return default;
+		}
+	}
 }
