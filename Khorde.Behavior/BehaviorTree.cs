@@ -85,13 +85,11 @@ namespace Khorde.Behavior
 		public static implicit operator BTStackFrame(BTExecNodeId nodeId) => new() { nodeId = nodeId };
 	}
 
-#if UNITY_EDITOR
 	[InternalBufferCapacity(0)]
 	public struct BTUtilityDebug : IBufferElementData
 	{
 		public float value;
 	}
-#endif
 
 	[InternalBufferCapacity(0)]
 	public struct BTExecTrace : IBufferElementData
