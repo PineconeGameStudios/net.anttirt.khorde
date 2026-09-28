@@ -1,5 +1,7 @@
 using Khorde.Behavior.Authoring;
+using Khorde.Entities.Editor;
 using Khorde.Expr.Authoring;
+using System;
 using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.Editor;
@@ -27,6 +29,14 @@ namespace Khorde.Behavior
 				{
 					ctx.LogImportError($"Failed to load graph of type '{nameof(BehaviorTreeGraph)}' from path '{ctx.assetPath}'");
 					return;
+				}
+
+				foreach(var node in graph.GetNodes())
+				{
+					if(node is IComponentAccess componentAccess)
+					{
+						TypeDependencyCacheExt.AddComponentTypeDependency(ctx, componentAccess.ComponentType);
+					}
 				}
 
 				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.Variable.VariableKind == VariableKind.Input || v.Variable.VariableKind == VariableKind.Output);
