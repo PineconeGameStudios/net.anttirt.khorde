@@ -1,6 +1,7 @@
 using Khorde.Expr;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Unity.Entities;
 using Unity.NetCode;
 using Random = Unity.Mathematics.Random;
@@ -27,6 +28,8 @@ namespace Khorde.Behavior
 
 		public int threadIdCounter;
 		public Random random;
+		[MarshalAs(UnmanagedType.U1)]
+		public bool initialized;
 	}
 
 	[InternalBufferCapacity(2)]

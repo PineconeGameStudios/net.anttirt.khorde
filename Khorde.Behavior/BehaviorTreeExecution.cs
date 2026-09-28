@@ -85,18 +85,6 @@ namespace Khorde.Behavior
 		{
 			data.exprData.CheckExpressionComponents(componentPtrs, lookups);
 
-			if(Hint.Unlikely(threads.Length == 0))
-			{
-				Spawn(ref state, ref data, data.Root, -1, default, 0, -1);
-				if(state.random.state == 0)
-					state.random = Random.CreateFromIndex((uint)now);
-
-#if UNITY_EDITOR
-				if(utilityDebug.IsCreated && utilityDebug.Length != data.execs.Length)
-					utilityDebug.Resize(data.execs.Length, NativeArrayOptions.ClearMemory);
-#endif
-			}
-
 			NativeArray<byte> blackboardBytes = default;
 			if(blackboard.IsCreated)
 			{
@@ -110,6 +98,33 @@ namespace Khorde.Behavior
 
 			exprContext.time = now;
 			exprContext.deltaTime = deltaTime;
+
+			if(Hint.Unlikely(threads.Length == 0))
+			{
+				Spawn(ref state, ref data, data.Root, -1, default, 0, -1);
+
+				if(!state.initialized)
+				{
+					state.initialized = true;
+
+					if(state.random.state == 0)
+						state.random = Random.CreateFromIndex((uint)now);
+
+					// set up cooldowns
+					for(int i = 0; i < data.execs.Length; ++i)
+					{
+						if(data.execs[i].type == BTExec.BTExecType.UtilityCooldown)
+						{
+							exprContext.GetBlackboardVariable<float>(data.execs[i].data.utilityCooldown.lastExecutionTime) = -1000f;
+						}
+					}
+				}
+
+#if UNITY_EDITOR
+				if(utilityDebug.IsCreated && utilityDebug.Length != data.execs.Length)
+					utilityDebug.Resize(data.execs.Length, NativeArrayOptions.ClearMemory);
+#endif
+			}
 
 			bool rootVisited = false;
 			int cycle = -1;
