@@ -1,3 +1,4 @@
+using Khorde.Entities.Editor;
 using Khorde.Expr.Authoring;
 using System.Linq;
 using Unity.Collections;
@@ -11,7 +12,7 @@ namespace Khorde.Query.Authoring
 	[ScriptedImporter(QSData.SchemaVersion | (ImporterVersion << 24), QueryGraph.AssetExtension, importQueueOffset: 2)]
 	internal class QueryGraphImporter : ScriptedImporter
 	{
-		public const int ImporterVersion = 1;
+		public const int ImporterVersion = 2;
 
 		public static string[] GatherDependenciesFromSourceFile(string path) => ExprAuthoring.GatherDependenciesFromSourceFile(path);
 
@@ -27,6 +28,14 @@ namespace Khorde.Query.Authoring
 				{
 					ctx.LogImportError($"Failed to load graph of type '{nameof(QueryGraph)}' from path '{ctx.assetPath}'");
 					return;
+				}
+
+				foreach(var node in graph.GetNodes())
+				{
+					if(node is IComponentAccess componentAccess)
+					{
+						TypeDependencyCacheExt.AddComponentTypeDependency(ctx, componentAccess.ComponentType);
+					}
 				}
 
 				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.Variable.VariableKind == VariableKind.Input || v.Variable.VariableKind == VariableKind.Output);

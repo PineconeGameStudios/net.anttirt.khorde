@@ -23,15 +23,13 @@ namespace Khorde.Behavior.Authoring
 		private INodeOption retryOption;
 		private VariableId resultVariableIndex;
 		private VariableId resultCountVariableIndex;
-		private List<VariableId> queryVariableIndices = new();
-		private List<IPort> queryVariablePorts = new();
+		private List<VariableId> queryVariableIndices;
+		private List<IPort> queryVariablePorts;
 
 		static Dictionary<string, Assembly> s_assemblies = UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies().ToDictionary(asm => asm.FullName);
 
 		void IExecNode.Register(BTBakingContext context, BTExecNodeId nodeId)
 		{
-			queryVariableIndices.Clear();
-
 			queryOption.TryGetValue<QueryGraphAsset>(out var queryGraphAsset);
 			if(queryGraphAsset == null)
 			{
@@ -53,6 +51,9 @@ namespace Khorde.Behavior.Authoring
 
 			resultVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_Query_{nodeId.index}_result", true, type);
 			resultCountVariableIndex = context.RegisterGeneratedVariable(this, varIndex++, $"_Query_{nodeId.index}_count", true, typeof(int));
+
+			queryVariableIndices ??= new();
+			queryVariableIndices.Clear();
 
 			ref var variables = ref qsData.exprData.blackboardVariables;
 			for(int i = 0; i < variables.Length; i++)
@@ -109,6 +110,12 @@ namespace Khorde.Behavior.Authoring
 			{
 				context.BakeGeneratedVariable(this, varIndex++, queryVariableIndices[i]);
 
+				if(i >= queryVariablePorts.Count)
+				{
+					context.AddError(this, $"variable port #{i} not defined");
+					break;
+				}
+
 				inputVariables[i] = new Behavior.WriteVar
 				{
 					variable = queryVariableIndices[i],
@@ -130,8 +137,6 @@ namespace Khorde.Behavior.Authoring
 
 		protected override void OnDefinePorts(IPortDefinitionContext context)
 		{
-			queryVariablePorts.Clear();
-
 			execInput = context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
 				.WithDisplayName(string.Empty)
 				.WithConnectorUI(PortConnectorUI.Arrowhead)
@@ -157,6 +162,9 @@ namespace Khorde.Behavior.Authoring
 					.WithConnectorUI(PortConnectorUI.Circle)
 					.WithCapacity(PortCapacity.Multi)
 					.Build();
+
+				queryVariablePorts ??= new();
+				queryVariablePorts.Clear();
 
 				ref var variables = ref qsData.exprData.blackboardVariables;
 				for(int i = 0; i < variables.Length; ++i)

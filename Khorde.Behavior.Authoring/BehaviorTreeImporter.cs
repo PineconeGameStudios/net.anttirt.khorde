@@ -13,7 +13,7 @@ namespace Khorde.Behavior
 	[ScriptedImporter(BTData.SchemaVersion | (ImporterVersion << 24), BehaviorTreeGraph.AssetExtension, importQueueOffset: 3)]
 	internal class BehaviorTreeImporter : ScriptedImporter
 	{
-		public const int ImporterVersion = 1;
+		public const int ImporterVersion = 2;
 
 		public static string[] GatherDependenciesFromSourceFile(string path) => ExprAuthoring.GatherDependenciesFromSourceFile(path);
 
