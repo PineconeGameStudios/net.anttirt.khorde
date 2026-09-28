@@ -289,6 +289,157 @@ namespace Khorde.Expr.Authoring
 			}
 		}
 
+		public bool TryGetValue<T>(IPort dstPort, out T value)
+		{
+			using var _l = TraceScope(dstPort.Name);
+
+			var initialNode = dstPort.GetNode();
+
+			if(!dstPort.IsConnected)
+				return HandleDisconnectedPort(dstPort, out value);
+
+			using var _ = SaveSubgraph();
+
+			var srcPorts = new List<IPort>();
+			dstPort.GetConnectedPorts(srcPorts);
+
+			if(srcPorts.Count == 0)
+				return HandleDisconnectedPort(dstPort, out value);
+
+			if(srcPorts.Count > 1)
+				AddError(dstPort.GetNode(), $"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
+
+			var srcPort = srcPorts[0];
+			var srcNode = srcPort.GetNode();
+
+			while(true)
+			{
+				Trace($"srcNode={NodeName(srcNode)} port={srcPort.Name}");
+
+				if(srcNode is IVariableNode varNode)
+				{
+					if(varNode.Variable.VariableKind == VariableKind.Local)
+					{
+						AddError(initialNode, "Expected constant value, found a variable");
+						value = default;
+						return false;
+					}
+					else if(varNode.Variable.VariableKind == VariableKind.Input)
+					{
+						// exit subgraph
+						if(subgraphStack.Depth == 0)
+						{
+							AddError(initialNode, "Expected constant value, found a variable");
+							value = default;
+							return false;
+						}
+
+						dstPort = subgraphStack.Current.GetInputPortForVariable(varNode.Variable);
+
+						if(dstPort == null)
+						{
+							AddError(varNode, $"node {varNode} returns null for subgraph node {subgraphStack.Current} input port; try resaving the graph '{subgraphStack.Current.GetSubgraph()?.Name}'");
+							value = default;
+							return false;
+						}
+
+						if(!dstPort.IsConnected)
+							return HandleDisconnectedPort(dstPort, out value);
+
+						PopSubgraph();
+
+						srcPorts.Clear();
+						dstPort.GetConnectedPorts(srcPorts);
+
+						if(srcPorts.Count > 1)
+							AddError(dstPort.GetNode(), $"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
+
+						srcPort = srcPorts[0];
+						srcNode = srcPort.GetNode();
+					}
+					else if(varNode.Variable.VariableKind == VariableKind.Output)
+					{
+						// output variable node within a subgraph; just follow normally
+						dstPort = varNode.GetInputPort(0);
+
+						srcPorts.Clear();
+						dstPort.GetConnectedPorts(srcPorts);
+
+						if(srcPorts.Count > 1)
+							AddError(dstPort.GetNode(), $"node {dstPort.GetNode()} port {dstPort} is connected to multiple sources");
+
+						srcPort = srcPorts[0];
+						srcNode = srcPort.GetNode();
+					}
+					else
+					{
+						AddError(srcNode, $"unsupported variable kind {varNode.Variable.VariableKind}");
+					}
+				}
+				else if(srcNode is ISubgraphNode subgraphNode)
+				{
+					PushSubgraph(subgraphNode);
+
+					var subgraphVariable = subgraphNode.GetVariableForOutputPort(srcPort);
+					var nodes = subgraphNode.GetSubgraph().GetNodes().OfType<IVariableNode>().Where(v => v.Variable == subgraphVariable).ToArray();
+					if(nodes.Length != 1)
+					{
+						if(nodes.Length > 1)
+							AddError(subgraphNode, "output variable within subgraph has multiple connections");
+						else
+							AddError(subgraphNode, "output variable within subgraph has no connections");
+
+						value = default;
+						return false;
+					}
+
+					srcNode = nodes[0];
+					srcPort = srcNode.GetInputPort(0);
+				}
+				else if(srcNode is IExprNode exprNode)
+				{
+					AddError(initialNode, $"Expected constant value, found expression");
+					value = default;
+					return false;
+				}
+				else if(srcNode is IConstantNode constNode)
+				{
+					if(!constNode.TryGetValue(out value))
+					{
+						AddError(constNode, $"couldn't retrieve constant value from constant node");
+						return false;
+					}
+
+					return true;
+				}
+				else if(srcNode is ICustomExprNode customNode)
+				{
+					AddError(initialNode, $"Expected constant value, found expression");
+					value = default;
+					return false;
+				}
+				else
+				{
+					AddError(srcNode, $"unhandled expr source node type {srcNode.GetType().Name}");
+					value = default;
+					return false;
+				}
+			}
+
+			bool HandleDisconnectedPort(IPort dstPort, out T value)
+			{
+				if(dstPort.TryGetValue(out value))
+				{
+					return true;
+				}
+				else
+				{
+					AddError(dstPort.GetNode(), $"port {dstPort} is not connected to a source and couldn't get inlined value");
+					return false;
+				}
+			}
+		}
+
 		public BlobBuilder Build()
 		{
 			RegisterExprNodes(this.rootGraph);
