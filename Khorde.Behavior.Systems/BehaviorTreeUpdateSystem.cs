@@ -104,8 +104,8 @@ namespace Khorde.Behavior
 						trace.Clear();
 					}
 
-					DynamicBuffer<BTUtilityDebug> utilityDebug = default;
 #if UNITY_EDITOR
+					DynamicBuffer<BTUtilityDebug> utilityDebug = default;
 					if(btData.Value.HasFlag(BTData.Flags.HasUtilitySelectors) && utilityDebugs.Length > 0)
 					{
 						utilityDebug = utilityDebugs[entityIndex];
