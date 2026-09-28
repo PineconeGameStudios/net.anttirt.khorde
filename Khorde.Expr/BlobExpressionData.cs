@@ -22,7 +22,7 @@ namespace Khorde.Expr
 	/// </summary>
 	public struct BlobExpressionData
 	{
-		public const int SchemaVersion = 7;
+		public const int SchemaVersion = 8;
 
 		/// <summary>
 		/// Storage for constant-valued expression node references
