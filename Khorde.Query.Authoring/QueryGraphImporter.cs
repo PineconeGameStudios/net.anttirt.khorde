@@ -12,7 +12,7 @@ namespace Khorde.Query.Authoring
 	[ScriptedImporter(QSData.SchemaVersion | (ImporterVersion << 24), QueryGraph.AssetExtension, importQueueOffset: 2)]
 	internal class QueryGraphImporter : ScriptedImporter
 	{
-		public const int ImporterVersion = 2;
+		public const int ImporterVersion = 3;
 
 		public static string[] GatherDependenciesFromSourceFile(string path) => ExprAuthoring.GatherDependenciesFromSourceFile(path);
 
@@ -36,6 +36,12 @@ namespace Khorde.Query.Authoring
 					{
 						TypeDependencyCacheExt.AddComponentTypeDependency(ctx, componentAccess.ComponentType);
 					}
+				}
+
+				foreach(var guid in graph.GetSubgraphs())
+				{
+					ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
+					// ctx.DependsOnArtifact(guid); // TODO: placeholder asset for query subgraphs
 				}
 
 				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.Variable.VariableKind == VariableKind.Input || v.Variable.VariableKind == VariableKind.Output);
@@ -75,8 +81,6 @@ namespace Khorde.Query.Authoring
 						obj.entityQueries = context.EntityQueries.ToList();
 						foreach(var eq in obj.entityQueries)
 							ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(eq));
-						foreach(var guid in graph.GetSubgraphs())
-							ctx.DependsOnSourceAsset(AssetDatabase.GUIDToAssetPath(guid));
 						ctx.AddObjectToAsset("asset", obj);
 						ctx.AddObjectToAsset("data", data);
 						ctx.SetMainObject(obj);

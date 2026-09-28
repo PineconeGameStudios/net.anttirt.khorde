@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using Unity.Collections;
 using Unity.GraphToolkit.Editor;
+using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace Khorde.Behavior
 	[ScriptedImporter(BTData.SchemaVersion | (ImporterVersion << 24), BehaviorTreeGraph.AssetExtension, importQueueOffset: 3)]
 	internal class BehaviorTreeImporter : ScriptedImporter
 	{
-		public const int ImporterVersion = 2;
+		public const int ImporterVersion = 3;
 
 		public static string[] GatherDependenciesFromSourceFile(string path) => ExprAuthoring.GatherDependenciesFromSourceFile(path);
 
@@ -38,6 +39,9 @@ namespace Khorde.Behavior
 						TypeDependencyCacheExt.AddComponentTypeDependency(ctx, componentAccess.ComponentType);
 					}
 				}
+
+				foreach(var guid in graph.GetSubgraphs())
+					ctx.DependsOnArtifact(guid);
 
 				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.Variable.VariableKind == VariableKind.Input || v.Variable.VariableKind == VariableKind.Output);
 
