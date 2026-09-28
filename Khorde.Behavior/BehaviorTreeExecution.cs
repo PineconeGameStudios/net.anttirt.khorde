@@ -880,6 +880,7 @@ namespace Khorde.Behavior
 								}
 								else
 								{
+									frames.ElementAt(frames.Length - 1).execOutputIndex = 1;
 									Call(ref data, node.data.once.then);
 								}
 							}
