@@ -39,6 +39,7 @@ namespace Khorde.Behavior
 			UtilityCurve,
 			UtilityRange,
 			Once,
+			Log,
 		}
 
 		public enum Flags : byte
@@ -73,6 +74,7 @@ namespace Khorde.Behavior
 			[FieldOffset(0)] public UtilityCurve utilityCurve;
 			[FieldOffset(0)] public UtilityRange utilityRange;
 			[FieldOffset(0)] public Once once;
+			[FieldOffset(0)] public Log log;
 		}
 
 		public string DumpString()
@@ -105,6 +107,7 @@ namespace Khorde.Behavior
 				case BTExecType.UtilityCurve: result += data.utilityCurve.DumpString(); break;
 				case BTExecType.UtilityRange: result += data.utilityRange.DumpString(); break;
 				case BTExecType.Once: result += data.once.DumpString(); break;
+				case BTExecType.Log: result += data.log.DumpString(); break;
 				default: break;
 			}
 

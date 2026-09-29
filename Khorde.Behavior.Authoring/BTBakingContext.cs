@@ -165,13 +165,19 @@ namespace Khorde.Behavior.Authoring
 							subgraphStackIds[i++] = hash;
 
 						var portPairs = builder.Allocate(ref builderExecNodeExecPorts.ElementAt(index).pairs, execPorts.Length);
-						for(int k = 0;  k < execPorts.Length; k++)
+						for(int k = 0; k < execPorts.Length; k++)
 						{
-							portPairs[k] = new()
+							if(execPorts[k] != null)
 							{
-								output = execPorts[k].ID,
-								input = execPorts[k].IsConnected ? execPorts[k].FirstConnectedPort.ID : default,
-							};
+								if(execPorts[k].IsConnected && execPorts[k].FirstConnectedPort == null)
+									AddError(execNode, $"exec port on node reports connected but there is no destination port");
+
+								portPairs[k] = new()
+								{
+									output = execPorts[k].ID,
+									input = execPorts[k].IsConnected ? (execPorts[k].FirstConnectedPort?.ID ?? default) : default,
+								};
+							}
 						}
 
 						nodeId.index++;
