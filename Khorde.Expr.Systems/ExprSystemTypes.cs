@@ -346,8 +346,10 @@ namespace Khorde.Expr
                 var type = lookupTypes[i].ResolveComponentType();
                 if (type.TypeIndex == TypeIndex.Null)
                 {
+                    FixedString512Bytes name = default;
+                    exprData.assetName.CopyTo(ref name);
                     UnityEngine.Debug.LogError(
-                        $"type with stableTypeHash={componentTypes[i].stableTypeHash} required by BehaviorTree not found");
+                        $"type with stableTypeHash={componentTypes[i].stableTypeHash} required by '{name}' not found; try reimporting asset");
                     return false;
                 }
 

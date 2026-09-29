@@ -30,13 +30,8 @@ namespace Khorde.Query.Authoring
 					return;
 				}
 
-				foreach(var node in graph.GetNodes())
-				{
-					if(node is IComponentAccess componentAccess)
-					{
-						TypeDependencyCacheExt.AddComponentTypeDependency(ctx, componentAccess.ComponentType);
-					}
-				}
+				foreach(var type in graph.GetComponentTypes())
+					TypeDependencyCacheExt.AddComponentTypeDependency(ctx, type);
 
 				foreach(var guid in graph.GetSubgraphs())
 				{

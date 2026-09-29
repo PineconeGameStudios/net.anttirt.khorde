@@ -502,6 +502,36 @@ namespace Khorde.Expr.Authoring
 			return assets;
 		}
 
+		public static IEnumerable<Graph> GetSubgraphAssets(this Graph graph)
+		{
+			var assets = new HashSet<GUID>();
+			var visited = new HashSet<Graph>();
+			GetSubgraphs(graph, visited, assets);
+			return visited;
+		}
+
+		public static IEnumerable<ComponentType> GetComponentTypes(this Graph graph)
+		{
+			var assets = new HashSet<GUID>();
+			var visited = new HashSet<Graph>();
+			visited.Add(graph);
+			assets.Add(graph.AssetGuid);
+			GetSubgraphs(graph, visited, assets);
+
+			var types = new HashSet<ComponentType>();
+			foreach(var asset in visited)
+			{
+				foreach(var node in asset.GetNodes())
+				{
+					if(node is IComponentAccess access)
+						types.Add(access.ComponentType);
+					else if(node is IComponentLookup lookup)
+						types.Add(lookup.ComponentType);
+				}
+			}
+			return types;
+		}
+
 		static void GetSubgraphs(Graph graph, HashSet<Graph> visited, HashSet<GUID> assets)
 		{
 			foreach(var node in graph.GetNodes())
