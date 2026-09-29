@@ -303,6 +303,12 @@ namespace Khorde.Expr.Authoring
 			if(size != destinationSize)
 				throw new InvalidOperationException();
 
+			if(type.IsEnum)
+			{
+				// enums can't be copied via GCHandle, so we use the underlying type instead
+				source = Convert.ChangeType(source, type.GetEnumUnderlyingType());
+			}
+
 			var handle = GCHandle.Alloc(source, GCHandleType.Pinned);
 
 			try
@@ -311,6 +317,11 @@ namespace Khorde.Expr.Authoring
 					destination,
 					(void*)handle.AddrOfPinnedObject(),
 					size);
+			}
+			catch(Exception)
+			{
+				UnityEngine.Debug.LogError($"couldn't copy value of type {type.FullName}");
+				throw;
 			}
 			finally
 			{
