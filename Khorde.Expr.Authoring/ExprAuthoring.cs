@@ -24,8 +24,9 @@ namespace Khorde.Expr.Authoring
 		public ExpressionStorage* storage;
 		public ulong* typeHash;
 		public BlobString* debugTypeName;
+		public ExpressionValueType* valueType;
 
-		public ExpressionStorageRef(ref ExpressionStorage storage, ref ulong typeHash, ref BlobString debugTypeName)
+		public ExpressionStorageRef(ref ExpressionStorage storage, ref ulong typeHash, ref BlobString debugTypeName, ref ExpressionValueType valueType)
 		{
 			fixed(ExpressionStorage* ptr = &storage)
 				this.storage = ptr;
@@ -33,6 +34,8 @@ namespace Khorde.Expr.Authoring
 				this.typeHash = ptr;
 			fixed(BlobString* ptr = &debugTypeName)
 				this.debugTypeName = ptr;
+			fixed(ExpressionValueType* ptr = &valueType)
+				this.valueType = ptr;
 		}
 	}
 
@@ -191,6 +194,7 @@ namespace Khorde.Expr.Authoring
 					dst.size = src.size;
 					dst.alignment = src.alignment;
 					dst.offset = src.offset;
+					dst.valueType = src.type.GetExpressionValueType();
 					builder.AllocateString(ref dst.typeName, src.type.FullName);
 					builder.AllocateString(ref dst.typeAssembly, src.type.Assembly.FullName);
 				}
@@ -213,6 +217,7 @@ namespace Khorde.Expr.Authoring
 		{
 			*storage.typeHash = ExpressionTypeManager.GetTypeHash<TExpression>(hashCache);
 			builder.AllocateString(ref *storage.debugTypeName, typeof(TExpression).FullName);
+			*storage.valueType = typeof(TExpression).GetExpressionValueType();
 			if(UnsafeUtility.SizeOf<TExpression>() <= UnsafeUtility.SizeOf<ExpressionStorage>())
 			{
 				return ref *(TExpression*)storage.storage;

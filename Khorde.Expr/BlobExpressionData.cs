@@ -22,7 +22,7 @@ namespace Khorde.Expr
 	/// </summary>
 	public struct BlobExpressionData
 	{
-		public const int SchemaVersion = 8;
+		public const int SchemaVersion = 9;
 
 		/// <summary>
 		/// Storage for constant-valued expression node references
@@ -36,6 +36,7 @@ namespace Khorde.Expr
 			public int offset;
 			public int size;
 			public int alignment;
+			public ExpressionValueType valueType;
 		}
 
 		/// <summary>
@@ -57,6 +58,11 @@ namespace Khorde.Expr
 		/// Debug type names matching <see cref="expressionTypeHashes"/>
 		/// </summary>
 		public BlobArray<BlobString> expressionDebugTypeNames;
+
+		/// <summary>
+		/// Expression value types for string formatting etc.
+		/// </summary>
+		public BlobArray<ExpressionValueType> expressionValueTypes;
 
 		/// <summary>
 		/// Component types (especially non-[ChunkSerializable] ones) might have a

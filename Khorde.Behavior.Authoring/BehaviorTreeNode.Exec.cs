@@ -2,6 +2,7 @@
 using Khorde.Expr.Authoring;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
@@ -735,6 +736,104 @@ namespace Khorde.Behavior.Authoring
 		public ExpressionRef GetExpressionRef(GraphExpressionBakingContext context, IPort port)
 		{
 			return default;
+		}
+	}
+
+	[Serializable]
+	[Node("Execution")]
+	internal class Log : ExecBase, IExecNode
+	{
+		INodeOption text;
+		List<IPort> variables;
+		List<string> sections;
+
+		public override void Bake(ref BlobBuilder builder, ref BTExec exec, BTBakingContext context, int nodeIndex, BTExecNodeId nodeId)
+		{
+			exec.type = BTExec.BTExecType.Log;
+
+			var sections = builder.Allocate(ref exec.data.log.sections, this.sections.Count);
+			for(int i = 0; i < this.sections.Count; ++i)
+				builder.AllocateString(ref sections[i], this.sections[i]);
+
+			var variables = builder.Allocate(ref exec.data.log.variables, this.variables.Count);
+			for(int i = 0; i < this.variables.Count; ++i)
+				variables[i] = context.GetExpressionRef(this.variables[i]);
+		}
+
+		protected override void OnDefineOptions(IOptionDefinitionContext context)
+		{
+			text = context.AddOption<string>("Text")
+				.WithDisplayName("Text")
+				.WithDefaultValue("Count: {count:int}")
+				.WithTooltip("")
+				.Build();
+		}
+
+		protected override void OnDefinePorts(IPortDefinitionContext context)
+		{
+			context.AddInputPort<ExecutionFlow>(EXEC_PORT_DEFAULT_NAME)
+				.WithDisplayName(string.Empty)
+				.WithConnectorUI(PortConnectorUI.Arrowhead)
+				.WithCapacity(PortCapacity.Single)
+				.Build();
+
+			text.TryGetValue<string>(out var format);
+
+			sections = new();
+			variables = new();
+
+			if(format == null)
+				return;
+
+			int index = 0;
+			while(index < format.Length)
+			{
+				int nextFormat = format.IndexOf('{', index);
+				if(nextFormat == -1)
+				{
+					sections.Add(format.Substring(index));
+					index = format.Length;
+				}
+				else
+				{
+					sections.Add(format.Substring(index, nextFormat - index));
+					int endFormat = format.IndexOf('}', nextFormat);
+					if(endFormat == -1)
+					{
+						sections.Add(format.Substring(nextFormat));
+						index = format.Length;
+					}
+					else
+					{
+						int splitIndex = format.IndexOf(':', nextFormat, endFormat - nextFormat);
+						if(splitIndex == -1)
+						{
+							sections.Add(format.Substring(nextFormat, endFormat - nextFormat + 1));
+							index = endFormat + 1;
+						}
+						else
+						{
+							var varName = format.Substring(nextFormat + 1, splitIndex - nextFormat - 1);
+							var varTypeName = format.Substring(splitIndex + 1, endFormat - splitIndex - 1);
+							if(string.IsNullOrWhiteSpace(varName) || !Enum.TryParse<ExpressionValueType>(varTypeName, true, out var valueType))
+							{
+								sections.Add(format.Substring(nextFormat, endFormat - nextFormat + 1));
+								index = endFormat + 1;
+							}
+							else
+							{
+								var varType = valueType.GetValueType();
+								variables.Add(context.AddInputPort(varName.Trim())
+									.WithDataType(varType)
+									.WithDisplayName(varName.Trim())
+									.Build()
+									);
+								index = endFormat + 1;
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }

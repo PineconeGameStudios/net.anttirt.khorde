@@ -328,6 +328,23 @@ namespace Khorde.Expr
 			return index;
 		}
 
+		public ExpressionValueType GetValueType(ref BlobExpressionData data)
+		{
+			if(isNode)
+			{
+				if(index < data.expressionValueTypes.Length)
+					return data.expressionValueTypes[index];
+			}
+			else
+			{
+				for(int i = 0; i < data.constantReflection.Length; ++i)
+					if(data.constantReflection[i].offset == index)
+						return data.constantReflection[i].valueType;
+			}
+
+			return default;
+		}
+
 		public T Evaluate<T>(in ExpressionEvalContext ctx) where T : unmanaged
 		{
 			CheckCreated();

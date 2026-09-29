@@ -498,4 +498,15 @@ namespace Khorde.Behavior
 			return $"{{ once={once} then={then} latch={latch} }}";
 		}
 	}
+
+	public struct Log
+	{
+		public BlobArray<BlobString> sections;
+		public BlobArray<ExpressionRef> variables;
+
+		public string DumpString()
+		{
+			return $"{{ }}";
+		}
+	}
 }

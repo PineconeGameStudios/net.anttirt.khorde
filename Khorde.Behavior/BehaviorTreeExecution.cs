@@ -890,6 +890,62 @@ namespace Khorde.Behavior
 							}
 							break;
 
+						case BTExec.BTExecType.Log:
+							{
+#if UNITY_EDITOR
+								ref var nd = ref node.data.log;
+								NativeText text = new NativeText(Allocator.Temp);
+								for(int i = 0; i < nd.sections.Length; ++i)
+								{
+									unsafe
+									{
+										var span = nd.sections[i].AsSpan();
+										fixed(byte* bytes = span)
+										{
+											text.Append(bytes, span.Length);
+										}
+									}
+
+									if(i < nd.variables.Length)
+									{
+										switch(nd.variables[i].GetValueType(ref exprContext.data))
+										{
+										case ExpressionValueType.Int:
+											text.Append(nd.variables[i].Evaluate<int>(exprContext));
+											break;
+
+										case ExpressionValueType.Float:
+											text.Append(nd.variables[i].Evaluate<float>(exprContext));
+											break;
+
+										case ExpressionValueType.Bool:
+											if(nd.variables[i].Evaluate<bool>(exprContext))
+												text.Append((FixedString32Bytes)"true");
+											else
+												text.Append((FixedString32Bytes)"false");
+											break;
+
+										case ExpressionValueType.Entity:
+											var entity = nd.variables[i].Evaluate<Entity>(exprContext);
+											text.Append((FixedString32Bytes)"Entity(");
+											text.Append(entity.Index);
+											text.Append(':');
+											text.Append(entity.Version);
+											text.Append(')');
+											break;
+										}
+									}
+								}
+
+								FixedString512Bytes result = default;
+								result.CopyFromTruncated(text);
+								UnityEngine.Debug.Log(result);
+
+#endif
+								Return(ref data, ref node);
+							}
+							break;
+
 						default:
 							throw new NotImplementedException($"BTExec node type {node.type} not implemented");
 					}
@@ -1148,6 +1204,8 @@ namespace Khorde.Behavior
 #endif
 									);
 						}
+
+					case BTExec.BTExecType.Log: result = 0; break;
 
 					default:
 						throw new NotImplementedException();

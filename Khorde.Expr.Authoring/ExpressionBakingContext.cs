@@ -49,6 +49,7 @@ namespace Khorde.Expr.Authoring
 		protected NativeArray<ExpressionData> builderExpressions;
 		protected NativeArray<ulong> builderTypeHashes;
 		protected NativeArray<BlobString> builderDebugTypeNames;
+		protected NativeArray<ExpressionValueType> builderValueTypes;
 		protected NativeArray<UnityEngine.Hash128> builderSourceGraphNodeIds;
 		protected NativeArray<ExpressionOutput> builderOutputs;
 
@@ -121,6 +122,7 @@ namespace Khorde.Expr.Authoring
 			builderExpressions = AsArray(builder.Allocate(ref data->expressions, expressionCount));
 			builderTypeHashes = AsArray(builder.Allocate(ref data->expressionTypeHashes, expressionCount));
 			builderDebugTypeNames = AsArray(builder.Allocate(ref data->expressionDebugTypeNames, expressionCount));
+			builderValueTypes = AsArray(builder.Allocate(ref data->expressionValueTypes, expressionCount));
 			builderSourceGraphNodeIds = AsArray(builder.Allocate(ref data->sourceGraphNodeIds, expressionCount));
 
 			builderOutputs = AsArray(builder.Allocate(ref data->outputs, outputCount));
@@ -221,7 +223,8 @@ namespace Khorde.Expr.Authoring
 			return new ExpressionStorageRef(
 				ref builderExpressions.UnsafeElementAt(index).storage,
 				ref builderTypeHashes.UnsafeElementAt(index),
-				ref builderDebugTypeNames.UnsafeElementAt(index)
+				ref builderDebugTypeNames.UnsafeElementAt(index),
+				ref builderValueTypes.UnsafeElementAt(index)
 			);
 		}
 
