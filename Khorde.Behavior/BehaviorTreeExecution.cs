@@ -846,11 +846,15 @@ namespace Khorde.Behavior
 							if(frames[^1].childIndex == 0)
 							{
 								ref var nd = ref node.data.utilityCooldown;
-								exprContext.GetBlackboardVariable<float>(nd.lastExecutionTime) = now;
-								Call(ref data, node.data.utilityCooldown.child);
+								if(nd.resetOnEnter)
+									exprContext.GetBlackboardVariable<float>(nd.lastExecutionTime) = now;
+								Call(ref data, nd.child);
 							}
 							else
 							{
+								ref var nd = ref node.data.utilityCooldown;
+								if(!nd.resetOnEnter)
+									exprContext.GetBlackboardVariable<float>(nd.lastExecutionTime) = now;
 								Return(ref data, ref node);
 							}
 							break;

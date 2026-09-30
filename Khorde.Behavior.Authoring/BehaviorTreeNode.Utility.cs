@@ -140,6 +140,7 @@ namespace Khorde.Behavior.Authoring
 	internal class UtilityCooldown : ExecBase, IExecNode, ICustomExprNode, IUtilityNode
 	{
 		private INodeOption cooldown;
+		private INodeOption resetOnEnter;
 		private INodeOption softCooldown;
 		private INodeOption softCooldownCurve;
 		private IPort child;
@@ -165,6 +166,8 @@ namespace Khorde.Behavior.Authoring
 				curve.ConstructBlob(ref builder, ref data.curve);
 			}
 
+			this.resetOnEnter.TryGetValue(out data.resetOnEnter);
+
 			context.BakeGeneratedVariable(this, 0, execTimeVariableIndex);
 			data.lastExecutionTime = execTimeVariableIndex;
 			data.child = context.GetTargetNodeId(child);
@@ -187,6 +190,11 @@ namespace Khorde.Behavior.Authoring
 			cooldown = context.AddOption<float>("Cooldown")
 				.WithDisplayName("Duration")
 				.WithDefaultValue(15.0f)
+				.Build();
+
+			resetOnEnter = context.AddOption<bool>("ResetOnEnter")
+				.WithDisplayName("Reset on Enter")
+				.WithTooltip("Checked: Reset timer when this branch is entered.\nUnchecked: Reset timer when this branch is completed.")
 				.Build();
 
 			softCooldown = context.AddOption<bool>("SoftCooldown")
