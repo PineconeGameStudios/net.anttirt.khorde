@@ -36,7 +36,10 @@ namespace Khorde.Behavior
 					TypeDependencyCacheExt.AddComponentTypeDependency(ctx, type);
 
 				foreach(var guid in graph.GetSubgraphs())
+				{
 					ctx.DependsOnArtifact(guid);
+					ctx.DependsOnSourceAsset(guid);
+				}
 
 				bool isSubgraph = graph.GetNodes().OfType<IVariableNode>().Any(v => v.Variable.VariableKind == VariableKind.Input || v.Variable.VariableKind == VariableKind.Output);
 
