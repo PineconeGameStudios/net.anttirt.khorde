@@ -176,24 +176,41 @@ namespace Khorde.Behavior
 
 					void Trace(ref BTExec node, BTExecTrace.Event @event)
 					{
+#if UNITY_EDITOR
 						if(trace.IsCreated)
 							trace.Add(new(nodeId, node.type, @event, threadId, frames.Length, cycle));
+#endif
 					}
 
 					void Trace1(ref BTData data, BTExecTrace.Event @event)
 					{
+#if UNITY_EDITOR
 						if(trace.IsCreated)
 							trace.Add(new(nodeId, data.GetNode(nodeId).type, @event, threadId, frames.Length, cycle));
+#endif
 					}
 
 					void Trace2(ref BTData data, int stackIndex, BTExecTrace.Event @event)
 					{
+#if UNITY_EDITOR
 						if(trace.IsCreated)
 							trace.Add(new(frames[stackIndex].nodeId, data.GetNode(frames[stackIndex].nodeId).type, @event, threadId, stackIndex + 1, cycle));
+#endif
 					}
 
 					void Fail(ref BTState state, ref BTData data, ref BTExec node, ref BTThread thread)
 					{
+#if UNITY_EDITOR
+						if(state.logFailures)
+						{
+							FixedString128Bytes assetName = default;
+							data.exprData.assetName.CopyTo(ref assetName);
+							FixedString128Bytes extra = default;
+							if(node.type == BTExec.BTExecType.WriteLookupField)
+								extra = data.exprData.lookupComponents[node.data.writeLookupField.componentIndex].DebugTypeName;
+							UnityEngine.Debug.LogError($"{assetName}: {node.type.ToFixedString()} ({extra}) thread {threadIndex} frame {frames.Length} failed");
+						}
+#endif
 						Trace(ref node, BTExecTrace.Event.Fail);
 
 						for(int i = frames.Length - 1; i > 0; --i)

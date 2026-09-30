@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections;
+using Unity.Entities;
 
 namespace Khorde.Blobs
 {
@@ -35,5 +36,17 @@ namespace Khorde.Blobs
 
 		public static BlobComponentType Make<T>(ComponentType.AccessMode accessMode)
 			=> new BlobComponentType(TypeManager.GetTypeInfo<T>().StableTypeHash, accessMode);
+
+		public FixedString128Bytes DebugTypeName
+		{
+			get
+			{
+				var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(stableTypeHash);
+				ref readonly var typeInfo = ref TypeManager.GetTypeInfo(typeIndex);
+				FixedString128Bytes ret = default;
+				ret.CopyFromTruncated(typeInfo.DebugTypeName);
+				return ret;
+			}
+		}
 	}
 }

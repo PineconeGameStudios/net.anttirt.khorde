@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Unity.Collections;
 using UnityEngine;
 
 namespace Khorde.Behavior
@@ -112,6 +113,42 @@ namespace Khorde.Behavior
 			}
 
 			return result;
+		}
+	}
+
+	public static class BTExecExt
+	{
+		public static FixedString32Bytes ToFixedString(this BTExec.BTExecType type)
+		{
+			switch(type)
+			{
+			case BTExec.BTExecType.Nop: return "Nop";
+			case BTExec.BTExecType.Root: return "Root";
+			case BTExec.BTExecType.Sequence: return "Sequence";
+			case BTExec.BTExecType.Selector: return "Selector";
+			case BTExec.BTExecType.WriteField: return "WriteField";
+			case BTExec.BTExecType.Wait: return "Wait";
+			case BTExec.BTExecType.Fail: return "Fail";
+			case BTExec.BTExecType.If: return "If";
+			case BTExec.BTExecType.Catch: return "Catch";
+			case BTExec.BTExecType.WriteVar: return "WriteVar";
+			case BTExec.BTExecType.Query: return "Query";
+			case BTExec.BTExecType.Parallel: return "Parallel";
+			case BTExec.BTExecType.ThreadRoot: return "ThreadRoot";
+			case BTExec.BTExecType.Repeat: return "Repeat";
+			case BTExec.BTExecType.Append: return "Append";
+			case BTExec.BTExecType.Invoke: return "Invoke";
+			case BTExec.BTExecType.WriteBufferField: return "WriteBufferField";
+			case BTExec.BTExecType.WriteLookupField: return "WriteLookupField";
+			case BTExec.BTExecType.UtilitySelector: return "UtilitySelector";
+			case BTExec.BTExecType.Utility: return "Utility";
+			case BTExec.BTExecType.UtilityCooldown: return "UtilityCooldown";
+			case BTExec.BTExecType.UtilityCurve: return "UtilityCurve";
+			case BTExec.BTExecType.UtilityRange: return "UtilityRange";
+			case BTExec.BTExecType.Once: return "Once";
+			case BTExec.BTExecType.Log: return "Log";
+			default: return "[unknown]";
+			}
 		}
 	}
 }

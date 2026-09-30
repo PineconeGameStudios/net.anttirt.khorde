@@ -19,6 +19,8 @@ namespace Khorde.Behavior
 		[Header("Debugging")]
 		[Tooltip("Log Behavior Tree execution traces")]
 		public bool trace;
+		[Tooltip("Log error if a node Fails")]
+		public bool logFailures;
 		[Tooltip("Dump blackboard variable layout when baking")]
 		public bool dumpBlackboardLayout;
 
@@ -47,9 +49,7 @@ namespace Khorde.Behavior
 				if(authoring.trace)
 					AddBuffer<BTExecTrace>(entity);
 
-#if UNITY_EDITOR
 				AddBuffer<BTUtilityDebug>(entity);
-#endif
 
 				AddBuffer<BehaviorTreeInvocation>(entity);
 				SetComponentEnabled<BehaviorTreeInvocation>(entity, false);
@@ -59,7 +59,7 @@ namespace Khorde.Behavior
 				AddBlobAsset(ref bakedLayout, out var _);
 				AddSharedComponent(entity, new ExpressionBlackboardLayouts() { asset = bakedLayout, });
 
-				AddComponent(entity, new BTState { });
+				AddComponent(entity, new BTState { logFailures = authoring.logFailures });
 
 				var actions = AddBuffer<BehaviorTreeActionRef>(entity);
 				foreach(var action in authoring.behaviorTree.Actions)

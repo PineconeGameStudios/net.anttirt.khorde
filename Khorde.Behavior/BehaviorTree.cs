@@ -30,6 +30,8 @@ namespace Khorde.Behavior
 		public Random random;
 		[MarshalAs(UnmanagedType.U1)]
 		public bool initialized;
+		[MarshalAs(UnmanagedType.U1)]
+		public bool logFailures;
 	}
 
 	[InternalBufferCapacity(2)]
