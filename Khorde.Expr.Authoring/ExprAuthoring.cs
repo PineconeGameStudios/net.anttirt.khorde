@@ -11,6 +11,7 @@ using Unity.Entities;
 using Unity.GraphToolkit.Editor;
 using Unity.Mathematics;
 using UnityEditor;
+using UnityEditor.Search;
 using UnityEngine;
 using Hash128 = Unity.Entities.Hash128;
 
@@ -586,6 +587,16 @@ namespace Khorde.Expr.Authoring
 			}
 
 			return result.ToArray();
+		}
+
+		public static void IndexGraphSourceAsset(CustomObjectIndexerTarget context, ObjectIndexer indexer, UnityEngine.Object target)
+		{
+			if(target == null)
+				return;
+
+			foreach(var path in GatherDependenciesFromSourceFile(AssetDatabase.GetAssetPath(target)))
+				if(path.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("Packages/", StringComparison.OrdinalIgnoreCase))
+					indexer.IndexProperty(context.documentIndex, "ref", path, saveKeyword: false);
 		}
 	}
 }
